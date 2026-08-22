@@ -5,9 +5,11 @@ declare(strict_types=1);
 namespace SohoPHP\SoFinder\Tests;
 
 use PHPUnit\Framework\TestCase;
+use PHPUnit\Framework\Attributes\DataProvider;
 use SohoPHP\SoFinder\Exception\ConflictException;
 use SohoPHP\SoFinder\Exception\InvalidPathException;
 use SohoPHP\SoFinder\Storage\LocalStorageAdapter;
+use SohoPHP\SoFinder\Value\ListQuery;
 
 final class LocalStorageAdapterTest extends TestCase
 {
@@ -43,11 +45,11 @@ final class LocalStorageAdapterTest extends TestCase
         self::assertSame('copy.txt', $copy->name);
         $moved = $this->storage->move('documents/copy.txt', 'moved.txt');
         self::assertSame('moved.txt', $moved->path);
-        self::assertCount(1, $this->storage->list('documents'));
+        self::assertCount(1, $this->storage->list(new ListQuery('documents'))->entries);
 
         $this->storage->delete('moved.txt');
         $this->storage->delete('documents');
-        self::assertSame([], $this->storage->list(''));
+        self::assertSame([], $this->storage->list(new ListQuery())->entries);
     }
 
     public function testDoesNotOverwriteByDefault(): void
@@ -85,10 +87,10 @@ final class LocalStorageAdapterTest extends TestCase
         mkdir($this->directory . '/target');
         symlink($this->directory . '/target', $this->directory . '/link');
         $this->expectException(InvalidPathException::class);
-        $this->storage->list('link');
+        $this->storage->list(new ListQuery('link'));
     }
 
-    /** @dataProvider recursiveTransferProvider */
+    #[DataProvider('recursiveTransferProvider')]
     public function testRejectsTransferringDirectoryIntoItself(string $operation): void
     {
         mkdir($this->directory . '/source/nested', 0775, true);
@@ -122,6 +124,22 @@ final class LocalStorageAdapterTest extends TestCase
 
         self::assertSame(8, $this->storage->usage());
         self::assertSame(5, $this->storage->size('nested'));
+    }
+
+    public function testListsAFilteredSortedPageThroughTheStableQueryContract(): void
+    {
+        file_put_contents($this->directory . '/alpha.txt', '1');
+        file_put_contents($this->directory . '/beta.txt', '12345');
+        file_put_contents($this->directory . '/gamma.txt', '123');
+
+        $page = $this->storage->list(new ListQuery('', 'a', 'size', 'desc', 1, 1));
+
+        self::assertSame(3, $page->total);
+        self::assertSame(1, $page->offset);
+        self::assertSame('gamma.txt', $page->entries[0]->name);
+        self::assertNotNull($page->nextCursor);
+        self::assertTrue($this->storage->capabilities()->atomicMove);
+        self::assertTrue($this->storage->capabilities()->recoverableDelete);
     }
 
     private function remove(string $path): void

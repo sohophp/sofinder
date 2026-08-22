@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace SohoPHP\SoFinder\Usage;
 
+use SohoPHP\SoFinder\Contract\StorageUsageProviderInterface;
 use SohoPHP\SoFinder\Contract\UsageTrackerInterface;
 use SohoPHP\SoFinder\Exception\SoFinderException;
 use SohoPHP\SoFinder\Value\ResourceStorage;
@@ -22,7 +23,7 @@ final readonly class PersistentUsageTracker implements UsageTrackerInterface
     public function recalculate(ResourceStorage $resource): int
     {
         return $this->locked($resource, function (string $stateFile) use ($resource): int {
-            $bytes = $resource->storage->usage();
+            $bytes = $this->scan($resource);
             $this->write($stateFile, $bytes, false);
 
             return $bytes;
@@ -44,7 +45,11 @@ final readonly class PersistentUsageTracker implements UsageTrackerInterface
         });
     }
 
-    /** @template T @param callable(string):T $callback @return T */
+    /**
+     * @template T
+     * @param callable(string): T $callback
+     * @return T
+     */
     private function locked(ResourceStorage $resource, callable $callback): mixed
     {
         $this->ensureDirectory();
@@ -70,10 +75,23 @@ final readonly class PersistentUsageTracker implements UsageTrackerInterface
         if ($state !== null && $state['dirty'] === false) {
             return $state['bytes'];
         }
-        $bytes = $resource->storage->usage();
+        $bytes = $this->scan($resource);
         $this->write($stateFile, $bytes, false);
 
         return $bytes;
+    }
+
+    private function scan(ResourceStorage $resource): int
+    {
+        if (!$resource->storage instanceof StorageUsageProviderInterface) {
+            throw new SoFinderException(
+                'This storage adapter cannot calculate usage; provide a persisted usage baseline before enabling quotas.',
+                'usage_scan_unsupported',
+                501,
+            );
+        }
+
+        return $resource->storage->usage();
     }
 
     /** @return array{bytes:int,dirty:bool}|null */

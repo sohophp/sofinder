@@ -24,7 +24,7 @@ final readonly class CsrfGuard
             throw new AccessDeniedException('Authentication is required.');
         }
         $value = $request->headers->get('X-CSRF-TOKEN', (string) $request->request->get('_token', ''));
-        if (!$this->isValid($value)) {
+        if (!$this->isValid($value ?? '')) {
             throw new AccessDeniedException('The security token is invalid or expired.');
         }
     }
@@ -38,7 +38,7 @@ final readonly class CsrfGuard
             'X-CSRF-TOKEN',
             (string) $request->request->get('_token', $request->query->get('_token', '')),
         );
-        if (!$this->isValid($value)) {
+        if (!$this->isValid($value ?? '')) {
             throw new AccessDeniedException('The security token is invalid or expired.');
         }
         $origin = $request->headers->get('Origin');

@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace SohoPHP\SoFinder\Tests;
 
 use PHPUnit\Framework\TestCase;
+use PHPUnit\Framework\Attributes\DataProvider;
 use SohoPHP\SoFinder\Contract\AuthorizationInterface;
 use SohoPHP\SoFinder\Exception\AccessDeniedException;
 use SohoPHP\SoFinder\Exception\SoFinderException;
@@ -152,6 +153,31 @@ final class FileManagerTest extends TestCase
         self::assertSame(500, $result['limit']);
     }
 
+    public function testAuthorizationFilteringHappensBeforePagination(): void
+    {
+        foreach (['hidden.txt', 'visible-a.txt', 'visible-b.txt'] as $name) {
+            file_put_contents($this->directory . '/' . $name, '1');
+        }
+        $resource = new ResourceType('Files', $this->directory, '/files', ['txt']);
+        $authorization = new class implements AuthorizationInterface {
+            public function isAuthenticated(): bool { return true; }
+            public function isGranted(string $operation, ResourceType $resource, string $path): bool
+            {
+                return $operation !== 'read' || $path !== 'hidden.txt';
+            }
+        };
+        $manager = new FileManager(
+            new ResourceRegistry([new ResourceStorage($resource, new LocalStorageAdapter($this->directory, '/files'))]),
+            $authorization,
+            new EventDispatcher(),
+        );
+
+        $result = $manager->list('Files', limit: 2);
+
+        self::assertSame(2, $result['total']);
+        self::assertSame(['visible-a.txt', 'visible-b.txt'], array_column($result['entries'], 'name'));
+    }
+
     public function testRenamesFileWithoutChangingItsExtension(): void
     {
         file_put_contents($this->directory . '/photo.jpg', 'image');
@@ -163,7 +189,7 @@ final class FileManagerTest extends TestCase
         self::assertFileExists($this->directory . '/renamed.jpg');
     }
 
-    /** @dataProvider changedExtensionProvider */
+    #[DataProvider('changedExtensionProvider')]
     public function testRejectsChangingOrRemovingAFileExtension(string $newName): void
     {
         file_put_contents($this->directory . '/photo.jpg', 'image');

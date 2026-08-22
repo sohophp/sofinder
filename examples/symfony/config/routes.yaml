@@ -1,0 +1,3 @@
+sofinder:
+  resource: '@SoFinderBundle/Resources/config/routes.yaml'
+  prefix: /sofinder

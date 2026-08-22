@@ -47,8 +47,8 @@ so_finder:
       max_recursive_items: 10000
       max_archive_items: 1000
       max_archive_bytes: 536870912
-      allowed_extensions: [gif, jpeg, jpg, png, webp]
-      allowed_mime_types: [image/gif, image/jpeg, image/png, image/webp]
+      allowed_extensions: [avif, bmp, gif, heic, heif, ico, jpeg, jpg, png, tif, tiff, webp]
+      allowed_mime_types: [image/avif, image/bmp, image/gif, image/heic, image/heif, image/jpeg, image/png, image/tiff, image/vnd.microsoft.icon, image/x-heic, image/x-heif, image/x-icon, image/x-tiff, image/webp]
       roles: [ROLE_EDITOR]
       operation_roles:
         delete: [ROLE_FILE_ADMIN]

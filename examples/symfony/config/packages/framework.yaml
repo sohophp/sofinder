@@ -1,0 +1,6 @@
+framework:
+  secret: 'sofinder-example-not-for-production'
+  csrf_protection: true
+  session: true
+  router:
+    utf8: true

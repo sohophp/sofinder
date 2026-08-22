@@ -1,7 +1,8 @@
 # SoFinder
 
-SoFinder is an original MIT-licensed file manager for PHP 8.5. It provides a
-framework-independent core, a Symfony 7.4 bundle, and a React user interface.
+SoFinder is an original MIT-licensed file manager for PHP 8.2 through 8.5. It
+provides a framework-independent core, a Symfony 6.4/7.4 bundle, and a React
+user interface.
 
 The project is independently designed and does not contain code, artwork,
 translations, styles, or other assets from proprietary file managers.
@@ -50,7 +51,8 @@ and full image decoding before atomic publication. SoFinder also provides
 inherited path ACLs, public/proxy delivery, Range/ETag responses, operation
 gates, structured failure audits and a private 30-day recycle bin. Run
 `sofinder:security:audit` during deployment and schedule
-`sofinder:trash:cleanup`; see `docs/security.md`.
+`sofinder:trash:cleanup` and `sofinder:uploads:cleanup`; see
+`docs/security.md`.
 
 Image processing uses GD when available. Decoded images are limited to 50
 million pixels and edits preserve the original file format and extension.
@@ -62,7 +64,16 @@ ZIP downloads accept at most 100 selected roots, 1,000 total entries and 512 MB.
 ```bash
 composer install
 vendor/bin/phpunit
+composer phpstan
 cd frontend
 corepack pnpm install
 corepack pnpm build
+corepack pnpm test:unit
 ```
+
+The supported storage extension contract is documented in
+`docs/storage-adapters.md`; public PHP contracts, HTTP compatibility and
+versioning are documented in `docs/php-contracts.md`, `docs/http-api.md` and
+`docs/versioning.md`. Supported raster codecs and their runtime requirements
+are listed in `docs/image-formats.md`. Runnable Symfony 6.4 and 7.4
+installation variants are under `examples/symfony`.

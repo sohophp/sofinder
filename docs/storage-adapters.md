@@ -1,0 +1,49 @@
+# Storage adapter contract
+
+SoFinder 0.1.0-beta.3 introduces the storage contract intended to remain
+stable through 1.x. The 1.0 release supports the bundled local adapter; remote
+adapters may be registered by applications but are not part of the 1.0 support
+promise.
+
+Implement `StorageAdapterInterface` for stream I/O and entry mutations. Directory
+reads receive a `ListQuery` and return a `ListingPage`. Apply its search,
+sorting, filtering and page bounds before returning entries. Exact totals may
+be `null` when a backend only supports cursors. A non-null `nextCursor` must be
+opaque, stable for the current query and must never repeat.
+
+Return a truthful `StorageCapabilities` value. Capability flags describe native
+backend behavior and allow the browser to avoid offering unsupported queries.
+They do not bypass `AuthorizationInterface`; authorization is always evaluated
+by the file manager.
+
+Register adapters through a tagged `StorageAdapterFactoryInterface` service:
+
+```php
+final class AcmeStorageFactory implements StorageAdapterFactoryInterface
+{
+    public function alias(): string { return 'acme'; }
+
+    public function create(ResourceType $resource, array $options = []): StorageAdapterInterface
+    {
+        return new AcmeStorageAdapter($options);
+    }
+}
+```
+
+Tag the service `sofinder.storage_factory`, then use `adapter: acme` and an
+`options` mapping in the resource configuration. Adapter aliases must be
+unique. Unknown aliases fail container initialization.
+
+Local-only optimizations are separate optional contracts:
+
+- `LocalPathProviderInterface` supplies an absolute path to the private local
+  recycle-bin implementation.
+- `StorageUsageProviderInterface` supplies an authoritative full usage scan.
+- `RecycleBinInterface`, `UsageTrackerInterface`, `MetadataStoreInterface`,
+  `ChunkUploadStoreInterface` and `RequestGateStoreInterface` can be replaced
+  for clustered deployments.
+
+An adapter without `LocalPathProviderInterface` must use a compatible custom
+`RecycleBinInterface` or disable recoverable deletion. An adapter without
+`StorageUsageProviderInterface` must use a usage tracker that already has an
+authoritative baseline before quotas are enabled.

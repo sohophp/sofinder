@@ -7,6 +7,7 @@ namespace SohoPHP\SoFinder;
 use Psr\EventDispatcher\EventDispatcherInterface;
 use SohoPHP\SoFinder\Contract\AuthorizationInterface;
 use SohoPHP\SoFinder\Contract\EntryUrlGeneratorInterface;
+use SohoPHP\SoFinder\Contract\RecycleBinInterface;
 use SohoPHP\SoFinder\Contract\UsageTrackerInterface;
 use SohoPHP\SoFinder\Exception\AccessDeniedException;
 use SohoPHP\SoFinder\Exception\ConflictException;
@@ -16,16 +17,18 @@ use SohoPHP\SoFinder\Event\OperationEvent;
 use SohoPHP\SoFinder\Security\PathGuard;
 use SohoPHP\SoFinder\Security\DefaultFileInspector;
 use SohoPHP\SoFinder\Security\UploadPipeline;
-use SohoPHP\SoFinder\Trash\TrashManager;
+use SohoPHP\SoFinder\Storage\StoragePaginator;
 use SohoPHP\SoFinder\Usage\PersistentUsageTracker;
 use SohoPHP\SoFinder\Image\GdImageProcessor;
 use SohoPHP\SoFinder\Value\Entry;
+use SohoPHP\SoFinder\Value\ListQuery;
 use SohoPHP\SoFinder\Value\ResourceStorage;
 use SohoPHP\SoFinder\Value\TrashItem;
 
 final readonly class FileManager
 {
     private UploadPipeline $uploads;
+    private StoragePaginator $paginator;
 
     public function __construct(
         private ResourceRegistry $resources,
@@ -34,14 +37,16 @@ final readonly class FileManager
         private PathGuard $pathGuard = new PathGuard(),
         ?UploadPipeline $uploads = null,
         private ?EntryUrlGeneratorInterface $entryUrls = null,
-        private ?TrashManager $trash = null,
+        private ?RecycleBinInterface $trash = null,
         ?UsageTrackerInterface $usage = null,
+        ?StoragePaginator $paginator = null,
     ) {
         $this->uploads = $uploads ?? new UploadPipeline(
             new DefaultFileInspector(new GdImageProcessor()),
             sys_get_temp_dir() . '/sofinder-quarantine',
         );
         $this->usage = $usage ?? new PersistentUsageTracker(sys_get_temp_dir() . '/sofinder-usage');
+        $this->paginator = $paginator ?? new StoragePaginator();
     }
 
     private UsageTrackerInterface $usage;
@@ -59,12 +64,18 @@ final readonly class FileManager
         );
 
         return array_values(array_map(
-            fn (ResourceStorage $item): array => $item->resource->jsonSerialize() + ['usedBytes' => $this->usage->usage($item)],
+            fn (ResourceStorage $item): array => $item->resource->jsonSerialize() + [
+                'usedBytes' => $this->usage->usage($item),
+                'storageCapabilities' => $item->storage->capabilities(),
+            ],
             $visible,
         ));
     }
 
-    /** @return array{entries:list<Entry>,total:int,path:string,offset:int,limit:int,sort:string,direction:string,capabilities:array<string,bool>} */
+    /**
+     * @param list<string>|null $onlyPaths
+     * @return array{entries:list<Entry>,total:int,path:string,offset:int,limit:int,sort:string,direction:string,nextCursor:?string,capabilities:array<string,bool>,storageCapabilities:\SohoPHP\SoFinder\Value\StorageCapabilities}
+     */
     public function list(
         string $resourceName,
         string $path = '',
@@ -74,61 +85,51 @@ final readonly class FileManager
         int $offset = 0,
         int $limit = 100,
         ?array $onlyPaths = null,
+        ?string $cursor = null,
     ): array
     {
         $item = $this->authorized($resourceName, 'list', $path);
-        $entries = array_values(array_filter(
-            $item->storage->list($path),
+        $storageCapabilities = $item->storage->capabilities();
+        if (trim($search) !== '' && !$storageCapabilities->search) {
+            throw new SoFinderException('This storage adapter does not support server-side search.', 'storage_search_unsupported', 422);
+        }
+        if ($sort !== 'name' && !$storageCapabilities->sort) {
+            throw new SoFinderException('This storage adapter does not support the requested sorting mode.', 'storage_sort_unsupported', 422);
+        }
+        $query = new ListQuery(
+            $this->pathGuard->normalize($path),
+            $search,
+            $sort,
+            $direction,
+            $offset,
+            $limit,
+            $cursor,
+            $onlyPaths,
             fn (Entry $entry): bool => $this->authorization->isGranted(
                 $entry->directory ? 'list' : 'read',
                 $item->resource,
                 $entry->path,
             ),
-        ));
-        if ($onlyPaths !== null) {
-            $allowedPaths = array_fill_keys($onlyPaths, true);
-            $entries = array_values(array_filter($entries, static fn (Entry $entry): bool => isset($allowedPaths[$entry->path])));
-        }
-        $search = trim($search);
-        if ($search !== '') {
-            $entries = array_values(array_filter(
-                $entries,
-                static fn (Entry $entry): bool => mb_stripos($entry->name, $search) !== false,
-            ));
-        }
-
-        $sort = in_array($sort, ['name', 'size', 'modified'], true) ? $sort : 'name';
-        $direction = strtolower($direction) === 'desc' ? 'desc' : 'asc';
-        usort($entries, static function (Entry $left, Entry $right) use ($sort, $direction): int {
-            if ($left->directory !== $right->directory) {
-                return $left->directory ? -1 : 1;
-            }
-            $comparison = match ($sort) {
-                'size' => $left->size <=> $right->size,
-                'modified' => $left->modifiedAt <=> $right->modifiedAt,
-                default => strnatcasecmp($left->name, $right->name),
-            };
-            if ($comparison === 0) {
-                $comparison = strnatcasecmp($left->name, $right->name);
-            }
-
-            return $direction === 'desc' ? -$comparison : $comparison;
-        });
-
-        $limit = max(1, min($limit, 500));
-        $total = count($entries);
-        $maximumOffset = $total === 0 ? 0 : intdiv($total - 1, $limit) * $limit;
-        $offset = max(0, min($offset, $maximumOffset));
+        );
+        $page = $item->storage->list($query);
+        $entries = $page->entries;
+        $sort = $query->sort;
+        $direction = $query->direction;
+        $limit = $page->limit;
+        $total = $page->total ?? ($page->offset + count($entries) + ($page->nextCursor === null ? 0 : 1));
+        $offset = $page->offset;
 
         return [
-            'entries' => array_map(fn (Entry $entry): Entry => $this->present($item, $entry), array_slice($entries, $offset, $limit)),
+            'entries' => array_map(fn (Entry $entry): Entry => $this->present($item, $entry), $entries),
             'total' => $total,
             'path' => $this->pathGuard->normalize($path),
             'offset' => $offset,
             'limit' => $limit,
             'sort' => $sort,
             'direction' => $direction,
+            'nextCursor' => $page->nextCursor,
             'capabilities' => $this->capabilities($item, $this->pathGuard->normalize($path)),
+            'storageCapabilities' => $storageCapabilities,
         ];
     }
 
@@ -424,7 +425,8 @@ final readonly class FileManager
         if ($this->trash === null) {
             throw new SoFinderException('The recycle bin is disabled.', 'trash_disabled', 404);
         }
-        $trashed = $this->trash->get($id);
+        $trash = $this->trash;
+        $trashed = $trash->get($id);
         if ($trashed->resource !== $resourceName) {
             throw new \SohoPHP\SoFinder\Exception\NotFoundException();
         }
@@ -432,10 +434,10 @@ final readonly class FileManager
         if ($conflict === 'overwrite') {
             $this->assertGranted($item, 'overwrite', $trashed->path);
         }
-        $entry = $this->usage->mutate($item, function (int $currentUsage) use ($item, $id, $conflict, $trashed): array {
+        $entry = $this->usage->mutate($item, function (int $currentUsage) use ($item, $id, $conflict, $trashed, $trash): array {
             $replacedBytes = $conflict === 'overwrite' ? $this->existingSize($item, $trashed->path) : 0;
             $this->assertQuota($item, $currentUsage, $replacedBytes, $trashed->size);
-            $entry = $this->trash->restore($item, $id, $conflict);
+            $entry = $trash->restore($item, $id, $conflict);
             $this->after('trash_restore', $item, $entry->path, ['entry' => $entry, 'trash_id' => $id]);
 
             return ['value' => $entry, 'delta' => $trashed->size - $replacedBytes];
@@ -570,8 +572,12 @@ final readonly class FileManager
         $count = 0;
         $pending = [[$directory, 0]];
         while ($pending !== []) {
-            [$current, $depth] = array_pop($pending);
-            foreach ($item->storage->list($current) as $entry) {
+            $candidate = array_pop($pending);
+            if (!is_array($candidate) || !isset($candidate[0], $candidate[1]) || !is_string($candidate[0]) || !is_int($candidate[1])) {
+                throw new \LogicException('The recursive directory queue is invalid.');
+            }
+            [$current, $depth] = $candidate;
+            foreach ($this->paginator->all($item->storage, new ListQuery($current, limit: 500)) as $entry) {
                 ++$count;
                 if ($count > $item->resource->maxRecursiveItems) {
                     throw new SoFinderException('The recursive operation contains too many entries.', 'recursive_limit_exceeded', 413);

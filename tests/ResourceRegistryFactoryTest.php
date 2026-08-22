@@ -5,8 +5,13 @@ declare(strict_types=1);
 namespace SohoPHP\SoFinder\Tests;
 
 use PHPUnit\Framework\TestCase;
+use PHPUnit\Framework\Attributes\DataProvider;
 use SohoPHP\SoFinder\Security\PathGuard;
 use SohoPHP\SoFinder\Symfony\ResourceRegistryFactory;
+use SohoPHP\SoFinder\Contract\StorageAdapterFactoryInterface;
+use SohoPHP\SoFinder\Contract\StorageAdapterInterface;
+use SohoPHP\SoFinder\Storage\LocalStorageAdapter;
+use SohoPHP\SoFinder\Value\ResourceType;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\RequestStack;
 
@@ -37,7 +42,7 @@ final class ResourceRegistryFactoryTest extends TestCase
         ];
     }
 
-    /** @dataProvider publicUrlProvider */
+    #[DataProvider('publicUrlProvider')]
     public function testPublicUrlRespectsTheRequestBasePath(
         string $configuredUrl,
         string $scriptName,
@@ -78,5 +83,46 @@ final class ResourceRegistryFactoryTest extends TestCase
         } finally {
             rmdir($root);
         }
+    }
+
+    public function testUsesARegisteredStorageFactoryAliasAndPassesOptions(): void
+    {
+        $root = sys_get_temp_dir() . '/sofinder-registry-' . bin2hex(random_bytes(8));
+        mkdir($root, 0775, true);
+        $factory = new class($root) implements StorageAdapterFactoryInterface {
+            /** @var array<string, mixed> */
+            public array $options = [];
+            public function __construct(private readonly string $root) {}
+            public function alias(): string { return 'custom'; }
+            public function create(ResourceType $resource, array $options = []): StorageAdapterInterface
+            {
+                $this->options = $options;
+                return new LocalStorageAdapter($this->root);
+            }
+        };
+
+        try {
+            $registry = (new ResourceRegistryFactory(new PathGuard(), new RequestStack(), [$factory]))->create([
+                'Files' => $this->resourceConfig($root) + ['adapter' => 'custom', 'options' => ['bucket' => 'demo']],
+            ]);
+            self::assertSame('Files', $registry->get('Files')->resource->name);
+            self::assertSame(['bucket' => 'demo'], $factory->options);
+        } finally {
+            rmdir($root);
+        }
+    }
+
+    /** @return array<string, mixed> */
+    private function resourceConfig(string $root): array
+    {
+        return [
+            'root' => $root,
+            'public_url' => '',
+            'allowed_extensions' => [],
+            'denied_extensions' => [],
+            'allowed_mime_types' => [],
+            'max_size' => 1024,
+            'read_only' => false,
+        ];
     }
 }

@@ -65,6 +65,35 @@ final class PersistentUsageTrackerTest extends TestCase
         self::assertSame(10, (new PersistentUsageTracker($this->state))->usage($resource));
     }
 
+    public function testUsageLockCoordinatesIndependentProcesses(): void
+    {
+        file_put_contents($this->root . '/existing.txt', '1234');
+        $resource = $this->resource();
+        $tracker = new PersistentUsageTracker($this->state);
+        self::assertSame(4, $tracker->usage($resource));
+        $marker = $this->state . '/child-entered';
+        $autoload = dirname(__DIR__) . '/vendor/autoload.php';
+        $code = sprintf(
+            'require %s; $resource=new SohoPHP\\SoFinder\\Value\\ResourceStorage(new SohoPHP\\SoFinder\\Value\\ResourceType("Files",%s,"/files",["txt"]),new SohoPHP\\SoFinder\\Storage\\LocalStorageAdapter(%s,"/files")); $tracker=new SohoPHP\\SoFinder\\Usage\\PersistentUsageTracker(%s); $tracker->mutate($resource,static function(int $current):array{file_put_contents(%s,"1");usleep(400000);return ["value"=>null,"delta"=>0];});',
+            var_export($autoload, true),
+            var_export($this->root, true),
+            var_export($this->root, true),
+            var_export($this->state, true),
+            var_export($marker, true),
+        );
+        $process = proc_open([PHP_BINARY, '-r', $code], [1 => ['pipe', 'w'], 2 => ['pipe', 'w']], $pipes);
+        self::assertIsResource($process);
+        for ($attempt = 0; $attempt < 100 && !is_file($marker); ++$attempt) {
+            usleep(10_000);
+        }
+        self::assertFileExists($marker);
+
+        $started = microtime(true);
+        self::assertSame(4, $tracker->usage($resource));
+        self::assertGreaterThan(0.2, microtime(true) - $started);
+        self::assertSame(0, proc_close($process));
+    }
+
     private function resource(): ResourceStorage
     {
         return new ResourceStorage(

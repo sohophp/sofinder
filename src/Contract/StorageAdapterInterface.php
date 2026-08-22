@@ -5,11 +5,15 @@ declare(strict_types=1);
 namespace SohoPHP\SoFinder\Contract;
 
 use SohoPHP\SoFinder\Value\Entry;
+use SohoPHP\SoFinder\Value\ListQuery;
+use SohoPHP\SoFinder\Value\ListingPage;
+use SohoPHP\SoFinder\Value\StorageCapabilities;
 
 interface StorageAdapterInterface
 {
-    /** @return list<Entry> */
-    public function list(string $path): array;
+    public function list(ListQuery $query): ListingPage;
+
+    public function capabilities(): StorageCapabilities;
 
     public function entry(string $path): Entry;
 
@@ -28,10 +32,6 @@ interface StorageAdapterInterface
     public function delete(string $path): void;
 
     public function publicUrl(string $path): ?string;
-
-    public function absolutePath(string $path): ?string;
-
-    public function usage(): int;
 
     public function size(string $path): int;
 }

@@ -4,19 +4,36 @@ declare(strict_types=1);
 
 namespace SohoPHP\SoFinder\Symfony;
 
+use SohoPHP\SoFinder\Contract\StorageAdapterFactoryInterface;
+use SohoPHP\SoFinder\Exception\SoFinderException;
 use SohoPHP\SoFinder\ResourceRegistry;
 use SohoPHP\SoFinder\Security\PathGuard;
-use SohoPHP\SoFinder\Storage\LocalStorageAdapter;
+use SohoPHP\SoFinder\Storage\LocalStorageAdapterFactory;
 use SohoPHP\SoFinder\Value\ResourceStorage;
 use SohoPHP\SoFinder\Value\ResourceType;
 use Symfony\Component\HttpFoundation\RequestStack;
 
-final readonly class ResourceRegistryFactory
+final class ResourceRegistryFactory
 {
+    /** @var array<string, StorageAdapterFactoryInterface> */
+    private array $factories = [];
+
+    /** @param iterable<StorageAdapterFactoryInterface> $factories */
     public function __construct(
         private PathGuard $pathGuard,
         private RequestStack $requestStack,
+        iterable $factories = [],
     ) {
+        $factories = is_array($factories) && $factories === []
+            ? [new LocalStorageAdapterFactory($pathGuard)]
+            : $factories;
+        foreach ($factories as $factory) {
+            $alias = strtolower(trim($factory->alias()));
+            if ($alias === '' || isset($this->factories[$alias])) {
+                throw new \InvalidArgumentException(sprintf('The SoFinder storage adapter alias "%s" is empty or duplicated.', $alias));
+            }
+            $this->factories[$alias] = $factory;
+        }
     }
 
     /** @param array<string, array<string, mixed>> $configuration */
@@ -41,12 +58,12 @@ final readonly class ResourceRegistryFactory
                 (int) ($values['max_folder_name_length'] ?? 50),
                 (int) ($values['max_folder_depth'] ?? 5),
                 (int) ($values['max_image_pixels'] ?? 50_000_000),
-                array_map(fn (mixed $rule): array => [
+                array_values(array_map(fn (mixed $rule): array => [
                     'path' => $this->pathGuard->normalize((string) ((array) $rule)['path']),
                     'operations' => array_values(array_map('strval', (array) ((array) $rule)['operations'])),
                     'roles' => array_values(array_map('strval', (array) (((array) $rule)['roles'] ?? []))),
                     'allow' => (bool) (((array) $rule)['allow'] ?? true),
-                ], (array) ($values['path_acl'] ?? [])),
+                ], (array) ($values['path_acl'] ?? []))),
                 (string) ($values['delivery_mode'] ?? 'public'),
                 (int) ($values['max_batch_items'] ?? 100),
                 (int) ($values['max_recursive_items'] ?? 10_000),
@@ -56,10 +73,16 @@ final readonly class ResourceRegistryFactory
                 (int) ($values['max_image_height'] ?? 12_000),
                 (string) ($values['animated_image_policy'] ?? 'preserve'),
             );
-            $items[] = new ResourceStorage(
-                $resource,
-                new LocalStorageAdapter($resource->root, $resource->publicUrl, $this->pathGuard),
-            );
+            $adapter = strtolower((string) ($values['adapter'] ?? 'local'));
+            $factory = $this->factories[$adapter] ?? null;
+            if ($factory === null) {
+                throw new SoFinderException(sprintf('Storage adapter "%s" is not registered.', $adapter), 'unknown_storage_adapter', 500);
+            }
+            $options = $values['options'] ?? [];
+            if (!is_array($options)) {
+                throw new SoFinderException(sprintf('Storage adapter options for "%s" must be an object.', $name), 'invalid_storage_options', 500);
+            }
+            $items[] = new ResourceStorage($resource, $factory->create($resource, $options));
         }
 
         return new ResourceRegistry($items);

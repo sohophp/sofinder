@@ -17,6 +17,7 @@ an atomic destination backup for overwrite conflicts. Schedule:
 
 ```bash
 bin/console sofinder:trash:cleanup
+bin/console sofinder:uploads:cleanup
 ```
 
 Run after configuration or deployment changes:

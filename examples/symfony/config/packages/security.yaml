@@ -1,0 +1,15 @@
+security:
+  password_hashers:
+    Symfony\Component\Security\Core\User\PasswordAuthenticatedUserInterface: plaintext
+  providers:
+    demo_users:
+      memory:
+        users:
+          demo: { password: demo, roles: [ROLE_USER] }
+  firewalls:
+    main:
+      lazy: true
+      provider: demo_users
+      http_basic: ~
+  access_control:
+    - { path: ^/sofinder, roles: ROLE_USER }

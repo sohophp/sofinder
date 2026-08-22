@@ -8,6 +8,7 @@ use PHPUnit\Framework\TestCase;
 use SohoPHP\SoFinder\Contract\ActorProviderInterface;
 use SohoPHP\SoFinder\Exception\SoFinderException;
 use SohoPHP\SoFinder\Security\RequestGate;
+use SohoPHP\SoFinder\Security\LocalRequestGateStore;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpKernel\Event\ControllerEvent;
@@ -33,7 +34,7 @@ final class RequestGateTest extends TestCase
 
     public function testConcurrentOperationsAreRejectedUntilLeaseIsReleased(): void
     {
-        $gate = new RequestGate($this->directory, $this->actor(), [
+        $gate = new RequestGate(new LocalRequestGateStore($this->directory), $this->actor(), [
             'upload' => ['max_requests' => 0, 'interval' => 60, 'max_concurrent' => 1],
         ]);
         $kernel = $this->createMock(HttpKernelInterface::class);
@@ -55,7 +56,7 @@ final class RequestGateTest extends TestCase
 
     public function testRequestRateIsCountedEvenAfterResponseCompletes(): void
     {
-        $gate = new RequestGate($this->directory, $this->actor(), [
+        $gate = new RequestGate(new LocalRequestGateStore($this->directory), $this->actor(), [
             'normal' => ['max_requests' => 1, 'interval' => 60, 'max_concurrent' => 2],
         ]);
         $kernel = $this->createMock(HttpKernelInterface::class);
@@ -69,7 +70,7 @@ final class RequestGateTest extends TestCase
 
     public function testThumbnailsUseASeparateRateLimitFromImageEditing(): void
     {
-        $gate = new RequestGate($this->directory, $this->actor(), [
+        $gate = new RequestGate(new LocalRequestGateStore($this->directory), $this->actor(), [
             'image' => ['max_requests' => 1, 'interval' => 60, 'max_concurrent' => 2],
             'thumbnail' => ['max_requests' => 2, 'interval' => 60, 'max_concurrent' => 2],
         ]);

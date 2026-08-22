@@ -27,14 +27,45 @@ final class ChunkUploadManagerTest extends TestCase
     {
         $manager = new ChunkUploadManager($this->directory, $this->actor(), 10, 3);
         $first = fopen('php://temp', 'w+b'); fwrite($first, 'abc'); rewind($first);
-        self::assertFalse($manager->accept('abcdefghijklmnop', 0, 2, $first, 10)['complete']); fclose($first);
+        self::assertFalse($manager->accept('abcdefghijklmnop', 0, 2, $first, 10, ['resource' => 'Files', 'path' => 'docs', 'name' => 'file.txt'])['complete']); fclose($first);
+        self::assertSame([0], $manager->status('abcdefghijklmnop')['received']);
         $second = fopen('php://temp', 'w+b'); fwrite($second, 'def'); rewind($second);
-        $complete = $manager->accept('abcdefghijklmnop', 1, 2, $second, 10); fclose($second);
+        $complete = $manager->accept('abcdefghijklmnop', 1, 2, $second, 10, ['resource' => 'Files', 'path' => 'docs', 'name' => 'file.txt']); fclose($second);
 
         self::assertTrue($complete['complete']);
         self::assertSame('abcdef', file_get_contents((string) $complete['path']));
+        self::assertTrue($manager->status('abcdefghijklmnop')['complete']);
         $manager->discard('abcdefghijklmnop');
         self::assertDirectoryDoesNotExist(dirname((string) $complete['path']));
+    }
+
+    public function testRejectsChangingUploadSessionMetadata(): void
+    {
+        $manager = new ChunkUploadManager($this->directory, $this->actor(), 10, 3);
+        $stream = fopen('php://temp', 'w+b'); fwrite($stream, 'a'); rewind($stream);
+        $manager->accept('abcdefghijklmnop', 0, 2, $stream, 10, ['resource' => 'Files', 'name' => 'one.txt']);
+        rewind($stream);
+        try {
+            $manager->accept('abcdefghijklmnop', 1, 2, $stream, 10, ['resource' => 'Files', 'name' => 'two.txt']);
+            self::fail('A resumed upload must preserve its original metadata.');
+        } catch (SoFinderException $exception) {
+            self::assertSame('upload_session_mismatch', $exception->errorCode);
+        } finally {
+            fclose($stream);
+        }
+    }
+
+    public function testExpiredSessionsCanBeCleanedAcrossActorDirectories(): void
+    {
+        $manager = new ChunkUploadManager($this->directory, $this->actor(), 10, 3);
+        $stream = fopen('php://temp', 'w+b'); fwrite($stream, 'a'); rewind($stream);
+        $manager->accept('abcdefghijklmnop', 0, 2, $stream, 10);
+        fclose($stream);
+        $sessionDirectory = $this->directory . '/' . hash('sha256', 'actor') . '/abcdefghijklmnop';
+        touch($sessionDirectory, time() - 90_000);
+
+        self::assertSame(1, $manager->cleanupExpired(true));
+        self::assertDirectoryDoesNotExist($sessionDirectory);
     }
 
     public function testActualChunkBytesAreLimited(): void

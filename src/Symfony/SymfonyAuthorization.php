@@ -26,7 +26,7 @@ final readonly class SymfonyAuthorization implements AuthorizationInterface
         }
         $roles = $resource->operationRoles[$operation] ?? $resource->requiredRoles;
 
-        if ($roles !== [] && !array_any($roles, fn (string $role): bool => $this->authorizationChecker->isGranted($role))) {
+        if ($roles !== [] && !$this->anyRoleGranted($roles)) {
             return false;
         }
 
@@ -42,7 +42,7 @@ final readonly class SymfonyAuthorization implements AuthorizationInterface
         $matches = array_filter($matches, static fn (array $rule): bool => strlen($rule['path']) === $specificity);
         $allowed = false;
         foreach ($matches as $rule) {
-            $applies = $rule['roles'] === [] || array_any($rule['roles'], fn (string $role): bool => $this->authorizationChecker->isGranted($role));
+            $applies = $rule['roles'] === [] || $this->anyRoleGranted($rule['roles']);
             if (!$applies) {
                 continue;
             }
@@ -53,5 +53,17 @@ final readonly class SymfonyAuthorization implements AuthorizationInterface
         }
 
         return $allowed;
+    }
+
+    /** @param list<string> $roles */
+    private function anyRoleGranted(array $roles): bool
+    {
+        foreach ($roles as $role) {
+            if ($this->authorizationChecker->isGranted($role)) {
+                return true;
+            }
+        }
+
+        return false;
     }
 }

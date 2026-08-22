@@ -5,7 +5,7 @@ import { Modal } from "./Modal";
 
 export function TrashDialog({ api, resource, locale, labels, onClose, onChanged }: {
   api: Api; resource: string; locale: string;
-  labels: { title: string; close: string; empty: string; restore: string; permanentDelete: string; expires: string; conflict: string; usage: string; items: string; previous: string; next: string; search: string };
+  labels: { title: string; close: string; cancel: string; empty: string; restore: string; permanentDelete: string; expires: string; conflict: string; overwrite: string; autoRename: string; usage: string; items: string; previous: string; next: string; search: string };
   onClose: () => void; onChanged: () => void;
 }) {
   const [page, setPage] = useState<TrashPage>({ items: [], total: 0, offset: 0, limit: 50, usedItems: 0, usedBytes: 0, maxItems: 0, maxBytes: 0 });
@@ -13,6 +13,7 @@ export function TrashDialog({ api, resource, locale, labels, onClose, onChanged 
   const [search, setSearch] = useState("");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [conflictItem, setConflictItem] = useState<TrashItem | null>(null);
   const load = useCallback((requestedOffset = offset) => {
     setLoading(true);
     setError("");
@@ -25,16 +26,23 @@ export function TrashDialog({ api, resource, locale, labels, onClose, onChanged 
       load(offset); onChanged();
     } catch (reason) {
       if (reason instanceof Error && "code" in reason && reason.code === "conflict") {
-        await api.restoreTrash(resource, item.id, "rename"); load(offset); onChanged(); return;
+        setConflictItem(item); return;
       }
       setError(reason instanceof Error ? reason.message : String(reason));
     }
+  };
+  const resolveConflict = async (strategy: "overwrite" | "rename") => {
+    if (!conflictItem) return;
+    try {
+      await api.restoreTrash(resource, conflictItem.id, strategy);
+      setConflictItem(null); load(offset); onChanged();
+    } catch (reason) { setError(reason instanceof Error ? reason.message : String(reason)); }
   };
   const purge = async (item: TrashItem) => { try { await api.permanentlyDeleteTrash(resource, item.id); load(offset); } catch (reason) { setError(reason instanceof Error ? reason.message : String(reason)); } };
   const formatSize = (bytes: number) => bytes < 1024 ? `${bytes} B` : bytes < 1024 ** 2 ? `${(bytes / 1024).toFixed(1)} KB` : bytes < 1024 ** 3 ? `${(bytes / 1024 ** 2).toFixed(1)} MB` : `${(bytes / 1024 ** 3).toFixed(1)} GB`;
   const first = page.total === 0 ? 0 : page.offset + 1;
   const last = Math.min(page.offset + page.items.length, page.total);
-  return <Modal title={labels.title} closeLabel={labels.close} onClose={onClose} className="sf-trash-modal" footer={<button className="primary" onClick={onClose}>{labels.close}</button>}>
+  return <><Modal title={labels.title} closeLabel={labels.close} onClose={onClose} className="sf-trash-modal" footer={<button className="primary" onClick={onClose}>{labels.close}</button>}>
     {error && <div className="sf-notice" role="alert">{error}</div>}
     <div className="sf-trash-usage"><div><strong>{labels.usage}</strong><span>{formatSize(page.usedBytes)} / {formatSize(page.maxBytes)} · {page.usedItems} / {page.maxItems} {labels.items}</span></div><progress max={Math.max(1, page.maxBytes)} value={Math.min(page.usedBytes, page.maxBytes)}/></div>
     <div className="sf-trash-search"><span aria-hidden="true">⌕</span><input value={search} onChange={event => { setSearch(event.target.value); setOffset(0); }} placeholder={labels.search} aria-label={labels.search}/>{search && <button onClick={() => setSearch("")} aria-label={labels.close}>×</button>}</div>
@@ -43,5 +51,7 @@ export function TrashDialog({ api, resource, locale, labels, onClose, onChanged 
       <button onClick={() => void restore(item)}>{labels.restore}</button><button className="danger" onClick={() => void purge(item)}>{labels.permanentDelete}</button>
     </article>)}</div>
     {page.total > page.limit && <nav className="sf-trash-pagination" aria-label={labels.title}><button disabled={page.offset === 0 || loading} onClick={() => setOffset(Math.max(0, page.offset - page.limit))}>‹ {labels.previous}</button><span>{first}–{last} / {page.total}</span><button disabled={page.offset + page.limit >= page.total || loading} onClick={() => setOffset(page.offset + page.limit)}>{labels.next} ›</button></nav>}
-  </Modal>;
+  </Modal>
+    {conflictItem && <Modal title={labels.conflict} closeLabel={labels.close} onClose={() => setConflictItem(null)} className="sf-confirm-modal" footer={<><button onClick={() => setConflictItem(null)}>{labels.cancel}</button><button onClick={() => void resolveConflict("rename")}>{labels.autoRename}</button><button className="danger" onClick={() => void resolveConflict("overwrite")}>{labels.overwrite}</button></>}><div className="sf-form-body"><p>{conflictItem.path}</p></div></Modal>}
+  </>;
 }

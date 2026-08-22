@@ -5,6 +5,8 @@ declare(strict_types=1);
 namespace SohoPHP\SoFinder\Trash;
 
 use SohoPHP\SoFinder\Contract\ActorProviderInterface;
+use SohoPHP\SoFinder\Contract\LocalPathProviderInterface;
+use SohoPHP\SoFinder\Contract\RecycleBinInterface;
 use SohoPHP\SoFinder\Exception\ConflictException;
 use SohoPHP\SoFinder\Exception\NotFoundException;
 use SohoPHP\SoFinder\Exception\SoFinderException;
@@ -13,7 +15,7 @@ use SohoPHP\SoFinder\Value\Entry;
 use SohoPHP\SoFinder\Value\ResourceStorage;
 use SohoPHP\SoFinder\Value\TrashItem;
 
-final readonly class TrashManager
+final readonly class TrashManager implements RecycleBinInterface
 {
     public function __construct(
         private string $root,
@@ -33,10 +35,10 @@ final readonly class TrashManager
             throw new SoFinderException('The storage root cannot be moved to trash.', 'invalid_path', 400);
         }
         $entry = $resource->storage->entry($path);
-        $source = $resource->storage->absolutePath($path);
-        if ($source === null) {
+        if (!$resource->storage instanceof LocalPathProviderInterface) {
             throw new SoFinderException('This storage adapter does not support recoverable deletion.', 'trash_unsupported', 501);
         }
+        $source = $resource->storage->absolutePath($path);
         $this->assertTreeHasNoLinks($source);
 
         $actorRoot = $this->actorRoot();
@@ -136,7 +138,10 @@ final readonly class TrashManager
             return [];
         }
         $items = [];
-        foreach (new \FilesystemIterator($root, \FilesystemIterator::SKIP_DOTS) as $directory) {
+        foreach (new \FilesystemIterator($root, \FilesystemIterator::SKIP_DOTS | \FilesystemIterator::CURRENT_AS_FILEINFO) as $directory) {
+            if (!$directory instanceof \SplFileInfo) {
+                continue;
+            }
             if (!$directory->isDir() || $directory->isLink()) {
                 continue;
             }
@@ -220,11 +225,17 @@ final readonly class TrashManager
             return 0;
         }
         $purged = 0;
-        foreach (new \FilesystemIterator($this->root, \FilesystemIterator::SKIP_DOTS) as $actor) {
+        foreach (new \FilesystemIterator($this->root, \FilesystemIterator::SKIP_DOTS | \FilesystemIterator::CURRENT_AS_FILEINFO) as $actor) {
+            if (!$actor instanceof \SplFileInfo) {
+                continue;
+            }
             if (!$actor->isDir() || $actor->isLink()) {
                 continue;
             }
-            foreach (new \FilesystemIterator($actor->getPathname(), \FilesystemIterator::SKIP_DOTS) as $directory) {
+            foreach (new \FilesystemIterator($actor->getPathname(), \FilesystemIterator::SKIP_DOTS | \FilesystemIterator::CURRENT_AS_FILEINFO) as $directory) {
+                if (!$directory instanceof \SplFileInfo) {
+                    continue;
+                }
                 if (!$directory->isDir() || $directory->isLink()) {
                     continue;
                 }
@@ -334,7 +345,10 @@ final readonly class TrashManager
         if (!is_dir($path)) {
             return;
         }
-        foreach (new \FilesystemIterator($path, \FilesystemIterator::SKIP_DOTS) as $entry) {
+        foreach (new \FilesystemIterator($path, \FilesystemIterator::SKIP_DOTS | \FilesystemIterator::CURRENT_AS_FILEINFO) as $entry) {
+            if (!$entry instanceof \SplFileInfo) {
+                continue;
+            }
             $this->assertTreeHasNoLinks($entry->getPathname());
         }
     }
@@ -349,7 +363,10 @@ final readonly class TrashManager
         if (!is_dir($path)) {
             return;
         }
-        foreach (new \FilesystemIterator($path, \FilesystemIterator::SKIP_DOTS) as $entry) {
+        foreach (new \FilesystemIterator($path, \FilesystemIterator::SKIP_DOTS | \FilesystemIterator::CURRENT_AS_FILEINFO) as $entry) {
+            if (!$entry instanceof \SplFileInfo) {
+                continue;
+            }
             $this->removeTree($entry->getPathname());
         }
         @rmdir($path);

@@ -5,14 +5,19 @@ declare(strict_types=1);
 namespace SohoPHP\SoFinder\Storage;
 
 use SohoPHP\SoFinder\Contract\StorageAdapterInterface;
+use SohoPHP\SoFinder\Contract\LocalPathProviderInterface;
+use SohoPHP\SoFinder\Contract\StorageUsageProviderInterface;
 use SohoPHP\SoFinder\Exception\ConflictException;
 use SohoPHP\SoFinder\Exception\InvalidPathException;
 use SohoPHP\SoFinder\Exception\NotFoundException;
 use SohoPHP\SoFinder\Exception\SoFinderException;
 use SohoPHP\SoFinder\Security\PathGuard;
 use SohoPHP\SoFinder\Value\Entry;
+use SohoPHP\SoFinder\Value\ListQuery;
+use SohoPHP\SoFinder\Value\ListingPage;
+use SohoPHP\SoFinder\Value\StorageCapabilities;
 
-final class LocalStorageAdapter implements StorageAdapterInterface
+final class LocalStorageAdapter implements StorageAdapterInterface, LocalPathProviderInterface, StorageUsageProviderInterface
 {
     private readonly string $root;
 
@@ -31,32 +36,82 @@ final class LocalStorageAdapter implements StorageAdapterInterface
         $this->root = rtrim($resolved, DIRECTORY_SEPARATOR);
     }
 
-    public function list(string $path): array
+    public function list(ListQuery $query): ListingPage
     {
-        $relative = $this->pathGuard->normalize($path);
+        $relative = $this->pathGuard->normalize($query->path);
         $absolute = $this->resolveExisting($relative);
         if (!is_dir($absolute)) {
             throw new InvalidPathException('The requested path is not a directory.');
         }
 
         $entries = [];
-        $iterator = new \FilesystemIterator($absolute, \FilesystemIterator::SKIP_DOTS);
+        $iterator = new \FilesystemIterator($absolute, \FilesystemIterator::SKIP_DOTS | \FilesystemIterator::CURRENT_AS_FILEINFO);
         foreach ($iterator as $file) {
+            if (!$file instanceof \SplFileInfo) {
+                continue;
+            }
             if ($file->isLink() || str_starts_with($file->getFilename(), '.')) {
                 continue;
             }
             $child = $relative === '' ? $file->getFilename() : $relative . '/' . $file->getFilename();
             $entries[] = $this->makeEntry($child, $file->getPathname());
         }
-        usort($entries, static function (Entry $a, Entry $b): int {
+        if ($query->onlyPaths !== null) {
+            $allowed = array_fill_keys($query->onlyPaths, true);
+            $entries = array_values(array_filter($entries, static fn (Entry $entry): bool => isset($allowed[$entry->path])));
+        }
+        $search = trim($query->search);
+        if ($search !== '') {
+            $entries = array_values(array_filter($entries, static fn (Entry $entry): bool => mb_stripos($entry->name, $search) !== false));
+        }
+        if ($query->filter !== null) {
+            $entries = array_values(array_filter($entries, $query->filter));
+        }
+        usort($entries, static function (Entry $a, Entry $b) use ($query): int {
             if ($a->directory !== $b->directory) {
                 return $a->directory ? -1 : 1;
             }
+            $comparison = match ($query->sort) {
+                'size' => $a->size <=> $b->size,
+                'modified' => $a->modifiedAt <=> $b->modifiedAt,
+                default => strnatcasecmp($a->name, $b->name),
+            };
+            if ($comparison === 0) {
+                $comparison = strnatcasecmp($a->name, $b->name);
+            }
 
-            return strnatcasecmp($a->name, $b->name);
+            return $query->direction === 'desc' ? -$comparison : $comparison;
         });
 
-        return $entries;
+        $total = count($entries);
+        $requestedOffset = $query->offset;
+        if ($query->cursor !== null) {
+            $decoded = base64_decode($query->cursor, true);
+            if ($decoded === false || preg_match('/^\d+$/D', $decoded) !== 1) {
+                throw new InvalidPathException('The pagination cursor is invalid.');
+            }
+            $requestedOffset = (int) $decoded;
+        }
+        $maximumOffset = $total === 0 ? 0 : intdiv($total - 1, $query->limit) * $query->limit;
+        $offset = min($requestedOffset, $maximumOffset);
+
+        return new ListingPage(
+            array_slice($entries, $offset, $query->limit),
+            $total,
+            $offset,
+            $query->limit,
+            $offset + $query->limit < $total ? base64_encode((string) ($offset + $query->limit)) : null,
+        );
+    }
+
+    public function capabilities(): StorageCapabilities
+    {
+        return new StorageCapabilities(
+            atomicMove: true,
+            nativeCopy: true,
+            recoverableDelete: true,
+            publicUrl: $this->baseUrl !== '',
+        );
     }
 
     public function entry(string $path): Entry
@@ -326,7 +381,10 @@ final class LocalStorageAdapter implements StorageAdapterInterface
             throw new InvalidPathException('Symbolic links are not accessible.');
         }
         if (is_dir($path)) {
-            foreach (new \FilesystemIterator($path, \FilesystemIterator::SKIP_DOTS) as $child) {
+            foreach (new \FilesystemIterator($path, \FilesystemIterator::SKIP_DOTS | \FilesystemIterator::CURRENT_AS_FILEINFO) as $child) {
+                if (!$child instanceof \SplFileInfo) {
+                    continue;
+                }
                 $this->removeAbsolute($child->getPathname());
             }
             if (!@rmdir($path)) {
@@ -348,7 +406,10 @@ final class LocalStorageAdapter implements StorageAdapterInterface
             if (!@mkdir($destination, 0775) && !is_dir($destination)) {
                 throw new SoFinderException('Unable to copy the folder.');
             }
-            foreach (new \FilesystemIterator($source, \FilesystemIterator::SKIP_DOTS) as $child) {
+            foreach (new \FilesystemIterator($source, \FilesystemIterator::SKIP_DOTS | \FilesystemIterator::CURRENT_AS_FILEINFO) as $child) {
+                if (!$child instanceof \SplFileInfo) {
+                    continue;
+                }
                 $this->copyAbsolute($child->getPathname(), $destination . DIRECTORY_SEPARATOR . $child->getFilename());
             }
             return;
@@ -367,7 +428,10 @@ final class LocalStorageAdapter implements StorageAdapterInterface
             return (int) filesize($path);
         }
         $bytes = 0;
-        foreach (new \FilesystemIterator($path, \FilesystemIterator::SKIP_DOTS) as $child) {
+        foreach (new \FilesystemIterator($path, \FilesystemIterator::SKIP_DOTS | \FilesystemIterator::CURRENT_AS_FILEINFO) as $child) {
+            if (!$child instanceof \SplFileInfo) {
+                continue;
+            }
             $bytes += $this->sizeAbsolute($child->getPathname());
         }
 

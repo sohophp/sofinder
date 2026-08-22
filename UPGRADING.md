@@ -1,5 +1,24 @@
 # Upgrading SoFinder
 
+## From 0.1.0-beta.2 to 0.1.0-beta.3
+
+No stored files, public URLs, metadata or recycle-bin data require migration.
+PHP applications implementing `StorageAdapterInterface` must update once:
+
+1. Replace `list(string $path): array` with
+   `list(ListQuery $query): ListingPage` and add `capabilities()`.
+2. Move `absolutePath()` to `LocalPathProviderInterface` when the adapter can
+   expose a safe local path.
+3. Move `usage()` to `StorageUsageProviderInterface` when a full scan is
+   available.
+4. Register adapters through a tagged `StorageAdapterFactoryInterface`; the
+   built-in `adapter: local` configuration is unchanged.
+
+SoFinder now supports PHP 8.2 through 8.5 and Symfony 6.4 or 7.4. The HTTP
+routes and beta.2 response fields remain compatible. Configuration may add an
+adapter-specific `options` map. Schedule `sofinder:uploads:cleanup` alongside
+the existing recycle-bin cleanup command.
+
 ## From 0.1.0-beta.1 to 0.1.0-beta.2
 
 No storage migration is required. This release separates thumbnail traffic

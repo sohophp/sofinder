@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace SohoPHP\SoFinder\Tests;
 
 use PHPUnit\Framework\TestCase;
+use PHPUnit\Framework\Attributes\DataProvider;
 use SohoPHP\SoFinder\Exception\InvalidPathException;
 use SohoPHP\SoFinder\Security\PathGuard;
 
@@ -15,7 +16,7 @@ final class PathGuardTest extends TestCase
         self::assertSame('images/产品', (new PathGuard())->normalize('/images//产品/'));
     }
 
-    /** @dataProvider invalidPaths */
+    #[DataProvider('invalidPaths')]
     public function testRejectsUnsafePaths(string $path): void
     {
         $this->expectException(InvalidPathException::class);
