@@ -85,4 +85,71 @@ final class GdImageProcessorTest extends TestCase
         $this->expectExceptionMessage('outside the image');
         (new GdImageProcessor())->crop($this->source, $this->destination, 390, 190, 20, 20);
     }
+
+    public function testAvifIsDecodedAndThumbnailIsBrowserSafePngWhenAvailable(): void
+    {
+        $processor = new GdImageProcessor();
+        if (!$processor->supports('image/avif')) {
+            self::markTestSkipped('This GD build has no AVIF codec.');
+        }
+        $avif = tempnam(sys_get_temp_dir(), 'sofinder-avif-') ?: throw new \RuntimeException('Unable to create AVIF fixture.');
+        $image = imagecreatetruecolor(64, 32);
+        imagefill($image, 0, 0, imagecolorallocate($image, 25, 90, 180));
+        imageavif($image, $avif, 80);
+        unset($image);
+        try {
+            self::assertSame(['width' => 64, 'height' => 32], $processor->validate($avif));
+            $processor->thumbnail($avif, $this->destination, 32, 32);
+            $size = getimagesize($this->destination);
+            self::assertIsArray($size);
+            self::assertSame([32, 16], [$size[0], $size[1]]);
+            self::assertSame('image/png', $size['mime']);
+        } finally {
+            @unlink($avif);
+        }
+    }
+
+    public function testBaselineFormatsAreReallyDecoded(): void
+    {
+        $formats = [
+            'image/jpeg' => static fn (\GdImage $image, string $path): bool => imagejpeg($image, $path, 85),
+            'image/png' => static fn (\GdImage $image, string $path): bool => imagepng($image, $path),
+            'image/gif' => static fn (\GdImage $image, string $path): bool => imagegif($image, $path),
+        ];
+        if (function_exists('imagewebp')) {
+            $formats['image/webp'] = static fn (\GdImage $image, string $path): bool => imagewebp($image, $path, 85);
+        }
+        if (function_exists('imagebmp')) {
+            $formats['image/bmp'] = static fn (\GdImage $image, string $path): bool => imagebmp($image, $path);
+        }
+
+        $processor = new GdImageProcessor();
+        foreach ($formats as $mime => $write) {
+            $path = tempnam(sys_get_temp_dir(), 'sofinder-gd-format-') ?: throw new \RuntimeException('Unable to create image fixture.');
+            $image = imagecreatetruecolor(32, 16);
+            imagefill($image, 0, 0, imagecolorallocate($image, 30, 100, 180));
+            self::assertTrue($write($image, $path), $mime);
+            unset($image);
+            try {
+                self::assertTrue($processor->supports($mime), $mime);
+                self::assertSame(['width' => 32, 'height' => 16], $processor->validate($path), $mime);
+                $processor->thumbnail($path, $this->destination, 16, 16);
+                self::assertSame('image/png', getimagesize($this->destination)['mime'] ?? null, $mime);
+            } finally {
+                @unlink($path);
+            }
+        }
+    }
+
+    public function testPngThumbnailPreservesTransparency(): void
+    {
+        (new GdImageProcessor())->thumbnail($this->source, $this->destination, 100, 100);
+        $thumbnail = imagecreatefrompng($this->destination);
+        self::assertInstanceOf(\GdImage::class, $thumbnail);
+        try {
+            self::assertGreaterThan(0, (imagecolorat($thumbnail, 0, 0) >> 24) & 0x7F);
+        } finally {
+            unset($thumbnail);
+        }
+    }
 }

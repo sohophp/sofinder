@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Api, ApiError } from "./api";
 import { translator, type Language } from "./i18n";
-import type { Entry, ImageInfo, ImagePreset, MetadataState, ResourceType, SoFinderConfig } from "./types";
+import type { Entry, ImageCapabilities, ImageInfo, ImagePreset, MetadataState, ResourceType, SoFinderConfig } from "./types";
 import { ConfirmDialog, TextDialog } from "./components/Dialogs";
 import { ContextMenu } from "./components/ContextMenu";
 import { FolderTree } from "./components/FolderTree";
@@ -10,14 +10,15 @@ import { Modal } from "./components/Modal";
 import { TrashDialog } from "./components/TrashDialog";
 import { TagsDialog } from "./components/TagsDialog";
 import { UrlDialog } from "./components/UrlDialog";
+import { EntryIcon as Icon, LinkIcon, ThumbnailImage } from "./components/EntryVisuals";
+import { characterLength, formatSize } from "./format";
+import { UploadQueue, type UploadTask } from "./components/UploadQueue";
+import { DetailsPanel } from "./components/DetailsPanel";
+import { SettingsDialog, type FeaturePreferences, type ToolPreferences } from "./components/SettingsDialog";
+import { DestinationDialog, type DestinationState } from "./components/DestinationDialog";
 
 type ViewMode = "grid" | "list";
 type SortMode = "name" | "size" | "modified";
-type UploadStatus = "queued" | "uploading" | "done" | "error" | "cancelled";
-interface UploadTask { id: string; name: string; progress: number; status: UploadStatus; message?: string }
-interface ToolPreferences { resize: boolean; crop: boolean; rotate: boolean; presets: boolean }
-interface FeaturePreferences { recent: boolean; favorites: boolean; tags: boolean; archive: boolean; trash: boolean; folderTree: boolean; autoCollapseUploads: boolean }
-interface DestinationDialog { operation: "copy" | "move"; path: string; folders: Entry[]; loading: boolean }
 interface TextDialogState { kind: "folder" | "rename" | "resize"; title: string; label: string; initial: string; maximum: number; extension?: string }
 interface ConfirmState { title: string; message: string; detail?: string; danger?: boolean }
 
@@ -33,52 +34,6 @@ const loadToolPreferences = (): ToolPreferences => {
   return loadPreferences("sofinder.imageTools.v2", defaultTools);
 };
 
-const Icon = ({ kind }: { kind: "folder" | "file" | "image" }) => {
-  if (kind === "folder") return <svg viewBox="0 0 48 48" aria-hidden="true"><path d="M5 12h15l4 5h19v23H5z" fill="currentColor" opacity=".2"/><path d="M5 12h15l4 5h19v23H5z" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinejoin="round"/></svg>;
-  if (kind === "image") return <svg viewBox="0 0 48 48" aria-hidden="true"><rect x="7" y="5" width="34" height="38" rx="4" fill="none" stroke="currentColor" strokeWidth="2.5"/><circle cx="17" cy="16" r="4" fill="currentColor" opacity=".35"/><path d="m10 37 10-11 7 7 5-5 7 9" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinejoin="round"/></svg>;
-  return <svg viewBox="0 0 48 48" aria-hidden="true"><path d="M10 5h19l9 9v29H10z" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinejoin="round"/><path d="M29 5v10h9" fill="none" stroke="currentColor" strokeWidth="2.5"/></svg>;
-};
-
-const LinkIcon = () => <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9.5 14.5 14.5 9M7.8 17.2l-1.1 1.1a3.5 3.5 0 0 1-5-5l3.6-3.6a3.5 3.5 0 0 1 5 0M16.2 6.8l1.1-1.1a3.5 3.5 0 1 1 5 5l-3.6 3.6a3.5 3.5 0 0 1-5 0" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"/></svg>;
-
-const ThumbnailImage = ({ src, alt, lazy = false }: { src: string; alt: string; lazy?: boolean }) => {
-  const [attempt, setAttempt] = useState(0);
-  const [failed, setFailed] = useState(false);
-  const retryTimer = useRef<number | null>(null);
-
-  useEffect(() => {
-    setAttempt(0);
-    setFailed(false);
-    return () => {
-      if (retryTimer.current !== null) window.clearTimeout(retryTimer.current);
-    };
-  }, [src]);
-
-  if (failed) return <Icon kind="image"/>;
-  const retrySrc = attempt === 0 ? src : `${src}${src.includes("?") ? "&" : "?"}retry=${attempt}`;
-
-  return <img
-    src={retrySrc}
-    alt={alt}
-    loading={lazy ? "lazy" : undefined}
-    decoding="async"
-    onError={() => {
-      if (retryTimer.current !== null) window.clearTimeout(retryTimer.current);
-      if (attempt >= 2) {
-        setFailed(true);
-        return;
-      }
-      retryTimer.current = window.setTimeout(() => setAttempt(current => current + 1), 700 * (attempt + 1));
-    }}
-  />;
-};
-
-const formatSize = (bytes: number) => {
-  if (bytes < 1024) return `${bytes} B`;
-  if (bytes < 1024 ** 2) return `${(bytes / 1024).toFixed(1)} KB`;
-  return `${(bytes / 1024 ** 2).toFixed(1)} MB`;
-};
-const characterLength = (value: string) => Array.from(value).length;
 const columnLimits = { left: { initial: 220, min: 110, max: 330 }, right: { initial: 270, min: 135, max: 405 } } as const;
 const loadColumnWidth = (side: "left" | "right") => {
   const value = Number(localStorage.getItem(`sofinder.column.${side}`));
@@ -116,7 +71,7 @@ export default function App({ config }: { config: SoFinderConfig }) {
   const [tools, setTools] = useState<ToolPreferences>(loadToolPreferences);
   const [features, setFeatures] = useState<FeaturePreferences>(() => loadPreferences("sofinder.features.v2", { ...defaultFeatures, folderTree: config.featureDefaults?.folderTree ?? false }));
   const [settingsOpen, setSettingsOpen] = useState(false);
-  const [destinationDialog, setDestinationDialog] = useState<DestinationDialog | null>(null);
+  const [destinationDialog, setDestinationDialog] = useState<DestinationState | null>(null);
   const [cropOpen, setCropOpen] = useState(false);
   const [textDialog, setTextDialog] = useState<TextDialogState | null>(null);
   const [confirmDialog, setConfirmDialog] = useState<ConfirmState | null>(null);
@@ -126,6 +81,7 @@ export default function App({ config }: { config: SoFinderConfig }) {
   const [previewEntry, setPreviewEntry] = useState<Entry | null>(null);
   const [urlDialog, setUrlDialog] = useState<{ url: string; loginRequired: boolean } | null>(null);
   const [imagePresets, setImagePresets] = useState<Record<string, ImagePreset>>({});
+  const [imageCapabilities, setImageCapabilities] = useState<ImageCapabilities>({ driver: "", formats: [] });
   const [directoryCapabilities, setDirectoryCapabilities] = useState<Record<string, boolean>>({});
   const [leftWidth, setLeftWidth] = useState(() => loadColumnWidth("left"));
   const [rightWidth, setRightWidth] = useState(() => loadColumnWidth("right"));
@@ -188,14 +144,23 @@ export default function App({ config }: { config: SoFinderConfig }) {
   }, [api, direction, offset, path, report, resource, search, searchMode, sort]);
 
   useEffect(() => {
-    api.configData().then(({ resources: available, imagePresets: presets }) => {
+    api.configData().then(({ resources: available, imagePresets: presets, imageCapabilities: capabilities }) => {
       setResources(available);
       setImagePresets(presets || {});
+      setImageCapabilities(capabilities || { driver: "", formats: [] });
       const initial = available.some(item => item.name === config.resource) ? config.resource : available[0]?.name || "";
       setResource(initial);
       if (initial) void load(initial, "", "", 0);
     }).catch(report);
   }, [api, config.resource]);
+
+  useEffect(() => {
+    const interrupted = api.pendingUploads().map(session => ({ id: `pending-${session.id}`, name: session.name, progress: 0, status: "error" as const, message: t("uploadReselectToResume") }));
+    if (interrupted.length > 0) {
+      setUploads(current => [...current.filter(task => !task.id.startsWith("pending-")), ...interrupted]);
+      setUploadsCollapsed(false);
+    }
+  }, [api, t]);
 
   useEffect(() => {
     const timer = window.setTimeout(() => { if (resource) void load(resource, path, search, 0); }, 250);
@@ -234,6 +199,10 @@ export default function App({ config }: { config: SoFinderConfig }) {
   const currentDepth = path === "" ? 0 : path.split("/").length;
   const selectedEntries = useMemo(() => entries.filter(entry => selectedPaths.has(entry.path)), [entries, selectedPaths]);
   const selected = selectedEntries.length === 1 ? selectedEntries[0] : null;
+  const imageCapability = (entry: Entry) => imageCapabilities.formats.find(format => entry.mimeType !== null && format.mimes.includes(entry.mimeType.toLowerCase()));
+  const canPreviewImage = (entry: Entry | null) => Boolean(entry && imageCapability(entry)?.thumbnail);
+  const canEditImage = (entry: Entry | null) => Boolean(entry && imageCapability(entry)?.edit);
+  const canChooseEntry = (entry: Entry | null) => Boolean(entry && !entry.directory && entry.url && (config.selectionKind !== "image" || imageCapability(entry)?.webEmbeddable));
   const openUrlDialog = (entry: Entry) => {
     if (entry.directory) return;
     setUrlDialog({
@@ -245,7 +214,7 @@ export default function App({ config }: { config: SoFinderConfig }) {
 
   useEffect(() => {
     setImageInfo(null);
-    if (!selected?.mimeType?.startsWith("image/")) return;
+    if (!selected || !imageCapability(selected)?.read) return;
     let active = true;
     api.imageInfo(resource, selected.path).then(info => { if (active) setImageInfo(info); }).catch(error => { if (active) report(error); });
     return () => { active = false; };
@@ -298,11 +267,13 @@ export default function App({ config }: { config: SoFinderConfig }) {
       const id = `${Date.now()}-${++uploadSequence.current}`;
       const controller = new AbortController();
       uploadControllers.current.set(id, controller);
-      return { id, file, controller };
+      const pending = api.findPendingUpload(resource, targetPath, file, false);
+      return { id, file, controller, pendingId: pending ? `pending-${pending.id}` : null };
     });
     if (jobs.length === 0) return;
     setUploadsCollapsed(false);
-    setUploads(current => [...current, ...jobs.map(({ id, file }) => ({ id, name: file.name, progress: 0, status: "queued" as const }))]);
+    const resumedIds = new Set(jobs.map(job => job.pendingId).filter((id): id is string => id !== null));
+    setUploads(current => [...current.filter(task => !resumedIds.has(task.id)), ...jobs.map(({ id, file, pendingId }) => ({ id, name: file.name, progress: 0, status: "queued" as const, message: pendingId ? t("uploadResuming") : undefined }))]);
 
     let cursor = 0;
     const worker = async () => {
@@ -405,7 +376,11 @@ export default function App({ config }: { config: SoFinderConfig }) {
   };
 
   const choose = (entry = selected) => {
-    if (!entry || entry.directory || !entry.url) return;
+    if (!canChooseEntry(entry)) {
+      if (entry && config.selectionKind === "image") setNotice(t("webImageUnsupported"));
+      return;
+    }
+    if (!entry?.url) return;
     if (config.ckeditorFunction > 0) {
       const target = window.opener || window.parent;
       const ckeditor = (target as Window & { CKEDITOR?: { tools?: { callFunction?: (id: number, url: string) => void } } }).CKEDITOR;
@@ -422,7 +397,7 @@ export default function App({ config }: { config: SoFinderConfig }) {
   };
 
   const editImage = async (rotation: number, width = 0, height = 0) => {
-    if (!selected || !selected.mimeType?.startsWith("image/")) return;
+    if (!selected || !canEditImage(selected)) return;
     setLoading(true);
     try {
       const actions = rotation !== 0
@@ -626,14 +601,12 @@ export default function App({ config }: { config: SoFinderConfig }) {
       || (entry.directory && currentResource !== undefined && destinationDepth >= currentResource.maxFolderDepth)
       || (entry.directory && (destinationDialog.path === entry.path || destinationDialog.path.startsWith(`${entry.path}/`)));
   });
-  const destinationCrumbs = destinationDialog?.path ? destinationDialog.path.split("/") : [];
   const uploadActive = uploads.some(task => task.status === "queued" || task.status === "uploading");
-  const uploadFinished = uploads.filter(task => task.status !== "queued" && task.status !== "uploading").length;
 
   return <main className="sf-app" onKeyDown={handleKeyDown} onDragOver={event => event.preventDefault()} onDrop={event => { event.preventDefault(); if (event.dataTransfer.files.length) void upload(event.dataTransfer.files); }}>
     <header className="sf-header">
       <div className="sf-brand"><span className="sf-brand-mark">S</span><strong>SoFinder</strong></div>
-      <div className="sf-search"><span aria-hidden="true">⌕</span><select value={searchMode} onChange={event => { const next = event.target.value as "name" | "tags"; setSearchMode(next); setOffset(0); }} aria-label={t("searchScope")}><option value="name">{t("name")}</option><option value="tags" disabled={!features.tags}>{t("tags")}</option></select><input value={search} onChange={e => setSearch(e.target.value)} placeholder={searchMode === "tags" ? t("searchTags") : t("search")} aria-label={searchMode === "tags" ? t("searchTags") : t("search")}/></div>
+      <div className="sf-search"><span aria-hidden="true">⌕</span><select value={searchMode} onChange={event => { const next = event.target.value as "name" | "tags"; setSearchMode(next); setOffset(0); }} aria-label={t("searchScope")}><option value="name" disabled={currentResource?.storageCapabilities?.search === false}>{t("name")}</option><option value="tags" disabled={!features.tags}>{t("tags")}</option></select><input disabled={searchMode === "name" && currentResource?.storageCapabilities?.search === false} value={search} onChange={e => setSearch(e.target.value)} placeholder={searchMode === "tags" ? t("searchTags") : t("search")} aria-label={searchMode === "tags" ? t("searchTags") : t("search")}/></div>
       <div className="sf-header-actions">
         <label className="sf-language-switch"><span className="sf-sr-only">{t("language")}</span><select value={language} onChange={event => setLanguage(event.target.value as Language)} aria-label={t("language")}><option value="zh-cn">简中</option><option value="zh-tw">繁中</option><option value="en">EN</option></select></label>
         <div className="sf-view-toggle" role="group">
@@ -656,31 +629,23 @@ export default function App({ config }: { config: SoFinderConfig }) {
       {features.tags && <button onClick={() => void editTags()} disabled={!selected}># {t("tags")}</button>}
       <button className="danger" onClick={remove} disabled={!canSelected("delete") || currentResource?.readOnly}>× {t("remove")}{selectedEntries.length > 1 ? ` (${selectedEntries.length})` : ""}</button>
       {features.trash && <button onClick={() => setTrashOpen(true)}>♲ {t("trash")}</button>}
-      {tools.rotate && <><button onClick={() => void editImage(270)} disabled={!selected?.mimeType?.startsWith("image/") || currentResource?.readOnly}>↶ {t("rotateLeft")}</button>
-      <button onClick={() => void editImage(90)} disabled={!selected?.mimeType?.startsWith("image/") || currentResource?.readOnly}>↷ {t("rotateRight")}</button></>}
-      {tools.resize && <button onClick={resizeImage} disabled={!selected?.mimeType?.startsWith("image/") || currentResource?.readOnly}>↔ {t("resize")}</button>}
-      {tools.crop && <button onClick={openCropEditor} disabled={!selected?.mimeType?.startsWith("image/") || !imageInfo || currentResource?.readOnly}>▣ {t("crop")}</button>}
-      {tools.presets && <label className="sf-sort">{t("preset")}<select value="" disabled={!selected?.mimeType?.startsWith("image/") || currentResource?.readOnly || Object.keys(imagePresets).length === 0} onChange={event => { const name = event.target.value; event.target.value = ""; if (name) void applyPreset(name); }}>
+      {tools.rotate && <><button onClick={() => void editImage(270)} disabled={!canEditImage(selected) || currentResource?.readOnly}>↶ {t("rotateLeft")}</button>
+      <button onClick={() => void editImage(90)} disabled={!canEditImage(selected) || currentResource?.readOnly}>↷ {t("rotateRight")}</button></>}
+      {tools.resize && <button onClick={resizeImage} disabled={!canEditImage(selected) || currentResource?.readOnly}>↔ {t("resize")}</button>}
+      {tools.crop && <button onClick={openCropEditor} disabled={!canEditImage(selected) || !imageInfo || currentResource?.readOnly}>▣ {t("crop")}</button>}
+      {tools.presets && <label className="sf-sort">{t("preset")}<select value="" disabled={!canEditImage(selected) || currentResource?.readOnly || Object.keys(imagePresets).length === 0} onChange={event => { const name = event.target.value; event.target.value = ""; if (name) void applyPreset(name); }}>
         <option value="">—</option>{Object.entries(imagePresets).map(([name, preset]) => <option key={name} value={name}>{name} ({preset.width}×{preset.height})</option>)}
       </select></label>}
       <button onClick={() => setSettingsOpen(true)} title={t("settings")}>⚙ {t("settings")}</button>
       <button onClick={() => void load()}>↻ {t("refresh")}</button>
       <span className="sf-separator"/>
-      <label className="sf-sort">{t("sort")}<select value={sort} onChange={event => { const next = event.target.value as SortMode; setSort(next); void load(resource, path, search, 0, next, direction); }}>
+      <label className="sf-sort">{t("sort")}<select value={sort} disabled={currentResource?.storageCapabilities?.sort === false} onChange={event => { const next = event.target.value as SortMode; setSort(next); void load(resource, path, search, 0, next, direction); }}>
         <option value="name">{t("name")}</option><option value="size">{t("size")}</option><option value="modified">{t("modified")}</option>
       </select></label>
-      <button onClick={() => { const next = direction === "asc" ? "desc" : "asc"; setDirection(next); void load(resource, path, search, 0, sort, next); }} title={t("direction")}>{direction === "asc" ? "↑" : "↓"}</button>
+      <button disabled={currentResource?.storageCapabilities?.sort === false} onClick={() => { const next = direction === "asc" ? "desc" : "asc"; setDirection(next); void load(resource, path, search, 0, sort, next); }} title={t("direction")}>{direction === "asc" ? "↑" : "↓"}</button>
     </div>
     {notice && <div className="sf-notice" role="alert">{notice}<button onClick={() => setNotice("")}>×</button></div>}
-    {uploads.length > 0 && <section className={`sf-upload-panel${uploadsCollapsed ? " collapsed" : ""}`} aria-label={t("uploadQueue")}>
-      <header><button className="sf-upload-collapse" onClick={() => setUploadsCollapsed(current => !current)} aria-expanded={!uploadsCollapsed} title={uploadsCollapsed ? t("expand") : t("collapse")}>{uploadsCollapsed ? "›" : "⌄"}</button><strong>{t("uploadQueue")}</strong><span>{uploadFinished}/{uploads.length}</span><button onClick={cancelAllUploads} disabled={!uploadActive}>{t("cancelAll")}</button><button onClick={() => setUploads(current => current.filter(task => task.status === "queued" || task.status === "uploading"))}>{t("clearFinished")}</button></header>
-      {!uploadsCollapsed && <div className="sf-upload-list">{uploads.map(task => <div className={`sf-upload-task ${task.status}`} key={task.id}>
-        <span className="sf-upload-name" title={task.name}>{task.name}</span><progress max="100" value={task.progress} aria-label={`${task.name}: ${task.progress}%`}/><span>{task.status === "uploading" ? `${task.progress}%` : t(task.status)}</span>
-        {(task.status === "queued" || task.status === "uploading") && <button onClick={() => cancelUpload(task.id)}>{t("cancel")}</button>}
-        <button className="sf-upload-remove" onClick={() => removeUploadTask(task.id)} title={t("removeUploadTask")} aria-label={`${t("removeUploadTask")}: ${task.name}`}>×</button>
-        {task.message && <small title={task.message}>{task.message}</small>}
-      </div>)}</div>}
-    </section>}
+    <UploadQueue tasks={uploads} collapsed={uploadsCollapsed} labels={{ title: t("uploadQueue"), expand: t("expand"), collapse: t("collapse"), cancel: t("cancel"), cancelAll: t("cancelAll"), clearFinished: t("clearFinished"), remove: t("removeUploadTask"), status: status => t(status) }} onToggle={() => setUploadsCollapsed(current => !current)} onCancel={cancelUpload} onCancelAll={cancelAllUploads} onClearFinished={() => setUploads(current => current.filter(task => task.status === "queued" || task.status === "uploading"))} onRemove={removeUploadTask}/>
     <div className="sf-layout" style={{ "--sf-sidebar-width": `${leftWidth}px`, "--sf-details-width": `${rightWidth}px` } as React.CSSProperties}>
       <aside className="sf-sidebar" aria-label="Resources">
         <div className="sf-side-title">SoFinder</div>
@@ -705,7 +670,7 @@ export default function App({ config }: { config: SoFinderConfig }) {
           <div className={`sf-entries ${view}`} role="listbox" aria-multiselectable="true" aria-label={t("files")}>
             {view === "list" && <div className="sf-list-head" role="presentation" aria-hidden="true"><span>{t("name")}</span><span>{t("size")}</span><span>{t("modified")}</span></div>}
             {entries.map((entry, index) => {
-              const image = !entry.directory && entry.mimeType?.startsWith("image/");
+              const image = !entry.directory && canPreviewImage(entry);
               return <button key={entry.path} data-entry-index={index} role="option" aria-selected={selectedPaths.has(entry.path)} aria-label={`${entry.name}, ${entry.directory ? t("folder") : formatSize(entry.size)}`} className={`sf-entry ${selectedPaths.has(entry.path) ? "selected" : ""}`} onClick={event => selectEntry(entry, event)} onDoubleClick={() => openEntry(entry)} onContextMenu={event => { event.preventDefault(); setSelectedPaths(new Set([entry.path])); setSelectionAnchor(entry.path); setContextMenu({ x: event.clientX, y: event.clientY, entry }); }} onPointerDown={event => { if (event.pointerType === "touch") longPress.current = window.setTimeout(() => { setSelectedPaths(new Set([entry.path])); setSelectionAnchor(entry.path); setContextMenu({ x: event.clientX, y: event.clientY, entry }); }, 550); }} onPointerUp={() => { if (longPress.current !== null) window.clearTimeout(longPress.current); longPress.current = null; }} onPointerCancel={() => { if (longPress.current !== null) window.clearTimeout(longPress.current); longPress.current = null; }} onDragOver={event => { if (entry.directory) event.preventDefault(); }} onDrop={event => { if (entry.directory && event.dataTransfer.files.length) { event.preventDefault(); void uploadTo(entry.path, event.dataTransfer.files); } }}>
                 <span className="sf-entry-icon">{image ? <ThumbnailImage src={api.thumbnailUrl(resource, entry)} alt="" lazy/> : <Icon kind={entry.directory ? "folder" : "file"}/>}</span>
                 <span className="sf-entry-name" title={entry.name}>{features.favorites && metadata.favorites.includes(entry.path) && <span aria-label={t("favorite")}>★ </span>}{entry.name}</span>
@@ -721,36 +686,15 @@ export default function App({ config }: { config: SoFinderConfig }) {
         </nav>}
       </section>
       <div className="sf-column-resizer right" role="separator" tabIndex={0} aria-label={t("resizeRightPanel")} aria-orientation="vertical" aria-valuemin={columnLimits.right.min} aria-valuemax={columnLimits.right.max} aria-valuenow={rightWidth} onPointerDown={event => beginColumnResize("right", event)} onPointerMove={moveColumnResize} onPointerUp={endColumnResize} onPointerCancel={endColumnResize} onKeyDown={event => resizeColumnWithKeyboard("right", event)} onDoubleClick={() => setColumnWidth("right", columnLimits.right.initial, true)}/>
-      <aside className="sf-details">
-        <h2>{t("details")}</h2>
-        {selectedEntries.length > 1 ? <div className="sf-state">{selectedEntries.length} {t("selectedCount")}</div> : selected ? <>
-          <div className="sf-preview">{selected.mimeType?.startsWith("image/") ? <ThumbnailImage src={api.thumbnailUrl(resource, selected, 800, 600)} alt={selected.name}/> : <Icon kind={selected.directory ? "folder" : "file"}/>}</div>
-          <h3>{selected.name}</h3>
-          <dl><dt>{t("type")}</dt><dd>{selected.directory ? t("folder") : selected.mimeType || t("file")}</dd><dt>{t("size")}</dt><dd>{selected.directory ? "—" : formatSize(selected.size)}</dd>{imageInfo && <><dt>{t("dimensions")}</dt><dd>{imageInfo.width} × {imageInfo.height} px</dd></>}<dt>{t("modified")}</dt><dd><time dateTime={new Date(selected.modifiedAt * 1000).toISOString()}>{dateFormatter.format(selected.modifiedAt * 1000)}</time></dd><dt>{t("location")}</dt><dd>{selected.path}</dd></dl>
-          {features.tags && (metadata.tags[selected.path] || []).length > 0 && <div className="sf-tags">{metadata.tags[selected.path].map(tag => <span key={tag}>{tag}</span>)}</div>}
-          {config.selectMode && !selected.directory && selected.url && <button className="sf-select primary" onClick={() => choose()}>{t("select")}</button>}
-          {!selected.directory && <div className="sf-detail-actions"><a className="sf-download" href={api.downloadUrl(resource, selected.path)}>{t("download")}</a><button type="button" className="sf-icon-button" onClick={() => openUrlDialog(selected)} title={t("copyUrl")} aria-label={t("copyUrl")}><LinkIcon/></button></div>}
-        </> : <div className="sf-state">—</div>}
-      </aside>
+      <DetailsPanel api={api} resource={resource} selectedEntries={selectedEntries} selected={selected} imageInfo={imageInfo} metadata={metadata} showTags={features.tags} previewImage={canPreviewImage(selected)} selectMode={config.selectMode} selectAllowed={canChooseEntry(selected)} labels={{ details: t("details"), selected: t("selectedCount"), type: t("type"), folder: t("folder"), file: t("file"), size: t("size"), dimensions: t("dimensions"), modified: t("modified"), location: t("location"), select: t("select"), download: t("download"), copyUrl: t("copyUrl"), unsupportedWebImage: t("webImageUnsupported") }} formatDate={timestamp => dateFormatter.format(timestamp * 1000)} onChoose={choose} onOpenUrl={openUrlDialog}/>
     </div>
-    {settingsOpen && <Modal title={t("settings")} closeLabel={t("close")} onClose={() => setSettingsOpen(false)} className="sf-settings-modal" footer={<button className="primary" onClick={() => setSettingsOpen(false)}>{t("done")}</button>}>
-      <p>{t("toolSettingsHint")}</p>
-      {currentResource && <p className="sf-configured-limits">{t("configuredLimits")}: {t("fileName")} {currentResource.maxFileNameLength} · {t("folderName")} {currentResource.maxFolderNameLength} · {t("folderDepth")} {currentResource.maxFolderDepth}</p>}
-      <h3>{t("imageTools")}</h3>
-      {(["resize", "crop", "rotate", "presets"] as const).map(tool => <label className="sf-setting" key={tool}><input type="checkbox" checked={tools[tool]} onChange={event => updateTool(tool, event.target.checked)}/><span>{t(tool === "presets" ? "preset" : tool === "rotate" ? "rotationTools" : tool)}</span></label>)}
-      <h3>{t("optionalFeatures")}</h3><p>{t("featureSettingsHint")}</p>
-      {(["autoCollapseUploads", "folderTree", "recent", "favorites", "tags", "archive", "trash"] as const).map(feature => <label className="sf-setting" key={feature}><input type="checkbox" checked={features[feature]} onChange={event => { updateFeature(feature, event.target.checked); if (feature === "tags" && !event.target.checked && searchMode === "tags") setSearchMode("name"); }}/><span>{t(feature === "autoCollapseUploads" ? "autoCollapseUploads" : feature === "folderTree" ? "folderTreeFeature" : feature === "favorites" ? "favoriteFeature" : feature === "archive" ? "archiveFeature" : feature === "trash" ? "trashFeature" : feature === "tags" ? "tagsFeature" : "recentFeature")}</span></label>)}
-    </Modal>}
-    {destinationDialog && <Modal title={destinationDialog.operation === "move" ? t("moveDestination") : t("copyDestination")} closeLabel={t("close")} onClose={() => setDestinationDialog(null)} className="sf-folder-modal" footer={<><span>{t("currentFolder")}: /{destinationDialog.path}</span><button onClick={() => setDestinationDialog(null)}>{t("cancel")}</button><button className="primary" disabled={destinationDialog.loading || destinationUnsafe} onClick={() => void transfer(destinationDialog.operation, destinationDialog.path)}>{destinationDialog.operation === "move" ? t("moveHere") : t("copyHere")}</button></>}>
-      <nav className="sf-folder-crumbs" aria-label={t("chooseFolder")}><button onClick={() => void browseDestination(destinationDialog.operation, "")}>{t("rootFolder")}</button>{destinationCrumbs.map((crumb, index) => <span key={`${crumb}-${index}`}>› <button onClick={() => void browseDestination(destinationDialog.operation, destinationCrumbs.slice(0, index + 1).join("/"))}>{crumb}</button></span>)}</nav>
-      <div className="sf-folder-list">{destinationDialog.loading ? <div className="sf-state">{t("loading")}</div> : destinationDialog.folders.length === 0 ? <div className="sf-state">{t("noFolders")}</div> : destinationDialog.folders.map(folder => <button key={folder.path} onDoubleClick={() => void browseDestination(destinationDialog.operation, folder.path)} onClick={() => void browseDestination(destinationDialog.operation, folder.path)}><span className="sf-folder-small"><Icon kind="folder"/></span>{folder.name}<span>›</span></button>)}</div>
-      {destinationUnsafe && <p className="sf-warning" role="alert">{t("unsafeDestination")}</p>}
-    </Modal>}
+    {settingsOpen && <SettingsDialog resource={currentResource} tools={tools} features={features} translate={t} onToolChange={updateTool} onFeatureChange={(feature, enabled) => { updateFeature(feature, enabled); if (feature === "tags" && !enabled && searchMode === "tags") setSearchMode("name"); }} onClose={() => setSettingsOpen(false)}/>}
+    {destinationDialog && <DestinationDialog state={destinationDialog} unsafe={destinationUnsafe} translate={t} onBrowse={(operation, destination) => void browseDestination(operation, destination)} onConfirm={(operation, destination) => void transfer(operation, destination)} onClose={() => setDestinationDialog(null)}/>}
     {textDialog && <TextDialog title={textDialog.title} label={textDialog.label} initialValue={textDialog.initial} maximum={textDialog.maximum} extension={textDialog.extension} confirmLabel={t("confirm")} cancelLabel={t("cancel")} closeLabel={t("close")} onConfirm={value => void submitTextDialog(value)} onClose={() => setTextDialog(null)}/>}
     {confirmDialog && <ConfirmDialog {...confirmDialog} confirmLabel={t("confirm")} cancelLabel={t("cancel")} closeLabel={t("close")} onConfirm={() => answerConfirm(true)} onClose={() => answerConfirm(false)}/>}
     {trashOpen && <TrashDialog
       api={api} resource={resource} locale={language}
-      labels={{ title: t("trash"), close: t("close"), empty: t("trashEmpty"), restore: t("restore"), permanentDelete: t("permanentDelete"), expires: t("expires"), conflict: t("restoreConflict"), usage: t("trashUsage"), items: t("items"), previous: t("previous"), next: t("next"), search: t("searchTrash") }}
+      labels={{ title: t("trash"), close: t("close"), cancel: t("cancel"), empty: t("trashEmpty"), restore: t("restore"), permanentDelete: t("permanentDelete"), expires: t("expires"), conflict: t("restoreConflict"), overwrite: t("restoreOverwrite"), autoRename: t("restoreAutoRename"), usage: t("trashUsage"), items: t("items"), previous: t("previous"), next: t("next"), search: t("searchTrash") }}
       onClose={() => setTrashOpen(false)} onChanged={() => void load()}
     />}
     {tagsOpen && selected && <TagsDialog
@@ -769,8 +713,8 @@ export default function App({ config }: { config: SoFinderConfig }) {
     >
       <div className="sf-file-preview-body">
         <div className="sf-file-preview-content">
-          {previewEntry.mimeType?.startsWith("image/")
-            ? <ThumbnailImage src={previewEntry.url || api.contentUrl(resource, previewEntry.path)} alt={previewEntry.name}/>
+          {canPreviewImage(previewEntry)
+            ? <ThumbnailImage src={api.thumbnailUrl(resource, previewEntry, 512, 512)} alt={previewEntry.name}/>
             : <div className="sf-file-preview-fallback"><Icon kind="file"/><p>{t("previewUnavailable")}</p></div>}
         </div>
         <dl className="sf-file-preview-meta"><dt>{t("type")}</dt><dd>{previewEntry.mimeType || t("file")}</dd><dt>{t("size")}</dt><dd>{formatSize(previewEntry.size)}</dd><dt>{t("modified")}</dt><dd><time dateTime={new Date(previewEntry.modifiedAt * 1000).toISOString()}>{dateFormatter.format(previewEntry.modifiedAt * 1000)}</time></dd><dt>{t("location")}</dt><dd>{previewEntry.path}</dd></dl>
@@ -792,7 +736,7 @@ export default function App({ config }: { config: SoFinderConfig }) {
     />}
     {contextMenu && <ContextMenu x={contextMenu.x} y={contextMenu.y} onClose={() => setContextMenu(null)} onSelect={runContextCommand} items={[
       { id: contextMenu.entry.directory ? "open" : "preview", label: contextMenu.entry.directory ? t("open") : t("preview") },
-      ...(config.selectMode && !contextMenu.entry.directory ? [{ id: "select", label: t("select"), disabled: !contextMenu.entry.url }] : []),
+      ...(config.selectMode && !contextMenu.entry.directory ? [{ id: "select", label: t("select"), disabled: !canChooseEntry(contextMenu.entry) }] : []),
       { id: "download", label: t("download"), disabled: contextMenu.entry.directory },
       { id: "rename", label: t("rename"), disabled: contextMenu.entry.capabilities?.rename === false },
       { id: "copy", label: t("copy"), disabled: contextMenu.entry.capabilities?.copy === false },

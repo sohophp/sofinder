@@ -9,15 +9,27 @@ use SohoPHP\SoFinder\Exception\SoFinderException;
 
 final readonly class GdImageProcessor implements ImageProcessorInterface
 {
-    private const MIME_TYPES = ['image/jpeg', 'image/png', 'image/gif', 'image/webp', 'image/bmp'];
-
-    public function __construct(private int $maximumPixels = 50_000_000)
+    public function __construct(
+        private int $maximumPixels = 50_000_000,
+        private ImageFormatRegistry $formats = new ImageFormatRegistry(),
+    )
     {
     }
 
     public function supports(string $mimeType): bool
     {
-        return extension_loaded('gd') && in_array(strtolower($mimeType), self::MIME_TYPES, true);
+        $format = $this->formats->formatForMime($mimeType);
+        if (!extension_loaded('gd') || $format === null) {
+            return false;
+        }
+
+        return match ($format) {
+            'avif' => function_exists('imagecreatefromavif') && function_exists('imageavif'),
+            'webp' => function_exists('imagecreatefromwebp') && function_exists('imagewebp'),
+            'bmp' => function_exists('imagecreatefrombmp') && function_exists('imagebmp'),
+            'jpeg', 'png', 'gif' => true,
+            default => false,
+        };
     }
 
     public function dimensions(string $source): array
@@ -70,6 +82,9 @@ final readonly class GdImageProcessor implements ImageProcessorInterface
         if ($mime === 'image/webp') {
             return str_contains($contents, 'ANIM') || substr_count($contents, 'ANMF') > 1;
         }
+        if ($mime === 'image/avif') {
+            return str_contains(substr($contents, 0, 128), 'avis');
+        }
 
         return false;
     }
@@ -78,7 +93,7 @@ final readonly class GdImageProcessor implements ImageProcessorInterface
     {
         [$image, $mimeType] = $this->load($source);
         try {
-            $this->resizeAndSave($image, $mimeType, $destination, $width, $height, false);
+            $this->resizeAndSave($image, 'image/png', $destination, $width, $height, false);
         } finally {
             unset($image);
         }
@@ -92,7 +107,11 @@ final readonly class GdImageProcessor implements ImageProcessorInterface
         [$image, $mimeType] = $this->load($source);
         try {
             if ($rotation !== 0) {
-                $rotated = imagerotate($image, -$rotation, imagecolorallocatealpha($image, 0, 0, 0, 127));
+                $transparent = imagecolorallocatealpha($image, 0, 0, 0, 127);
+                if ($transparent === false) {
+                    throw new SoFinderException('Unable to allocate the image background.', 'image_processing_failed', 500);
+                }
+                $rotated = imagerotate($image, -$rotation, $transparent);
                 if (!$rotated instanceof \GdImage) {
                     throw new SoFinderException('Unable to rotate the image.', 'image_processing_failed', 500);
                 }
@@ -140,6 +159,7 @@ final readonly class GdImageProcessor implements ImageProcessorInterface
             'image/png' => @imagecreatefrompng($source),
             'image/gif' => @imagecreatefromgif($source),
             'image/webp' => @imagecreatefromwebp($source),
+            'image/avif' => @imagecreatefromavif($source),
             'image/bmp' => @imagecreatefrombmp($source),
             default => false,
         };
@@ -200,10 +220,14 @@ final readonly class GdImageProcessor implements ImageProcessorInterface
             throw new SoFinderException('Unable to allocate the resized image.', 'image_processing_failed', 500);
         }
         try {
-            if (in_array($mimeType, ['image/png', 'image/gif', 'image/webp'], true)) {
+            if (in_array($mimeType, ['image/png', 'image/gif', 'image/webp', 'image/avif'], true)) {
                 imagealphablending($target, false);
                 imagesavealpha($target, true);
-                imagefill($target, 0, 0, imagecolorallocatealpha($target, 0, 0, 0, 127));
+                $transparent = imagecolorallocatealpha($target, 0, 0, 0, 127);
+                if ($transparent === false) {
+                    throw new SoFinderException('Unable to allocate the image background.', 'image_processing_failed', 500);
+                }
+                imagefill($target, 0, 0, $transparent);
             }
             imagecopyresampled($target, $source, 0, 0, 0, 0, $targetWidth, $targetHeight, $sourceWidth, $sourceHeight);
             $saved = match ($mimeType) {
@@ -211,6 +235,7 @@ final readonly class GdImageProcessor implements ImageProcessorInterface
                 'image/png' => imagepng($target, $destination, (int) round((100 - $quality) * 9 / 99)),
                 'image/gif' => imagegif($target, $destination),
                 'image/webp' => imagewebp($target, $destination, $quality),
+                'image/avif' => imageavif($target, $destination, $quality),
                 'image/bmp' => imagebmp($target, $destination),
                 default => false,
             };

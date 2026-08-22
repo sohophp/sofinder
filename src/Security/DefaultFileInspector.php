@@ -7,22 +7,16 @@ namespace SohoPHP\SoFinder\Security;
 use SohoPHP\SoFinder\Contract\FileInspectorInterface;
 use SohoPHP\SoFinder\Contract\ImageProcessorInterface;
 use SohoPHP\SoFinder\Exception\SoFinderException;
+use SohoPHP\SoFinder\Image\ImageFormatRegistry;
 use SohoPHP\SoFinder\Value\InspectedFile;
 use SohoPHP\SoFinder\Value\ResourceType;
 
 final readonly class DefaultFileInspector implements FileInspectorInterface
 {
-    private const IMAGE_EXTENSIONS = [
-        'bmp' => 'image/bmp',
-        'gif' => 'image/gif',
-        'jpeg' => 'image/jpeg',
-        'jpg' => 'image/jpeg',
-        'png' => 'image/png',
-        'webp' => 'image/webp',
-    ];
-
-    public function __construct(private ImageProcessorInterface $images)
-    {
+    public function __construct(
+        private ImageProcessorInterface $images,
+        private ImageFormatRegistry $formats = new ImageFormatRegistry(),
+    ) {
     }
 
     public function inspect(string $path, string $fileName, ResourceType $resource): InspectedFile
@@ -36,22 +30,30 @@ final readonly class DefaultFileInspector implements FileInspectorInterface
         $this->assertNoActiveContent($path);
 
         $extension = strtolower((string) pathinfo($fileName, PATHINFO_EXTENSION));
-        $expectedImageMime = self::IMAGE_EXTENSIONS[$extension] ?? null;
-        if ($expectedImageMime === null) {
+        $format = $this->formats->formatForExtension($extension);
+        if ($format === null) {
             return new InspectedFile((int) $size, $mimeType);
         }
-        if (strtolower($mimeType) !== $expectedImageMime) {
+        if (!$this->formats->mimeMatches($format, strtolower($mimeType))) {
             throw new SoFinderException('The image extension does not match its content.', 'invalid_image', 415);
         }
+        $headerDimensions = $this->images->dimensions($path);
+        $this->assertImageLimits($headerDimensions, $resource);
         $dimensions = $this->images->validate($path);
-        if ($dimensions['width'] * $dimensions['height'] > $resource->maxImagePixels || $dimensions['width'] > $resource->maxImageWidth || $dimensions['height'] > $resource->maxImageHeight) {
-            throw new SoFinderException('The uploaded image exceeds the configured dimension or pixel limit.', 'image_too_large', 413);
-        }
+        $this->assertImageLimits($dimensions, $resource);
         if ($resource->animatedImagePolicy === 'reject' && $this->images->isAnimated($path)) {
             throw new SoFinderException('Animated images are not allowed in this resource.', 'animated_image_not_allowed', 415);
         }
 
         return new InspectedFile((int) $size, $mimeType, $dimensions['width'], $dimensions['height']);
+    }
+
+    /** @param array{width:int,height:int} $dimensions */
+    private function assertImageLimits(array $dimensions, ResourceType $resource): void
+    {
+        if ($dimensions['width'] * $dimensions['height'] > $resource->maxImagePixels || $dimensions['width'] > $resource->maxImageWidth || $dimensions['height'] > $resource->maxImageHeight) {
+            throw new SoFinderException('The uploaded image exceeds the configured dimension or pixel limit.', 'image_too_large', 413);
+        }
     }
 
     private function assertNoActiveContent(string $path): void

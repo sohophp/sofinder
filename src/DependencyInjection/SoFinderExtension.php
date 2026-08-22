@@ -9,14 +9,21 @@ use Psr\Log\LoggerInterface;
 use SohoPHP\SoFinder\Command\SecurityAuditCommand;
 use SohoPHP\SoFinder\Command\TrashCleanupCommand;
 use SohoPHP\SoFinder\Command\UsageRecalculateCommand;
+use SohoPHP\SoFinder\Command\UploadCleanupCommand;
+use SohoPHP\SoFinder\Command\ImageCapabilitiesCommand;
 use SohoPHP\SoFinder\Archive\ArchiveManager;
 use SohoPHP\SoFinder\Contract\AuthorizationInterface;
+use SohoPHP\SoFinder\Contract\ChunkUploadStoreInterface;
 use SohoPHP\SoFinder\Contract\ActorProviderInterface;
 use SohoPHP\SoFinder\Contract\ImageProcessorInterface;
+use SohoPHP\SoFinder\Contract\ImageCapabilityProviderInterface;
 use SohoPHP\SoFinder\Contract\FileInspectorInterface;
 use SohoPHP\SoFinder\Contract\EntryUrlGeneratorInterface;
 use SohoPHP\SoFinder\Contract\MetadataStoreInterface;
 use SohoPHP\SoFinder\Contract\PluginInterface;
+use SohoPHP\SoFinder\Contract\RecycleBinInterface;
+use SohoPHP\SoFinder\Contract\RequestGateStoreInterface;
+use SohoPHP\SoFinder\Contract\StorageAdapterFactoryInterface;
 use SohoPHP\SoFinder\Contract\UsageTrackerInterface;
 use SohoPHP\SoFinder\FileManager;
 use SohoPHP\SoFinder\Http\ApiController;
@@ -24,6 +31,7 @@ use SohoPHP\SoFinder\Http\ArchiveController;
 use SohoPHP\SoFinder\Http\AssetController;
 use SohoPHP\SoFinder\Http\BrowserController;
 use SohoPHP\SoFinder\Http\ChunkUploadController;
+use SohoPHP\SoFinder\Http\ContentController;
 use SohoPHP\SoFinder\Http\ExceptionSubscriber;
 use SohoPHP\SoFinder\Http\FailureAuditSubscriber;
 use SohoPHP\SoFinder\Http\ImageController;
@@ -32,6 +40,9 @@ use SohoPHP\SoFinder\Http\QuickUploadController;
 use SohoPHP\SoFinder\Http\SecurityResponseSubscriber;
 use SohoPHP\SoFinder\ResourceRegistry;
 use SohoPHP\SoFinder\Image\GdImageProcessor;
+use SohoPHP\SoFinder\Image\HybridImageProcessor;
+use SohoPHP\SoFinder\Image\ImageFormatRegistry;
+use SohoPHP\SoFinder\Image\ImagickImageProcessor;
 use SohoPHP\SoFinder\Image\ImageManager;
 use SohoPHP\SoFinder\Metadata\JsonMetadataStore;
 use SohoPHP\SoFinder\Metadata\MetadataManager;
@@ -40,6 +51,9 @@ use SohoPHP\SoFinder\Security\PathGuard;
 use SohoPHP\SoFinder\Security\DefaultFileInspector;
 use SohoPHP\SoFinder\Security\UploadPipeline;
 use SohoPHP\SoFinder\Security\RequestGate;
+use SohoPHP\SoFinder\Security\LocalRequestGateStore;
+use SohoPHP\SoFinder\Storage\LocalStorageAdapterFactory;
+use SohoPHP\SoFinder\Storage\StoragePaginator;
 use SohoPHP\SoFinder\Symfony\CsrfGuard;
 use SohoPHP\SoFinder\Symfony\OperationAuditSubscriber;
 use SohoPHP\SoFinder\Symfony\MetadataOperationSubscriber;
@@ -51,6 +65,7 @@ use SohoPHP\SoFinder\Trash\TrashManager;
 use SohoPHP\SoFinder\Usage\PersistentUsageTracker;
 use SohoPHP\SoFinder\Upload\ChunkUploadManager;
 use SohoPHP\SoFinder\Value\Theme;
+use SohoPHP\SoFinder\Value\ImageProcessingLimits;
 use Symfony\Component\DependencyInjection\Alias;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
 use Symfony\Component\DependencyInjection\Definition;
@@ -71,6 +86,13 @@ final class SoFinderExtension extends Extension
     public function load(array $configs, ContainerBuilder $container): void
     {
         $config = $this->processConfiguration(new Configuration(), $configs);
+        $imageDriver = (string) $config['image_processing']['driver'];
+        if ($imageDriver === 'gd' && !extension_loaded('gd')) {
+            throw new \InvalidArgumentException('SoFinder image_processing.driver is gd, but ext-gd is not installed.');
+        }
+        if ($imageDriver === 'imagick' && !extension_loaded('imagick')) {
+            throw new \InvalidArgumentException('SoFinder image_processing.driver is imagick, but ext-imagick is not installed.');
+        }
         $container->setParameter('so_finder.resources', $config['resources']);
         $container->setParameter('so_finder.cache_dir', $config['cache_dir']);
         $container->setParameter('so_finder.metadata_file', $config['metadata_file']);
@@ -79,6 +101,7 @@ final class SoFinderExtension extends Extension
         $container->setParameter('so_finder.usage_dir', $config['usage_dir']);
         $container->setParameter('so_finder.trash_dir', $config['trash_dir']);
         $container->registerForAutoconfiguration(PluginInterface::class)->addTag('sofinder.plugin');
+        $container->registerForAutoconfiguration(StorageAdapterFactoryInterface::class)->addTag('sofinder.storage_factory');
         $packageDir = dirname(__DIR__, 2);
         $container->setParameter('so_finder.package_dir', $packageDir);
         $assetFiles = [$packageDir . '/dist/sofinder.js', $packageDir . '/dist/sofinder.css'];
@@ -91,9 +114,14 @@ final class SoFinderExtension extends Extension
         $container->setParameter('so_finder.asset_version', substr(hash_final($assetFingerprint), 0, 12));
 
         $container->setDefinition(PathGuard::class, new Definition(PathGuard::class));
+        $container->setDefinition(LocalStorageAdapterFactory::class, (new Definition(LocalStorageAdapterFactory::class))
+            ->setArgument('$pathGuard', new Reference(PathGuard::class))
+            ->addTag('sofinder.storage_factory'));
+        $container->setDefinition(StoragePaginator::class, new Definition(StoragePaginator::class));
         $container->setDefinition(ResourceRegistryFactory::class, (new Definition(ResourceRegistryFactory::class))
             ->setArgument('$pathGuard', new Reference(PathGuard::class))
-            ->setArgument('$requestStack', new Reference(RequestStack::class)));
+            ->setArgument('$requestStack', new Reference(RequestStack::class))
+            ->setArgument('$factories', new TaggedIteratorArgument('sofinder.storage_factory')));
         $container->setDefinition(ResourceRegistry::class, (new Definition(ResourceRegistry::class))
             ->setFactory([new Reference(ResourceRegistryFactory::class), 'create'])
             ->setArguments([$config['resources']]));
@@ -118,10 +146,36 @@ final class SoFinderExtension extends Extension
                 new Reference(CsrfTokenManagerInterface::class),
                 new Reference(AuthorizationInterface::class),
             ]));
-        $container->setDefinition(GdImageProcessor::class, new Definition(GdImageProcessor::class));
-        $container->setAlias(ImageProcessorInterface::class, new Alias(GdImageProcessor::class));
+        $imageConfig = $config['image_processing'];
+        $container->setDefinition(ImageFormatRegistry::class, new Definition(ImageFormatRegistry::class));
+        $container->setDefinition(ImageProcessingLimits::class, (new Definition(ImageProcessingLimits::class))->setArguments([
+            $imageConfig['max_width'],
+            $imageConfig['max_height'],
+            $imageConfig['max_single_frame_pixels'],
+            $imageConfig['max_frames'],
+            $imageConfig['max_total_pixels'],
+            $imageConfig['memory_bytes'],
+            $imageConfig['map_bytes'],
+            $imageConfig['disk_bytes'],
+            $imageConfig['threads'],
+            $imageConfig['timeout_seconds'],
+        ]));
+        $container->setDefinition(GdImageProcessor::class, (new Definition(GdImageProcessor::class))
+            ->setArgument('$maximumPixels', $imageConfig['max_single_frame_pixels'])
+            ->setArgument('$formats', new Reference(ImageFormatRegistry::class)));
+        $container->setDefinition(ImagickImageProcessor::class, (new Definition(ImagickImageProcessor::class))
+            ->setArguments([new Reference(ImageFormatRegistry::class), new Reference(ImageProcessingLimits::class)]));
+        $container->setDefinition(HybridImageProcessor::class, (new Definition(HybridImageProcessor::class))
+            ->setArguments([
+                new Reference(ImageFormatRegistry::class),
+                new Reference(GdImageProcessor::class),
+                new Reference(ImagickImageProcessor::class),
+                $imageDriver,
+            ]));
+        $container->setAlias(ImageProcessorInterface::class, new Alias(HybridImageProcessor::class));
+        $container->setAlias(ImageCapabilityProviderInterface::class, new Alias(HybridImageProcessor::class));
         $container->setDefinition(DefaultFileInspector::class, (new Definition(DefaultFileInspector::class))
-            ->setArgument('$images', new Reference(ImageProcessorInterface::class)));
+            ->setArguments([new Reference(ImageProcessorInterface::class), new Reference(ImageFormatRegistry::class)]));
         $container->setAlias(FileInspectorInterface::class, new Alias(DefaultFileInspector::class));
         $container->setDefinition(SymfonyEntryUrlGenerator::class, (new Definition(SymfonyEntryUrlGenerator::class))
             ->setArgument('$router', new Reference(RouterInterface::class)));
@@ -140,6 +194,7 @@ final class SoFinderExtension extends Extension
                 $config['trash_max_items'],
                 $config['trash_max_bytes'],
             ]));
+        $container->setAlias(RecycleBinInterface::class, new Alias(TrashManager::class));
         $container->setDefinition(ChunkUploadManager::class, (new Definition(ChunkUploadManager::class))
             ->setArguments([
                 $config['chunk_dir'],
@@ -147,6 +202,7 @@ final class SoFinderExtension extends Extension
                 $config['chunk_size'],
                 $config['max_upload_chunks'],
             ]));
+        $container->setAlias(ChunkUploadStoreInterface::class, new Alias(ChunkUploadManager::class));
         $container->setDefinition(FileManager::class, (new Definition(FileManager::class))
             ->setArguments([
                 new Reference(ResourceRegistry::class),
@@ -155,8 +211,9 @@ final class SoFinderExtension extends Extension
                 new Reference(PathGuard::class),
                 new Reference(UploadPipeline::class),
                 new Reference(EntryUrlGeneratorInterface::class),
-                new Reference(TrashManager::class),
+                new Reference(RecycleBinInterface::class),
                 new Reference(UsageTrackerInterface::class),
+                new Reference(StoragePaginator::class),
             ]));
         $container->setDefinition(ImageManager::class, (new Definition(ImageManager::class))
             ->setArguments([
@@ -195,14 +252,20 @@ final class SoFinderExtension extends Extension
             new Reference(PluginRegistry::class),
             $config['image_presets'],
             new Reference(MetadataManager::class),
+            new Reference(ImageCapabilityProviderInterface::class),
+        ]);
+        $this->controller($container, ContentController::class, [
+            new Reference(FileManager::class),
+            new Reference(ImageFormatRegistry::class),
         ]);
         $this->controller($container, QuickUploadController::class, [
             new Reference(FileManager::class),
             new Reference(CsrfGuard::class),
+            new Reference(ImageCapabilityProviderInterface::class),
         ]);
         $this->controller($container, ChunkUploadController::class, [
             new Reference(FileManager::class),
-            new Reference(ChunkUploadManager::class),
+            new Reference(ChunkUploadStoreInterface::class),
             new Reference(CsrfGuard::class),
         ]);
         $this->controller($container, ImageController::class, [
@@ -223,9 +286,12 @@ final class SoFinderExtension extends Extension
             ->addTag('kernel.event_subscriber'));
         $container->setDefinition(SecurityResponseSubscriber::class, (new Definition(SecurityResponseSubscriber::class))
             ->addTag('kernel.event_subscriber'));
+        $container->setDefinition(LocalRequestGateStore::class, (new Definition(LocalRequestGateStore::class))
+            ->setArgument('$directory', rtrim((string) $config['cache_dir'], '/') . '/rate-limit'));
+        $container->setAlias(RequestGateStoreInterface::class, new Alias(LocalRequestGateStore::class));
         $container->setDefinition(RequestGate::class, (new Definition(RequestGate::class))
             ->setArguments([
-                rtrim((string) $config['cache_dir'], '/') . '/rate-limit',
+                new Reference(RequestGateStoreInterface::class),
                 new Reference(ActorProviderInterface::class),
                 $config['limits'],
             ])
@@ -247,7 +313,7 @@ final class SoFinderExtension extends Extension
             ])
             ->addTag('kernel.event_subscriber'));
         $container->setDefinition(TrashCleanupCommand::class, (new Definition(TrashCleanupCommand::class))
-            ->setArgument('$trash', new Reference(TrashManager::class))
+            ->setArgument('$trash', new Reference(RecycleBinInterface::class))
             ->addTag('console.command'));
         $container->setDefinition(SecurityAuditCommand::class, (new Definition(SecurityAuditCommand::class))
             ->setArguments([
@@ -256,6 +322,15 @@ final class SoFinderExtension extends Extension
                 $config['quarantine_dir'],
                 $config['chunk_dir'],
                 $config['trash_dir'],
+                new Reference(ImageCapabilityProviderInterface::class),
+                new Reference(ImageFormatRegistry::class),
+            ])
+            ->addTag('console.command'));
+        $container->setDefinition(ImageCapabilitiesCommand::class, (new Definition(ImageCapabilitiesCommand::class))
+            ->setArguments([
+                new Reference(ImageCapabilityProviderInterface::class),
+                new Reference(ImageFormatRegistry::class),
+                new Reference(ResourceRegistry::class),
             ])
             ->addTag('console.command'));
         $container->setDefinition(UsageRecalculateCommand::class, (new Definition(UsageRecalculateCommand::class))
@@ -263,6 +338,9 @@ final class SoFinderExtension extends Extension
                 new Reference(ResourceRegistry::class),
                 new Reference(UsageTrackerInterface::class),
             ])
+            ->addTag('console.command'));
+        $container->setDefinition(UploadCleanupCommand::class, (new Definition(UploadCleanupCommand::class))
+            ->setArgument('$chunks', new Reference(ChunkUploadStoreInterface::class))
             ->addTag('console.command'));
     }
 

@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace SohoPHP\SoFinder\Command;
 
+use SohoPHP\SoFinder\Contract\ImageCapabilityProviderInterface;
+use SohoPHP\SoFinder\Image\ImageFormatRegistry;
 use SohoPHP\SoFinder\ResourceRegistry;
 use Symfony\Component\Console\Attribute\AsCommand;
 use Symfony\Component\Console\Command\Command;
@@ -23,6 +25,8 @@ final class SecurityAuditCommand extends Command
         private readonly string $quarantineDirectory,
         private readonly string $chunkDirectory,
         private readonly string $trashDirectory,
+        private readonly ?ImageCapabilityProviderInterface $images = null,
+        private readonly ?ImageFormatRegistry $imageFormats = null,
     ) {
         parent::__construct();
     }
@@ -54,6 +58,13 @@ final class SecurityAuditCommand extends Command
             }
             if ($this->contains($publicRoot, $root) && $resource->deliveryMode === 'proxy') {
                 $findings[] = ['critical', $resource->name, 'Proxy storage is physically located under the public document root.'];
+            }
+            if ($this->images !== null && $this->imageFormats !== null) {
+                foreach ($resource->allowedExtensions as $extension) {
+                    if ($this->imageFormats->formatForExtension($extension) !== null && !$this->images->supportsExtension($extension)) {
+                        $findings[] = ['critical', $resource->name, sprintf('Configured image extension .%s has no available decoder.', strtolower($extension))];
+                    }
+                }
             }
             $this->scan($root, $resource->name, $findings);
         }

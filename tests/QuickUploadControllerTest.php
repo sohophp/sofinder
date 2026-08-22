@@ -5,7 +5,9 @@ declare(strict_types=1);
 namespace SohoPHP\SoFinder\Tests;
 
 use PHPUnit\Framework\TestCase;
+use PHPUnit\Framework\Attributes\DataProvider;
 use SohoPHP\SoFinder\Contract\AuthorizationInterface;
+use SohoPHP\SoFinder\Contract\ImageCapabilityProviderInterface;
 use SohoPHP\SoFinder\FileManager;
 use SohoPHP\SoFinder\Http\QuickUploadController;
 use SohoPHP\SoFinder\Security\PathGuard;
@@ -39,7 +41,7 @@ final class QuickUploadControllerTest extends TestCase
         @rmdir($this->directory);
     }
 
-    /** @dataProvider responseTypeProvider */
+    #[DataProvider('responseTypeProvider')]
     public function testResponseContainsTheApplicationBasePath(string $query, bool $jsonResponse): void
     {
         $csrfTokens = $this->createMock(CsrfTokenManagerInterface::class);
@@ -112,5 +114,55 @@ final class QuickUploadControllerTest extends TestCase
         yield 'JSON upload protocol' => ['type=Files&responseType=json', true];
         yield 'CKEditor XHR without callback number' => ['type=Files', true];
         yield 'CKEditor 4 callback protocol' => ['type=Files&CKEditorFuncNum=42', false];
+    }
+
+    public function testImageSelectionRejectsNonWebFormatBeforeWriting(): void
+    {
+        $csrfTokens = $this->createMock(CsrfTokenManagerInterface::class);
+        $csrfTokens->method('isTokenValid')->willReturn(true);
+        $request = Request::create(
+            'https://example.test/sofinder/quick-upload?type=Images&selection=image&responseType=json&_token=valid-token',
+            'POST',
+            files: ['upload' => new UploadedFile($this->upload, 'camera.heic', 'image/heic', UPLOAD_ERR_OK, true)],
+            server: ['HTTP_ORIGIN' => 'https://example.test'],
+        );
+        $requestStack = new RequestStack();
+        $requestStack->push($request);
+        $pathGuard = new PathGuard();
+        $registry = (new ResourceRegistryFactory($pathGuard, $requestStack))->create([
+            'Images' => [
+                'root' => $this->directory,
+                'public_url' => '/images',
+                'allowed_extensions' => ['heic'],
+                'denied_extensions' => [],
+                'allowed_mime_types' => [],
+                'max_size' => 1024,
+                'read_only' => false,
+            ],
+        ]);
+        $authorization = new class implements AuthorizationInterface {
+            public function isAuthenticated(): bool { return true; }
+            public function isGranted(string $operation, ResourceType $resource, string $path): bool { return true; }
+        };
+        $capabilities = new class implements ImageCapabilityProviderInterface {
+            public function capabilities(): array { return []; }
+            public function isWebEmbeddable(string $mimeType): bool { return false; }
+            public function supportsExtension(string $extension): bool { return false; }
+            public function driver(): string { return 'auto'; }
+            public function cacheVersion(): string { return 'test'; }
+        };
+        $controller = new QuickUploadController(
+            new FileManager($registry, $authorization, new EventDispatcher(), $pathGuard),
+            new CsrfGuard($csrfTokens, $authorization),
+            $capabilities,
+        );
+
+        $response = $controller($request);
+        $payload = json_decode((string) $response->getContent(), true, 512, JSON_THROW_ON_ERROR);
+
+        self::assertSame(415, $response->getStatusCode());
+        self::assertSame(0, $payload['uploaded']);
+        self::assertSame('image_not_web_embeddable', $payload['error']['code']);
+        self::assertFileDoesNotExist($this->directory . '/camera.heic');
     }
 }

@@ -8,14 +8,27 @@ on:
 jobs:
   php:
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        php: ['8.2', '8.3', '8.4', '8.5']
+        symfony: ['6.4.*', '7.4.*']
     steps:
       - uses: actions/checkout@v4
       - uses: shivammathur/setup-php@v2
         with:
-          php-version: '8.5'
+          php-version: ${{ matrix.php }}
           coverage: none
+          extensions: gd, imagick
       - run: composer validate --strict
-      - run: composer install --no-interaction --prefer-dist
+      - run: |
+          composer require --no-update \
+            symfony/config:${{ matrix.symfony }} symfony/console:${{ matrix.symfony }} \
+            symfony/dependency-injection:${{ matrix.symfony }} symfony/event-dispatcher:${{ matrix.symfony }} \
+            symfony/filesystem:${{ matrix.symfony }} symfony/http-foundation:${{ matrix.symfony }} \
+            symfony/http-kernel:${{ matrix.symfony }} symfony/routing:${{ matrix.symfony }} \
+            symfony/security-core:${{ matrix.symfony }} symfony/security-csrf:${{ matrix.symfony }}
+          composer update --no-interaction --prefer-dist
       - run: vendor/bin/phpunit
       - run: composer audit
 
@@ -35,11 +48,56 @@ jobs:
         working-directory: frontend
       - run: pnpm build
         working-directory: frontend
+      - run: pnpm test:unit
+        working-directory: frontend
       - run: git diff --exit-code -- dist
       - run: pnpm exec playwright install --with-deps
         working-directory: frontend
       - run: pnpm test:e2e
         working-directory: frontend
+
+  quality:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.5'
+          coverage: pcov
+          extensions: gd, imagick
+      - run: composer install --no-interaction --prefer-dist
+      - run: composer phpstan
+      - run: vendor/bin/phpunit --coverage-clover var/coverage.xml
+
+  symfony-example:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        include:
+          - php: '8.2'
+            manifest: composer-6.4.json
+          - php: '8.5'
+            manifest: composer-7.4.json
+    steps:
+      - uses: actions/checkout@v4
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: ${{ matrix.php }}
+          coverage: none
+          extensions: gd, imagick
+      - run: cp ${{ matrix.manifest }} composer.json
+        working-directory: examples/symfony
+      - run: composer install --no-interaction --prefer-dist
+        working-directory: examples/symfony
+      - run: php bin/console cache:warmup --env=prod --no-interaction
+        working-directory: examples/symfony
+        env: { APP_ENV: prod, APP_DEBUG: 0 }
+      - run: php bin/console sofinder:image:capabilities --env=prod --json
+        working-directory: examples/symfony
+        env: { APP_ENV: prod, APP_DEBUG: 0 }
+      - run: php bin/console sofinder:security:audit --env=prod
+        working-directory: examples/symfony
+        env: { APP_ENV: prod, APP_DEBUG: 0 }
 
   originality:
     runs-on: ubuntu-latest

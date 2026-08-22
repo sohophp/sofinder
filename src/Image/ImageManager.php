@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace SohoPHP\SoFinder\Image;
 
 use SohoPHP\SoFinder\Contract\ImageProcessorInterface;
+use SohoPHP\SoFinder\Contract\ImageCapabilityProviderInterface;
 use SohoPHP\SoFinder\Exception\SoFinderException;
 use SohoPHP\SoFinder\FileManager;
 use SohoPHP\SoFinder\Value\Entry;
@@ -31,11 +32,8 @@ final readonly class ImageManager
             throw new SoFinderException('Unable to create the thumbnail cache.', 'image_processing_failed', 500);
         }
         $this->maintainCache($directory);
-        $extension = match ($entry->mimeType) {
-            'image/jpeg' => 'jpg', 'image/png' => 'png', 'image/gif' => 'gif', 'image/webp' => 'webp', 'image/bmp' => 'bmp',
-            default => throw new SoFinderException('The image format is not supported.', 'unsupported_image', 415),
-        };
-        $cachePath = $directory . '/' . hash('sha256', implode('|', [$resource, $entry->path, $entry->modifiedAt, $entry->size, $width, $height])) . '.' . $extension;
+        $processorVersion = $this->processor instanceof ImageCapabilityProviderInterface ? $this->processor->cacheVersion() : get_debug_type($this->processor);
+        $cachePath = $directory . '/' . hash('sha256', implode('|', [$processorVersion, $resource, $entry->path, $entry->modifiedAt, $entry->size, $width, $height])) . '.png';
         if (!is_file($cachePath)) {
             $temporary = tempnam($directory, '.sofinder-thumbnail-');
             if ($temporary === false) {
@@ -51,7 +49,7 @@ final readonly class ImageManager
             }
         }
 
-        return ['path' => $cachePath, 'mimeType' => (string) $entry->mimeType];
+        return ['path' => $cachePath, 'mimeType' => 'image/png'];
     }
 
     public function edit(string $resource, string $path, int $rotation, int $width, int $height): Entry
@@ -123,7 +121,7 @@ final readonly class ImageManager
         try {
             $this->copySource($resource, $path, $source);
             if ($this->processor->isAnimated($source)) {
-                throw new SoFinderException('Animated GIF and WebP images cannot be edited without losing animation.', 'animated_image_edit_unsupported', 415);
+                throw new SoFinderException('Animated or multi-page images cannot be edited without losing content.', 'animated_image_edit_unsupported', 415);
             }
             $originalDimensions = $this->processor->dimensions($source);
             foreach ($actions as $action) {
@@ -320,7 +318,10 @@ final readonly class ImageManager
         $maintained = true;
         $files = [];
         $expiry = time() - 2_592_000;
-        foreach (new \FilesystemIterator($directory, \FilesystemIterator::SKIP_DOTS) as $file) {
+        foreach (new \FilesystemIterator($directory, \FilesystemIterator::SKIP_DOTS | \FilesystemIterator::CURRENT_AS_FILEINFO) as $file) {
+            if (!$file instanceof \SplFileInfo) {
+                continue;
+            }
             if (!$file->isFile() || $file->isLink()) {
                 continue;
             }

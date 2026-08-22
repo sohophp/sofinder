@@ -48,6 +48,13 @@ sofinder_api_chunk_cancel:
   requirements: { id: '[a-zA-Z0-9_-]{16,80}' }
   defaults: { _sofinder: true }
 
+sofinder_api_chunk_status:
+  path: /api/uploads/chunks/{id}
+  controller: SohoPHP\SoFinder\Http\ChunkUploadController::status
+  methods: [GET]
+  requirements: { id: '[a-zA-Z0-9_-]{16,80}' }
+  defaults: { _sofinder: true }
+
 sofinder_api_rename:
   path: /api/entries/rename
   controller: SohoPHP\SoFinder\Http\ApiController::rename
@@ -80,13 +87,13 @@ sofinder_api_batch:
 
 sofinder_api_download:
   path: /api/download
-  controller: SohoPHP\SoFinder\Http\ApiController::download
+  controller: SohoPHP\SoFinder\Http\ContentController::download
   methods: [GET]
   defaults: { _sofinder: true }
 
 sofinder_api_content:
   path: /api/content
-  controller: SohoPHP\SoFinder\Http\ApiController::content
+  controller: SohoPHP\SoFinder\Http\ContentController::content
   methods: [GET]
   defaults: { _sofinder: true }
 

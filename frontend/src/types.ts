@@ -4,6 +4,7 @@ export interface SoFinderConfig {
   language: "en" | "zh-cn" | "zh-tw";
   resource: string;
   selectMode: boolean;
+  selectionKind: "any" | "file" | "image";
   ckeditorFunction: number;
   theme: {
     accent: string;
@@ -23,6 +24,22 @@ export interface PluginDescriptor {
   capabilities: string[];
 }
 
+export interface ImageFormatCapability {
+  format: string;
+  extensions: string[];
+  mimes: string[];
+  processor: "" | "gd" | "imagick";
+  read: boolean;
+  edit: boolean;
+  thumbnail: boolean;
+  webEmbeddable: boolean;
+}
+
+export interface ImageCapabilities {
+  driver: "" | "auto" | "gd" | "imagick";
+  formats: ImageFormatCapability[];
+}
+
 export interface ResourceType {
   name: string;
   publicUrl: string;
@@ -35,6 +52,17 @@ export interface ResourceType {
   maxFolderNameLength: number;
   maxFolderDepth: number;
   deliveryMode: "public" | "proxy";
+  storageCapabilities?: StorageCapabilities;
+}
+
+export interface StorageCapabilities {
+  search: boolean;
+  sort: boolean;
+  cursorPagination: boolean;
+  atomicMove: boolean;
+  nativeCopy: boolean;
+  recoverableDelete: boolean;
+  publicUrl: boolean;
 }
 
 export interface Entry {

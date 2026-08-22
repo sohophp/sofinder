@@ -1,4 +1,4 @@
-import type { ApiResponse, BatchResult, Entry, ImageAction, ImageEditResult, ImagePreset, ImageInfo, MetadataState, PluginDescriptor, ResourceType, SoFinderConfig, TrashPage } from "./types";
+import type { ApiResponse, BatchResult, Entry, ImageAction, ImageCapabilities, ImageEditResult, ImagePreset, ImageInfo, MetadataState, PluginDescriptor, ResourceType, SoFinderConfig, TrashPage } from "./types";
 
 export class ApiError extends Error {
   constructor(message: string, public readonly code: string, public readonly status: number) {
@@ -13,18 +13,32 @@ interface UploadOptions {
   onProgress?: (percentage: number) => void;
 }
 
+export interface PendingUploadSession {
+  id: string;
+  scope: string;
+  resource: string;
+  path: string;
+  name: string;
+  size: number;
+  lastModified: number;
+  total: number;
+  overwrite: boolean;
+  updatedAt: number;
+}
+
 export class Api {
   private readonly base: string;
+  private readonly uploadStorageKey = "sofinder.uploadSessions.v1";
 
   constructor(private readonly config: SoFinderConfig) {
     this.base = config.apiBase.replace(/\/config$/, "");
   }
 
-  configData() { return this.request<{ resources: ResourceType[]; plugins: PluginDescriptor[]; imagePresets: Record<string, ImagePreset> }>("/config"); }
+  configData() { return this.request<{ apiVersion: string; resources: ResourceType[]; plugins: PluginDescriptor[]; imagePresets: Record<string, ImagePreset>; imageCapabilities?: ImageCapabilities }>("/config"); }
 
   list(resource: string, path: string, search = "", sort = "name", direction = "asc", offset = 0, limit = 100, searchMode: "name" | "tags" = "name") {
     const query = new URLSearchParams({ resource, path, search, searchMode, sort, direction, offset: String(offset), limit: String(limit) });
-    return this.request<{ entries: Entry[]; total: number; path: string; offset: number; limit: number; sort: string; direction: string; capabilities: Record<string, boolean> }>(`/entries?${query}`);
+    return this.request<{ entries: Entry[]; total: number; path: string; offset: number; limit: number; nextCursor: string | null; sort: string; direction: string; capabilities: Record<string, boolean> }>(`/entries?${query}`);
   }
 
   createFolder(resource: string, path: string, name: string) {
@@ -108,12 +122,31 @@ export class Api {
   private async chunkUpload(resource: string, path: string, file: File, options: UploadOptions): Promise<{ entry: Entry }> {
     const chunkSize = 4_000_000;
     const total = Math.ceil(file.size / chunkSize);
-    const uploadId = crypto.randomUUID();
+    const existing = this.findPendingUpload(resource, path, file, Boolean(options.overwrite), total);
+    const uploadId = existing?.id || crypto.randomUUID();
+    const session: PendingUploadSession = existing || { id: uploadId, scope: this.base, resource, path, name: file.name, size: file.size, lastModified: file.lastModified, total, overwrite: Boolean(options.overwrite), updatedAt: Date.now() };
+    this.savePendingUpload({ ...session, updatedAt: Date.now() });
     const cancel = () => { void fetch(`${this.base}/uploads/chunks/${encodeURIComponent(uploadId)}`, { method: "DELETE", headers: { "X-CSRF-TOKEN": this.config.csrfToken }, credentials: "same-origin", keepalive: true }); };
     options.signal?.addEventListener("abort", cancel, { once: true });
     try {
+      let received = new Set<number>();
+      if (existing) {
+        try {
+          const status = await this.request<{ received: number[]; complete: boolean }>(`/uploads/chunks/${encodeURIComponent(uploadId)}`);
+          received = new Set(status.received);
+          if (received.size >= total) received.delete(total - 1);
+        } catch (error) {
+          if (!(error instanceof ApiError) || error.status !== 404) throw error;
+          this.removePendingUpload(uploadId);
+          return this.chunkUpload(resource, path, file, options);
+        }
+      }
       for (let index = 0; index < total; index++) {
         if (options.signal?.aborted) throw new DOMException("The upload was cancelled.", "AbortError");
+        if (received.has(index)) {
+          options.onProgress?.(Math.round((index + 1) / total * 100));
+          continue;
+        }
         const form = new FormData();
         form.set("resource", resource); form.set("path", path); form.set("name", file.name);
         form.set("uploadId", uploadId); form.set("index", String(index)); form.set("total", String(total));
@@ -123,12 +156,50 @@ export class Api {
         const payload = await response.json() as ApiResponse<{ complete: boolean; entry?: Entry }>;
         if (!response.ok || !payload.success || !payload.data) throw new ApiError(payload.error?.message || `Request failed (${response.status})`, payload.error?.code || "upload_failed", response.status);
         options.onProgress?.(Math.round((index + 1) / total * 100));
-        if (payload.data.complete && payload.data.entry) return { entry: payload.data.entry };
+        this.savePendingUpload({ ...session, updatedAt: Date.now() });
+        if (payload.data.complete && payload.data.entry) {
+          this.removePendingUpload(uploadId);
+          return { entry: payload.data.entry };
+        }
       }
       throw new ApiError("The chunk upload did not complete.", "chunk_incomplete", 500);
+    } catch (error) {
+      if (error instanceof ApiError && error.status >= 400 && error.status < 500) {
+        this.removePendingUpload(uploadId);
+      }
+      throw error;
     } finally {
       options.signal?.removeEventListener("abort", cancel);
+      if (options.signal?.aborted) this.removePendingUpload(uploadId);
     }
+  }
+
+  pendingUploads(): PendingUploadSession[] {
+    try {
+      const parsed = JSON.parse(localStorage.getItem(this.uploadStorageKey) || "[]") as PendingUploadSession[];
+      return Array.isArray(parsed) ? parsed.filter(item => item.scope === this.base && Date.now() - item.updatedAt < 86_400_000) : [];
+    } catch { return []; }
+  }
+
+  findPendingUpload(resource: string, path: string, file: File, overwrite: boolean, total?: number): PendingUploadSession | undefined {
+    return this.pendingUploads().find(item => item.resource === resource && item.path === path && item.name === file.name && item.size === file.size && item.lastModified === file.lastModified && item.overwrite === overwrite && (total === undefined || item.total === total));
+  }
+
+  private savePendingUpload(session: PendingUploadSession) {
+    const sessions = this.readAllPendingUploads().filter(item => item.id !== session.id);
+    sessions.push(session);
+    localStorage.setItem(this.uploadStorageKey, JSON.stringify(sessions.slice(-50)));
+  }
+
+  private removePendingUpload(id: string) {
+    localStorage.setItem(this.uploadStorageKey, JSON.stringify(this.readAllPendingUploads().filter(item => item.id !== id)));
+  }
+
+  private readAllPendingUploads(): PendingUploadSession[] {
+    try {
+      const parsed = JSON.parse(localStorage.getItem(this.uploadStorageKey) || "[]") as PendingUploadSession[];
+      return Array.isArray(parsed) ? parsed : [];
+    } catch { return []; }
   }
 
   downloadUrl(resource: string, path: string) {

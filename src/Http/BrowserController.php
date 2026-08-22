@@ -41,6 +41,7 @@ final readonly class BrowserController
             'language' => $language,
             'resource' => (string) $request->query->get('type', ''),
             'selectMode' => $request->query->has('CKEditorFuncNum') || $request->query->getBoolean('select'),
+            'selectionKind' => in_array((string) $request->query->get('selection', ''), ['file', 'image'], true) ? (string) $request->query->get('selection') : 'any',
             'ckeditorFunction' => (int) $request->query->get('CKEditorFuncNum', 0),
             'theme' => $this->theme->values(),
             'featureDefaults' => ['folderTree' => (bool) ($this->ui['folder_tree'] ?? false)],
