@@ -33,8 +33,7 @@ test.beforeEach(async ({ page }) => {
   await expect(page.getByText("guide.txt").first()).toBeVisible();
 });
 
-test("shows and copies an absolute public file URL", async ({ page, context }) => {
-  await context.grantPermissions(["clipboard-read", "clipboard-write"], { origin: "http://sofinder.test" });
+test("shows and copies an absolute public file URL", async ({ page }) => {
   await page.waitForTimeout(400);
   await page.evaluate(() => Object.defineProperty(navigator, "clipboard", { configurable: true, value: { writeText: async () => undefined } }));
   await page.getByText("guide.txt").first().click();
