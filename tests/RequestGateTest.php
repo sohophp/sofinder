@@ -67,6 +67,32 @@ final class RequestGateTest extends TestCase
         $gate->acquire(new ControllerEvent($kernel, static fn (): Response => new Response(), $this->request('sofinder_api_config'), HttpKernelInterface::MAIN_REQUEST));
     }
 
+    public function testThumbnailsUseASeparateRateLimitFromImageEditing(): void
+    {
+        $gate = new RequestGate($this->directory, $this->actor(), [
+            'image' => ['max_requests' => 1, 'interval' => 60, 'max_concurrent' => 2],
+            'thumbnail' => ['max_requests' => 2, 'interval' => 60, 'max_concurrent' => 2],
+        ]);
+        $kernel = $this->createMock(HttpKernelInterface::class);
+
+        foreach (range(1, 2) as $_) {
+            $thumbnail = $this->request('sofinder_image_thumbnail');
+            $gate->acquire(new ControllerEvent($kernel, static fn (): Response => new Response(), $thumbnail, HttpKernelInterface::MAIN_REQUEST));
+            $gate->release(new ResponseEvent($kernel, $thumbnail, HttpKernelInterface::MAIN_REQUEST, new Response()));
+        }
+
+        try {
+            $gate->acquire(new ControllerEvent($kernel, static fn (): Response => new Response(), $this->request('sofinder_image_thumbnail'), HttpKernelInterface::MAIN_REQUEST));
+            self::fail('The thumbnail limit should have been enforced.');
+        } catch (SoFinderException $exception) {
+            self::assertSame('rate_limit_exceeded', $exception->errorCode);
+        }
+
+        $edit = $this->request('sofinder_image_edit');
+        $gate->acquire(new ControllerEvent($kernel, static fn (): Response => new Response(), $edit, HttpKernelInterface::MAIN_REQUEST));
+        self::assertIsArray($edit->attributes->get('_sofinder_gate'));
+    }
+
     private function request(string $route): Request
     {
         $request = Request::create('/sofinder');

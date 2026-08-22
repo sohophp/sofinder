@@ -24,9 +24,13 @@ final class ExceptionSubscriber implements EventSubscriberInterface
         if (!$exception instanceof SoFinderException || !$event->getRequest()->attributes->getBoolean('_sofinder')) {
             return;
         }
-        $event->setResponse(new JsonResponse(
+        $response = new JsonResponse(
             OperationResult::failure($exception->errorCode, $exception->getMessage()),
             $exception->httpStatus,
-        ));
+        );
+        if ($exception->httpStatus === 429) {
+            $response->headers->set('Retry-After', '2');
+        }
+        $event->setResponse($response);
     }
 }

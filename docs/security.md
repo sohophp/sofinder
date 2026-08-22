@@ -26,9 +26,12 @@ bin/console sofinder:security:audit
 ```
 
 Default request gates separately constrain ordinary APIs, upload/chunk traffic,
-image work, ZIP generation and transfer batches. Tune `so_finder.limits` for
-the deployment. The built-in gate uses local locked files; a multi-host setup
-should replace it with a shared limiter before distributing concurrent traffic.
+read-only thumbnails, image editing, ZIP generation and transfer batches.
+Thumbnails have a larger independent allowance because one directory page can
+load many images; successful responses are privately cached by the browser.
+Tune `so_finder.limits` for the deployment. The built-in gate uses local locked
+files; a multi-host setup should replace it with a shared limiter before
+distributing concurrent traffic.
 
 The default inspector is replaceable through `FileInspectorInterface`.
 Deployments accepting untrusted public uploads should decorate it with an

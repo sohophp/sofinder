@@ -38,6 +38,38 @@ const Icon = ({ kind }: { kind: "folder" | "file" | "image" }) => {
   return <svg viewBox="0 0 48 48" aria-hidden="true"><path d="M10 5h19l9 9v29H10z" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinejoin="round"/><path d="M29 5v10h9" fill="none" stroke="currentColor" strokeWidth="2.5"/></svg>;
 };
 
+const ThumbnailImage = ({ src, alt, lazy = false }: { src: string; alt: string; lazy?: boolean }) => {
+  const [attempt, setAttempt] = useState(0);
+  const [failed, setFailed] = useState(false);
+  const retryTimer = useRef<number | null>(null);
+
+  useEffect(() => {
+    setAttempt(0);
+    setFailed(false);
+    return () => {
+      if (retryTimer.current !== null) window.clearTimeout(retryTimer.current);
+    };
+  }, [src]);
+
+  if (failed) return <Icon kind="image"/>;
+  const retrySrc = attempt === 0 ? src : `${src}${src.includes("?") ? "&" : "?"}retry=${attempt}`;
+
+  return <img
+    src={retrySrc}
+    alt={alt}
+    loading={lazy ? "lazy" : undefined}
+    decoding="async"
+    onError={() => {
+      if (retryTimer.current !== null) window.clearTimeout(retryTimer.current);
+      if (attempt >= 2) {
+        setFailed(true);
+        return;
+      }
+      retryTimer.current = window.setTimeout(() => setAttempt(current => current + 1), 700 * (attempt + 1));
+    }}
+  />;
+};
+
 const formatSize = (bytes: number) => {
   if (bytes < 1024) return `${bytes} B`;
   if (bytes < 1024 ** 2) return `${(bytes / 1024).toFixed(1)} KB`;
@@ -667,7 +699,7 @@ export default function App({ config }: { config: SoFinderConfig }) {
             {entries.map((entry, index) => {
               const image = !entry.directory && entry.mimeType?.startsWith("image/");
               return <button key={entry.path} data-entry-index={index} role="option" aria-selected={selectedPaths.has(entry.path)} aria-label={`${entry.name}, ${entry.directory ? t("folder") : formatSize(entry.size)}`} className={`sf-entry ${selectedPaths.has(entry.path) ? "selected" : ""}`} onClick={event => selectEntry(entry, event)} onDoubleClick={() => openEntry(entry)} onContextMenu={event => { event.preventDefault(); setSelectedPaths(new Set([entry.path])); setSelectionAnchor(entry.path); setContextMenu({ x: event.clientX, y: event.clientY, entry }); }} onPointerDown={event => { if (event.pointerType === "touch") longPress.current = window.setTimeout(() => { setSelectedPaths(new Set([entry.path])); setSelectionAnchor(entry.path); setContextMenu({ x: event.clientX, y: event.clientY, entry }); }, 550); }} onPointerUp={() => { if (longPress.current !== null) window.clearTimeout(longPress.current); longPress.current = null; }} onPointerCancel={() => { if (longPress.current !== null) window.clearTimeout(longPress.current); longPress.current = null; }} onDragOver={event => { if (entry.directory) event.preventDefault(); }} onDrop={event => { if (entry.directory && event.dataTransfer.files.length) { event.preventDefault(); void uploadTo(entry.path, event.dataTransfer.files); } }}>
-                <span className="sf-entry-icon">{image ? <img src={api.thumbnailUrl(resource, entry)} alt="" loading="lazy"/> : <Icon kind={entry.directory ? "folder" : "file"}/>}</span>
+                <span className="sf-entry-icon">{image ? <ThumbnailImage src={api.thumbnailUrl(resource, entry)} alt="" lazy/> : <Icon kind={entry.directory ? "folder" : "file"}/>}</span>
                 <span className="sf-entry-name" title={entry.name}>{features.favorites && metadata.favorites.includes(entry.path) && <span aria-label={t("favorite")}>★ </span>}{entry.name}</span>
                 <span className="sf-entry-size">{entry.directory ? "—" : formatSize(entry.size)}</span>
                 <time dateTime={new Date(entry.modifiedAt * 1000).toISOString()}>{new Intl.DateTimeFormat(config.language, { dateStyle: "medium", timeStyle: "short" }).format(entry.modifiedAt * 1000)}</time>
@@ -684,7 +716,7 @@ export default function App({ config }: { config: SoFinderConfig }) {
       <aside className="sf-details">
         <h2>{t("details")}</h2>
         {selectedEntries.length > 1 ? <div className="sf-state">{selectedEntries.length} {t("selectedCount")}</div> : selected ? <>
-          <div className="sf-preview">{selected.mimeType?.startsWith("image/") ? <img src={api.thumbnailUrl(resource, selected, 800, 600)} alt={selected.name}/> : <Icon kind={selected.directory ? "folder" : "file"}/>}</div>
+          <div className="sf-preview">{selected.mimeType?.startsWith("image/") ? <ThumbnailImage src={api.thumbnailUrl(resource, selected, 800, 600)} alt={selected.name}/> : <Icon kind={selected.directory ? "folder" : "file"}/>}</div>
           <h3>{selected.name}</h3>
           <dl><dt>{t("type")}</dt><dd>{selected.directory ? t("folder") : selected.mimeType || t("file")}</dd><dt>{t("size")}</dt><dd>{selected.directory ? "—" : formatSize(selected.size)}</dd>{imageInfo && <><dt>{t("dimensions")}</dt><dd>{imageInfo.width} × {imageInfo.height} px</dd></>}<dt>{t("location")}</dt><dd>{selected.path}</dd></dl>
           {features.tags && (metadata.tags[selected.path] || []).length > 0 && <div className="sf-tags">{metadata.tags[selected.path].map(tag => <span key={tag}>{tag}</span>)}</div>}

@@ -30,7 +30,10 @@ final readonly class ImageController
         );
         $response = new BinaryFileResponse($thumbnail['path']);
         $response->headers->set('Content-Type', $thumbnail['mimeType']);
-        $response->headers->set('Cache-Control', 'private, no-store');
+        $response->setPrivate();
+        $response->setMaxAge(86400);
+        $response->setAutoEtag();
+        $response->isNotModified($request);
         $response->headers->set('X-Content-Type-Options', 'nosniff');
 
         return $response;
