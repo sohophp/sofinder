@@ -44,9 +44,11 @@ test("shows and copies an absolute public file URL", async ({ page }) => {
   await page.waitForTimeout(400);
   await page.evaluate(() => Object.defineProperty(navigator, "clipboard", { configurable: true, value: { writeText: async () => undefined } }));
   await page.getByText("guide.txt").first().click();
-  await expect(page.getByLabel("文件网址")).toHaveValue("http://sofinder.test/uploads/editor/files/guide.txt");
-  await page.locator(".sf-file-url button").click({ force: true });
-  await expect(page.locator(".sf-file-url [role=status]")).toContainText("网址已复制");
+  await page.getByRole("button", { name: "复制网址" }).click();
+  const url = page.getByRole("dialog", { name: "文件网址" }).getByRole("textbox", { name: "文件网址" });
+  await expect(url).toHaveValue("http://sofinder.test/uploads/editor/files/guide.txt");
+  await url.click();
+  await expect(page.getByRole("dialog", { name: "文件网址" }).getByRole("status")).toContainText("网址已复制");
 });
 
 test("has no serious automated accessibility violations", async ({ page }) => {
@@ -64,4 +66,11 @@ test("right-click preview opens a preview without selecting the file", async ({ 
   await expect(page.getByRole("dialog", { name: "photo.png" })).toBeVisible();
   await expect(page.locator(".sf-file-preview-content img")).toHaveAttribute("src", "/uploads/editor/files/photo.png");
   await expect.poll(() => page.evaluate(() => (window as Window & { selectionEvents?: number }).selectionEvents)).toBe(0);
+});
+
+test("switches language and remembers the choice", async ({ page }) => {
+  await page.getByLabel("语言").selectOption("en");
+  await expect(page.getByRole("button", { name: /New folder/ })).toBeVisible();
+  await expect.poll(() => page.evaluate(() => localStorage.getItem("sofinder.language"))).toBe("en");
+  await expect(page.locator("html")).toHaveAttribute("lang", "en");
 });

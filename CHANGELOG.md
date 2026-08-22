@@ -11,6 +11,8 @@ Versioning; prereleases may still refine public extension interfaces.
   failures without leaving broken-image controls in the file browser.
 - Make the context-menu preview a dedicated accessible dialog instead of
   invoking the editor file-selection callback.
+- Refine the preview layout, move URL copying behind a compact icon and
+  click-to-copy dialog, and add a persistent English/Simplified Chinese switch.
 
 ## 0.1.0-beta.1 - 2026-08-22
 

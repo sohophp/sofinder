@@ -12,7 +12,7 @@ export function Modal({ title, closeLabel, onClose, children, footer, className 
   const titleId = useRef(`sf-dialog-${Math.random().toString(36).slice(2)}`);
   useEffect(() => {
     const previous = document.activeElement instanceof HTMLElement ? document.activeElement : null;
-    const focusable = panel.current?.querySelector<HTMLElement>("button:not(:disabled),input:not(:disabled),select:not(:disabled),textarea:not(:disabled),[href],[tabindex]:not([tabindex='-1'])");
+    const focusable = panel.current?.querySelector<HTMLElement>("[autofocus],button:not(:disabled),input:not(:disabled),select:not(:disabled),textarea:not(:disabled),[href],[tabindex]:not([tabindex='-1'])");
     focusable?.focus();
     return () => previous?.focus();
   }, []);

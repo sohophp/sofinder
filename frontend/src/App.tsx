@@ -9,6 +9,7 @@ import { ImageEditor } from "./components/ImageEditor";
 import { Modal } from "./components/Modal";
 import { TrashDialog } from "./components/TrashDialog";
 import { TagsDialog } from "./components/TagsDialog";
+import { UrlDialog } from "./components/UrlDialog";
 
 type ViewMode = "grid" | "list";
 type SortMode = "name" | "size" | "modified";
@@ -37,6 +38,8 @@ const Icon = ({ kind }: { kind: "folder" | "file" | "image" }) => {
   if (kind === "image") return <svg viewBox="0 0 48 48" aria-hidden="true"><rect x="7" y="5" width="34" height="38" rx="4" fill="none" stroke="currentColor" strokeWidth="2.5"/><circle cx="17" cy="16" r="4" fill="currentColor" opacity=".35"/><path d="m10 37 10-11 7 7 5-5 7 9" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinejoin="round"/></svg>;
   return <svg viewBox="0 0 48 48" aria-hidden="true"><path d="M10 5h19l9 9v29H10z" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinejoin="round"/><path d="M29 5v10h9" fill="none" stroke="currentColor" strokeWidth="2.5"/></svg>;
 };
+
+const LinkIcon = () => <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9.5 14.5 14.5 9M7.8 17.2l-1.1 1.1a3.5 3.5 0 0 1-5-5l3.6-3.6a3.5 3.5 0 0 1 5 0M16.2 6.8l1.1-1.1a3.5 3.5 0 1 1 5 5l-3.6 3.6a3.5 3.5 0 0 1-5 0" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"/></svg>;
 
 const ThumbnailImage = ({ src, alt, lazy = false }: { src: string; alt: string; lazy?: boolean }) => {
   const [attempt, setAttempt] = useState(0);
@@ -85,7 +88,11 @@ const loadColumnWidth = (side: "left" | "right") => {
 
 export default function App({ config }: { config: SoFinderConfig }) {
   const api = useMemo(() => new Api(config), [config]);
-  const t = useMemo(() => translator(config.language), [config.language]);
+  const [language, setLanguage] = useState<"en" | "zh-cn">(() => {
+    const saved = localStorage.getItem("sofinder.language");
+    return saved === "en" || saved === "zh-cn" ? saved : config.language;
+  });
+  const t = useMemo(() => translator(language), [language]);
   const [resources, setResources] = useState<ResourceType[]>([]);
   const [resource, setResource] = useState(config.resource);
   const [path, setPath] = useState("");
@@ -101,7 +108,6 @@ export default function App({ config }: { config: SoFinderConfig }) {
   const [view, setView] = useState<ViewMode>(() => localStorage.getItem("sofinder.view") === "list" ? "list" : "grid");
   const [loading, setLoading] = useState(true);
   const [notice, setNotice] = useState("");
-  const [copyStatus, setCopyStatus] = useState<"" | "copied" | "manual">("");
   const [uploads, setUploads] = useState<UploadTask[]>([]);
   const [uploadsCollapsed, setUploadsCollapsed] = useState(false);
   const [metadata, setMetadata] = useState<MetadataState>({ favorites: [], tags: {}, recent: [] });
@@ -117,6 +123,7 @@ export default function App({ config }: { config: SoFinderConfig }) {
   const [tagsOpen, setTagsOpen] = useState(false);
   const [contextMenu, setContextMenu] = useState<{ x: number; y: number; entry: Entry } | null>(null);
   const [previewEntry, setPreviewEntry] = useState<Entry | null>(null);
+  const [urlDialog, setUrlDialog] = useState<{ url: string; loginRequired: boolean } | null>(null);
   const [imagePresets, setImagePresets] = useState<Record<string, ImagePreset>>({});
   const [directoryCapabilities, setDirectoryCapabilities] = useState<Record<string, boolean>>({});
   const [leftWidth, setLeftWidth] = useState(() => loadColumnWidth("left"));
@@ -126,7 +133,6 @@ export default function App({ config }: { config: SoFinderConfig }) {
   const uploadSequence = useRef(0);
   const confirmResolver = useRef<((answer: boolean) => void) | null>(null);
   const longPress = useRef<number | null>(null);
-  const fileUrlInput = useRef<HTMLInputElement>(null);
   const columnDrag = useRef<{ side: "left" | "right"; startX: number; startWidth: number; currentWidth: number } | null>(null);
   const pageSize = 100;
 
@@ -145,6 +151,11 @@ export default function App({ config }: { config: SoFinderConfig }) {
     Object.entries(variableNames).forEach(([key, name]) => root.style.setProperty(name, config.theme[key as keyof typeof config.theme]));
     return () => previous.forEach(([name, value]) => value ? root.style.setProperty(name, value) : root.style.removeProperty(name));
   }, [config.theme]);
+
+  useEffect(() => {
+    localStorage.setItem("sofinder.language", language);
+    document.documentElement.lang = language === "zh-cn" ? "zh-CN" : "en";
+  }, [language]);
 
   const report = useCallback((error: unknown) => setNotice(error instanceof Error ? error.message : t("error")), [t]);
   const ask = useCallback((state: ConfirmState) => new Promise<boolean>(resolve => {
@@ -222,32 +233,22 @@ export default function App({ config }: { config: SoFinderConfig }) {
   const currentDepth = path === "" ? 0 : path.split("/").length;
   const selectedEntries = useMemo(() => entries.filter(entry => selectedPaths.has(entry.path)), [entries, selectedPaths]);
   const selected = selectedEntries.length === 1 ? selectedEntries[0] : null;
-  const selectedFileUrl = useMemo(() => {
-    if (!selected || selected.directory) return "";
-    return new URL(selected.url || api.downloadUrl(resource, selected.path), document.baseURI).href;
-  }, [api, resource, selected]);
+  const openUrlDialog = (entry: Entry) => {
+    if (entry.directory) return;
+    setUrlDialog({
+      url: new URL(entry.url || api.downloadUrl(resource, entry.path), document.baseURI).href,
+      loginRequired: !entry.url,
+    });
+  };
   const canSelected = (operation: string) => selectedEntries.length > 0 && selectedEntries.every(entry => entry.capabilities?.[operation] !== false);
 
   useEffect(() => {
-    setCopyStatus("");
     setImageInfo(null);
     if (!selected?.mimeType?.startsWith("image/")) return;
     let active = true;
     api.imageInfo(resource, selected.path).then(info => { if (active) setImageInfo(info); }).catch(error => { if (active) report(error); });
     return () => { active = false; };
   }, [api, resource, selected?.path, selected?.mimeType, report]);
-
-  const copyFileUrl = async () => {
-    if (!selectedFileUrl) return;
-    try {
-      await navigator.clipboard.writeText(selectedFileUrl);
-      setCopyStatus("copied");
-    } catch {
-      fileUrlInput.current?.focus();
-      fileUrlInput.current?.select();
-      setCopyStatus("manual");
-    }
-  };
 
   const selectEntry = (entry: Entry, event: React.MouseEvent) => {
     if (event.shiftKey && selectionAnchor) {
@@ -632,9 +633,12 @@ export default function App({ config }: { config: SoFinderConfig }) {
     <header className="sf-header">
       <div className="sf-brand"><span className="sf-brand-mark">S</span><strong>SoFinder</strong></div>
       <div className="sf-search"><span aria-hidden="true">⌕</span><select value={searchMode} onChange={event => { const next = event.target.value as "name" | "tags"; setSearchMode(next); setOffset(0); }} aria-label={t("searchScope")}><option value="name">{t("name")}</option><option value="tags" disabled={!features.tags}>{t("tags")}</option></select><input value={search} onChange={e => setSearch(e.target.value)} placeholder={searchMode === "tags" ? t("searchTags") : t("search")} aria-label={searchMode === "tags" ? t("searchTags") : t("search")}/></div>
-      <div className="sf-view-toggle" role="group">
-        <button className={view === "grid" ? "active" : ""} onClick={() => setViewMode("grid")} title={t("grid")}>▦</button>
-        <button className={view === "list" ? "active" : ""} onClick={() => setViewMode("list")} title={t("list")}>☷</button>
+      <div className="sf-header-actions">
+        <label className="sf-language-switch"><span className="sf-sr-only">{t("language")}</span><select value={language} onChange={event => setLanguage(event.target.value as "en" | "zh-cn")} aria-label={t("language")}><option value="zh-cn">简中</option><option value="en">EN</option></select></label>
+        <div className="sf-view-toggle" role="group">
+          <button className={view === "grid" ? "active" : ""} onClick={() => setViewMode("grid")} title={t("grid")}>▦</button>
+          <button className={view === "list" ? "active" : ""} onClick={() => setViewMode("list")} title={t("list")}>☷</button>
+        </div>
       </div>
     </header>
     <div className="sf-toolbar" role="toolbar" aria-label={t("fileActions")} title={t("keyboardHelp")}>
@@ -705,7 +709,7 @@ export default function App({ config }: { config: SoFinderConfig }) {
                 <span className="sf-entry-icon">{image ? <ThumbnailImage src={api.thumbnailUrl(resource, entry)} alt="" lazy/> : <Icon kind={entry.directory ? "folder" : "file"}/>}</span>
                 <span className="sf-entry-name" title={entry.name}>{features.favorites && metadata.favorites.includes(entry.path) && <span aria-label={t("favorite")}>★ </span>}{entry.name}</span>
                 <span className="sf-entry-size">{entry.directory ? "—" : formatSize(entry.size)}</span>
-                <time dateTime={new Date(entry.modifiedAt * 1000).toISOString()}>{new Intl.DateTimeFormat(config.language, { dateStyle: "medium", timeStyle: "short" }).format(entry.modifiedAt * 1000)}</time>
+                <time dateTime={new Date(entry.modifiedAt * 1000).toISOString()}>{new Intl.DateTimeFormat(language, { dateStyle: "medium", timeStyle: "short" }).format(entry.modifiedAt * 1000)}</time>
               </button>;
             })}
           </div>}
@@ -724,13 +728,7 @@ export default function App({ config }: { config: SoFinderConfig }) {
           <dl><dt>{t("type")}</dt><dd>{selected.directory ? t("folder") : selected.mimeType || t("file")}</dd><dt>{t("size")}</dt><dd>{selected.directory ? "—" : formatSize(selected.size)}</dd>{imageInfo && <><dt>{t("dimensions")}</dt><dd>{imageInfo.width} × {imageInfo.height} px</dd></>}<dt>{t("location")}</dt><dd>{selected.path}</dd></dl>
           {features.tags && (metadata.tags[selected.path] || []).length > 0 && <div className="sf-tags">{metadata.tags[selected.path].map(tag => <span key={tag}>{tag}</span>)}</div>}
           {config.selectMode && !selected.directory && selected.url && <button className="sf-select primary" onClick={() => choose()}>{t("select")}</button>}
-          {!selected.directory && <div className="sf-file-url">
-            <label htmlFor="sf-file-url-value">{t("fileUrl")}</label>
-            <div><input ref={fileUrlInput} id="sf-file-url-value" readOnly value={selectedFileUrl} onFocus={event => event.currentTarget.select()}/><button type="button" onClick={() => void copyFileUrl()}>{t("copyUrl")}</button></div>
-            {currentResource?.deliveryMode === "proxy" && <small>{t("loginRequired")}</small>}
-            <span role="status" aria-live="polite">{copyStatus === "copied" ? t("urlCopied") : copyStatus === "manual" ? t("copyUrlFailed") : ""}</span>
-          </div>}
-          {!selected.directory && <a className="sf-download" href={api.downloadUrl(resource, selected.path)}>{t("download")}</a>}
+          {!selected.directory && <div className="sf-detail-actions"><a className="sf-download" href={api.downloadUrl(resource, selected.path)}>{t("download")}</a><button type="button" className="sf-icon-button" onClick={() => openUrlDialog(selected)} title={t("copyUrl")} aria-label={t("copyUrl")}><LinkIcon/></button></div>}
         </> : <div className="sf-state">—</div>}
       </aside>
     </div>
@@ -750,13 +748,13 @@ export default function App({ config }: { config: SoFinderConfig }) {
     {textDialog && <TextDialog title={textDialog.title} label={textDialog.label} initialValue={textDialog.initial} maximum={textDialog.maximum} extension={textDialog.extension} confirmLabel={t("confirm")} cancelLabel={t("cancel")} closeLabel={t("close")} onConfirm={value => void submitTextDialog(value)} onClose={() => setTextDialog(null)}/>}
     {confirmDialog && <ConfirmDialog {...confirmDialog} confirmLabel={t("confirm")} cancelLabel={t("cancel")} closeLabel={t("close")} onConfirm={() => answerConfirm(true)} onClose={() => answerConfirm(false)}/>}
     {trashOpen && <TrashDialog
-      api={api} resource={resource} locale={config.language}
+      api={api} resource={resource} locale={language}
       labels={{ title: t("trash"), close: t("close"), empty: t("trashEmpty"), restore: t("restore"), permanentDelete: t("permanentDelete"), expires: t("expires"), conflict: t("restoreConflict"), usage: t("trashUsage"), items: t("items"), previous: t("previous"), next: t("next"), search: t("searchTrash") }}
       onClose={() => setTrashOpen(false)} onChanged={() => void load()}
     />}
     {tagsOpen && selected && <TagsDialog
       initial={metadata.tags[selected.path] || []}
-      suggestions={Array.from(new Set(Object.values(metadata.tags).flat())).sort((left, right) => left.localeCompare(right, config.language))}
+      suggestions={Array.from(new Set(Object.values(metadata.tags).flat())).sort((left, right) => left.localeCompare(right, language))}
       labels={{ title: t("tags"), close: t("close"), cancel: t("cancel"), save: t("save"), input: t("tagInput"), hint: t("tagInputHint"), maximum: t("tagMaximum") }}
       onClose={() => setTagsOpen(false)}
       onSave={tags => { setTagsOpen(false); void api.updateMetadata(resource, selected.path, "tags", { tags }).then(setMetadata).catch(report); }}
@@ -766,7 +764,7 @@ export default function App({ config }: { config: SoFinderConfig }) {
       closeLabel={t("close")}
       onClose={() => setPreviewEntry(null)}
       className="sf-file-preview-modal"
-      footer={<><a className="sf-preview-download" href={api.downloadUrl(resource, previewEntry.path)}>{t("download")}</a><button className="primary" onClick={() => setPreviewEntry(null)}>{t("close")}</button></>}
+      footer={<><button type="button" className="sf-icon-button" onClick={() => openUrlDialog(previewEntry)} title={t("copyUrl")} aria-label={t("copyUrl")}><LinkIcon/></button><a className="sf-preview-download" href={api.downloadUrl(resource, previewEntry.path)}>{t("download")}</a><button className="primary" onClick={() => setPreviewEntry(null)}>{t("close")}</button></>}
     >
       <div className="sf-file-preview-content">
         {previewEntry.mimeType?.startsWith("image/")
@@ -775,6 +773,7 @@ export default function App({ config }: { config: SoFinderConfig }) {
       </div>
       <dl className="sf-file-preview-meta"><dt>{t("type")}</dt><dd>{previewEntry.mimeType || t("file")}</dd><dt>{t("size")}</dt><dd>{formatSize(previewEntry.size)}</dd><dt>{t("location")}</dt><dd>{previewEntry.path}</dd></dl>
     </Modal>}
+    {urlDialog && <UrlDialog url={urlDialog.url} loginRequired={urlDialog.loginRequired} labels={{ title: t("fileUrl"), close: t("close"), copied: t("urlCopied"), failed: t("copyUrlFailed"), hint: t("clickUrlToCopy"), loginRequired: t("loginRequired") }} onClose={() => setUrlDialog(null)}/>}
     {cropOpen && selected && imageInfo && <ImageEditor
       entry={selected}
       info={imageInfo}
