@@ -14,7 +14,7 @@ jobs:
         php: ['8.2', '8.3', '8.4', '8.5']
         symfony: ['6.4.*', '7.4.*']
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - uses: shivammathur/setup-php@v2
         with:
           php-version: ${{ matrix.php }}
@@ -35,7 +35,7 @@ jobs:
   frontend:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
@@ -59,7 +59,7 @@ jobs:
   quality:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - uses: shivammathur/setup-php@v2
         with:
           php-version: '8.5'
@@ -79,7 +79,7 @@ jobs:
           - php: '8.5'
             manifest: composer-7.4.json
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - uses: shivammathur/setup-php@v2
         with:
           php-version: ${{ matrix.php }}
@@ -102,7 +102,7 @@ jobs:
   originality:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - name: Scan product source and distribution
         run: '! grep -RniE "CKFinder|CKSource" src frontend/src dist'
       - run: git diff --check

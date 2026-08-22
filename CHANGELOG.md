@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased (0.1.0-beta.3)
+## 0.1.0-beta.3 - 2026-08-23
 
 - Support PHP 8.2–8.5 and Symfony 6.4/7.4 with a CI compatibility matrix.
 - Add paged storage queries, cursor-ready listing results, storage capability
