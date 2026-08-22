@@ -23,6 +23,7 @@ so_finder:
     accent: '#276ef1'
     radius: '10px'
   trash_dir: '%kernel.project_dir%/var/sofinder/trash'
+  usage_dir: '%kernel.project_dir%/var/sofinder/usage'
   trash_retention_days: 30
   trash_max_items: 1000
   trash_max_bytes: 1073741824
@@ -106,4 +107,7 @@ CKEDITOR.replace("editor", {
 ```
 
 Schedule `sofinder:trash:cleanup` daily and run `sofinder:security:audit` during
-deployment. Treat critical audit findings as a release blocker.
+deployment. Run `sofinder:usage:recalculate` after the first deployment and
+daily to reconcile changes made outside SoFinder. Normal requests use the
+locked persistent counter rather than recursively scanning a resource. Treat
+critical audit findings as a release blocker.

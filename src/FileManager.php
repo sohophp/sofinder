@@ -7,6 +7,7 @@ namespace SohoPHP\SoFinder;
 use Psr\EventDispatcher\EventDispatcherInterface;
 use SohoPHP\SoFinder\Contract\AuthorizationInterface;
 use SohoPHP\SoFinder\Contract\EntryUrlGeneratorInterface;
+use SohoPHP\SoFinder\Contract\UsageTrackerInterface;
 use SohoPHP\SoFinder\Exception\AccessDeniedException;
 use SohoPHP\SoFinder\Exception\ConflictException;
 use SohoPHP\SoFinder\Exception\InvalidPathException;
@@ -16,6 +17,7 @@ use SohoPHP\SoFinder\Security\PathGuard;
 use SohoPHP\SoFinder\Security\DefaultFileInspector;
 use SohoPHP\SoFinder\Security\UploadPipeline;
 use SohoPHP\SoFinder\Trash\TrashManager;
+use SohoPHP\SoFinder\Usage\PersistentUsageTracker;
 use SohoPHP\SoFinder\Image\GdImageProcessor;
 use SohoPHP\SoFinder\Value\Entry;
 use SohoPHP\SoFinder\Value\ResourceStorage;
@@ -33,12 +35,16 @@ final readonly class FileManager
         ?UploadPipeline $uploads = null,
         private ?EntryUrlGeneratorInterface $entryUrls = null,
         private ?TrashManager $trash = null,
+        ?UsageTrackerInterface $usage = null,
     ) {
         $this->uploads = $uploads ?? new UploadPipeline(
             new DefaultFileInspector(new GdImageProcessor()),
             sys_get_temp_dir() . '/sofinder-quarantine',
         );
+        $this->usage = $usage ?? new PersistentUsageTracker(sys_get_temp_dir() . '/sofinder-usage');
     }
+
+    private UsageTrackerInterface $usage;
 
     /** @return list<array<string, mixed>> */
     public function resources(): array
@@ -53,7 +59,7 @@ final readonly class FileManager
         );
 
         return array_values(array_map(
-            static fn (ResourceStorage $item): array => $item->resource->jsonSerialize() + ['usedBytes' => $item->storage->usage()],
+            fn (ResourceStorage $item): array => $item->resource->jsonSerialize() + ['usedBytes' => $this->usage->usage($item)],
             $visible,
         ));
     }
@@ -142,7 +148,8 @@ final readonly class FileManager
     public function upload(string $resourceName, string $directory, string $name, int $size, mixed $stream, bool $overwrite = false): Entry
     {
         $path = $this->pathGuard->join($directory, trim($name));
-        $item = $this->authorized($resourceName, 'upload', $path, true);
+        $authorizationOperation = $overwrite ? 'overwrite' : 'upload';
+        $item = $this->authorized($resourceName, $authorizationOperation, $path, true);
         $item->resource->assertFileNameAllowed($name);
         $item->resource->assertEntryPathAllowed($path, false);
         $quarantined = $this->uploads->quarantine($stream, $name, $item->resource);
@@ -154,13 +161,14 @@ final readonly class FileManager
                 throw new SoFinderException('Unable to read the inspected upload.', 'upload_quarantine_failed', 500);
             }
 
-            return $this->withQuotaLock($item, function () use ($item, $path, $input, $overwrite, $actualSize, $size): Entry {
-                $this->assertQuota($item, $path, $actualSize, $overwrite);
-                $this->before('upload', $item, $path, ['size' => $actualSize, 'reported_size' => $size]);
+            return $this->usage->mutate($item, function (int $currentUsage) use ($item, $path, $input, $overwrite, $actualSize, $size, $authorizationOperation): array {
+                $replacedBytes = $overwrite ? $this->existingSize($item, $path) : 0;
+                $this->assertQuota($item, $currentUsage, $replacedBytes, $actualSize);
+                $this->before($authorizationOperation, $item, $path, ['size' => $actualSize, 'reported_size' => $size]);
                 $entry = $item->storage->writeStream($path, $input, $overwrite);
-                $this->after('upload', $item, $path, ['entry' => $entry, 'size' => $actualSize]);
+                $this->after($authorizationOperation, $item, $path, ['entry' => $entry, 'size' => $actualSize]);
 
-                return $this->present($item, $entry);
+                return ['value' => $this->present($item, $entry), 'delta' => $actualSize - $replacedBytes];
             });
         } finally {
             if (is_resource($input)) {
@@ -219,9 +227,17 @@ final readonly class FileManager
             $source->directory ? $this->maximumDescendantDepth($item, $path, 'rename') : 0,
         );
         $this->assertGranted($item, 'rename', $destination);
-        $this->before('rename', $item, $path, ['destination' => $destination]);
-        $entry = $item->storage->move($path, $destination, $overwrite);
-        $this->after('rename', $item, $destination, ['source' => $path, 'entry' => $entry]);
+        if ($overwrite) {
+            $this->assertGranted($item, 'overwrite', $destination);
+        }
+        $entry = $this->usage->mutate($item, function () use ($item, $path, $destination, $overwrite): array {
+            $replacedBytes = $overwrite && $destination !== $path ? $this->existingSize($item, $destination) : 0;
+            $this->before('rename', $item, $path, ['destination' => $destination]);
+            $entry = $item->storage->move($path, $destination, $overwrite);
+            $this->after('rename', $item, $destination, ['source' => $path, 'entry' => $entry]);
+
+            return ['value' => $entry, 'delta' => -$replacedBytes];
+        });
 
         return $this->present($item, $entry);
     }
@@ -252,10 +268,14 @@ final readonly class FileManager
                 $source->directory,
                 $additionalFolderDepth,
             );
+        } elseif ($overwrite) {
+            $this->assertGranted($item, 'overwrite', $destination);
         }
-        $execute = function () use ($operation, $item, $path, $destination, $overwrite): Entry {
+        $entry = $this->usage->mutate($item, function (int $currentUsage) use ($operation, $item, $path, $destination, $overwrite): array {
+            $sourceBytes = $item->storage->size($path);
+            $replacedBytes = $overwrite ? $this->existingSize($item, $destination) : 0;
             if ($operation === 'copy') {
-                $this->assertQuota($item, $destination, $item->storage->size($path), $overwrite);
+                $this->assertQuota($item, $currentUsage, $replacedBytes, $sourceBytes);
             }
             $this->before($operation, $item, $path, ['destination' => $destination]);
             $entry = $operation === 'copy'
@@ -263,9 +283,11 @@ final readonly class FileManager
                 : $item->storage->move($path, $destination, $overwrite);
             $this->after($operation, $item, $destination, ['source' => $path, 'entry' => $entry]);
 
-            return $entry;
-        };
-        $entry = $operation === 'copy' ? $this->withQuotaLock($item, $execute) : $execute();
+            return [
+                'value' => $entry,
+                'delta' => $operation === 'copy' ? $sourceBytes - $replacedBytes : -$replacedBytes,
+            ];
+        });
 
         return $this->present($item, $entry);
     }
@@ -353,12 +375,17 @@ final readonly class FileManager
     public function delete(string $resourceName, string $path): ?array
     {
         $item = $this->authorized($resourceName, 'delete', $path, true);
-        $this->before('delete', $item, $path);
-        $trashed = $this->trash?->put($item, $path);
-        if ($trashed === null) {
-            $item->storage->delete($path);
-        }
-        $this->after('delete', $item, $path, ['trash' => $trashed]);
+        $trashed = $this->usage->mutate($item, function () use ($item, $path): array {
+            $removedBytes = $item->storage->size($path);
+            $this->before('delete', $item, $path);
+            $trashed = $this->trash?->put($item, $path);
+            if ($trashed === null) {
+                $item->storage->delete($path);
+            }
+            $this->after('delete', $item, $path, ['trash' => $trashed]);
+
+            return ['value' => $trashed, 'delta' => -$removedBytes];
+        });
 
         return $trashed;
     }
@@ -402,8 +429,17 @@ final readonly class FileManager
             throw new \SohoPHP\SoFinder\Exception\NotFoundException();
         }
         $item = $this->authorized($resourceName, 'trash_restore', $trashed->path, true);
-        $entry = $this->trash->restore($item, $id, $conflict);
-        $this->after('trash_restore', $item, $entry->path, ['entry' => $entry, 'trash_id' => $id]);
+        if ($conflict === 'overwrite') {
+            $this->assertGranted($item, 'overwrite', $trashed->path);
+        }
+        $entry = $this->usage->mutate($item, function (int $currentUsage) use ($item, $id, $conflict, $trashed): array {
+            $replacedBytes = $conflict === 'overwrite' ? $this->existingSize($item, $trashed->path) : 0;
+            $this->assertQuota($item, $currentUsage, $replacedBytes, $trashed->size);
+            $entry = $this->trash->restore($item, $id, $conflict);
+            $this->after('trash_restore', $item, $entry->path, ['entry' => $entry, 'trash_id' => $id]);
+
+            return ['value' => $entry, 'delta' => $trashed->size - $replacedBytes];
+        });
 
         return $this->present($item, $entry);
     }
@@ -472,10 +508,10 @@ final readonly class FileManager
     /** @return array<string, bool> */
     private function capabilities(ResourceStorage $item, string $path): array
     {
-        $operations = ['read', 'list', 'upload', 'create_folder', 'rename', 'copy', 'move', 'delete'];
+        $operations = ['read', 'list', 'upload', 'overwrite', 'create_folder', 'rename', 'copy', 'move', 'delete'];
         $capabilities = [];
         foreach ($operations as $operation) {
-            $write = in_array($operation, ['upload', 'create_folder', 'rename', 'copy', 'move', 'delete'], true);
+            $write = in_array($operation, ['upload', 'overwrite', 'create_folder', 'rename', 'copy', 'move', 'delete'], true);
             $capabilities[$operation] = (!$write || !$item->resource->readOnly)
                 && $this->authorization->isGranted($operation, $item->resource, $path);
         }
@@ -552,49 +588,23 @@ final readonly class FileManager
         return $maximum;
     }
 
-    private function assertQuota(ResourceStorage $item, string $destination, int $incomingBytes, bool $overwrite): void
+    private function assertQuota(ResourceStorage $item, int $currentUsage, int $replacedBytes, int $incomingBytes): void
     {
         $quota = $item->resource->quotaBytes;
         if ($quota <= 0) {
             return;
         }
-        $replacedBytes = 0;
-        try {
-            $item->storage->entry($destination);
-            if (!$overwrite) {
-                return;
-            }
-            $replacedBytes = $item->storage->size($destination);
-        } catch (\SohoPHP\SoFinder\Exception\NotFoundException) {
-        }
-        if ($item->storage->usage() - $replacedBytes + $incomingBytes > $quota) {
+        if ($currentUsage - $replacedBytes + $incomingBytes > $quota) {
             throw new SoFinderException('The resource storage quota would be exceeded.', 'quota_exceeded', 413);
         }
     }
 
-    /**
-     * @template T
-     * @param callable():T $operation
-     * @return T
-     */
-    private function withQuotaLock(ResourceStorage $item, callable $operation): mixed
+    private function existingSize(ResourceStorage $item, string $path): int
     {
-        if ($item->resource->quotaBytes <= 0) {
-            return $operation();
-        }
-        $lock = fopen(sys_get_temp_dir() . '/sofinder-quota-' . hash('sha256', $item->resource->root) . '.lock', 'c+b');
-        if ($lock === false) {
-            throw new SoFinderException('Unable to acquire the resource quota lock.', 'quota_check_failed', 500);
-        }
         try {
-            if (!flock($lock, LOCK_EX)) {
-                throw new SoFinderException('Unable to acquire the resource quota lock.', 'quota_check_failed', 500);
-            }
-
-            return $operation();
-        } finally {
-            flock($lock, LOCK_UN);
-            fclose($lock);
+            return $item->storage->size($path);
+        } catch (\SohoPHP\SoFinder\Exception\NotFoundException) {
+            return 0;
         }
     }
 }

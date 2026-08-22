@@ -37,6 +37,46 @@ final class FileManagerTest extends TestCase
         $manager->resources();
     }
 
+    public function testEveryReplacementRequiresTheIndependentOverwritePermission(): void
+    {
+        file_put_contents($this->directory . '/target.txt', 'original');
+        file_put_contents($this->directory . '/source.txt', 'source');
+        $resource = new ResourceType('Files', $this->directory, '/files', ['txt']);
+        $authorization = new class implements AuthorizationInterface {
+            public function isAuthenticated(): bool { return true; }
+            public function isGranted(string $operation, ResourceType $resource, string $path): bool
+            {
+                return $operation !== 'overwrite';
+            }
+        };
+        $manager = new FileManager(
+            new ResourceRegistry([new ResourceStorage($resource, new LocalStorageAdapter($this->directory, '/files'))]),
+            $authorization,
+            new EventDispatcher(),
+        );
+
+        $stream = fopen('php://temp', 'w+b');
+        self::assertIsResource($stream);
+        fwrite($stream, 'replacement');
+        rewind($stream);
+        try {
+            $manager->upload('Files', '', 'target.txt', 11, $stream, true);
+            self::fail('An upload replacement must require overwrite permission.');
+        } catch (AccessDeniedException) {
+            self::assertSame('original', file_get_contents($this->directory . '/target.txt'));
+        } finally {
+            fclose($stream);
+        }
+
+        try {
+            $manager->rename('Files', 'source.txt', 'target.txt', true);
+            self::fail('A rename replacement must require overwrite permission.');
+        } catch (AccessDeniedException) {
+            self::assertFileExists($this->directory . '/source.txt');
+            self::assertSame('original', file_get_contents($this->directory . '/target.txt'));
+        }
+    }
+
     public function testCreatesAndListsFolder(): void
     {
         $manager = $this->manager(true);

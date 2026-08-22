@@ -69,6 +69,7 @@ export default function App({ config }: { config: SoFinderConfig }) {
   const [view, setView] = useState<ViewMode>(() => localStorage.getItem("sofinder.view") === "list" ? "list" : "grid");
   const [loading, setLoading] = useState(true);
   const [notice, setNotice] = useState("");
+  const [copyStatus, setCopyStatus] = useState<"" | "copied" | "manual">("");
   const [uploads, setUploads] = useState<UploadTask[]>([]);
   const [uploadsCollapsed, setUploadsCollapsed] = useState(false);
   const [metadata, setMetadata] = useState<MetadataState>({ favorites: [], tags: {}, recent: [] });
@@ -92,6 +93,7 @@ export default function App({ config }: { config: SoFinderConfig }) {
   const uploadSequence = useRef(0);
   const confirmResolver = useRef<((answer: boolean) => void) | null>(null);
   const longPress = useRef<number | null>(null);
+  const fileUrlInput = useRef<HTMLInputElement>(null);
   const columnDrag = useRef<{ side: "left" | "right"; startX: number; startWidth: number; currentWidth: number } | null>(null);
   const pageSize = 100;
 
@@ -187,15 +189,32 @@ export default function App({ config }: { config: SoFinderConfig }) {
   const currentDepth = path === "" ? 0 : path.split("/").length;
   const selectedEntries = useMemo(() => entries.filter(entry => selectedPaths.has(entry.path)), [entries, selectedPaths]);
   const selected = selectedEntries.length === 1 ? selectedEntries[0] : null;
+  const selectedFileUrl = useMemo(() => {
+    if (!selected || selected.directory) return "";
+    return new URL(selected.url || api.downloadUrl(resource, selected.path), document.baseURI).href;
+  }, [api, resource, selected]);
   const canSelected = (operation: string) => selectedEntries.length > 0 && selectedEntries.every(entry => entry.capabilities?.[operation] !== false);
 
   useEffect(() => {
+    setCopyStatus("");
     setImageInfo(null);
     if (!selected?.mimeType?.startsWith("image/")) return;
     let active = true;
     api.imageInfo(resource, selected.path).then(info => { if (active) setImageInfo(info); }).catch(error => { if (active) report(error); });
     return () => { active = false; };
   }, [api, resource, selected?.path, selected?.mimeType, report]);
+
+  const copyFileUrl = async () => {
+    if (!selectedFileUrl) return;
+    try {
+      await navigator.clipboard.writeText(selectedFileUrl);
+      setCopyStatus("copied");
+    } catch {
+      fileUrlInput.current?.focus();
+      fileUrlInput.current?.select();
+      setCopyStatus("manual");
+    }
+  };
 
   const selectEntry = (entry: Entry, event: React.MouseEvent) => {
     if (event.shiftKey && selectionAnchor) {
@@ -670,6 +689,12 @@ export default function App({ config }: { config: SoFinderConfig }) {
           <dl><dt>{t("type")}</dt><dd>{selected.directory ? t("folder") : selected.mimeType || t("file")}</dd><dt>{t("size")}</dt><dd>{selected.directory ? "—" : formatSize(selected.size)}</dd>{imageInfo && <><dt>{t("dimensions")}</dt><dd>{imageInfo.width} × {imageInfo.height} px</dd></>}<dt>{t("location")}</dt><dd>{selected.path}</dd></dl>
           {features.tags && (metadata.tags[selected.path] || []).length > 0 && <div className="sf-tags">{metadata.tags[selected.path].map(tag => <span key={tag}>{tag}</span>)}</div>}
           {config.selectMode && !selected.directory && selected.url && <button className="sf-select primary" onClick={() => choose()}>{t("select")}</button>}
+          {!selected.directory && <div className="sf-file-url">
+            <label htmlFor="sf-file-url-value">{t("fileUrl")}</label>
+            <div><input ref={fileUrlInput} id="sf-file-url-value" readOnly value={selectedFileUrl} onFocus={event => event.currentTarget.select()}/><button type="button" onClick={() => void copyFileUrl()}>{t("copyUrl")}</button></div>
+            {currentResource?.deliveryMode === "proxy" && <small>{t("loginRequired")}</small>}
+            <span role="status" aria-live="polite">{copyStatus === "copied" ? t("urlCopied") : copyStatus === "manual" ? t("copyUrlFailed") : ""}</span>
+          </div>}
           {!selected.directory && <a className="sf-download" href={api.downloadUrl(resource, selected.path)}>{t("download")}</a>}
         </> : <div className="sf-state">—</div>}
       </aside>

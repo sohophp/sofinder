@@ -9,6 +9,8 @@
 **/node_modules/
 /frontend/.vite/
 /frontend/.vite-temp/
+/frontend/test-results/
+/frontend/playwright-report/
 *.tsbuildinfo
 
 # Local environment and runtime files

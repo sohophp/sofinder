@@ -8,6 +8,7 @@ use Psr\EventDispatcher\EventDispatcherInterface;
 use Psr\Log\LoggerInterface;
 use SohoPHP\SoFinder\Command\SecurityAuditCommand;
 use SohoPHP\SoFinder\Command\TrashCleanupCommand;
+use SohoPHP\SoFinder\Command\UsageRecalculateCommand;
 use SohoPHP\SoFinder\Archive\ArchiveManager;
 use SohoPHP\SoFinder\Contract\AuthorizationInterface;
 use SohoPHP\SoFinder\Contract\ActorProviderInterface;
@@ -16,6 +17,7 @@ use SohoPHP\SoFinder\Contract\FileInspectorInterface;
 use SohoPHP\SoFinder\Contract\EntryUrlGeneratorInterface;
 use SohoPHP\SoFinder\Contract\MetadataStoreInterface;
 use SohoPHP\SoFinder\Contract\PluginInterface;
+use SohoPHP\SoFinder\Contract\UsageTrackerInterface;
 use SohoPHP\SoFinder\FileManager;
 use SohoPHP\SoFinder\Http\ApiController;
 use SohoPHP\SoFinder\Http\ArchiveController;
@@ -46,6 +48,7 @@ use SohoPHP\SoFinder\Symfony\ResourceRegistryFactory;
 use SohoPHP\SoFinder\Symfony\SymfonyAuthorization;
 use SohoPHP\SoFinder\Symfony\SymfonyEntryUrlGenerator;
 use SohoPHP\SoFinder\Trash\TrashManager;
+use SohoPHP\SoFinder\Usage\PersistentUsageTracker;
 use SohoPHP\SoFinder\Upload\ChunkUploadManager;
 use SohoPHP\SoFinder\Value\Theme;
 use Symfony\Component\DependencyInjection\Alias;
@@ -73,6 +76,7 @@ final class SoFinderExtension extends Extension
         $container->setParameter('so_finder.metadata_file', $config['metadata_file']);
         $container->setParameter('so_finder.quarantine_dir', $config['quarantine_dir']);
         $container->setParameter('so_finder.chunk_dir', $config['chunk_dir']);
+        $container->setParameter('so_finder.usage_dir', $config['usage_dir']);
         $container->setParameter('so_finder.trash_dir', $config['trash_dir']);
         $container->registerForAutoconfiguration(PluginInterface::class)->addTag('sofinder.plugin');
         $packageDir = dirname(__DIR__, 2);
@@ -102,6 +106,9 @@ final class SoFinderExtension extends Extension
                 new Reference(RequestStack::class),
             ]));
         $container->setAlias(ActorProviderInterface::class, new Alias(SymfonyActorProvider::class));
+        $container->setDefinition(PersistentUsageTracker::class, (new Definition(PersistentUsageTracker::class))
+            ->setArgument('$directory', $config['usage_dir']));
+        $container->setAlias(UsageTrackerInterface::class, new Alias(PersistentUsageTracker::class));
         $container->setDefinition(JsonMetadataStore::class, (new Definition(JsonMetadataStore::class))
             ->setArgument('$file', $config['metadata_file']));
         $container->setAlias(MetadataStoreInterface::class, new Alias(JsonMetadataStore::class));
@@ -149,6 +156,7 @@ final class SoFinderExtension extends Extension
                 new Reference(UploadPipeline::class),
                 new Reference(EntryUrlGeneratorInterface::class),
                 new Reference(TrashManager::class),
+                new Reference(UsageTrackerInterface::class),
             ]));
         $container->setDefinition(ImageManager::class, (new Definition(ImageManager::class))
             ->setArguments([
@@ -248,6 +256,12 @@ final class SoFinderExtension extends Extension
                 $config['quarantine_dir'],
                 $config['chunk_dir'],
                 $config['trash_dir'],
+            ])
+            ->addTag('console.command'));
+        $container->setDefinition(UsageRecalculateCommand::class, (new Definition(UsageRecalculateCommand::class))
+            ->setArguments([
+                new Reference(ResourceRegistry::class),
+                new Reference(UsageTrackerInterface::class),
             ])
             ->addTag('console.command'));
     }
