@@ -1,0 +1,31 @@
+# PHP dependencies and test output
+/vendor/
+/.phpunit.result.cache
+/.phpunit.cache/
+/coverage/
+/build/
+
+# Frontend dependencies and transient build caches
+**/node_modules/
+/frontend/.vite/
+/frontend/.vite-temp/
+*.tsbuildinfo
+
+# Local environment and runtime files
+/.env
+/.env.*
+!/.env.example
+/.cache/
+/.tmp/
+/tmp/
+*.log
+
+# Editors and operating systems
+/.idea/
+/.vscode/
+*.swp
+*.swo
+.DS_Store
+Thumbs.db
+
+# dist/ is intentionally committed: Composer consumers use these assets.

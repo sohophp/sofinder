@@ -1,0 +1,115 @@
+export interface SoFinderConfig {
+  apiBase: string;
+  csrfToken: string;
+  language: "en" | "zh-cn";
+  resource: string;
+  selectMode: boolean;
+  ckeditorFunction: number;
+  theme: {
+    accent: string;
+    background: string;
+    panel: string;
+    text: string;
+    muted: string;
+    danger: string;
+    radius: string;
+  };
+  featureDefaults: { folderTree: boolean };
+}
+
+export interface PluginDescriptor {
+  name: string;
+  version: string;
+  capabilities: string[];
+}
+
+export interface ResourceType {
+  name: string;
+  publicUrl: string;
+  allowedExtensions: string[];
+  maxSize: number;
+  readOnly: boolean;
+  quotaBytes: number;
+  usedBytes: number;
+  maxFileNameLength: number;
+  maxFolderNameLength: number;
+  maxFolderDepth: number;
+  deliveryMode: "public" | "proxy";
+}
+
+export interface Entry {
+  path: string;
+  name: string;
+  directory: boolean;
+  size: number;
+  modifiedAt: number;
+  mimeType: string | null;
+  url: string | null;
+  capabilities: Record<string, boolean>;
+}
+
+export interface TrashItem {
+  id: string;
+  resource: string;
+  path: string;
+  directory: boolean;
+  size: number;
+  deletedAt: number;
+  expiresAt: number;
+}
+
+export interface TrashPage {
+  items: TrashItem[];
+  total: number;
+  offset: number;
+  limit: number;
+  usedItems: number;
+  usedBytes: number;
+  maxItems: number;
+  maxBytes: number;
+}
+
+export interface ImagePreset { width: number; height: number; quality: number }
+export type ImageAction =
+  | { type: "crop"; x: number; y: number; width: number; height: number; quality?: number }
+  | { type: "rotate"; degrees: 0 | 90 | 180 | 270; quality?: number }
+  | { type: "resize"; width: number; height: number; quality?: number }
+  | { type: "preset"; name: string };
+
+export interface ImageEditResult {
+  entry: Entry;
+  original: ImageInfo & { size: number };
+  result: ImageInfo & { size: number };
+}
+
+export interface ApiResponse<T> {
+  success: boolean;
+  data?: T;
+  error?: { code: string; message: string };
+}
+
+export interface BatchResult {
+  operation: "copy" | "move" | "delete";
+  total: number;
+  succeeded: number;
+  failed: number;
+  purgedItems: number;
+  purgedBytes: number;
+  results: Array<{
+    path: string;
+    success: boolean;
+    entry?: Entry;
+    error?: { code: string; message: string };
+  }>;
+}
+
+export interface MetadataState {
+  favorites: string[];
+  tags: Record<string, string[]>;
+  recent: Array<{ path: string; touchedAt: number }>;
+}
+
+export interface ImageInfo {
+  width: number;
+  height: number;
+}

@@ -1,0 +1,153 @@
+sofinder_browser:
+  path: /browser
+  controller: SohoPHP\SoFinder\Http\BrowserController
+  methods: [GET]
+  defaults: { _sofinder: true }
+
+sofinder_asset:
+  path: /assets/{file}
+  controller: SohoPHP\SoFinder\Http\AssetController
+  methods: [GET]
+  requirements: { file: 'sofinder\.(?:js|css)' }
+  defaults: { _sofinder: true }
+
+sofinder_api_config:
+  path: /api/config
+  controller: SohoPHP\SoFinder\Http\ApiController::config
+  methods: [GET]
+  defaults: { _sofinder: true }
+
+sofinder_api_entries:
+  path: /api/entries
+  controller: SohoPHP\SoFinder\Http\ApiController::entries
+  methods: [GET]
+  defaults: { _sofinder: true }
+
+sofinder_api_folder:
+  path: /api/folders
+  controller: SohoPHP\SoFinder\Http\ApiController::createFolder
+  methods: [POST]
+  defaults: { _sofinder: true }
+
+sofinder_api_upload:
+  path: /api/uploads
+  controller: SohoPHP\SoFinder\Http\ApiController::upload
+  methods: [POST]
+  defaults: { _sofinder: true }
+
+sofinder_api_chunk_upload:
+  path: /api/uploads/chunks
+  controller: SohoPHP\SoFinder\Http\ChunkUploadController::upload
+  methods: [POST]
+  defaults: { _sofinder: true }
+
+sofinder_api_chunk_cancel:
+  path: /api/uploads/chunks/{id}
+  controller: SohoPHP\SoFinder\Http\ChunkUploadController::cancel
+  methods: [DELETE]
+  requirements: { id: '[a-zA-Z0-9_-]{16,80}' }
+  defaults: { _sofinder: true }
+
+sofinder_api_rename:
+  path: /api/entries/rename
+  controller: SohoPHP\SoFinder\Http\ApiController::rename
+  methods: [PATCH]
+  defaults: { _sofinder: true }
+
+sofinder_api_copy:
+  path: /api/entries/copy
+  controller: SohoPHP\SoFinder\Http\ApiController::transfer
+  methods: [POST]
+  defaults: { _sofinder: true, operation: copy }
+
+sofinder_api_move:
+  path: /api/entries/move
+  controller: SohoPHP\SoFinder\Http\ApiController::transfer
+  methods: [POST]
+  defaults: { _sofinder: true, operation: move }
+
+sofinder_api_delete:
+  path: /api/entries
+  controller: SohoPHP\SoFinder\Http\ApiController::delete
+  methods: [DELETE]
+  defaults: { _sofinder: true }
+
+sofinder_api_batch:
+  path: /api/entries/batch
+  controller: SohoPHP\SoFinder\Http\ApiController::batch
+  methods: [POST]
+  defaults: { _sofinder: true }
+
+sofinder_api_download:
+  path: /api/download
+  controller: SohoPHP\SoFinder\Http\ApiController::download
+  methods: [GET]
+  defaults: { _sofinder: true }
+
+sofinder_api_content:
+  path: /api/content
+  controller: SohoPHP\SoFinder\Http\ApiController::content
+  methods: [GET]
+  defaults: { _sofinder: true }
+
+sofinder_api_trash:
+  path: /api/trash
+  controller: SohoPHP\SoFinder\Http\ApiController::trash
+  methods: [GET]
+  defaults: { _sofinder: true }
+
+sofinder_api_trash_restore:
+  path: /api/trash/{id}/restore
+  controller: SohoPHP\SoFinder\Http\ApiController::restoreTrash
+  methods: [POST]
+  requirements: { id: '[a-f0-9]{32}' }
+  defaults: { _sofinder: true }
+
+sofinder_api_trash_delete:
+  path: /api/trash/{id}
+  controller: SohoPHP\SoFinder\Http\ApiController::permanentlyDeleteTrash
+  methods: [DELETE]
+  requirements: { id: '[a-f0-9]{32}' }
+  defaults: { _sofinder: true }
+
+sofinder_image_thumbnail:
+  path: /api/images/thumbnail
+  controller: SohoPHP\SoFinder\Http\ImageController::thumbnail
+  methods: [GET]
+  defaults: { _sofinder: true }
+
+sofinder_image_info:
+  path: /api/images/info
+  controller: SohoPHP\SoFinder\Http\ImageController::info
+  methods: [GET]
+  defaults: { _sofinder: true }
+
+sofinder_image_edit:
+  path: /api/images/edit
+  controller: SohoPHP\SoFinder\Http\ImageController::edit
+  methods: [PATCH]
+  defaults: { _sofinder: true }
+
+sofinder_archive_download:
+  path: /api/archive
+  controller: SohoPHP\SoFinder\Http\ArchiveController
+  methods: [POST]
+  defaults: { _sofinder: true }
+
+sofinder_metadata_get:
+  path: /api/metadata
+  controller: SohoPHP\SoFinder\Http\MetadataController::get
+  methods: [GET]
+  defaults: { _sofinder: true }
+
+sofinder_metadata_update:
+  path: /api/metadata
+  controller: SohoPHP\SoFinder\Http\MetadataController::update
+  methods: [PATCH]
+  defaults: { _sofinder: true }
+
+sofinder_quick_upload:
+  path: /compat/ckeditor4/upload
+  controller: SohoPHP\SoFinder\Http\QuickUploadController
+  methods: [POST]
+  defaults: { _sofinder: true }
