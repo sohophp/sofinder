@@ -70,13 +70,15 @@ final readonly class HybridImageProcessor implements ImageProcessorInterface, Im
             $mime = $definition['mimes'][0];
             $processor = $this->processorForMime($mime);
             $available = $processor !== null;
+            $editable = $available && $definition['editable']
+                && (!$processor instanceof ImagickImageProcessor || $processor->canEncode($mime));
             $result[] = [
                 'format' => $format,
                 'extensions' => $definition['extensions'],
                 'mimes' => $definition['mimes'],
                 'processor' => $processor instanceof GdImageProcessor ? 'gd' : ($processor instanceof ImagickImageProcessor ? 'imagick' : ''),
                 'read' => $available,
-                'edit' => $available && $definition['editable'],
+                'edit' => $editable,
                 'thumbnail' => $available,
                 'webEmbeddable' => $available && $definition['web'],
             ];

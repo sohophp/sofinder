@@ -193,6 +193,10 @@ final class ImagickImageProcessorTest extends TestCase
             if (\Imagick::queryFormats($coder) === []) {
                 continue;
             }
+            $mime = (new ImageFormatRegistry())->canonicalMime(strtolower($coder));
+            if ($mime === null || !$processor->canEncode($mime)) {
+                continue;
+            }
             $image = new \Imagick();
             $image->newImage(128, 64, new \ImagickPixel('rgba(30,100,180,0.5)'), $coder);
             $image->setImageFormat($coder);
@@ -200,9 +204,9 @@ final class ImagickImageProcessorTest extends TestCase
             $image->clear();
             $image->destroy();
 
-            $mime = (new \finfo(FILEINFO_MIME_TYPE))->file($this->source);
-            self::assertIsString($mime, $coder);
-            self::assertTrue($processor->supports($mime), $coder . ': ' . $mime);
+            $detectedMime = (new \finfo(FILEINFO_MIME_TYPE))->file($this->source);
+            self::assertIsString($detectedMime, $coder);
+            self::assertTrue($processor->supports($detectedMime), $coder . ': ' . $detectedMime);
             self::assertSame(['width' => 128, 'height' => 64], $processor->validate($this->source), $coder);
             $processor->thumbnail($this->source, $this->destination, 16, 16);
             self::assertSame('image/png', getimagesize($this->destination)['mime'] ?? null, $coder);

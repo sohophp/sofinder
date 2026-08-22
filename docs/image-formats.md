@@ -16,6 +16,10 @@ back to Imagick when GD cannot decode that format. This keeps ImageMagick's
 delegate attack surface out of the normal JPEG/PNG path. Individual coders are
 checked at runtime; installing the PHP extension alone does not guarantee that
 its ImageMagick build includes a particular delegate.
+Read/thumbnail support and write/edit support are reported separately. SoFinder
+performs a small, resource-limited encoder round trip once per process before it
+advertises an Imagick format as editable; a registered coder with a missing
+delegate therefore remains read-only instead of failing later during save.
 
 ```yaml
 so_finder:

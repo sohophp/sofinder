@@ -25,6 +25,56 @@ final readonly class ImagickImageProcessor implements ImageProcessorInterface
         return $coder !== null && extension_loaded('imagick') && \Imagick::queryFormats($coder) !== [];
     }
 
+    /** Verifies the encoder and delegate with a bounded in-memory round trip. */
+    public function canEncode(string $mimeType): bool
+    {
+        $format = $this->formats->formatForMime($mimeType);
+        $coder = $format === null ? null : $this->formats->coder($format);
+        if ($coder === null || !$this->supports($mimeType)) {
+            return false;
+        }
+        $version = \Imagick::getVersion();
+        $key = $coder . '|' . (is_array($version) ? json_encode($version) : (string) $version);
+        /** @var array<string, bool> $cache */
+        static $cache = [];
+        if (array_key_exists($key, $cache)) {
+            return $cache[$key];
+        }
+
+        return $cache[$key] = $this->withResourceLimits(function () use ($coder): bool {
+            $temporary = tempnam(sys_get_temp_dir(), 'sofinder-codec-probe-');
+            if ($temporary === false) {
+                return false;
+            }
+            $image = new \Imagick();
+            try {
+                $image->newImage(128, 64, new \ImagickPixel('rgba(30,100,180,0.5)'), $coder);
+                $image->setImageFormat($coder);
+                if (!$image->writeImage($temporary)) {
+                    return false;
+                }
+                clearstatcache(true, $temporary);
+                if (!is_file($temporary) || filesize($temporary) === 0) {
+                    return false;
+                }
+                $decoded = new \Imagick();
+                try {
+                    $decoded->readImage($this->sourceSpecifier($coder, $temporary, true));
+                    $decoded->getImageSignature();
+
+                    return $decoded->getImageWidth() === 128 && $decoded->getImageHeight() === 64;
+                } finally {
+                    $this->release($decoded);
+                }
+            } catch (\ImagickException) {
+                return false;
+            } finally {
+                $this->release($image);
+                @unlink($temporary);
+            }
+        });
+    }
+
     public function dimensions(string $source): array
     {
         return $this->withResourceLimits(function () use ($source): array {

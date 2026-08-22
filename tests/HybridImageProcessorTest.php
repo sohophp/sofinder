@@ -26,6 +26,7 @@ final class HybridImageProcessorTest extends TestCase
         }
         if (extension_loaded('imagick') && \Imagick::queryFormats('TIFF') !== []) {
             self::assertSame('imagick', $capabilities['tiff']['processor']);
+            self::assertSame((new ImagickImageProcessor())->canEncode('image/tiff'), $capabilities['tiff']['edit']);
         }
         self::assertFalse($capabilities['tiff']['webEmbeddable']);
         self::assertSame($processor->cacheVersion(), $processor->cacheVersion());
