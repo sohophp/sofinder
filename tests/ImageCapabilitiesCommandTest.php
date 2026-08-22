@@ -30,7 +30,7 @@ final class ImageCapabilitiesCommandTest extends TestCase
         @rmdir($this->directory);
     }
 
-    public function testJsonCommandFailsForConfiguredImageWithoutDecoder(): void
+    public function testJsonCommandIgnoresGenericNonWebFileExtensions(): void
     {
         $images = new class implements ImageCapabilityProviderInterface {
             public function capabilities(): array { return []; }
@@ -46,8 +46,8 @@ final class ImageCapabilitiesCommandTest extends TestCase
         $status = $tester->execute(['--json' => true]);
         $payload = json_decode($tester->getDisplay(), true, 512, JSON_THROW_ON_ERROR);
 
-        self::assertSame(Command::FAILURE, $status);
+        self::assertSame(Command::SUCCESS, $status);
         self::assertSame('gd', $payload['driver']);
-        self::assertSame([['resource' => 'Images', 'extension' => 'tiff']], $payload['unsupportedConfiguredFormats']);
+        self::assertSame([], $payload['unsupportedConfiguredFormats']);
     }
 }

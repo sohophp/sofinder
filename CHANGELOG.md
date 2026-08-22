@@ -1,5 +1,16 @@
 # Changelog
 
+## 0.1.0-beta.4 - 2026-08-23
+
+- Limit the image pipeline and CKEditor image selection to web-embeddable
+  raster formats: JPEG, PNG, GIF, WebP, AVIF, BMP and ICO.
+- Treat HEIC, HEIF and TIFF as ordinary files when a `Files` resource allows
+  their extensions; they are no longer decoded, previewed or edited.
+- Preserve existing non-web files without migration while rejecting new
+  HEIC/HEIF/TIFF uploads to Winstar's `Images` resource.
+- Clarify the 1.0 support policy, release process and Winstar maintenance
+  schedule without changing routes, public URLs or PHP contracts.
+
 ## 0.1.0-beta.3 - 2026-08-23
 
 - Support PHP 8.2–8.5 and Symfony 6.4/7.4 with a CI compatibility matrix.

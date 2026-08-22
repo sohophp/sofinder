@@ -54,8 +54,11 @@ gates, structured failure audits and a private 30-day recycle bin. Run
 `sofinder:trash:cleanup` and `sofinder:uploads:cleanup`; see
 `docs/security.md`.
 
-Image processing uses GD when available. Decoded images are limited to 50
-million pixels and edits preserve the original file format and extension.
+Image processing supports web-embeddable JPEG, PNG, GIF, WebP, AVIF, BMP and
+ICO, using GD when available and an optional Imagick ICO fallback. Decoded
+images are limited to 50 million pixels and edits preserve the original file
+format and extension. HEIC, HEIF and TIFF may be stored in a general file
+resource but are not decoded, previewed or edited.
 Thumbnail cache entries expire after 30 days and are capped at 5,000 files.
 ZIP downloads accept at most 100 selected roots, 1,000 total entries and 512 MB.
 

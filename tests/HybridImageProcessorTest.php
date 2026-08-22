@@ -12,7 +12,7 @@ use SohoPHP\SoFinder\Image\ImagickImageProcessor;
 
 final class HybridImageProcessorTest extends TestCase
 {
-    public function testAutoUsesGdFirstAndImagickOnlyForMissingFormats(): void
+    public function testAutoUsesGdFirstAndDoesNotAdvertiseNonWebFormats(): void
     {
         $registry = new ImageFormatRegistry();
         $processor = new HybridImageProcessor($registry, new GdImageProcessor(), new ImagickImageProcessor(), 'auto');
@@ -24,16 +24,14 @@ final class HybridImageProcessorTest extends TestCase
         if (extension_loaded('gd')) {
             self::assertSame('gd', $capabilities['jpeg']['processor']);
         }
-        if (extension_loaded('imagick') && \Imagick::queryFormats('TIFF') !== []) {
-            self::assertSame('imagick', $capabilities['tiff']['processor']);
-            self::assertSame((new ImagickImageProcessor())->canEncode('image/tiff'), $capabilities['tiff']['edit']);
-        }
-        self::assertFalse($capabilities['tiff']['webEmbeddable']);
+        self::assertArrayNotHasKey('heic', $capabilities);
+        self::assertArrayNotHasKey('heif', $capabilities);
+        self::assertArrayNotHasKey('tiff', $capabilities);
         self::assertSame($processor->cacheVersion(), $processor->cacheVersion());
         self::assertSame(16, strlen($processor->cacheVersion()));
     }
 
-    public function testForcedGdDoesNotClaimTiffSupport(): void
+    public function testForcedGdDoesNotClaimNonWebFormatSupport(): void
     {
         if (!extension_loaded('gd')) {
             self::markTestSkipped('GD is not installed.');

@@ -25,8 +25,6 @@ final class ImageFormatRegistryTest extends TestCase
     {
         yield 'JPEG extension alias' => ['.jpg', 'image/jpeg', 'jpeg'];
         yield 'BMP MIME alias' => ['bmp', 'image/x-bmp', 'bmp'];
-        yield 'HEIC MIME alias' => ['heic', 'image/x-heic', 'heic'];
-        yield 'TIFF extension and MIME alias' => ['tif', 'image/x-tiff', 'tiff'];
         yield 'ICO MIME alias' => ['ico', 'image/x-icon', 'ico'];
     }
 
@@ -39,5 +37,17 @@ final class ImageFormatRegistryTest extends TestCase
         self::assertFalse($registry->isWebEmbeddableMime('image/heic'));
         self::assertFalse($registry->isWebEmbeddableMime('image/tiff'));
         self::assertFalse($registry->isWebEmbeddableMime('image/svg+xml'));
+    }
+
+    public function testNonWebImageFormatsAreNotRegisteredForImageProcessing(): void
+    {
+        $registry = new ImageFormatRegistry();
+
+        foreach (['heic', 'heif', 'tif', 'tiff'] as $extension) {
+            self::assertNull($registry->formatForExtension($extension));
+        }
+        foreach (['image/heic', 'image/heif', 'image/tiff', 'image/x-tiff'] as $mime) {
+            self::assertNull($registry->formatForMime($mime));
+        }
     }
 }

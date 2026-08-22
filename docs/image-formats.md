@@ -1,25 +1,20 @@
 # Image format support
 
-SoFinder validates image contents by fully decoding them before publication.
-The available formats depend on the installed processor:
+SoFinder 1.0 only treats formats that can be embedded directly in supported
+web browsers as images. Image content is fully decoded before publication.
+Effective support still depends on the installed processor:
 
-| Format | GD | Imagick fallback | Direct CKEditor image | Thumbnail |
+| Format | GD | Imagick fallback | CKEditor image | Thumbnail/edit |
 | --- | --- | --- | --- | --- |
-| JPEG, PNG, GIF, WebP, BMP | Yes | When its coder is installed | Yes | PNG |
-| AVIF | When GD has AVIF support | When its coder is installed | Yes | PNG |
-| ICO | No | When the ICO coder is installed | Yes | PNG |
-| HEIC / HEIF | No | When the HEIC/HEIF coder is installed | No | PNG |
-| TIFF | No | When the TIFF coder is installed | No | PNG |
+| JPEG, PNG, GIF, WebP, BMP | Yes | When its coder is installed | Yes | Yes |
+| AVIF | When GD has AVIF support | When its coder is installed | Yes | Yes |
+| ICO | No | When the ICO coder is installed | Yes | Yes |
 
-The default `auto` driver selects GD separately for each format and only falls
-back to Imagick when GD cannot decode that format. This keeps ImageMagick's
-delegate attack surface out of the normal JPEG/PNG path. Individual coders are
-checked at runtime; installing the PHP extension alone does not guarantee that
-its ImageMagick build includes a particular delegate.
-Read/thumbnail support and write/edit support are reported separately. SoFinder
-performs a small, resource-limited encoder round trip once per process before it
-advertises an Imagick format as editable; a registered coder with a missing
-delegate therefore remains read-only instead of failing later during save.
+The default `auto` driver selects GD separately for each registered format and
+falls back to Imagick only when GD cannot decode it. A configured `gd` or
+`imagick` driver fails container startup when that extension is absent. The
+capability command and `/api/config.imageCapabilities` report the codecs that
+the current server can actually read, edit and thumbnail.
 
 ```yaml
 so_finder:
@@ -37,33 +32,31 @@ so_finder:
     timeout_seconds: 30
 ```
 
-Selecting `gd` or `imagick` explicitly fails container startup if that PHP
-extension is absent. With `auto`, unavailable formats are reported through the
-browser configuration and are disabled in the UI.
+Imagick receives a fixed coder derived from the registry and never performs
+automatic SVG, PDF, PostScript, URL or pseudo-protocol dispatch. Its memory,
+map, disk, thread and time limits are scoped to each operation and restored
+afterward. Encoder availability is verified with a bounded round trip before
+edit capability is advertised.
 
-Animated and multi-page images may be uploaded when the resource policy permits
-them, but editing is rejected when it would flatten the content. Thumbnails use
-the first frame and are emitted as PNG so formats that browsers cannot render
-directly still work in the file list and preview dialog.
+## Ordinary non-web image files
 
-Before a full Imagick decode, SoFinder identifies the content with `fileinfo`,
-maps it to a fixed allowlisted coder, pings its dimensions and frames, and
-enforces the configured frame and pixel budgets. SVG, PDF, PostScript, URLs and
-pseudo-protocols are never passed to automatic ImageMagick coder selection.
-Imagick memory, map, disk, thread and time limits are scoped to each operation
-and restored afterwards.
+HEIC, HEIF, TIF and TIFF are not registered image-pipeline formats in 1.0.
+They may be included in the extension allowlist of a general `Files` resource,
+where they receive the same actual-byte, extension, MIME and active-content
+checks as other ordinary files. SoFinder does not decode them, report their
+dimensions, generate thumbnails, edit them or convert them automatically.
 
-SVG, PDF, PostScript, RAW camera formats and ImageMagick pseudo-formats are not
-accepted by the image pipeline. They require separate sanitization or delegate
-policies and are intentionally outside the supported raster allowlist.
+Do not include these extensions or MIME aliases in an image-only resource.
+Existing files are not removed: the browser shows them with a normal file icon,
+and image selection and image endpoints reject them with `unsupported_image`.
+File-selection mode may still return their public URL as a download link.
+CKEditor image QuickUpload rejects them before writing with
+`image_not_web_embeddable`.
 
-HEIC, HEIF and TIFF remain available for ordinary SoFinder upload, storage,
-download and preview. A browser opened with `selection=image` disables their
-selection, and QuickUpload returns `image_not_web_embeddable` before writing
-them. A browser opened with `selection=file` may still select their public URL
-as a normal download link. SoFinder does not silently create a WebP copy.
+SVG, PDF, PostScript, PSD, JP2 and RAW formats are also outside the image
+pipeline. Formats permitted by a general file resource remain ordinary files;
+supporting safe preview or conversion requires a separate future design.
 
 Run `bin/console sofinder:image:capabilities` after deployment. It exits with a
-failure status when a configured image extension has no effective decoder; use
-`--json` for deployment automation. `/api/config` exposes the same effective
-state in the additive `imageCapabilities` field.
+failure status when a configured registered image extension has no effective
+decoder; use `--json` for deployment automation.

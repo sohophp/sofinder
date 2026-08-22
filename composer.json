@@ -37,7 +37,7 @@
     },
     "suggest": {
         "ext-gd": "Required for thumbnails and image editing",
-        "ext-imagick": "Adds HEIC/HEIF, TIFF and ICO processing support",
+        "ext-imagick": "Adds ICO processing support when its ImageMagick coder is installed",
         "ext-zip": "Required for ZIP archive downloads"
     },
     "autoload": {

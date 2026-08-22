@@ -12,4 +12,4 @@
    audit before announcing the release.
 
 The current beta's exact Composer constraint is
-`sohophp/sofinder:0.1.0-beta.2`. Published tags must never be moved.
+`sohophp/sofinder:0.1.0-beta.4`. Published tags must never be moved.

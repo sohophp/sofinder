@@ -18,7 +18,7 @@ test.beforeEach(async ({ page }) => {
   await page.route("http://sofinder.test/**", async route => {
     const url = new URL(route.request().url());
     if (url.pathname === "/sofinder/api/config") {
-      await route.fulfill({ json: { success: true, data: { apiVersion: "1.0", resources: [{ name: "Files", publicUrl: "/uploads/editor/files", allowedExtensions: ["txt", "png", "heic"], maxSize: 1000000, readOnly: false, quotaBytes: 0, usedBytes: 80, maxFileNameLength: 120, maxFolderNameLength: 50, maxFolderDepth: 5, deliveryMode: "public", storageCapabilities: { search: true, sort: true, cursorPagination: false, atomicMove: true, nativeCopy: true, recoverableDelete: true, publicUrl: true } }], plugins: [], imagePresets: {}, imageCapabilities: { driver: "auto", formats: [{ format: "png", extensions: ["png"], mimes: ["image/png"], processor: "gd", read: true, edit: true, thumbnail: true, webEmbeddable: true }, { format: "heic", extensions: ["heic"], mimes: ["image/heic"], processor: "imagick", read: true, edit: true, thumbnail: true, webEmbeddable: false }] } } } });
+      await route.fulfill({ json: { success: true, data: { apiVersion: "1.0", resources: [{ name: "Files", publicUrl: "/uploads/editor/files", allowedExtensions: ["txt", "png", "heic"], maxSize: 1000000, readOnly: false, quotaBytes: 0, usedBytes: 80, maxFileNameLength: 120, maxFolderNameLength: 50, maxFolderDepth: 5, deliveryMode: "public", storageCapabilities: { search: true, sort: true, cursorPagination: false, atomicMove: true, nativeCopy: true, recoverableDelete: true, publicUrl: true } }], plugins: [], imagePresets: {}, imageCapabilities: { driver: "auto", formats: [{ format: "png", extensions: ["png"], mimes: ["image/png"], processor: "gd", read: true, edit: true, thumbnail: true, webEmbeddable: true }] } } } });
       return;
     }
     if (url.pathname === "/sofinder/api/entries") {
@@ -102,12 +102,13 @@ test("asks how to resolve a recycle-bin restore conflict", async ({ page }) => {
   await expect(conflict).toBeHidden();
 });
 
-test("blocks non-web image formats in image selection mode", async ({ page }) => {
+test("treats non-web image formats as ordinary files and blocks image selection", async ({ page }) => {
   await page.setContent(`<!doctype html><html lang="zh-CN"><head><title>SoFinder</title></head><body><main id="sofinder-root" data-config='${JSON.stringify({ ...config, selectMode: true, selectionKind: "image" })}'></main></body></html>`);
   await page.addStyleTag({ path: resolve(import.meta.dirname, "../../dist/sofinder.css") });
   await page.addScriptTag({ path: resolve(import.meta.dirname, "../../dist/sofinder.js"), type: "module" });
   const heic = page.locator(".sf-entry", { hasText: "camera.heic" });
   await expect(heic).toBeVisible();
+  await expect(heic.locator("img")).toHaveCount(0);
   await heic.click();
   await expect(page.getByRole("button", { name: "选择" })).toBeDisabled();
   await expect(page.getByText("此图片格式不能直接用于网页内容。")).toBeVisible();

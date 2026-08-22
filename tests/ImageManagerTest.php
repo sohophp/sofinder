@@ -9,7 +9,10 @@ use SohoPHP\SoFinder\Contract\AuthorizationInterface;
 use SohoPHP\SoFinder\Exception\SoFinderException;
 use SohoPHP\SoFinder\FileManager;
 use SohoPHP\SoFinder\Image\GdImageProcessor;
+use SohoPHP\SoFinder\Image\HybridImageProcessor;
 use SohoPHP\SoFinder\Image\ImageManager;
+use SohoPHP\SoFinder\Image\ImageFormatRegistry;
+use SohoPHP\SoFinder\Image\ImagickImageProcessor;
 use SohoPHP\SoFinder\ResourceRegistry;
 use SohoPHP\SoFinder\Storage\LocalStorageAdapter;
 use SohoPHP\SoFinder\Value\ResourceStorage;
@@ -72,6 +75,30 @@ final class ImageManagerTest extends TestCase
             self::fail('Animated image editing should be rejected.');
         } catch (SoFinderException $exception) {
             self::assertSame('animated_image_edit_unsupported', $exception->errorCode);
+        }
+    }
+
+    public function testNonWebFileCannotEnterImageEndpoints(): void
+    {
+        file_put_contents($this->directory . '/scan.tiff', "II*\0\x08\0\0\0ordinary-file");
+        $authorization = new class implements AuthorizationInterface {
+            public function isAuthenticated(): bool { return true; }
+            public function isGranted(string $operation, ResourceType $resource, string $path): bool { return true; }
+        };
+        $type = new ResourceType('Files', $this->directory, '/files', allowedExtensions: ['tiff']);
+        $files = new FileManager(new ResourceRegistry([new ResourceStorage($type, new LocalStorageAdapter($this->directory, '/files'))]), $authorization, new EventDispatcher());
+        $formats = new ImageFormatRegistry();
+        $images = new ImageManager(
+            $files,
+            new HybridImageProcessor($formats, new GdImageProcessor(), new ImagickImageProcessor($formats)),
+            $this->directory . '/cache',
+        );
+
+        try {
+            $images->info('Files', 'scan.tiff');
+            self::fail('A non-web file must not enter the image pipeline.');
+        } catch (SoFinderException $exception) {
+            self::assertSame('unsupported_image', $exception->errorCode);
         }
     }
 

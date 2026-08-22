@@ -4,14 +4,10 @@ declare(strict_types=1);
 
 namespace SohoPHP\SoFinder\Tests;
 
-use PHPUnit\Framework\TestCase;
 use PHPUnit\Framework\Attributes\DataProvider;
-use SohoPHP\SoFinder\Image\ImagickImageProcessor;
+use PHPUnit\Framework\TestCase;
 use SohoPHP\SoFinder\Exception\SoFinderException;
-use SohoPHP\SoFinder\Image\ImageFormatRegistry;
-use SohoPHP\SoFinder\Security\DefaultFileInspector;
-use SohoPHP\SoFinder\Value\ImageProcessingLimits;
-use SohoPHP\SoFinder\Value\ResourceType;
+use SohoPHP\SoFinder\Image\ImagickImageProcessor;
 
 final class ImagickImageProcessorTest extends TestCase
 {
@@ -20,43 +16,53 @@ final class ImagickImageProcessorTest extends TestCase
 
     protected function setUp(): void
     {
-        if (!extension_loaded('imagick') || \Imagick::queryFormats('TIFF') === []) {
-            self::markTestSkipped('Imagick TIFF support is not installed.');
+        if (!extension_loaded('imagick')) {
+            self::markTestSkipped('Imagick is not installed.');
         }
-        $this->source = tempnam(sys_get_temp_dir(), 'sofinder-tiff-') ?: throw new \RuntimeException('Unable to create TIFF fixture.');
-        $this->destination = tempnam(sys_get_temp_dir(), 'sofinder-image-output-') ?: throw new \RuntimeException('Unable to create image output.');
-        $image = new \Imagick();
-        $image->newImage(80, 40, new \ImagickPixel('#195ab4'), 'TIFF');
-        $image->writeImage($this->source);
-        $image->clear();
-        $image->destroy();
+        $this->source = tempnam(sys_get_temp_dir(), 'sofinder-imagick-source-') ?: throw new \RuntimeException('Unable to create image fixture.');
+        $this->destination = tempnam(sys_get_temp_dir(), 'sofinder-imagick-output-') ?: throw new \RuntimeException('Unable to create image output.');
     }
 
     protected function tearDown(): void
     {
-        @unlink($this->source);
-        @unlink($this->destination);
+        if (isset($this->source)) {
+            @unlink($this->source);
+        }
+        if (isset($this->destination)) {
+            @unlink($this->destination);
+        }
     }
 
-    public function testTiffCanBeValidatedAndPreviewedAsPng(): void
+    public function testIcoCanBeDecodedThumbnailedAndEditedWhenCoderIsAvailable(): void
     {
+        if (\Imagick::queryFormats('ICO') === []) {
+            self::markTestSkipped('Imagick ICO support is not installed.');
+        }
         $processor = new ImagickImageProcessor();
-        self::assertTrue($processor->supports('image/tiff'));
-        self::assertSame(['width' => 80, 'height' => 40], $processor->validate($this->source));
+        if (!$processor->canEncode('image/vnd.microsoft.icon')) {
+            self::markTestSkipped('The installed ICO coder cannot complete a write round trip.');
+        }
+        $image = new \Imagick();
+        try {
+            $image->newImage(80, 40, new \ImagickPixel('rgba(25,90,180,0.5)'), 'ICO');
+            $image->setImageFormat('ICO');
+            self::assertTrue($image->writeImage($this->source));
+        } finally {
+            $image->clear();
+            $image->destroy();
+        }
 
+        self::assertTrue($processor->supports('image/vnd.microsoft.icon'));
+        self::assertSame(['width' => 80, 'height' => 40], $processor->validate($this->source));
         $processor->thumbnail($this->source, $this->destination, 40, 40);
         $info = getimagesize($this->destination);
         self::assertIsArray($info);
-        self::assertSame([40, 20], [$info[0], $info[1]]);
-        self::assertSame('image/png', $info['mime']);
-    }
+        self::assertSame([40, 20, 'image/png'], [$info[0], $info[1], $info['mime']]);
 
-    public function testTiffEditingPreservesItsFormat(): void
-    {
-        (new ImagickImageProcessor())->transform($this->source, $this->destination, 0, 20, 20, 85);
-        $result = new \Imagick($this->destination);
+        $processor->transform($this->source, $this->destination, 0, 20, 20, 85);
+        $result = new \Imagick('ICO:' . $this->destination);
         try {
-            self::assertSame('TIFF', $result->getImageFormat());
+            self::assertSame('ICO', $result->getImageFormat());
             self::assertSame([20, 10], [$result->getImageWidth(), $result->getImageHeight()]);
         } finally {
             $result->clear();
@@ -64,96 +70,32 @@ final class ImagickImageProcessorTest extends TestCase
         }
     }
 
-    public function testTiffUploadInspectorRequiresARealDecodableImage(): void
+    #[DataProvider('unsupportedContentProvider')]
+    public function testNonWebAndDelegateFormatsAreNeverAutoDetected(string $content): void
     {
-        $inspected = (new DefaultFileInspector(new ImagickImageProcessor()))->inspect(
-            $this->source,
-            'scan.tiff',
-            new ResourceType('Images', '/tmp', '/images', ['tiff'], allowedMimeTypes: ['image/tiff']),
-        );
-
-        self::assertSame('image/tiff', $inspected->mimeType);
-        self::assertSame([80, 40], [$inspected->imageWidth, $inspected->imageHeight]);
-    }
-
-    public function testMultiPageTiffCanPreviewButCannotBeEdited(): void
-    {
-        $sequence = new \Imagick();
-        foreach (['#195ab4', '#c73545'] as $colour) {
-            $frame = new \Imagick();
-            $frame->newImage(30, 20, new \ImagickPixel($colour), 'TIFF');
-            $sequence->addImage($frame);
-            $frame->clear();
-            $frame->destroy();
-        }
-        $sequence->writeImages($this->source, true);
-        $sequence->clear();
-        $sequence->destroy();
-
-        $processor = new ImagickImageProcessor();
-        self::assertTrue($processor->isAnimated($this->source));
-        $processor->thumbnail($this->source, $this->destination, 15, 15);
-        self::assertSame('image/png', getimagesize($this->destination)['mime'] ?? null);
-
-        $this->expectException(SoFinderException::class);
-        $this->expectExceptionMessage('multi-page');
-        $processor->transform($this->source, $this->destination, 0, 10, 10);
-    }
-
-    public function testFrameAndTotalPixelLimitsAreEnforcedBeforeFullDecode(): void
-    {
-        $sequence = new \Imagick();
-        foreach (['#111111', '#222222'] as $colour) {
-            $frame = new \Imagick();
-            $frame->newImage(20, 20, new \ImagickPixel($colour), 'TIFF');
-            $sequence->addImage($frame);
-            $frame->clear();
-            $frame->destroy();
-        }
-        $sequence->writeImages($this->source, true);
-        $sequence->clear();
-        $sequence->destroy();
-
-        $processor = new ImagickImageProcessor(
-            new ImageFormatRegistry(),
-            new ImageProcessingLimits(maxFrames: 1, maxTotalPixels: 10_000),
-        );
-        try {
-            $processor->validate($this->source);
-            self::fail('The frame limit should have rejected the image.');
-        } catch (SoFinderException $exception) {
-            self::assertSame('image_frame_limit_exceeded', $exception->errorCode);
-        }
-
-        $processor = new ImagickImageProcessor(
-            new ImageFormatRegistry(),
-            new ImageProcessingLimits(maxFrames: 10, maxTotalPixels: 700),
-        );
-        try {
-            $processor->validate($this->source);
-            self::fail('The cumulative pixel limit should have rejected the image.');
-        } catch (SoFinderException $exception) {
-            self::assertSame('image_pixel_limit_exceeded', $exception->errorCode);
-        }
-    }
-
-    public function testDisallowedCoderIsNeverAutoDetected(): void
-    {
-        file_put_contents($this->source, '<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20"/>');
+        file_put_contents($this->source, $content);
 
         try {
             (new ImagickImageProcessor())->validate($this->source);
-            self::fail('SVG must not be delegated to ImageMagick.');
+            self::fail('A format outside the web-image registry must not reach ImageMagick.');
         } catch (SoFinderException $exception) {
             self::assertSame('unsupported_image', $exception->errorCode);
         }
     }
 
+    /** @return iterable<string, array{string}> */
+    public static function unsupportedContentProvider(): iterable
+    {
+        yield 'TIFF' => ["II*\0\x08\0\0\0ordinary-file"];
+        yield 'SVG' => ['<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20"/>'];
+        yield 'PDF' => ['%PDF-1.7 unsupported'];
+    }
+
     #[DataProvider('orientationProvider')]
     public function testExifOrientationsAreAppliedToDimensions(int $orientation, int $expectedWidth, int $expectedHeight): void
     {
-        if (\Imagick::queryFormats('JPEG') === []) {
-            self::markTestSkipped('Imagick JPEG support is not installed.');
+        if (!extension_loaded('gd') || \Imagick::queryFormats('JPEG') === []) {
+            self::markTestSkipped('GD and Imagick JPEG support are required.');
         }
         $image = imagecreatetruecolor(40, 20);
         self::assertInstanceOf(\GdImage::class, $image);
@@ -184,44 +126,5 @@ final class ImagickImageProcessorTest extends TestCase
         yield 'rotate 90' => [6, 20, 40];
         yield 'transverse' => [7, 20, 40];
         yield 'rotate 270' => [8, 20, 40];
-    }
-
-    public function testOptionalRasterCodersAreReallyDecodedAndThumbnailed(): void
-    {
-        $processor = new ImagickImageProcessor();
-        foreach (['HEIC', 'HEIF', 'ICO'] as $coder) {
-            if (\Imagick::queryFormats($coder) === []) {
-                continue;
-            }
-            $mime = (new ImageFormatRegistry())->canonicalMime(strtolower($coder));
-            if ($mime === null || !$processor->canEncode($mime)) {
-                continue;
-            }
-            $image = new \Imagick();
-            $image->newImage(128, 64, new \ImagickPixel('rgba(30,100,180,0.5)'), $coder);
-            $image->setImageFormat($coder);
-            self::assertTrue($image->writeImage($this->source), $coder);
-            $image->clear();
-            $image->destroy();
-
-            $detectedMime = (new \finfo(FILEINFO_MIME_TYPE))->file($this->source);
-            self::assertIsString($detectedMime, $coder);
-            self::assertTrue($processor->supports($detectedMime), $coder . ': ' . $detectedMime);
-            self::assertSame(['width' => 128, 'height' => 64], $processor->validate($this->source), $coder);
-            $processor->thumbnail($this->source, $this->destination, 16, 16);
-            self::assertSame('image/png', getimagesize($this->destination)['mime'] ?? null, $coder);
-        }
-    }
-
-    public function testCorruptedAllowlistedImageIsRejected(): void
-    {
-        file_put_contents($this->source, "II*\0\x08\0\0\0broken-tiff");
-
-        try {
-            (new ImagickImageProcessor())->validate($this->source);
-            self::fail('A corrupt TIFF must not pass validation.');
-        } catch (SoFinderException $exception) {
-            self::assertContains($exception->errorCode, ['invalid_image', 'unsupported_image']);
-        }
     }
 }

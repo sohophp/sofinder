@@ -13,12 +13,9 @@ final readonly class ImageFormatRegistry
         'avif' => ['extensions' => ['avif'], 'mimes' => ['image/avif'], 'coder' => 'AVIF', 'web' => true, 'editable' => true],
         'bmp' => ['extensions' => ['bmp'], 'mimes' => ['image/bmp', 'image/x-bmp'], 'coder' => 'BMP', 'web' => true, 'editable' => true],
         'gif' => ['extensions' => ['gif'], 'mimes' => ['image/gif'], 'coder' => 'GIF', 'web' => true, 'editable' => true],
-        'heic' => ['extensions' => ['heic'], 'mimes' => ['image/heic', 'image/x-heic'], 'coder' => 'HEIC', 'web' => false, 'editable' => true],
-        'heif' => ['extensions' => ['heif'], 'mimes' => ['image/heif', 'image/x-heif'], 'coder' => 'HEIF', 'web' => false, 'editable' => true],
         'ico' => ['extensions' => ['ico'], 'mimes' => ['image/vnd.microsoft.icon', 'image/x-icon'], 'coder' => 'ICO', 'web' => true, 'editable' => true],
         'jpeg' => ['extensions' => ['jpg', 'jpeg'], 'mimes' => ['image/jpeg'], 'coder' => 'JPEG', 'web' => true, 'editable' => true],
         'png' => ['extensions' => ['png'], 'mimes' => ['image/png'], 'coder' => 'PNG', 'web' => true, 'editable' => true],
-        'tiff' => ['extensions' => ['tif', 'tiff'], 'mimes' => ['image/tiff', 'image/x-tiff'], 'coder' => 'TIFF', 'web' => false, 'editable' => true],
         'webp' => ['extensions' => ['webp'], 'mimes' => ['image/webp'], 'coder' => 'WEBP', 'web' => true, 'editable' => true],
     ];
 
@@ -70,9 +67,7 @@ final readonly class ImageFormatRegistry
 
     public function isWebEmbeddableMime(string $mime): bool
     {
-        $format = $this->formatForMime($mime);
-
-        return $format !== null && self::FORMATS[$format]['web'];
+        return $this->formatForMime($mime) !== null;
     }
 
     /** @return array<string, array{extensions:list<string>,mimes:list<string>,coder:string,web:bool,editable:bool}> */
