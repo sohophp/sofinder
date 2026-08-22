@@ -334,6 +334,54 @@ select:focus-visible,
 .sf-file-url button { flex: 0 0 auto; }
 .sf-file-url > span:empty { display: none; }
 
+.sf-file-preview-modal {
+  width: min(900px, calc(100vw - 32px));
+}
+
+.sf-file-preview-content {
+  display: grid;
+  place-items: center;
+  min-height: 280px;
+  max-height: min(68vh, 720px);
+  overflow: hidden;
+  border: 1px solid var(--sf-line);
+  border-radius: var(--sf-radius);
+  background: var(--sf-bg);
+}
+
+.sf-file-preview-content > img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  max-height: min(68vh, 720px);
+  object-fit: contain;
+}
+
+.sf-file-preview-fallback {
+  display: grid;
+  place-items: center;
+  gap: 12px;
+  padding: 32px;
+  color: var(--sf-muted);
+  text-align: center;
+}
+
+.sf-file-preview-fallback svg { width: 96px; height: 96px; }
+.sf-file-preview-fallback p { margin: 0; }
+
+.sf-file-preview-meta {
+  display: grid;
+  grid-template-columns: max-content minmax(0, 1fr);
+  gap: 8px 14px;
+  margin: 16px 0 0;
+  font-size: 13px;
+}
+
+.sf-file-preview-meta dt { color: var(--sf-muted); }
+.sf-file-preview-meta dd { margin: 0; overflow-wrap: anywhere; }
+.sf-preview-download { color: var(--sf-accent); text-decoration: none; }
+.sf-preview-download:hover { text-decoration: underline; }
+
 .sf-toolbar button.primary.sf-upload-trigger:hover:not(:disabled),
 .sf-toolbar button.primary.sf-upload-trigger:focus-visible:not(:disabled) {
   border-color: color-mix(in srgb,var(--sf-accent) 70%,#000);

@@ -9,6 +9,8 @@ Versioning; prereleases may still refine public extension interfaces.
   directories do not exhaust the stricter image-editing quota.
 - Cache versioned thumbnail responses privately and retry transient preview
   failures without leaving broken-image controls in the file browser.
+- Make the context-menu preview a dedicated accessible dialog instead of
+  invoking the editor file-selection callback.
 
 ## 0.1.0-beta.1 - 2026-08-22
 

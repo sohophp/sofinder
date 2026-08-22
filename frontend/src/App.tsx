@@ -116,6 +116,7 @@ export default function App({ config }: { config: SoFinderConfig }) {
   const [trashOpen, setTrashOpen] = useState(false);
   const [tagsOpen, setTagsOpen] = useState(false);
   const [contextMenu, setContextMenu] = useState<{ x: number; y: number; entry: Entry } | null>(null);
+  const [previewEntry, setPreviewEntry] = useState<Entry | null>(null);
   const [imagePresets, setImagePresets] = useState<Record<string, ImagePreset>>({});
   const [directoryCapabilities, setDirectoryCapabilities] = useState<Record<string, boolean>>({});
   const [leftWidth, setLeftWidth] = useState(() => loadColumnWidth("left"));
@@ -512,14 +513,16 @@ export default function App({ config }: { config: SoFinderConfig }) {
   const setViewMode = (mode: ViewMode) => { setView(mode); localStorage.setItem("sofinder.view", mode); };
 
   const runContextCommand = (command: string) => {
+    const target = contextMenu?.entry ?? null;
     setContextMenu(null);
-    if (command === "open" && selected) openEntry(selected);
-    else if (command === "select" && selected) choose(selected);
+    if (command === "open" && target?.directory) openEntry(target);
+    else if (command === "preview" && target && !target.directory) setPreviewEntry(target);
+    else if (command === "select" && target) choose(target);
     else if (command === "rename") void rename();
     else if (command === "copy") void browseDestination("copy", path);
     else if (command === "move") void browseDestination("move", path);
     else if (command === "delete") void remove();
-    else if (command === "download" && selected) window.location.assign(api.downloadUrl(resource, selected.path));
+    else if (command === "download" && target && !target.directory) window.location.assign(api.downloadUrl(resource, target.path));
   };
 
   const applyPreset = async (name: string) => {
@@ -758,6 +761,20 @@ export default function App({ config }: { config: SoFinderConfig }) {
       onClose={() => setTagsOpen(false)}
       onSave={tags => { setTagsOpen(false); void api.updateMetadata(resource, selected.path, "tags", { tags }).then(setMetadata).catch(report); }}
     />}
+    {previewEntry && <Modal
+      title={previewEntry.name}
+      closeLabel={t("close")}
+      onClose={() => setPreviewEntry(null)}
+      className="sf-file-preview-modal"
+      footer={<><a className="sf-preview-download" href={api.downloadUrl(resource, previewEntry.path)}>{t("download")}</a><button className="primary" onClick={() => setPreviewEntry(null)}>{t("close")}</button></>}
+    >
+      <div className="sf-file-preview-content">
+        {previewEntry.mimeType?.startsWith("image/")
+          ? <ThumbnailImage src={previewEntry.url || api.contentUrl(resource, previewEntry.path)} alt={previewEntry.name}/>
+          : <div className="sf-file-preview-fallback"><Icon kind="file"/><p>{t("previewUnavailable")}</p></div>}
+      </div>
+      <dl className="sf-file-preview-meta"><dt>{t("type")}</dt><dd>{previewEntry.mimeType || t("file")}</dd><dt>{t("size")}</dt><dd>{formatSize(previewEntry.size)}</dd><dt>{t("location")}</dt><dd>{previewEntry.path}</dd></dl>
+    </Modal>}
     {cropOpen && selected && imageInfo && <ImageEditor
       entry={selected}
       info={imageInfo}
@@ -772,7 +789,7 @@ export default function App({ config }: { config: SoFinderConfig }) {
       }}
     />}
     {contextMenu && <ContextMenu x={contextMenu.x} y={contextMenu.y} onClose={() => setContextMenu(null)} onSelect={runContextCommand} items={[
-      { id: "open", label: contextMenu.entry.directory ? t("open") : t("preview") },
+      { id: contextMenu.entry.directory ? "open" : "preview", label: contextMenu.entry.directory ? t("open") : t("preview") },
       ...(config.selectMode && !contextMenu.entry.directory ? [{ id: "select", label: t("select"), disabled: !contextMenu.entry.url }] : []),
       { id: "download", label: t("download"), disabled: contextMenu.entry.directory },
       { id: "rename", label: t("rename"), disabled: contextMenu.entry.capabilities?.rename === false },

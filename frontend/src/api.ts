@@ -135,6 +135,10 @@ export class Api {
     return `${this.base}/download?${new URLSearchParams({ resource, path })}`;
   }
 
+  contentUrl(resource: string, path: string) {
+    return `${this.base}/content?${new URLSearchParams({ resource, path, disposition: "inline" })}`;
+  }
+
   thumbnailUrl(resource: string, entry: Entry, width = 240, height = 180) {
     return `${this.base}/images/thumbnail?${new URLSearchParams({ resource, path: entry.path, width: String(width), height: String(height), v: `${entry.modifiedAt}-${entry.size}` })}`;
   }
