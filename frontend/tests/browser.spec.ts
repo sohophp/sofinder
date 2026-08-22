@@ -44,6 +44,7 @@ test("shows and copies an absolute public file URL", async ({ page }) => {
   await page.waitForTimeout(400);
   await page.evaluate(() => Object.defineProperty(navigator, "clipboard", { configurable: true, value: { writeText: async () => undefined } }));
   await page.getByText("guide.txt").first().click();
+  await expect(page.locator(".sf-details time")).toHaveAttribute("datetime", "1970-01-01T00:00:01.000Z");
   await page.getByRole("button", { name: "复制网址" }).click();
   const url = page.getByRole("dialog", { name: "文件网址" }).getByRole("textbox", { name: "文件网址" });
   await expect(url).toHaveValue("http://sofinder.test/uploads/editor/files/guide.txt");
@@ -65,6 +66,7 @@ test("right-click preview opens a preview without selecting the file", async ({ 
   await page.getByRole("menuitem", { name: "预览" }).click();
   await expect(page.getByRole("dialog", { name: "photo.png" })).toBeVisible();
   await expect(page.locator(".sf-file-preview-content img")).toHaveAttribute("src", "/uploads/editor/files/photo.png");
+  await expect(page.locator(".sf-file-preview-meta time")).toHaveAttribute("datetime", "1970-01-01T00:00:02.000Z");
   await expect.poll(() => page.evaluate(() => (window as Window & { selectionEvents?: number }).selectionEvents)).toBe(0);
 });
 

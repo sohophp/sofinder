@@ -13,6 +13,8 @@ Versioning; prereleases may still refine public extension interfaces.
   invoking the editor file-selection callback.
 - Refine the preview layout, move URL copying behind a compact icon and
   click-to-copy dialog, and add a persistent English/Simplified Chinese switch.
+- Add consistent responsive padding and localized modification times to file
+  details and the preview dialog.
 
 ## 0.1.0-beta.1 - 2026-08-22
 

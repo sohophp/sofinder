@@ -93,6 +93,7 @@ export default function App({ config }: { config: SoFinderConfig }) {
     return saved === "en" || saved === "zh-cn" ? saved : config.language;
   });
   const t = useMemo(() => translator(language), [language]);
+  const dateFormatter = useMemo(() => new Intl.DateTimeFormat(language, { dateStyle: "medium", timeStyle: "short" }), [language]);
   const [resources, setResources] = useState<ResourceType[]>([]);
   const [resource, setResource] = useState(config.resource);
   const [path, setPath] = useState("");
@@ -709,7 +710,7 @@ export default function App({ config }: { config: SoFinderConfig }) {
                 <span className="sf-entry-icon">{image ? <ThumbnailImage src={api.thumbnailUrl(resource, entry)} alt="" lazy/> : <Icon kind={entry.directory ? "folder" : "file"}/>}</span>
                 <span className="sf-entry-name" title={entry.name}>{features.favorites && metadata.favorites.includes(entry.path) && <span aria-label={t("favorite")}>★ </span>}{entry.name}</span>
                 <span className="sf-entry-size">{entry.directory ? "—" : formatSize(entry.size)}</span>
-                <time dateTime={new Date(entry.modifiedAt * 1000).toISOString()}>{new Intl.DateTimeFormat(language, { dateStyle: "medium", timeStyle: "short" }).format(entry.modifiedAt * 1000)}</time>
+                <time dateTime={new Date(entry.modifiedAt * 1000).toISOString()}>{dateFormatter.format(entry.modifiedAt * 1000)}</time>
               </button>;
             })}
           </div>}
@@ -725,7 +726,7 @@ export default function App({ config }: { config: SoFinderConfig }) {
         {selectedEntries.length > 1 ? <div className="sf-state">{selectedEntries.length} {t("selectedCount")}</div> : selected ? <>
           <div className="sf-preview">{selected.mimeType?.startsWith("image/") ? <ThumbnailImage src={api.thumbnailUrl(resource, selected, 800, 600)} alt={selected.name}/> : <Icon kind={selected.directory ? "folder" : "file"}/>}</div>
           <h3>{selected.name}</h3>
-          <dl><dt>{t("type")}</dt><dd>{selected.directory ? t("folder") : selected.mimeType || t("file")}</dd><dt>{t("size")}</dt><dd>{selected.directory ? "—" : formatSize(selected.size)}</dd>{imageInfo && <><dt>{t("dimensions")}</dt><dd>{imageInfo.width} × {imageInfo.height} px</dd></>}<dt>{t("location")}</dt><dd>{selected.path}</dd></dl>
+          <dl><dt>{t("type")}</dt><dd>{selected.directory ? t("folder") : selected.mimeType || t("file")}</dd><dt>{t("size")}</dt><dd>{selected.directory ? "—" : formatSize(selected.size)}</dd>{imageInfo && <><dt>{t("dimensions")}</dt><dd>{imageInfo.width} × {imageInfo.height} px</dd></>}<dt>{t("modified")}</dt><dd><time dateTime={new Date(selected.modifiedAt * 1000).toISOString()}>{dateFormatter.format(selected.modifiedAt * 1000)}</time></dd><dt>{t("location")}</dt><dd>{selected.path}</dd></dl>
           {features.tags && (metadata.tags[selected.path] || []).length > 0 && <div className="sf-tags">{metadata.tags[selected.path].map(tag => <span key={tag}>{tag}</span>)}</div>}
           {config.selectMode && !selected.directory && selected.url && <button className="sf-select primary" onClick={() => choose()}>{t("select")}</button>}
           {!selected.directory && <div className="sf-detail-actions"><a className="sf-download" href={api.downloadUrl(resource, selected.path)}>{t("download")}</a><button type="button" className="sf-icon-button" onClick={() => openUrlDialog(selected)} title={t("copyUrl")} aria-label={t("copyUrl")}><LinkIcon/></button></div>}
@@ -766,12 +767,14 @@ export default function App({ config }: { config: SoFinderConfig }) {
       className="sf-file-preview-modal"
       footer={<><button type="button" className="sf-icon-button" onClick={() => openUrlDialog(previewEntry)} title={t("copyUrl")} aria-label={t("copyUrl")}><LinkIcon/></button><a className="sf-preview-download" href={api.downloadUrl(resource, previewEntry.path)}>{t("download")}</a><button className="primary" onClick={() => setPreviewEntry(null)}>{t("close")}</button></>}
     >
-      <div className="sf-file-preview-content">
-        {previewEntry.mimeType?.startsWith("image/")
-          ? <ThumbnailImage src={previewEntry.url || api.contentUrl(resource, previewEntry.path)} alt={previewEntry.name}/>
-          : <div className="sf-file-preview-fallback"><Icon kind="file"/><p>{t("previewUnavailable")}</p></div>}
+      <div className="sf-file-preview-body">
+        <div className="sf-file-preview-content">
+          {previewEntry.mimeType?.startsWith("image/")
+            ? <ThumbnailImage src={previewEntry.url || api.contentUrl(resource, previewEntry.path)} alt={previewEntry.name}/>
+            : <div className="sf-file-preview-fallback"><Icon kind="file"/><p>{t("previewUnavailable")}</p></div>}
+        </div>
+        <dl className="sf-file-preview-meta"><dt>{t("type")}</dt><dd>{previewEntry.mimeType || t("file")}</dd><dt>{t("size")}</dt><dd>{formatSize(previewEntry.size)}</dd><dt>{t("modified")}</dt><dd><time dateTime={new Date(previewEntry.modifiedAt * 1000).toISOString()}>{dateFormatter.format(previewEntry.modifiedAt * 1000)}</time></dd><dt>{t("location")}</dt><dd>{previewEntry.path}</dd></dl>
       </div>
-      <dl className="sf-file-preview-meta"><dt>{t("type")}</dt><dd>{previewEntry.mimeType || t("file")}</dd><dt>{t("size")}</dt><dd>{formatSize(previewEntry.size)}</dd><dt>{t("location")}</dt><dd>{previewEntry.path}</dd></dl>
     </Modal>}
     {urlDialog && <UrlDialog url={urlDialog.url} loginRequired={urlDialog.loginRequired} labels={{ title: t("fileUrl"), close: t("close"), copied: t("urlCopied"), failed: t("copyUrlFailed"), hint: t("clickUrlToCopy"), loginRequired: t("loginRequired") }} onClose={() => setUrlDialog(null)}/>}
     {cropOpen && selected && imageInfo && <ImageEditor

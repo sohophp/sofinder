@@ -337,6 +337,14 @@ select:focus-visible,
   width: min(900px, calc(100vw - 32px));
 }
 
+.sf-file-preview-body {
+  display: grid;
+  gap: 14px;
+  min-height: 0;
+  padding: 18px;
+  overflow: auto;
+}
+
 .sf-file-preview-content {
   position: relative;
   display: grid;
@@ -376,7 +384,11 @@ select:focus-visible,
   display: grid;
   grid-template-columns: max-content minmax(0, 1fr);
   gap: 8px 14px;
-  margin: 16px 0 0;
+  margin: 0;
+  border: 1px solid var(--sf-line);
+  border-radius: 9px;
+  background: color-mix(in srgb,var(--sf-panel) 88%,var(--sf-bg));
+  padding: 13px 15px;
   font-size: 13px;
 }
 
@@ -754,6 +766,10 @@ select:focus-visible,
 
 @media (max-width: 620px) {
   .sf-modal-backdrop { padding: 8px; }
+  .sf-file-preview-modal { width: 100%; }
+  .sf-file-preview-body { gap: 10px; padding: 10px; }
+  .sf-file-preview-content { min-height: 220px; }
+  .sf-file-preview-meta { padding: 11px 12px; }
   .sf-crop-workspace { grid-template-columns: 1fr; }
   .sf-crop-fields { grid-template-columns: repeat(2, 1fr); }
 }
