@@ -21,3 +21,20 @@ are recorded but do not automatically block release.
 - Formal registry searches and a legal review remain required before public
   commercial promotion. The package name remains `sohophp/sofinder` unless the
   blocking-conflict rule is triggered.
+
+## 2026-08-22 beta.2 engineering recheck
+
+- Exact-name web searches scoped to WIPO, USPTO, EUIPO and CNIPA did not expose
+  a live or pending class 9, 35, 38 or 42 file-management/software mark.
+- USPTO serial 97045626 uses `SOFINDER` for class 7 household cleaning and
+  kitchen machinery. It is recorded as an unrelated goods category rather
+  than a blocking software conflict.
+- `sofinder.me` was found as a social-profile link application. No evidence of
+  file-management use, a matching software trademark, or likely source
+  confusion with this PHP/Symfony package was identified in this check.
+- `sohophp/sofinder` and `@sohophp/sofinder-ui` were absent from the public
+  Packagist and npm registry endpoints immediately before release.
+
+No blocking conflict was confirmed under the engineering gate, so the project
+name is retained for the beta. This check is not a legal clearance opinion;
+formal registry review remains required before broader commercial promotion.

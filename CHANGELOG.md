@@ -3,7 +3,7 @@
 All notable changes are documented here. This project follows Semantic
 Versioning; prereleases may still refine public extension interfaces.
 
-## Unreleased
+## 0.1.0-beta.2 - 2026-08-22
 
 - Give read-only thumbnails an independent request limit so large image
   directories do not exhaust the stricter image-editing quota.

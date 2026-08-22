@@ -11,5 +11,5 @@
 6. Install the exact version into an empty Symfony project and run the security
    audit before announcing the release.
 
-For the first beta the exact Composer constraint is
-`sohophp/sofinder:0.1.0-beta.1`. Published tags must never be moved.
+The current beta's exact Composer constraint is
+`sohophp/sofinder:0.1.0-beta.2`. Published tags must never be moved.

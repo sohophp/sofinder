@@ -21,8 +21,8 @@ folder-tree navigation, context/long-press menus, clipboard and targeted drag
 and drop, per-file/chunked upload progress, cancellation, explicit conflict
 replacement, cached thumbnails, EXIF-aware image rotation and proportional
 resize, Canvas-based cropping, derived-image presets, bounded ZIP downloads,
-responsive layout, English and
-Simplified Chinese, Traditional Chinese, and CKEditor 4 browse/upload adapters.
+responsive layout, English, Simplified Chinese, Traditional Chinese, and
+CKEditor 4 browse/upload adapters.
 
 Resources may define byte quotas, required Symfony roles and operation-specific
 role overrides. Completed mutations emit structured PSR-3 audit log entries.
