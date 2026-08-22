@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Api, ApiError } from "./api";
-import { translator } from "./i18n";
+import { translator, type Language } from "./i18n";
 import type { Entry, ImageInfo, ImagePreset, MetadataState, ResourceType, SoFinderConfig } from "./types";
 import { ConfirmDialog, TextDialog } from "./components/Dialogs";
 import { ContextMenu } from "./components/ContextMenu";
@@ -88,9 +88,9 @@ const loadColumnWidth = (side: "left" | "right") => {
 
 export default function App({ config }: { config: SoFinderConfig }) {
   const api = useMemo(() => new Api(config), [config]);
-  const [language, setLanguage] = useState<"en" | "zh-cn">(() => {
+  const [language, setLanguage] = useState<Language>(() => {
     const saved = localStorage.getItem("sofinder.language");
-    return saved === "en" || saved === "zh-cn" ? saved : config.language;
+    return saved === "en" || saved === "zh-cn" || saved === "zh-tw" ? saved : config.language;
   });
   const t = useMemo(() => translator(language), [language]);
   const dateFormatter = useMemo(() => new Intl.DateTimeFormat(language, { dateStyle: "medium", timeStyle: "short" }), [language]);
@@ -155,7 +155,7 @@ export default function App({ config }: { config: SoFinderConfig }) {
 
   useEffect(() => {
     localStorage.setItem("sofinder.language", language);
-    document.documentElement.lang = language === "zh-cn" ? "zh-CN" : "en";
+    document.documentElement.lang = language === "zh-cn" ? "zh-CN" : language === "zh-tw" ? "zh-TW" : "en";
   }, [language]);
 
   const report = useCallback((error: unknown) => setNotice(error instanceof Error ? error.message : t("error")), [t]);
@@ -635,7 +635,7 @@ export default function App({ config }: { config: SoFinderConfig }) {
       <div className="sf-brand"><span className="sf-brand-mark">S</span><strong>SoFinder</strong></div>
       <div className="sf-search"><span aria-hidden="true">⌕</span><select value={searchMode} onChange={event => { const next = event.target.value as "name" | "tags"; setSearchMode(next); setOffset(0); }} aria-label={t("searchScope")}><option value="name">{t("name")}</option><option value="tags" disabled={!features.tags}>{t("tags")}</option></select><input value={search} onChange={e => setSearch(e.target.value)} placeholder={searchMode === "tags" ? t("searchTags") : t("search")} aria-label={searchMode === "tags" ? t("searchTags") : t("search")}/></div>
       <div className="sf-header-actions">
-        <label className="sf-language-switch"><span className="sf-sr-only">{t("language")}</span><select value={language} onChange={event => setLanguage(event.target.value as "en" | "zh-cn")} aria-label={t("language")}><option value="zh-cn">简中</option><option value="en">EN</option></select></label>
+        <label className="sf-language-switch"><span className="sf-sr-only">{t("language")}</span><select value={language} onChange={event => setLanguage(event.target.value as Language)} aria-label={t("language")}><option value="zh-cn">简中</option><option value="zh-tw">繁中</option><option value="en">EN</option></select></label>
         <div className="sf-view-toggle" role="group">
           <button className={view === "grid" ? "active" : ""} onClick={() => setViewMode("grid")} title={t("grid")}>▦</button>
           <button className={view === "list" ? "active" : ""} onClick={() => setViewMode("list")} title={t("list")}>☷</button>

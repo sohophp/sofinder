@@ -58,4 +58,36 @@ const messages = {
 } as const;
 
 export type MessageKey = keyof typeof messages.en;
-export const translator = (language: "en" | "zh-cn") => (key: MessageKey): string => messages[language][key];
+const traditionalChinese: Record<MessageKey, string> = {
+  files: "檔案", images: "圖片", newFolder: "新增資料夾", upload: "上傳", refresh: "重新整理",
+  search: "搜尋檔案", searchTags: "搜尋標籤（多個標籤以逗號分隔）", searchScope: "搜尋範圍", searchTrash: "搜尋已刪除的檔案", name: "名稱", size: "大小", modified: "修改時間", empty: "此資料夾是空的",
+  select: "選取", rename: "重新命名", remove: "刪除", download: "下載", copy: "複製", move: "移動",
+  details: "詳細資訊", type: "類型", folder: "資料夾", file: "檔案", location: "位置", chooseFolder: "目標資料夾", fileUrl: "檔案網址", copyUrl: "複製網址", urlCopied: "網址已複製", copyUrlFailed: "自動複製失敗，網址仍保持選取，可手動複製。", clickUrlToCopy: "點選網址輸入框即可複製。", loginRequired: "需要登入", language: "語言",
+  confirmDelete: "確定要刪除選取的項目嗎？", folderName: "資料夾名稱", newName: "新名稱", newBaseName: "新名稱；副檔名不可修改", loading: "載入中…",
+  uploadDone: "上傳完成", error: "操作失敗", grid: "網格檢視", list: "清單檢視", home: "首頁",
+  sort: "排序", direction: "排序方向", pagination: "分頁", previous: "上一頁", next: "下一頁",
+  selectAll: "全選", clearSelection: "取消全選", selectedCount: "個項目已選取", confirmDeleteMany: "確定要刪除選取的項目嗎？數量：", completed: "個已完成", failed: "個失敗",
+  uploadQueue: "上傳佇列", cancel: "取消", cancelAll: "全部取消", clearFinished: "清除已完成項目", removeUploadTask: "移除工作", collapse: "收合", expand: "展開", queued: "等待中", uploading: "上傳中", done: "已完成", cancelled: "已取消", replaceFile: "已有同名檔案，是否覆寫？",
+  rotateLeft: "向左旋轉", rotateRight: "向右旋轉", resize: "縮放", resizePrompt: "最大寬度 × 高度（1–4096）", invalidDimensions: "請輸入類似 1200x1200 的尺寸。", imageUpdated: "圖片已更新",
+  crop: "裁切", cropPrompt: "裁切範圍：x,y,寬度,高度", invalidCrop: "請輸入有效範圍，例如 0,0,800,600。", preset: "預設尺寸",
+  downloadZip: "打包下載",
+  readOnly: "唯讀", storageUsage: "儲存空間",
+  favorite: "收藏", tags: "標籤", tagsPrompt: "使用逗號分隔標籤", recent: "最近使用",
+  fileActions: "檔案操作", keyboardHelp: "鍵盤：方向鍵導覽，Enter 開啟，F2 重新命名，Delete 刪除，Ctrl+A 全選，Esc 清除選取",
+  dimensions: "圖片尺寸", width: "寬度", height: "高度", settings: "設定", imageTools: "圖片工具", rotationTools: "旋轉工具",
+  optionalFeatures: "選用功能", featureSettingsHint: "僅啟用此檔案管理器實際需要的附加功能。", autoCollapseUploads: "全部上傳完成後自動收合佇列", folderTreeFeature: "左側資料夾樹", recentFeature: "最近使用", favoriteFeature: "收藏", tagsFeature: "標籤", archiveFeature: "打包下載", trashFeature: "資源回收筒管理",
+  resizeLeftPanel: "調整左側欄寬度", resizeRightPanel: "調整詳細資訊欄寬度",
+  toolSettingsHint: "選擇工具列中顯示的圖片功能。旋轉和預設尺寸預設為隱藏。", close: "關閉",
+  confirmImageOverwrite: "此操作會覆寫原始圖片且無法復原，確定要繼續嗎？",
+  moveDestination: "移動到資料夾", copyDestination: "複製到資料夾", rootFolder: "根目錄", noFolders: "沒有子資料夾", currentFolder: "已選資料夾", moveHere: "移動到這裡", copyHere: "複製到這裡",
+  unsafeDestination: "請選擇其他資料夾；不能移動到目前位置，也不能將資料夾放入自身或其子目錄。", cropInstructions: "在圖片上拖曳以選取裁切範圍，也可以使用數值微調。", applyCrop: "裁切並覆寫",
+  maximum: "最多", fileName: "檔名", folderDepth: "資料夾層數", configuredLimits: "目前限制", fileNameTooLong: "檔名超過字數限制：", folderNameTooLong: "資料夾名稱超過字數限制：", folderDepthReached: "已達到設定的最大資料夾層數。",
+  confirm: "確認", save: "儲存", saving: "儲存中…", overwrite: "覆寫原圖", trash: "資源回收筒", trashEmpty: "資源回收筒是空的", restore: "還原", permanentDelete: "永久刪除", expires: "到期時間", restoreConflict: "如有衝突，將自動以新名稱還原", trashRetention: "項目會移入私有資源回收筒，並保留 30 天。", trashUsage: "資源回收筒用量", trashAutoPurged: "資源回收筒已滿，已自動清除最舊項目：", items: "個項目",
+  tagInput: "新增標籤", tagInputHint: "按 Enter 或逗號新增；輸入為空時按 Backspace 移除最後一個標籤。", tagMaximum: "最多 10 個標籤，每個 30 個字元",
+  ratio: "比例", freeRatio: "自由比例", originalRatio: "原圖比例", zoom: "縮放", undo: "復原", redo: "重做", reset: "重設", compare: "按住以比較前後差異", saveMode: "儲存方式", saveCopy: "另存副本", imageCreated: "已產生圖片", panHint: "拖曳選取範圍內部可移動，按住四角可縮小或放大；按住 Alt 拖曳可平移圖片，方向鍵每次微調一個像素。", open: "開啟", preview: "預覽", previewUnavailable: "此檔案類型暫不支援視覺預覽。",
+};
+
+const localizedMessages = { ...messages, "zh-tw": traditionalChinese } as const;
+
+export type Language = keyof typeof localizedMessages;
+export const translator = (language: Language) => (key: MessageKey): string => localizedMessages[language][key];

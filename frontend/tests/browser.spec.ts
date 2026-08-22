@@ -71,7 +71,11 @@ test("right-click preview opens a preview without selecting the file", async ({ 
 });
 
 test("switches language and remembers the choice", async ({ page }) => {
-  await page.getByLabel("语言").selectOption("en");
+  await page.getByLabel("语言").selectOption("zh-tw");
+  await expect(page.getByRole("button", { name: /新增資料夾/ })).toBeVisible();
+  await expect.poll(() => page.evaluate(() => localStorage.getItem("sofinder.language"))).toBe("zh-tw");
+  await expect(page.locator("html")).toHaveAttribute("lang", "zh-TW");
+  await page.getByLabel("語言").selectOption("en");
   await expect(page.getByRole("button", { name: /New folder/ })).toBeVisible();
   await expect.poll(() => page.evaluate(() => localStorage.getItem("sofinder.language"))).toBe("en");
   await expect(page.locator("html")).toHaveAttribute("lang", "en");

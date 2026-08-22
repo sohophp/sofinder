@@ -1,7 +1,7 @@
 export interface SoFinderConfig {
   apiBase: string;
   csrfToken: string;
-  language: "en" | "zh-cn";
+  language: "en" | "zh-cn" | "zh-tw";
   resource: string;
   selectMode: boolean;
   ckeditorFunction: number;

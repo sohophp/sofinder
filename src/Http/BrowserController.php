@@ -29,8 +29,11 @@ final readonly class BrowserController
     {
         $this->files->resources();
         $language = strtolower((string) $request->query->get('lang', ''));
-        if (!in_array($language, ['en', 'zh-cn'], true)) {
-            $language = str_starts_with(strtolower($request->getPreferredLanguage() ?? ''), 'zh') ? 'zh-cn' : 'en';
+        if (!in_array($language, ['en', 'zh-cn', 'zh-tw'], true)) {
+            $preferred = str_replace('_', '-', strtolower($request->getPreferredLanguage() ?? ''));
+            $language = preg_match('/^zh-(tw|hk|mo)|^zh-hant/', $preferred) === 1
+                ? 'zh-tw'
+                : (str_starts_with($preferred, 'zh') ? 'zh-cn' : 'en');
         }
         $config = [
             'apiBase' => $this->router->generate('sofinder_api_config'),
