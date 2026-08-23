@@ -1,5 +1,7 @@
 # SoFinder
 
+> Traditional Chinese: [README.zh-TW.md](README.zh-TW.md)
+
 SoFinder is an original MIT-licensed file manager for PHP 8.2 through 8.5. It
 provides a framework-independent core, a Symfony 6.4/7.4 bundle, and a React
 user interface.

@@ -1,5 +1,7 @@
 # Image format support
 
+> 繁體中文版本：[image-formats.zh-TW.md](image-formats.zh-TW.md)
+
 SoFinder 1.0 only treats formats that can be embedded directly in supported
 web browsers as images. Image content is fully decoded before publication.
 Effective support still depends on the installed processor:

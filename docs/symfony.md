@@ -1,5 +1,7 @@
 # Symfony integration
 
+> 繁體中文版本：[symfony.zh-TW.md](symfony.zh-TW.md)
+
 Register the bundle in the application kernel:
 
 ```php

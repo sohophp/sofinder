@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.1.0-beta.6 - 2026-08-23
+
+- Add a Traditional Chinese project README.
+- Add Traditional Chinese Symfony integration, maintenance-mode and image-format guides.
+- Link each translated guide from its English source document.
+- Keep all PHP, HTTP, storage and frontend runtime contracts unchanged.
+
 ## 0.1.0-beta.5 - 2026-08-23
 
 - Add bounded `inline`, optional `messenger`, externally scheduled and disabled

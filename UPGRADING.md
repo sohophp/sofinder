@@ -1,5 +1,11 @@
 # Upgrading SoFinder
 
+## From 0.1.0-beta.5 to 0.1.0-beta.6
+
+This is a documentation-only release. No configuration, storage, API or asset
+migration is required. Existing `maintenance`, `ui.scale`, file paths and public
+URLs remain unchanged.
+
 ## From 0.1.0-beta.4 to 0.1.0-beta.5
 
 No file, URL or metadata migration is required. Maintenance defaults to bounded
