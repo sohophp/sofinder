@@ -219,8 +219,11 @@ final readonly class TrashManager implements RecycleBinInterface
         $this->removeTree($this->itemDirectory($id));
     }
 
-    public function purgeExpired(): int
+    public function purgeExpired(?int $limit = null): int
     {
+        if ($limit !== null && $limit < 1) {
+            return 0;
+        }
         if (!is_dir($this->root)) {
             return 0;
         }
@@ -243,6 +246,9 @@ final readonly class TrashManager implements RecycleBinInterface
                 if ($data !== null && (int) ($data['expiresAt'] ?? PHP_INT_MAX) <= time()) {
                     $this->removeTree($directory->getPathname());
                     ++$purged;
+                    if ($limit !== null && $purged >= $limit) {
+                        break 2;
+                    }
                 }
             }
         }

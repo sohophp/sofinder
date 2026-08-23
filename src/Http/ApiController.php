@@ -25,6 +25,8 @@ final readonly class ApiController
         private array $imagePresets = [],
         private ?MetadataManager $metadata = null,
         private ?ImageCapabilityProviderInterface $imageCapabilities = null,
+        /** @var array{folder_tree?:bool,scale?:string} */
+        private array $ui = [],
     ) {
     }
 
@@ -39,6 +41,7 @@ final readonly class ApiController
                 'driver' => $this->imageCapabilities?->driver() ?? '',
                 'formats' => $this->imageCapabilities?->capabilities() ?? [],
             ],
+            'uiDefaults' => ['scale' => (string) ($this->ui['scale'] ?? 'standard')],
         ]);
     }
 

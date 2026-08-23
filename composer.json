@@ -38,7 +38,8 @@
     "suggest": {
         "ext-gd": "Required for thumbnails and image editing",
         "ext-imagick": "Adds ICO processing support when its ImageMagick coder is installed",
-        "ext-zip": "Required for ZIP archive downloads"
+        "ext-zip": "Required for ZIP archive downloads",
+        "symfony/messenger": "Required only when maintenance.mode is messenger"
     },
     "autoload": {
         "psr-4": {

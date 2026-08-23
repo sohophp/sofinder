@@ -16,7 +16,10 @@ export interface SoFinderConfig {
     radius: string;
   };
   featureDefaults: { folderTree: boolean };
+  uiDefaults: { scale: UiScale };
 }
+
+export type UiScale = "compact" | "standard" | "large" | "xlarge";
 
 export interface PluginDescriptor {
   name: string;

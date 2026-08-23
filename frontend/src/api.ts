@@ -1,4 +1,4 @@
-import type { ApiResponse, BatchResult, Entry, ImageAction, ImageCapabilities, ImageEditResult, ImagePreset, ImageInfo, MetadataState, PluginDescriptor, ResourceType, SoFinderConfig, TrashPage } from "./types";
+import type { ApiResponse, BatchResult, Entry, ImageAction, ImageCapabilities, ImageEditResult, ImagePreset, ImageInfo, MetadataState, PluginDescriptor, ResourceType, SoFinderConfig, TrashPage, UiScale } from "./types";
 
 export class ApiError extends Error {
   constructor(message: string, public readonly code: string, public readonly status: number) {
@@ -34,7 +34,7 @@ export class Api {
     this.base = config.apiBase.replace(/\/config$/, "");
   }
 
-  configData() { return this.request<{ apiVersion: string; resources: ResourceType[]; plugins: PluginDescriptor[]; imagePresets: Record<string, ImagePreset>; imageCapabilities?: ImageCapabilities }>("/config"); }
+  configData() { return this.request<{ apiVersion: string; resources: ResourceType[]; plugins: PluginDescriptor[]; imagePresets: Record<string, ImagePreset>; imageCapabilities?: ImageCapabilities; uiDefaults?: { scale: UiScale } }>("/config"); }
 
   list(resource: string, path: string, search = "", sort = "name", direction = "asc", offset = 0, limit = 100, searchMode: "name" | "tags" = "name") {
     const query = new URLSearchParams({ resource, path, search, searchMode, sort, direction, offset: String(offset), limit: String(limit) });

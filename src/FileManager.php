@@ -20,6 +20,8 @@ use SohoPHP\SoFinder\Security\UploadPipeline;
 use SohoPHP\SoFinder\Storage\StoragePaginator;
 use SohoPHP\SoFinder\Usage\PersistentUsageTracker;
 use SohoPHP\SoFinder\Image\GdImageProcessor;
+use SohoPHP\SoFinder\Maintenance\MaintenanceCoordinator;
+use SohoPHP\SoFinder\Maintenance\MaintenanceTask;
 use SohoPHP\SoFinder\Value\Entry;
 use SohoPHP\SoFinder\Value\ListQuery;
 use SohoPHP\SoFinder\Value\ResourceStorage;
@@ -40,6 +42,7 @@ final readonly class FileManager
         private ?RecycleBinInterface $trash = null,
         ?UsageTrackerInterface $usage = null,
         ?StoragePaginator $paginator = null,
+        private ?MaintenanceCoordinator $maintenance = null,
     ) {
         $this->uploads = $uploads ?? new UploadPipeline(
             new DefaultFileInspector(new GdImageProcessor()),
@@ -387,6 +390,9 @@ final readonly class FileManager
 
             return ['value' => $trashed, 'delta' => -$removedBytes];
         });
+        if ($trashed !== null) {
+            $this->maintenance?->trigger(MaintenanceTask::Trash);
+        }
 
         return $trashed;
     }

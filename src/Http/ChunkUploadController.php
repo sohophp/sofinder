@@ -9,13 +9,20 @@ use SohoPHP\SoFinder\FileManager;
 use SohoPHP\SoFinder\Symfony\CsrfGuard;
 use SohoPHP\SoFinder\Contract\ChunkUploadStoreInterface;
 use SohoPHP\SoFinder\Value\OperationResult;
+use SohoPHP\SoFinder\Maintenance\MaintenanceCoordinator;
+use SohoPHP\SoFinder\Maintenance\MaintenanceTask;
 use Symfony\Component\HttpFoundation\File\UploadedFile;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 
 final readonly class ChunkUploadController
 {
-    public function __construct(private FileManager $files, private ChunkUploadStoreInterface $chunks, private CsrfGuard $csrf)
+    public function __construct(
+        private FileManager $files,
+        private ChunkUploadStoreInterface $chunks,
+        private CsrfGuard $csrf,
+        private ?MaintenanceCoordinator $maintenance = null,
+    )
     {
     }
 
@@ -56,7 +63,7 @@ final readonly class ChunkUploadController
             fclose($assembled);
             $this->chunks->discard($id);
         }
-        $this->chunks->cleanupExpired();
+        $this->maintenance?->trigger(MaintenanceTask::Uploads);
 
         return new JsonResponse(OperationResult::success(['complete' => true, 'entry' => $entry]), 201);
     }

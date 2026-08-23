@@ -51,8 +51,9 @@ and full image decoding before atomic publication. SoFinder also provides
 inherited path ACLs, public/proxy delivery, Range/ETag responses, operation
 gates, structured failure audits and a private 30-day recycle bin. Run
 `sofinder:security:audit` during deployment and schedule
-`sofinder:trash:cleanup` and `sofinder:uploads:cleanup`; see
-`docs/security.md`.
+`sofinder:trash:cleanup` and `sofinder:uploads:cleanup` when using an external
+scheduler. Bounded inline maintenance is the default; see
+`docs/maintenance.md` and `docs/security.md`.
 
 Image processing supports web-embeddable JPEG, PNG, GIF, WebP, AVIF, BMP and
 ICO, using GD when available and an optional Imagick ICO fallback. Decoded

@@ -544,6 +544,11 @@ select:focus-visible,
 .sf-settings-modal > header { position: sticky; z-index: 2; top: 0; background: var(--sf-panel); }
 .sf-settings-modal > footer { position: sticky; z-index: 2; bottom: 0; background: var(--sf-panel); }
 
+.sf-scale-options { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 8px; margin: 0 18px 16px; }
+.sf-scale-options label { display: flex; align-items: center; gap: 7px; min-width: 0; border: 1px solid var(--sf-line); border-radius: 8px; padding: 9px 10px; cursor: pointer; }
+.sf-scale-options label:has(input:checked) { border-color: var(--sf-accent); background: var(--sf-accent-soft); }
+.sf-scale-options input { accent-color: var(--sf-accent); }
+
 .sf-setting {
   display: flex;
   align-items: center;
@@ -608,6 +613,20 @@ select:focus-visible,
 .sf-trash-pagination { display: flex; align-items: center; justify-content: center; gap: 12px; padding: 10px 18px; border-top: 1px solid var(--sf-line); }
 .sf-trash-pagination span { min-width: 100px; color: var(--sf-muted); font-size: 12px; text-align: center; }
 .sf-trash-pagination button:disabled { opacity: .4; }
+
+/* Four tested density levels scale typography, controls, icons and spacing without browser zoom. */
+:root { --sf-ui-font:14px; --sf-ui-small:12px; --sf-ui-large:18px; --sf-ui-control-y:8px; --sf-ui-control-x:11px; --sf-ui-icon:36px; --sf-ui-gap:10px; }
+:root[data-sofinder-scale="compact"] { --sf-ui-font:12.6px; --sf-ui-small:10.8px; --sf-ui-large:16.2px; --sf-ui-control-y:7px; --sf-ui-control-x:10px; --sf-ui-icon:32px; --sf-ui-gap:9px; }
+:root[data-sofinder-scale="large"] { --sf-ui-font:15.75px; --sf-ui-small:13.5px; --sf-ui-large:20.25px; --sf-ui-control-y:9px; --sf-ui-control-x:12px; --sf-ui-icon:41px; --sf-ui-gap:11px; }
+:root[data-sofinder-scale="xlarge"] { --sf-ui-font:17.5px; --sf-ui-small:15px; --sf-ui-large:22.5px; --sf-ui-control-y:10px; --sf-ui-control-x:14px; --sf-ui-icon:45px; --sf-ui-gap:13px; }
+.sf-app { font-size:var(--sf-ui-font); }
+.sf-toolbar,.sf-sidebar,.sf-details,.sf-modal,.sf-context-menu,.sf-upload-queue { font-size:var(--sf-ui-font); }
+.sf-toolbar button,.sf-details button,.sf-download,.sf-modal button,.sf-context-menu button { padding:var(--sf-ui-control-y) var(--sf-ui-control-x); }
+.sf-icon-button { width:var(--sf-ui-icon); min-width:var(--sf-ui-icon); height:var(--sf-ui-icon); }
+.sf-side-title,.sf-list-head,.sf-details dl,.sf-entry-size,.sf-entries.list time,.sf-trash-pagination span { font-size:var(--sf-ui-small); }
+.sf-brand { font-size:var(--sf-ui-large); }
+.sf-setting,.sf-scale-options,.sf-form-body { gap:var(--sf-ui-gap); }
+@media(max-width:620px){.sf-scale-options{grid-template-columns:1fr}}
 
 .sf-settings-modal h3 { margin: 16px 18px 4px; font-size: 14px; }
 

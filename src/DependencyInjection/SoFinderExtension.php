@@ -20,6 +20,7 @@ use SohoPHP\SoFinder\Contract\ImageCapabilityProviderInterface;
 use SohoPHP\SoFinder\Contract\FileInspectorInterface;
 use SohoPHP\SoFinder\Contract\EntryUrlGeneratorInterface;
 use SohoPHP\SoFinder\Contract\MetadataStoreInterface;
+use SohoPHP\SoFinder\Contract\MaintenanceDispatcherInterface;
 use SohoPHP\SoFinder\Contract\PluginInterface;
 use SohoPHP\SoFinder\Contract\RecycleBinInterface;
 use SohoPHP\SoFinder\Contract\RequestGateStoreInterface;
@@ -46,6 +47,10 @@ use SohoPHP\SoFinder\Image\ImagickImageProcessor;
 use SohoPHP\SoFinder\Image\ImageManager;
 use SohoPHP\SoFinder\Metadata\JsonMetadataStore;
 use SohoPHP\SoFinder\Metadata\MetadataManager;
+use SohoPHP\SoFinder\Maintenance\MaintenanceCoordinator;
+use SohoPHP\SoFinder\Maintenance\MaintenanceMessageHandler;
+use SohoPHP\SoFinder\Maintenance\MaintenanceRunner;
+use SohoPHP\SoFinder\Maintenance\MessengerMaintenanceDispatcher;
 use SohoPHP\SoFinder\Plugin\PluginRegistry;
 use SohoPHP\SoFinder\Security\PathGuard;
 use SohoPHP\SoFinder\Security\DefaultFileInspector;
@@ -100,6 +105,10 @@ final class SoFinderExtension extends Extension
         $container->setParameter('so_finder.chunk_dir', $config['chunk_dir']);
         $container->setParameter('so_finder.usage_dir', $config['usage_dir']);
         $container->setParameter('so_finder.trash_dir', $config['trash_dir']);
+        $maintenanceConfig = $config['maintenance'];
+        if ($maintenanceConfig['mode'] === 'messenger' && !interface_exists('Symfony\\Component\\Messenger\\MessageBusInterface')) {
+            throw new \InvalidArgumentException('SoFinder maintenance.mode is messenger, but symfony/messenger is not installed.');
+        }
         $container->registerForAutoconfiguration(PluginInterface::class)->addTag('sofinder.plugin');
         $container->registerForAutoconfiguration(StorageAdapterFactoryInterface::class)->addTag('sofinder.storage_factory');
         $packageDir = dirname(__DIR__, 2);
@@ -203,6 +212,34 @@ final class SoFinderExtension extends Extension
                 $config['max_upload_chunks'],
             ]));
         $container->setAlias(ChunkUploadStoreInterface::class, new Alias(ChunkUploadManager::class));
+        $maintenanceDirectory = rtrim((string) $config['cache_dir'], '/') . '/maintenance';
+        $container->setDefinition(MaintenanceRunner::class, (new Definition(MaintenanceRunner::class))
+            ->setArguments([
+                $maintenanceDirectory,
+                new Reference(ChunkUploadStoreInterface::class),
+                new Reference(RecycleBinInterface::class),
+                new Reference(UsageTrackerInterface::class),
+                new Reference(ResourceRegistry::class),
+            ]));
+        $dispatcher = null;
+        if ($maintenanceConfig['mode'] === 'messenger') {
+            $container->setDefinition(MessengerMaintenanceDispatcher::class, (new Definition(MessengerMaintenanceDispatcher::class))
+                ->setArgument('$bus', new Reference('messenger.default_bus')));
+            $container->setAlias(MaintenanceDispatcherInterface::class, new Alias(MessengerMaintenanceDispatcher::class));
+            $container->setDefinition(MaintenanceMessageHandler::class, (new Definition(MaintenanceMessageHandler::class))
+                ->setArgument('$runner', new Reference(MaintenanceRunner::class))
+                ->addTag('messenger.message_handler'));
+            $dispatcher = new Reference(MaintenanceDispatcherInterface::class);
+        }
+        $container->setDefinition(MaintenanceCoordinator::class, (new Definition(MaintenanceCoordinator::class))
+            ->setArguments([
+                $maintenanceDirectory,
+                $maintenanceConfig['mode'],
+                $maintenanceConfig['min_interval_seconds'],
+                $maintenanceConfig['max_items_per_run'],
+                new Reference(MaintenanceRunner::class),
+                $dispatcher,
+            ]));
         $container->setDefinition(FileManager::class, (new Definition(FileManager::class))
             ->setArguments([
                 new Reference(ResourceRegistry::class),
@@ -214,6 +251,7 @@ final class SoFinderExtension extends Extension
                 new Reference(RecycleBinInterface::class),
                 new Reference(UsageTrackerInterface::class),
                 new Reference(StoragePaginator::class),
+                new Reference(MaintenanceCoordinator::class),
             ]));
         $container->setDefinition(ImageManager::class, (new Definition(ImageManager::class))
             ->setArguments([
@@ -253,6 +291,7 @@ final class SoFinderExtension extends Extension
             $config['image_presets'],
             new Reference(MetadataManager::class),
             new Reference(ImageCapabilityProviderInterface::class),
+            $config['ui'],
         ]);
         $this->controller($container, ContentController::class, [
             new Reference(FileManager::class),
@@ -267,6 +306,7 @@ final class SoFinderExtension extends Extension
             new Reference(FileManager::class),
             new Reference(ChunkUploadStoreInterface::class),
             new Reference(CsrfGuard::class),
+            new Reference(MaintenanceCoordinator::class),
         ]);
         $this->controller($container, ImageController::class, [
             new Reference(ImageManager::class),
@@ -313,7 +353,7 @@ final class SoFinderExtension extends Extension
             ])
             ->addTag('kernel.event_subscriber'));
         $container->setDefinition(TrashCleanupCommand::class, (new Definition(TrashCleanupCommand::class))
-            ->setArgument('$trash', new Reference(RecycleBinInterface::class))
+            ->setArgument('$runner', new Reference(MaintenanceRunner::class))
             ->addTag('console.command'));
         $container->setDefinition(SecurityAuditCommand::class, (new Definition(SecurityAuditCommand::class))
             ->setArguments([
@@ -337,10 +377,11 @@ final class SoFinderExtension extends Extension
             ->setArguments([
                 new Reference(ResourceRegistry::class),
                 new Reference(UsageTrackerInterface::class),
+                new Reference(MaintenanceRunner::class),
             ])
             ->addTag('console.command'));
         $container->setDefinition(UploadCleanupCommand::class, (new Definition(UploadCleanupCommand::class))
-            ->setArgument('$chunks', new Reference(ChunkUploadStoreInterface::class))
+            ->setArgument('$runner', new Reference(MaintenanceRunner::class))
             ->addTag('console.command'));
     }
 

@@ -6,6 +6,8 @@ namespace SohoPHP\SoFinder\Command;
 
 use SohoPHP\SoFinder\Contract\UsageTrackerInterface;
 use SohoPHP\SoFinder\ResourceRegistry;
+use SohoPHP\SoFinder\Maintenance\MaintenanceRunner;
+use SohoPHP\SoFinder\Maintenance\MaintenanceTask;
 use Symfony\Component\Console\Attribute\AsCommand;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputArgument;
@@ -19,6 +21,7 @@ final class UsageRecalculateCommand extends Command
     public function __construct(
         private readonly ResourceRegistry $resources,
         private readonly UsageTrackerInterface $usage,
+        private readonly MaintenanceRunner $runner,
     ) {
         parent::__construct();
     }
@@ -32,7 +35,19 @@ final class UsageRecalculateCommand extends Command
     {
         $io = new SymfonyStyle($input, $output);
         $name = $input->getArgument('resource');
-        $items = is_string($name) && $name !== '' ? [$this->resources->get($name)] : $this->resources->all();
+        if (!is_string($name) || $name === '') {
+            $result = $this->runner->run(MaintenanceTask::Usage);
+            if (!$result->executed) {
+                $io->note('SoFinder usage recalculation is already running; skipped.');
+                return Command::SUCCESS;
+            }
+            foreach ($result->details as $resource => $bytes) {
+                $io->writeln(sprintf('%s: %d bytes', $resource, $bytes));
+            }
+            $io->success(sprintf('Recalculated %d SoFinder resource(s).', $result->processed));
+            return Command::SUCCESS;
+        }
+        $items = [$this->resources->get($name)];
         foreach ($items as $item) {
             $bytes = $this->usage->recalculate($item);
             $io->writeln(sprintf('%s: %d bytes', $item->resource->name, $bytes));

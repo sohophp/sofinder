@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.1.0-beta.5 - 2026-08-23
+
+- Add bounded `inline`, optional `messenger`, externally scheduled and disabled
+  maintenance modes while retaining synchronous recycle-bin capacity safety.
+- Serialize cleanup entry points with non-blocking locks and throttle web-request
+  cleanup without requiring a daemon or cron service.
+- Add compact, standard, large and extra-large interface density settings with
+  host defaults and browser-local user preferences.
+
 ## 0.1.0-beta.4 - 2026-08-23
 
 - Limit the image pipeline and CKEditor image selection to web-embeddable

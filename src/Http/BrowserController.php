@@ -20,7 +20,7 @@ final readonly class BrowserController
         private CsrfTokenManagerInterface $csrf,
         private string $assetVersion,
         private Theme $theme,
-        /** @var array{folder_tree:bool} */
+        /** @var array{folder_tree:bool,scale:string} */
         private array $ui,
     ) {
     }
@@ -45,6 +45,7 @@ final readonly class BrowserController
             'ckeditorFunction' => (int) $request->query->get('CKEditorFuncNum', 0),
             'theme' => $this->theme->values(),
             'featureDefaults' => ['folderTree' => (bool) ($this->ui['folder_tree'] ?? false)],
+            'uiDefaults' => ['scale' => (string) ($this->ui['scale'] ?? 'standard')],
         ];
         $encoded = htmlspecialchars(json_encode($config, JSON_THROW_ON_ERROR | JSON_UNESCAPED_SLASHES), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
         $version = rawurlencode($this->assetVersion);

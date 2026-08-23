@@ -18,5 +18,5 @@ interface ChunkUploadStoreInterface
 
     public function discard(string $id): void;
 
-    public function cleanupExpired(bool $allActors = false): int;
+    public function cleanupExpired(bool $allActors = false, ?int $limit = null): int;
 }

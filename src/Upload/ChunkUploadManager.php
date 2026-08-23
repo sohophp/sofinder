@@ -121,8 +121,9 @@ final readonly class ChunkUploadManager implements ChunkUploadStoreInterface
         ];
     }
 
-    public function cleanupExpired(bool $allActors = false): int
+    public function cleanupExpired(bool $allActors = false, ?int $limit = null): int
     {
+        if ($limit !== null && $limit < 1) return 0;
         $root = $allActors ? rtrim($this->root, '/') : $this->actorRoot(false);
         if (!is_dir($root)) return 0;
         $purged = 0;
@@ -138,7 +139,10 @@ final readonly class ChunkUploadManager implements ChunkUploadStoreInterface
                 if (!$directory instanceof \SplFileInfo) continue;
                 if (!$directory->isDir() || $directory->isLink() || $directory->getMTime() >= time() - 86_400) continue;
                 $this->removeDirectory($directory->getPathname());
-                if (!is_dir($directory->getPathname())) ++$purged;
+                if (!is_dir($directory->getPathname())) {
+                    ++$purged;
+                    if ($limit !== null && $purged >= $limit) return $purged;
+                }
             }
         }
 

@@ -29,6 +29,11 @@ so_finder:
   trash_max_bytes: 1073741824
   ui:
     folder_tree: false # Initial UI preference; each browser can enable it in Settings.
+    scale: standard    # compact, standard, large or xlarge; browser preference wins.
+  maintenance:
+    mode: inline       # inline, messenger, external or disabled
+    min_interval_seconds: 300
+    max_items_per_run: 50
   image_presets:
     content: { width: 1200, height: 1200, quality: 88 }
   resources:

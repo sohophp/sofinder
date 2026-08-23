@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Api, ApiError } from "./api";
 import { translator, type Language } from "./i18n";
-import type { Entry, ImageCapabilities, ImageInfo, ImagePreset, MetadataState, ResourceType, SoFinderConfig } from "./types";
+import type { Entry, ImageCapabilities, ImageInfo, ImagePreset, MetadataState, ResourceType, SoFinderConfig, UiScale } from "./types";
 import { ConfirmDialog, TextDialog } from "./components/Dialogs";
 import { ContextMenu } from "./components/ContextMenu";
 import { FolderTree } from "./components/FolderTree";
@@ -32,6 +32,10 @@ const loadPreferences = <T extends object>(key: string, defaults: T): T => {
 };
 const loadToolPreferences = (): ToolPreferences => {
   return loadPreferences("sofinder.imageTools.v2", defaultTools);
+};
+const loadScale = (fallback: UiScale): UiScale => {
+  const saved = localStorage.getItem("sofinder.uiScale.v1");
+  return saved === "compact" || saved === "standard" || saved === "large" || saved === "xlarge" ? saved : fallback;
 };
 
 const columnLimits = { left: { initial: 220, min: 110, max: 330 }, right: { initial: 270, min: 135, max: 405 } } as const;
@@ -71,6 +75,7 @@ export default function App({ config }: { config: SoFinderConfig }) {
   const [tools, setTools] = useState<ToolPreferences>(loadToolPreferences);
   const [features, setFeatures] = useState<FeaturePreferences>(() => loadPreferences("sofinder.features.v2", { ...defaultFeatures, folderTree: config.featureDefaults?.folderTree ?? false }));
   const [settingsOpen, setSettingsOpen] = useState(false);
+  const [uiScale, setUiScale] = useState<UiScale>(() => loadScale(config.uiDefaults?.scale ?? "standard"));
   const [destinationDialog, setDestinationDialog] = useState<DestinationState | null>(null);
   const [cropOpen, setCropOpen] = useState(false);
   const [textDialog, setTextDialog] = useState<TextDialogState | null>(null);
@@ -108,6 +113,12 @@ export default function App({ config }: { config: SoFinderConfig }) {
     Object.entries(variableNames).forEach(([key, name]) => root.style.setProperty(name, config.theme[key as keyof typeof config.theme]));
     return () => previous.forEach(([name, value]) => value ? root.style.setProperty(name, value) : root.style.removeProperty(name));
   }, [config.theme]);
+
+  useEffect(() => {
+    document.documentElement.dataset.sofinderScale = uiScale;
+    localStorage.setItem("sofinder.uiScale.v1", uiScale);
+    return () => { delete document.documentElement.dataset.sofinderScale; };
+  }, [uiScale]);
 
   useEffect(() => {
     localStorage.setItem("sofinder.language", language);
@@ -688,7 +699,7 @@ export default function App({ config }: { config: SoFinderConfig }) {
       <div className="sf-column-resizer right" role="separator" tabIndex={0} aria-label={t("resizeRightPanel")} aria-orientation="vertical" aria-valuemin={columnLimits.right.min} aria-valuemax={columnLimits.right.max} aria-valuenow={rightWidth} onPointerDown={event => beginColumnResize("right", event)} onPointerMove={moveColumnResize} onPointerUp={endColumnResize} onPointerCancel={endColumnResize} onKeyDown={event => resizeColumnWithKeyboard("right", event)} onDoubleClick={() => setColumnWidth("right", columnLimits.right.initial, true)}/>
       <DetailsPanel api={api} resource={resource} selectedEntries={selectedEntries} selected={selected} imageInfo={imageInfo} metadata={metadata} showTags={features.tags} previewImage={canPreviewImage(selected)} selectMode={config.selectMode} selectAllowed={canChooseEntry(selected)} labels={{ details: t("details"), selected: t("selectedCount"), type: t("type"), folder: t("folder"), file: t("file"), size: t("size"), dimensions: t("dimensions"), modified: t("modified"), location: t("location"), select: t("select"), download: t("download"), copyUrl: t("copyUrl"), unsupportedWebImage: t("webImageUnsupported") }} formatDate={timestamp => dateFormatter.format(timestamp * 1000)} onChoose={choose} onOpenUrl={openUrlDialog}/>
     </div>
-    {settingsOpen && <SettingsDialog resource={currentResource} tools={tools} features={features} translate={t} onToolChange={updateTool} onFeatureChange={(feature, enabled) => { updateFeature(feature, enabled); if (feature === "tags" && !enabled && searchMode === "tags") setSearchMode("name"); }} onClose={() => setSettingsOpen(false)}/>}
+    {settingsOpen && <SettingsDialog resource={currentResource} tools={tools} features={features} scale={uiScale} translate={t} onToolChange={updateTool} onFeatureChange={(feature, enabled) => { updateFeature(feature, enabled); if (feature === "tags" && !enabled && searchMode === "tags") setSearchMode("name"); }} onScaleChange={setUiScale} onClose={() => setSettingsOpen(false)}/>}
     {destinationDialog && <DestinationDialog state={destinationDialog} unsafe={destinationUnsafe} translate={t} onBrowse={(operation, destination) => void browseDestination(operation, destination)} onConfirm={(operation, destination) => void transfer(operation, destination)} onClose={() => setDestinationDialog(null)}/>}
     {textDialog && <TextDialog title={textDialog.title} label={textDialog.label} initialValue={textDialog.initial} maximum={textDialog.maximum} extension={textDialog.extension} confirmLabel={t("confirm")} cancelLabel={t("cancel")} closeLabel={t("close")} onConfirm={value => void submitTextDialog(value)} onClose={() => setTextDialog(null)}/>}
     {confirmDialog && <ConfirmDialog {...confirmDialog} confirmLabel={t("confirm")} cancelLabel={t("cancel")} closeLabel={t("close")} onConfirm={() => answerConfirm(true)} onClose={() => answerConfirm(false)}/>}

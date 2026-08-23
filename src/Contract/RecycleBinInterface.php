@@ -25,5 +25,5 @@ interface RecycleBinInterface
 
     public function permanentlyDelete(string $id): void;
 
-    public function purgeExpired(): int;
+    public function purgeExpired(?int $limit = null): int;
 }

@@ -1,5 +1,15 @@
 # Upgrading SoFinder
 
+## From 0.1.0-beta.4 to 0.1.0-beta.5
+
+No file, URL or metadata migration is required. Maintenance defaults to bounded
+`inline` execution, so existing hosts remain safe without cron or a worker.
+Hosts with Symfony Messenger may select `maintenance.mode: messenger`; install
+`symfony/messenger`, route `MaintenanceMessage` to an asynchronous transport and
+run a consumer before switching modes. `external` retains Console/cron control,
+while `disabled` turns off opportunity cleanup but not recycle-bin capacity
+enforcement. The optional `ui.scale` default is `standard`.
+
 ## From 0.1.0-beta.3 to 0.1.0-beta.4
 
 No stored files, public URLs, metadata or recycle-bin data require migration.
