@@ -129,6 +129,19 @@ test("keeps portrait thumbnails inside grid preview cells", async ({ page }) => 
   expect(thumbnailBox!.y).toBeGreaterThanOrEqual(previewBox!.y);
   expect(thumbnailBox!.y + thumbnailBox!.height).toBeLessThanOrEqual(previewBox!.y + previewBox!.height);
   expect(previewBox!.y + previewBox!.height).toBeLessThanOrEqual(entryBox!.y + entryBox!.height);
+
+  await entry.click();
+  const detailPreview = page.locator(".sf-details .sf-preview");
+  const detailThumbnail = detailPreview.locator("img");
+  await expect(detailThumbnail).toBeVisible();
+  const [detailPreviewBox, detailThumbnailBox] = await Promise.all([detailPreview.boundingBox(), detailThumbnail.boundingBox()]);
+  expect(detailPreviewBox).not.toBeNull();
+  expect(detailThumbnailBox).not.toBeNull();
+  expect(detailThumbnailBox!.x).toBeGreaterThanOrEqual(detailPreviewBox!.x);
+  expect(detailThumbnailBox!.y).toBeGreaterThanOrEqual(detailPreviewBox!.y);
+  expect(detailThumbnailBox!.x + detailThumbnailBox!.width).toBeLessThanOrEqual(detailPreviewBox!.x + detailPreviewBox!.width);
+  expect(detailThumbnailBox!.y + detailThumbnailBox!.height).toBeLessThanOrEqual(detailPreviewBox!.y + detailPreviewBox!.height);
+  await expect(detailThumbnail).toHaveAttribute("src", /path=photo\.png/);
 });
 
 test("keeps crop corner and side handles reachable for wide images", async ({ page }) => {

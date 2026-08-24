@@ -4,6 +4,7 @@
 
 - Keep image thumbnails fully contained within fixed-height list rows.
 - Keep portrait and unusually tall thumbnails contained within fixed-height grid preview cells.
+- Keep portrait detail thumbnails fully contained instead of clipping them to the preview panel.
 - Use the intended 270px details-panel width when no saved preference exists.
 - Replace the custom crop overlay with CropperJS 1.6.2 for aligned handles, reliable corner/edge resizing, and smoother selection drawing.
 - Let the server choose a conflict-safe name when saving a crop with the unchanged default copy name.
