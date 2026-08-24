@@ -5,6 +5,7 @@
 /examples/symfony/composer.lock
 /examples/symfony/vendor/
 /examples/symfony/var/
+/examples/symfony/public/uploads
 /.phpunit.result.cache
 /.phpunit.cache/
 /coverage/
