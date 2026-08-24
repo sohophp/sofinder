@@ -546,7 +546,7 @@ export default function App({ config }: { config: SoFinderConfig }) {
     else if (command === "copy") void browseDestination("copy", path);
     else if (command === "move") void browseDestination("move", path);
     else if (command === "delete") void remove();
-    else if (command === "download" && target && !target.directory) window.location.assign(api.downloadUrl(resource, target.path));
+    else if (command === "download" && target && !target.directory) window.location.assign(target.url || api.downloadUrl(resource, target.path));
   };
 
   const applyPreset = async (name: string) => {
@@ -778,7 +778,7 @@ export default function App({ config }: { config: SoFinderConfig }) {
       closeLabel={t("close")}
       onClose={() => setPreviewEntry(null)}
       className="sf-file-preview-modal"
-      footer={<><button type="button" className="sf-icon-button" onClick={() => openUrlDialog(previewEntry)} title={t("copyUrl")} aria-label={t("copyUrl")}><LinkIcon/></button><a className="sf-preview-download" href={api.downloadUrl(resource, previewEntry.path)}>{t("download")}</a><button className="primary" onClick={() => setPreviewEntry(null)}>{t("close")}</button></>}
+      footer={<><button type="button" className="sf-icon-button" onClick={() => openUrlDialog(previewEntry)} title={t("copyUrl")} aria-label={t("copyUrl")}><LinkIcon/></button><a className="sf-preview-download" href={previewEntry.url || api.downloadUrl(resource, previewEntry.path)}>{t("download")}</a><button className="primary" onClick={() => setPreviewEntry(null)}>{t("close")}</button></>}
     >
       <div className="sf-file-preview-body">
         <div className="sf-file-preview-content">

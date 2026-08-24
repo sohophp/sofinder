@@ -11283,7 +11283,7 @@ function he({ api: e, resource: t, selectedEntries: n, selected: r, imageInfo: i
 				className: "sf-detail-actions",
 				children: [/* @__PURE__ */ (0, k.jsx)("a", {
 					className: "sf-download",
-					href: e.downloadUrl(t, r.path),
+					href: r.url || e.downloadUrl(t, r.path),
 					children: u.download
 				}), /* @__PURE__ */ (0, k.jsx)("button", {
 					type: "button",
@@ -11905,7 +11905,7 @@ function Te({ config: e }) {
 		Ae(e), localStorage.setItem("sofinder.view", e);
 	}, _n = (e) => {
 		let n = st?.entry ?? null;
-		ct(null), e === "open" && n?.directory ? Gt(n) : e === "preview" && n && !n.directory ? ut(n) : e === "select" && n ? rn(n) : e === "rename" ? $t() : e === "copy" ? nn("copy", u) : e === "move" ? nn("move", u) : e === "delete" ? en() : e === "download" && n && !n.directory && window.location.assign(t.downloadUrl(c, n.path));
+		ct(null), e === "open" && n?.directory ? Gt(n) : e === "preview" && n && !n.directory ? ut(n) : e === "select" && n ? rn(n) : e === "rename" ? $t() : e === "copy" ? nn("copy", u) : e === "move" ? nn("move", u) : e === "delete" ? en() : e === "download" && n && !n.directory && window.location.assign(n.url || t.downloadUrl(c, n.path));
 	}, vn = async (e) => {
 		if (H) try {
 			let n = await t.applyImageActions(c, H.path, [{
@@ -12655,7 +12655,7 @@ function Te({ config: e }) {
 					}),
 					/* @__PURE__ */ (0, k.jsx)("a", {
 						className: "sf-preview-download",
-						href: t.downloadUrl(c, lt.path),
+						href: lt.url || t.downloadUrl(c, lt.path),
 						children: i("download")
 					}),
 					/* @__PURE__ */ (0, k.jsx)("button", {

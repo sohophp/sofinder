@@ -4,6 +4,8 @@
 
 - Clear stale directory entries when switching to a resource that fails to
   load, and ignore superseded asynchronous list responses.
+- Use configured public/CDN entry URLs for copied links and single-file
+  downloads, while private resources continue to use authenticated API URLs.
 
 ## 0.1.0-beta.9 - 2026-08-24
 
