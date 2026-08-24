@@ -1,3 +1,8 @@
+---
+title: Release procedure
+description: Maintainer checklist for testing, tagging and publishing SoFinder packages.
+---
+
 # Release procedure
 
 1. Confirm `composer validate --strict`, PHPUnit, frontend type checking/build,

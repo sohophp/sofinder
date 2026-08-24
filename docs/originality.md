@@ -1,3 +1,8 @@
+---
+title: Original implementation record
+description: SoFinder project originality, provenance and third-party notice policy.
+---
+
 # Original implementation record
 
 SoFinder is an independent implementation based on ordinary file-management

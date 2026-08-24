@@ -1,3 +1,8 @@
+---
+title: SoFinder trademark release gate
+description: Project naming and trademark clearance notes for SoFinder maintainers.
+---
+
 # SoFinder trademark release gate
 
 This is an engineering release gate, not legal advice. Before publishing a

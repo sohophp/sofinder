@@ -1,3 +1,8 @@
+---
+title: Production security
+description: Authentication, authorization, storage, upload and operational security requirements for SoFinder deployments.
+---
+
 # Production security
 
 SoFinder treats every configured resource root as a sandbox. Traversal,

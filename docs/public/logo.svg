@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" role="img" aria-labelledby="title">
+  <title id="title">SoFinder</title>
+  <defs>
+    <linearGradient id="g" x1="16" y1="12" x2="112" y2="116" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#1967d2"/>
+      <stop offset="1" stop-color="#18a999"/>
+    </linearGradient>
+  </defs>
+  <rect width="128" height="128" rx="28" fill="url(#g)"/>
+  <path fill="#fff" d="M25 39a9 9 0 0 1 9-9h25l10 11h25a9 9 0 0 1 9 9v7H25V39Zm0 26h78v24a9 9 0 0 1-9 9H34a9 9 0 0 1-9-9V65Z"/>
+  <circle cx="83" cy="76" r="13" fill="none" stroke="#1967d2" stroke-width="6"/>
+  <path stroke="#1967d2" stroke-linecap="round" stroke-width="6" d="m92 85 9 9"/>
+</svg>

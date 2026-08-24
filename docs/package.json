@@ -1,0 +1,16 @@
+{
+  "name": "@sohophp/sofinder-docs",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "vitepress .",
+    "build": "vitepress build .",
+    "preview": "vitepress preview .",
+    "check": "vitepress build ."
+  },
+  "devDependencies": {
+    "vitepress": "1.6.4"
+  },
+  "packageManager": "pnpm@11.8.0"
+}

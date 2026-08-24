@@ -1,3 +1,8 @@
+---
+title: Plugin development
+description: Extend SoFinder through its tagged plugin descriptor and frontend integration contract.
+---
+
 # Plugin development
 
 SoFinder plugins are ordinary Symfony services that implement

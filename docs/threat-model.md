@@ -1,3 +1,8 @@
+---
+title: Threat model
+description: Assets, trust boundaries, attacker capabilities and mitigations in SoFinder.
+---
+
 # Threat model
 
 ## Protected assets

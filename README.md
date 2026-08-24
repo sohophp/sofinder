@@ -1,6 +1,6 @@
 # SoFinder
 
-> Traditional Chinese: [README.zh-TW.md](README.zh-TW.md)
+> **Documentation:** <https://sofinder.sohophp.app/> · [Traditional Chinese](https://sofinder.sohophp.app/zh-TW/) · [Repository overview in Traditional Chinese](README.zh-TW.md)
 
 SoFinder is an original MIT-licensed file manager for PHP 8.2 through 8.5. It
 provides a framework-independent core, a Symfony 6.4/7.4 bundle, and a React
@@ -14,7 +14,9 @@ Runtime dependency notices are recorded in `THIRD_PARTY_NOTICES.md`.
 
 Register `SohoPHP\SoFinder\SoFinderBundle`, import
 `@SoFinderBundle/Resources/config/routes.yaml`, and configure one or more
-resource types under `so_finder.resources`. See `docs/symfony.md`.
+resource types under `so_finder.resources`. Follow the
+[installation guide](https://sofinder.sohophp.app/getting-started) or see
+[`docs/symfony.md`](docs/symfony.md) for the complete Symfony reference.
 
 Implemented capabilities include authenticated browsing, search, upload,
 download, folder creation, rename, recoverable deletion, copy/move with automatic
@@ -75,6 +77,9 @@ cd frontend
 corepack pnpm install
 corepack pnpm build
 corepack pnpm test:unit
+cd ../docs
+corepack pnpm install
+corepack pnpm build
 ```
 
 The supported storage extension contract is documented in

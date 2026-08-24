@@ -1,3 +1,8 @@
+---
+title: Storage adapter contract
+description: Implement and register local, object or remote storage adapters through SoFinder's public contracts.
+---
+
 # Storage adapter contract
 
 SoFinder 0.1.0-beta.3 introduces the storage contract intended to remain

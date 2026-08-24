@@ -1,3 +1,8 @@
+---
+title: Public PHP contracts
+description: Public PHP interfaces and value objects provided for SoFinder integrations and extensions.
+---
+
 # Public PHP contracts
 
 SoFinder 1.x treats the interfaces under `SohoPHP\SoFinder\Contract` and the

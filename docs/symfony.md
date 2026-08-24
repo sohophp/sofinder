@@ -1,6 +1,11 @@
+---
+title: Symfony integration
+description: Complete SoFinder Symfony Bundle configuration for resources, ACLs, delivery, UI, images and CKEditor.
+---
+
 # Symfony integration
 
-> 繁體中文版本：[symfony.zh-TW.md](symfony.zh-TW.md)
+> Traditional Chinese: [Symfony integration](/zh-TW/symfony)
 
 Register the bundle in the application kernel:
 

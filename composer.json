@@ -3,7 +3,7 @@
     "description": "An original, framework-friendly web file manager for PHP and Symfony applications",
     "type": "symfony-bundle",
     "license": "MIT",
-    "homepage": "https://github.com/sohophp/sofinder",
+    "homepage": "https://sofinder.sohophp.app/",
     "keywords": ["file-manager", "symfony", "ckeditor", "upload", "image-manager"],
     "support": {
         "issues": "https://github.com/sohophp/sofinder/issues",

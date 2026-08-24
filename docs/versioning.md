@@ -1,3 +1,8 @@
+---
+title: Versioning and compatibility
+description: SoFinder semantic versioning, beta compatibility and public contract policy.
+---
+
 # Versioning and compatibility
 
 SoFinder follows semantic versioning. Releases before 1.0 may change PHP

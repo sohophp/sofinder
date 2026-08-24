@@ -1,3 +1,8 @@
+---
+title: HTTP API stability
+description: Stable browser, API and content-delivery routes exposed by SoFinder.
+---
+
 # HTTP API stability
 
 `GET /api/config` returns `apiVersion: "1.0"`. The browser endpoints remain
