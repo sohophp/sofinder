@@ -2,9 +2,13 @@
 
 ## Unreleased
 
+## 0.1.0-beta.9 - 2026-08-24
+
 - Keep image thumbnails fully contained within fixed-height list rows.
 - Keep portrait and unusually tall thumbnails contained within fixed-height grid preview cells.
 - Keep portrait detail thumbnails fully contained instead of clipping them to the preview panel.
+- Allow switching between name and tag search without enabling the optional tag-management UI.
+- Consolidate the frontend stylesheet entry and add narrow manager/picker, keyboard, image-ratio and accessibility regressions.
 - Use the intended 270px details-panel width when no saved preference exists.
 - Replace the custom crop overlay with CropperJS 1.6.2 for aligned handles, reliable corner/edge resizing, and smoother selection drawing.
 - Let the server choose a conflict-safe name when saving a crop with the unchanged default copy name.

@@ -38,3 +38,20 @@ are recorded but do not automatically block release.
 No blocking conflict was confirmed under the engineering gate, so the project
 name is retained for the beta. This check is not a legal clearance opinion;
 formal registry review remains required before broader commercial promotion.
+
+## 2026-08-24 beta.9 engineering recheck
+
+- Exact-name searches were repeated against the public WIPO, USPTO, EUIPO and
+  CNIPA search surfaces, with classes 9 and 42 treated as the primary risk.
+- The searches did not surface a new file-management or SaaS result that
+  changes the beta.2 assessment. USPTO serial 97045626 remains the known
+  unrelated class 7 result recorded above.
+- Public web and package-registry searches did not identify a newly established
+  confusingly similar file-manager package or service requiring the release to
+  stop.
+
+No blocking conflict was identified by this engineering recheck, so beta.9 may
+retain the project name. Dynamic registry search interfaces can omit results
+from ordinary web indexing; this record is not a legal clearance opinion and
+does not replace a formal registry or counsel review before broader commercial
+promotion.

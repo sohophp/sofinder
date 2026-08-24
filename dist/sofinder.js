@@ -12033,7 +12033,6 @@ function we({ config: e }) {
 									children: i("name")
 								}), /* @__PURE__ */ (0, k.jsx)("option", {
 									value: "tags",
-									disabled: !He.tags,
 									children: i("tags")
 								})]
 							}),
@@ -12565,9 +12564,7 @@ function we({ config: e }) {
 				scale: Je,
 				translate: i,
 				onToolChange: cn,
-				onFeatureChange: (e, t) => {
-					ln(e, t), e === "tags" && !t && x === "tags" && S("name");
-				},
+				onFeatureChange: ln,
 				onScaleChange: Ye,
 				onClose: () => Ge(!1)
 			}),

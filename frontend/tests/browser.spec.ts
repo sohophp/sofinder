@@ -102,6 +102,51 @@ test("uses a minimal shell and reveals manager actions contextually", async ({ p
   await expect(page.getByLabel("语言")).toBeVisible();
 });
 
+test("switches between name and tag search without enabling tag management", async ({ page }) => {
+  const scope = page.getByRole("combobox", { name: "搜索范围" });
+  await expect(scope).toHaveValue("name");
+  await scope.selectOption("tags");
+  await expect(scope).toHaveValue("tags");
+  await expect(page.getByRole("textbox", { name: "搜索标签（多个标签用逗号分隔）" })).toBeEnabled();
+  await scope.selectOption("name");
+  await expect(scope).toHaveValue("name");
+  await expect(page.getByRole("textbox", { name: "搜索文件" })).toBeEnabled();
+});
+
+test("keeps the compact manager layout inside a narrow viewport", async ({ page }) => {
+  await page.setViewportSize({ width: 560, height: 740 });
+  await expect(page.locator(".sf-commandbar")).toBeVisible();
+  await expect(page.locator(".sf-details")).toBeHidden();
+  await expect(page.locator(".sf-sidebar")).toBeHidden();
+  const metrics = await page.locator(".sf-app").evaluate(element => ({
+    clientWidth: element.clientWidth,
+    scrollWidth: element.scrollWidth,
+    commandRight: element.querySelector(".sf-commandbar")?.getBoundingClientRect().right || 0,
+  }));
+  expect(metrics.scrollWidth).toBeLessThanOrEqual(metrics.clientWidth);
+  expect(metrics.commandRight).toBeLessThanOrEqual(560);
+});
+
+test("supports keyboard selection and keeps the picker confirmation bar compact", async ({ page }) => {
+  await page.setViewportSize({ width: 560, height: 740 });
+  await page.setContent(`<!doctype html><html lang="zh-CN"><head><title>SoFinder picker</title></head><body><main id="sofinder-root" data-config='${JSON.stringify({ ...config, selectMode: true, selectionKind: "any", uiDefaults: { ...config.uiDefaults, mode: "picker" } })}'></main></body></html>`);
+  await page.addStyleTag({ path: resolve(import.meta.dirname, "../../dist/sofinder.css") });
+  await page.addScriptTag({ path: resolve(import.meta.dirname, "../../dist/sofinder.js"), type: "module" });
+  const first = page.locator(".sf-entry").first();
+  await expect(first).toBeVisible();
+  await first.focus();
+  await page.keyboard.press("ArrowRight");
+  const selected = page.locator('.sf-entry[aria-selected="true"]');
+  await expect(selected).toHaveCount(1);
+  await expect(page.locator(".sf-picker-bar")).toBeVisible();
+  await expect(page.getByRole("button", { name: "上传" })).toHaveCount(0);
+  const bounds = await page.locator(".sf-picker-bar").boundingBox();
+  expect(bounds).not.toBeNull();
+  expect(bounds!.x + bounds!.width).toBeLessThanOrEqual(560);
+  const results = await new AxeBuilder({ page }).analyze();
+  expect(results.violations.filter(item => ["serious", "critical"].includes(item.impact || ""))).toEqual([]);
+});
+
 test("keeps image thumbnails inside list rows", async ({ page }) => {
   await page.getByRole("button", { name: "列表" }).click();
   const entry = page.locator(".sf-entry", { hasText: "photo.png" });
@@ -234,6 +279,10 @@ test("warns when the current storage deletes permanently", async ({ page }) => {
   await page.addStyleTag({ path: resolve(import.meta.dirname, "../../dist/sofinder.css") });
   await page.addScriptTag({ path: resolve(import.meta.dirname, "../../dist/sofinder.js"), type: "module" });
   await expect(page.getByText("guide.txt").first()).toBeVisible();
+  const scope = page.getByRole("combobox", { name: "搜索范围" });
+  await expect(scope.locator('option[value="name"]')).toBeDisabled();
+  await scope.selectOption("tags");
+  await expect(page.getByRole("textbox", { name: "搜索标签（多个标签用逗号分隔）" })).toBeEnabled();
   await page.waitForTimeout(350);
   await page.locator(".sf-entry", { hasText: "guide.txt" }).click();
   await page.getByRole("button", { name: "删除" }).click();
