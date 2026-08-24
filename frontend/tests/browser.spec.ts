@@ -57,6 +57,10 @@ test.beforeEach(async ({ page }) => {
       return;
     }
     if (url.pathname === "/sofinder/api/images/thumbnail") {
+      if (url.searchParams.get("path") === "photo.png") {
+        await route.fulfill({ contentType: "image/svg+xml", body: '<svg xmlns="http://www.w3.org/2000/svg" width="100" height="800"><rect width="100" height="800" fill="#749b72"/></svg>' });
+        return;
+      }
       await route.fulfill({ contentType: "image/png", body: Buffer.from("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII=", "base64") });
       return;
     }
@@ -109,6 +113,22 @@ test("keeps image thumbnails inside list rows", async ({ page }) => {
   expect(boxes[1]!.height).toBeLessThanOrEqual(32);
   expect(boxes[1]!.y).toBeGreaterThanOrEqual(boxes[0]!.y);
   expect(boxes[1]!.y + boxes[1]!.height).toBeLessThanOrEqual(boxes[0]!.y + boxes[0]!.height);
+});
+
+test("keeps portrait thumbnails inside grid preview cells", async ({ page }) => {
+  const entry = page.locator(".sf-entry", { hasText: "photo.png" });
+  const preview = entry.locator(".sf-entry-icon");
+  const thumbnail = preview.locator("img");
+  await expect(thumbnail).toBeVisible();
+  const [entryBox, previewBox, thumbnailBox] = await Promise.all([entry.boundingBox(), preview.boundingBox(), thumbnail.boundingBox()]);
+  expect(entryBox).not.toBeNull();
+  expect(previewBox).not.toBeNull();
+  expect(thumbnailBox).not.toBeNull();
+  expect(previewBox!.height).toBe(90);
+  expect(thumbnailBox!.height).toBeLessThanOrEqual(90);
+  expect(thumbnailBox!.y).toBeGreaterThanOrEqual(previewBox!.y);
+  expect(thumbnailBox!.y + thumbnailBox!.height).toBeLessThanOrEqual(previewBox!.y + previewBox!.height);
+  expect(previewBox!.y + previewBox!.height).toBeLessThanOrEqual(entryBox!.y + entryBox!.height);
 });
 
 test("keeps crop corner and side handles reachable for wide images", async ({ page }) => {
