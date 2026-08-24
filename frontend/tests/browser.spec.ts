@@ -38,6 +38,10 @@ test.beforeEach(async ({ page }) => {
       await route.fulfill({ json: { success: true, data: { width: 1200, height: 400, format: "png", mimeType: "image/png", editable: true } } });
       return;
     }
+    if (url.pathname === "/sofinder/api/images/edit" && route.request().method() === "PATCH") {
+      await route.fulfill({ json: { success: true, data: { entry: { path: "photo-edited-1.png", name: "photo-edited-1.png", directory: false, size: 64, modifiedAt: 5, mimeType: "image/png", url: "/uploads/editor/files/photo-edited-1.png", capabilities: {} }, original: { width: 1200, height: 400, size: 68 }, result: { width: 1000, height: 340, size: 64 } } } });
+      return;
+    }
     if (url.pathname === "/sofinder/api/trash" && route.request().method() === "GET") {
       await route.fulfill({ json: { success: true, data: { items: [{ id: "1234567890abcdef1234567890abcdef", resource: "Files", path: "guide.txt", directory: false, size: 12, deletedAt: 1, expiresAt: 9999999999 }], total: 1, offset: 0, limit: 50, usedItems: 1, usedBytes: 12, maxItems: 1000, maxBytes: 1000000 } } });
       return;
@@ -166,6 +170,19 @@ test("keeps crop corner and side handles reachable for wide images", async ({ pa
   expect(Math.abs(redrawn!.y - startY)).toBeLessThanOrEqual(2);
   expect(Math.abs(redrawn!.x + redrawn!.width - endX)).toBeLessThanOrEqual(10);
   expect(Math.abs(redrawn!.y + redrawn!.height - endY)).toBeLessThanOrEqual(10);
+});
+
+test("lets the server auto-rename an unchanged default crop copy", async ({ page }) => {
+  await page.locator(".sf-entry", { hasText: "photo.png" }).click();
+  await page.getByRole("button", { name: "裁剪" }).click();
+  await expect(page.getByRole("textbox", { name: "文件名" })).toHaveValue("photo-edited.png");
+
+  const requestPromise = page.waitForRequest(request => request.url().endsWith("/sofinder/api/images/edit") && request.method() === "PATCH");
+  await page.getByRole("dialog").getByRole("button", { name: "保存" }).click();
+  const request = await requestPromise;
+  const body = request.postDataJSON() as { save: { mode: string; name?: string } };
+  expect(body.save).toEqual({ mode: "copy" });
+  await expect(page.getByRole("dialog")).toBeHidden();
 });
 
 test("navigates cursor pages with unknown totals", async ({ page }) => {

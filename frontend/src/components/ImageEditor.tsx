@@ -137,8 +137,11 @@ export function ImageEditor({ entry, info, imageUrl, labels, onClose, onSave }: 
   };
   const save = async () => {
     const crop = cropper.current ? normalize(cropper.current.getData(true)) : rectRef.current;
+    const saveSettings = saveMode === "copy"
+      ? { mode: saveMode, ...(name === suggested ? {} : { name }) }
+      : { mode: saveMode };
     setSaving(true);
-    try { await onSave([{ type: "crop", ...crop }], { mode: saveMode, ...(saveMode === "copy" ? { name } : {}) }); }
+    try { await onSave([{ type: "crop", ...crop }], saveSettings); }
     finally { setSaving(false); }
   };
 

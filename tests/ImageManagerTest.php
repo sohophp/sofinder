@@ -64,6 +64,15 @@ final class ImageManagerTest extends TestCase
         self::assertSame(40, $result['result']['height']);
     }
 
+    public function testRepeatedImplicitCopyUsesConflictSafeName(): void
+    {
+        $images = $this->manager();
+        $action = [['type' => 'crop', 'x' => 0, 'y' => 0, 'width' => 200, 'height' => 100]];
+
+        self::assertSame('source-edited.png', $images->applyActions('Images', 'source.png', $action)['entry']->name);
+        self::assertSame('source-edited-1.png', $images->applyActions('Images', 'source.png', $action)['entry']->name);
+    }
+
     public function testAnimatedImageEditingIsRejectedExplicitly(): void
     {
         $gif = base64_decode('R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7', true);

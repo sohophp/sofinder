@@ -5,6 +5,7 @@
 - Keep image thumbnails fully contained within fixed-height list rows.
 - Use the intended 270px details-panel width when no saved preference exists.
 - Replace the custom crop overlay with CropperJS 1.6.2 for aligned handles, reliable corner/edge resizing, and smoother selection drawing.
+- Let the server choose a conflict-safe name when saving a crop with the unchanged default copy name.
 - Document local frontend and Symfony integration testing without publishing a release.
 
 ## 0.1.0-beta.8 - 2026-08-24
