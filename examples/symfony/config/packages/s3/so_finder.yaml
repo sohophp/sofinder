@@ -17,7 +17,7 @@ so_finder:
     S3Files:
       adapter: s3
       root: '%env(SOFINDER_PROVIDER_PREFIX)%'
-      public_url: ''
+      public_url: '%env(SOFINDER_PROVIDER_PUBLIC_URL)%'
       delivery_mode: proxy
       allowed_extensions: [txt, jpg, jpeg, png, gif, webp, svg, pdf, zip]
       roles: [ROLE_USER]

@@ -82,6 +82,25 @@ Repeat that block as many times as needed. Keep resource structure in YAML and
 credentials in `.env.local`. A Backblaze key restricted to one prefix cannot be
 reused for another prefix unless its permissions cover both.
 
+### Public or CDN URLs
+
+Private resources should keep `delivery_mode: proxy` and an empty `public_url`;
+copied links then use SoFinder's authenticated content API. For a public bucket
+or CDN, set `delivery_mode: public` and configure `public_url` as the browser
+base URL corresponding to that resource's `root`. The adapter appends the
+logical object path to this base. For example, when `root` is
+`component-images`:
+
+```dotenv
+SOFINDER_PROVIDER_PUBLIC_URL=https://cdn.example.com/component-images
+```
+
+and set the matching YAML resource to `delivery_mode: public`. Keep the YAML
+value as `proxy` when the URL is empty or the bucket is private.
+
+Additional resources may use any environment variable names referenced by
+their YAML blocks, for example `ARCHIVE_PUBLIC_URL` or `CUSTOMER_CDN_URL`.
+
 The example's root autoload mappings read SoFinder and S3 PHP classes from the
 current checkout, so PHP and committed `dist/` changes are visible without
 publishing or reinstalling either package. After changing the frontend, build
