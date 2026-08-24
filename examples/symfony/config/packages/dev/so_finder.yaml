@@ -1,0 +1,9 @@
+so_finder:
+  resources:
+    Files:
+      adapter: local
+      root: '%kernel.project_dir%/var/storage'
+      public_url: '/uploads'
+      delivery_mode: public
+      allowed_extensions: [txt, jpg, jpeg, png, webp]
+      roles: [ROLE_USER]
