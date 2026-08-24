@@ -1,5 +1,17 @@
 # Upgrading SoFinder
 
+## From 0.1.0-beta.6 to 0.1.0-beta.7
+
+The default browser no longer renders the dark SoFinder brand header. Restore a
+brand-only header with `so_finder.ui.header: true` and its mark with
+`so_finder.ui.logo: true`. Existing language, view, scale and feature browser
+preferences remain valid. Cursor-capable HTTP clients must accept `total: null`.
+
+Remote adapters that cannot use the configured recycle bin should continue to
+report `recoverableDelete: false`; deletion then becomes explicitly permanent.
+Implement `StorageAuditProviderInterface` to participate in the main security
+audit. Existing local adapters need no changes.
+
 ## From 0.1.0-beta.5 to 0.1.0-beta.6
 
 This is a documentation-only release. No configuration, storage, API or asset

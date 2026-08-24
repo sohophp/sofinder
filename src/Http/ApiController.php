@@ -25,7 +25,7 @@ final readonly class ApiController
         private array $imagePresets = [],
         private ?MetadataManager $metadata = null,
         private ?ImageCapabilityProviderInterface $imageCapabilities = null,
-        /** @var array{folder_tree?:bool,scale?:string} */
+        /** @var array{mode?:string,header?:bool,logo?:bool,search?:bool,language_switcher?:bool,view_switcher?:bool,folder_tree?:bool,scale?:string} */
         private array $ui = [],
     ) {
     }
@@ -41,7 +41,15 @@ final readonly class ApiController
                 'driver' => $this->imageCapabilities?->driver() ?? '',
                 'formats' => $this->imageCapabilities?->capabilities() ?? [],
             ],
-            'uiDefaults' => ['scale' => (string) ($this->ui['scale'] ?? 'standard')],
+            'uiDefaults' => [
+                'scale' => (string) ($this->ui['scale'] ?? 'standard'),
+                'mode' => (string) ($this->ui['mode'] ?? 'auto'),
+                'header' => (bool) ($this->ui['header'] ?? false),
+                'logo' => (bool) ($this->ui['logo'] ?? false),
+                'search' => (bool) ($this->ui['search'] ?? true),
+                'languageSwitcher' => (bool) ($this->ui['language_switcher'] ?? true),
+                'viewSwitcher' => (bool) ($this->ui['view_switcher'] ?? true),
+            ],
         ]);
     }
 

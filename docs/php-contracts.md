@@ -22,6 +22,8 @@ independently through `ChunkUploadStoreInterface`,
 `RequestGateStoreInterface`, `MetadataStoreInterface` and
 `UsageTrackerInterface`. A usage tracker must serialize `mutate()` calls for a
 resource and return the callback's exact byte delta atomically.
+Remote adapters may additionally implement `StorageAuditProviderInterface` to
+return secret-safe `warning` or `critical` findings to the security audit.
 
 ## Inspection and images
 

@@ -1,4 +1,11 @@
 so_finder:
+  ui:
+    mode: auto
+    header: false
+    logo: false
+    search: true
+    language_switcher: true
+    view_switcher: true
   resources:
     Files:
       adapter: local

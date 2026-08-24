@@ -35,7 +35,7 @@ describe("format helpers", () => {
 
 describe("resumable upload state", () => {
   it("returns only current, scoped sessions", () => {
-    const api = new Api({ apiBase: "/sofinder/api/config", csrfToken: "token", language: "en", resource: "Files", selectMode: false, selectionKind: "any", ckeditorFunction: 0, theme: { accent: "#000", background: "#fff", panel: "#fff", text: "#000", muted: "#666", danger: "#f00", radius: "1px" }, featureDefaults: { folderTree: false } } satisfies SoFinderConfig);
+    const api = new Api({ apiBase: "/sofinder/api/config", csrfToken: "token", language: "en", resource: "Files", selectMode: false, selectionKind: "any", ckeditorFunction: 0, theme: { accent: "#000", background: "#fff", panel: "#fff", text: "#000", muted: "#666", danger: "#f00", radius: "1px" }, featureDefaults: { folderTree: false }, uiDefaults: { scale: "standard", mode: "manager", header: false, logo: false, search: true, languageSwitcher: true, viewSwitcher: true } } satisfies SoFinderConfig);
     localStorage.setItem("sofinder.uploadSessions.v1", JSON.stringify([
       { id: "current", scope: "/sofinder/api", resource: "Files", path: "", name: "large.zip", size: 10, lastModified: 1, total: 2, overwrite: false, updatedAt: Date.now() },
       { id: "other", scope: "/other/api", resource: "Files", path: "", name: "other.zip", size: 10, lastModified: 1, total: 2, overwrite: false, updatedAt: Date.now() },

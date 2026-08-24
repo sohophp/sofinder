@@ -37,3 +37,7 @@ corepack pnpm test:unit
 ```
 
 儲存擴充契約請見 `docs/storage-adapters.md`；公開 PHP 契約、HTTP 相容性與版本政策請見 `docs/php-contracts.md`、`docs/http-api.md`、`docs/versioning.md`。圖片 Runtime 需求請見[圖片格式支援](docs/image-formats.zh-TW.md)。可執行的 Symfony 6.4／7.4 安裝範例位於 `examples/symfony`。
+
+S3 相容物件儲存由選用的 `sohophp/sofinder-s3` Composer 套件提供，使核心
+安裝不必承擔 AWS SDK 相依；可使用私有 proxy delivery，或明確設定公開／CDN
+網址。原始碼發行內容請見 `packages/sofinder-s3/README.md`。

@@ -12,6 +12,7 @@ const config = {
   ckeditorFunction: 0,
   theme: { accent: "#276ef1", background: "#f4f6f9", panel: "#ffffff", text: "#1c2735", muted: "#667282", danger: "#c13a43", radius: "10px" },
   featureDefaults: { folderTree: false },
+  uiDefaults: { scale: "standard" as const, mode: "manager" as const, header: false, logo: false, search: true, languageSwitcher: true, viewSwitcher: true },
 };
 
 test.beforeEach(async ({ page }) => {
@@ -22,11 +23,15 @@ test.beforeEach(async ({ page }) => {
       return;
     }
     if (url.pathname === "/sofinder/api/entries") {
+      if (url.searchParams.get("cursor") === "page-2") {
+        await route.fulfill({ json: { success: true, data: { entries: [{ path: "later.txt", name: "later.txt", directory: false, size: 9, modifiedAt: 4, mimeType: "text/plain", url: "/uploads/editor/files/later.txt", capabilities: { read: true, rename: true, copy: true, move: true, delete: true } }], total: null, path: "", offset: 100, limit: 100, nextCursor: null, sort: "name", direction: "asc", capabilities: { upload: true, create_folder: true } } } });
+        return;
+      }
       await route.fulfill({ json: { success: true, data: { entries: [
         { path: "guide.txt", name: "guide.txt", directory: false, size: 12, modifiedAt: 1, mimeType: "text/plain", url: "/uploads/editor/files/guide.txt", capabilities: { read: true, rename: true, copy: true, move: true, delete: true } },
         { path: "photo.png", name: "photo.png", directory: false, size: 68, modifiedAt: 2, mimeType: "image/png", url: "/uploads/editor/files/photo.png", capabilities: { read: true, rename: true, copy: true, move: true, delete: true } },
         { path: "camera.heic", name: "camera.heic", directory: false, size: 80, modifiedAt: 3, mimeType: "image/heic", url: "/uploads/editor/files/camera.heic", capabilities: { read: true, rename: true, copy: true, move: true, delete: true } },
-      ], total: 3, path: "", offset: 0, limit: 100, sort: "name", direction: "asc", capabilities: { upload: true, create_folder: true } } } });
+      ], total: null, path: "", offset: 0, limit: 100, nextCursor: "page-2", sort: "name", direction: "asc", capabilities: { upload: true, create_folder: true } } } });
       return;
     }
     if (url.pathname === "/sofinder/api/trash" && route.request().method() === "GET") {
@@ -69,6 +74,39 @@ test("has no serious automated accessibility violations", async ({ page }) => {
   expect(results.violations.filter(item => ["serious", "critical"].includes(item.impact || ""))).toEqual([]);
 });
 
+test("uses a minimal shell and reveals manager actions contextually", async ({ page }) => {
+  await expect(page.locator(".sf-header")).toHaveCount(0);
+  await expect(page.getByRole("button", { name: "重命名" })).toHaveCount(0);
+  await page.waitForTimeout(350);
+  await page.locator(".sf-entry", { hasText: "guide.txt" }).click();
+  await expect(page.getByRole("button", { name: "重命名" })).toBeVisible();
+  await page.getByRole("button", { name: "更多操作" }).click();
+  await expect(page.getByLabel("语言")).toBeVisible();
+});
+
+test("navigates cursor pages with unknown totals", async ({ page }) => {
+  await page.getByRole("button", { name: /下一页/ }).click();
+  await expect(page.getByText("later.txt")).toBeVisible();
+  await expect(page.getByText(/第 2/)).toBeVisible();
+  await page.getByRole("button", { name: /上一页/ }).click();
+  await expect(page.getByText("guide.txt").first()).toBeVisible();
+});
+
+test("warns when the current storage deletes permanently", async ({ page }) => {
+  await page.route("**/sofinder/api/config", async route => {
+    await route.fulfill({ json: { success: true, data: { apiVersion: "1.0", resources: [{ name: "Files", publicUrl: "", allowedExtensions: ["txt"], maxSize: 1000000, readOnly: false, quotaBytes: 0, usedBytes: 80, maxFileNameLength: 120, maxFolderNameLength: 50, maxFolderDepth: 5, deliveryMode: "proxy", storageCapabilities: { search: false, sort: false, cursorPagination: true, atomicMove: false, nativeCopy: true, recoverableDelete: false, publicUrl: false } }], plugins: [], imagePresets: {}, imageCapabilities: { driver: "", formats: [] } } } });
+  });
+  await page.setContent(`<!doctype html><html lang="zh-CN"><body><main id="sofinder-root" data-config='${JSON.stringify(config)}'></main></body></html>`);
+  await page.addStyleTag({ path: resolve(import.meta.dirname, "../../dist/sofinder.css") });
+  await page.addScriptTag({ path: resolve(import.meta.dirname, "../../dist/sofinder.js"), type: "module" });
+  await expect(page.getByText("guide.txt").first()).toBeVisible();
+  await page.waitForTimeout(350);
+  await page.locator(".sf-entry", { hasText: "guide.txt" }).click();
+  await page.getByRole("button", { name: "删除" }).click();
+  await expect(page.getByText("此存储不提供回收站，本操作无法撤销。")).toBeVisible();
+  await page.getByRole("button", { name: "取消" }).click();
+});
+
 test("right-click preview opens a preview without selecting the file", async ({ page }) => {
   await page.evaluate(() => {
     (window as Window & { selectionEvents?: number }).selectionEvents = 0;
@@ -83,6 +121,7 @@ test("right-click preview opens a preview without selecting the file", async ({ 
 });
 
 test("switches language and remembers the choice", async ({ page }) => {
+  await page.getByRole("button", { name: "更多操作" }).click();
   await page.getByLabel("语言").selectOption("zh-tw");
   await expect(page.getByRole("button", { name: /新增資料夾/ })).toBeVisible();
   await expect.poll(() => page.evaluate(() => localStorage.getItem("sofinder.language"))).toBe("zh-tw");
@@ -94,7 +133,8 @@ test("switches language and remembers the choice", async ({ page }) => {
 });
 
 test("asks how to resolve a recycle-bin restore conflict", async ({ page }) => {
-  await page.getByRole("button", { name: /回收站/ }).click();
+  await page.getByRole("button", { name: "更多操作" }).click();
+  await page.getByRole("menuitem", { name: /回收站/ }).click();
   await page.getByRole("button", { name: "恢复" }).click();
   const conflict = page.getByRole("dialog", { name: "原位置已经存在同名项目" });
   await expect(conflict).toBeVisible();
@@ -103,15 +143,18 @@ test("asks how to resolve a recycle-bin restore conflict", async ({ page }) => {
 });
 
 test("treats non-web image formats as ordinary files and blocks image selection", async ({ page }) => {
-  await page.setContent(`<!doctype html><html lang="zh-CN"><head><title>SoFinder</title></head><body><main id="sofinder-root" data-config='${JSON.stringify({ ...config, selectMode: true, selectionKind: "image" })}'></main></body></html>`);
+  await page.setContent(`<!doctype html><html lang="zh-CN"><head><title>SoFinder</title></head><body><main id="sofinder-root" data-config='${JSON.stringify({ ...config, selectMode: true, selectionKind: "image", uiDefaults: { ...config.uiDefaults, mode: "picker" } })}'></main></body></html>`);
   await page.addStyleTag({ path: resolve(import.meta.dirname, "../../dist/sofinder.css") });
   await page.addScriptTag({ path: resolve(import.meta.dirname, "../../dist/sofinder.js"), type: "module" });
   const heic = page.locator(".sf-entry", { hasText: "camera.heic" });
   await expect(heic).toBeVisible();
+  await expect(page.getByRole("button", { name: "新建文件夹" })).toHaveCount(0);
+  await expect(page.getByRole("button", { name: "上传" })).toHaveCount(0);
   await expect(heic.locator("img")).toHaveCount(0);
   await heic.click();
   await expect(page.getByRole("button", { name: "选择" })).toBeDisabled();
   await expect(page.getByText("此图片格式不能直接用于网页内容。")).toBeVisible();
   await heic.click({ button: "right" });
   await expect(page.getByRole("menuitem", { name: "选择" })).toBeDisabled();
+  await expect(page.getByRole("menuitem", { name: "删除" })).toHaveCount(0);
 });

@@ -83,3 +83,8 @@ versioning are documented in `docs/php-contracts.md`, `docs/http-api.md` and
 `docs/versioning.md`. Supported raster codecs and their runtime requirements
 are listed in `docs/image-formats.md`. Runnable Symfony 6.4 and 7.4
 installation variants are under `examples/symfony`.
+
+S3-compatible object storage is available as the optional
+`sohophp/sofinder-s3` Composer package. It keeps AWS SDK dependencies out of the
+core install and supports private proxy delivery or an explicitly configured
+public/CDN URL. See `packages/sofinder-s3/README.md` in the source distribution.

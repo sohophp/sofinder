@@ -1,4 +1,5 @@
 import { useEffect, useRef, type ReactNode } from "react";
+import { UiIcon } from "./UiIcon";
 
 export function Modal({ title, closeLabel, onClose, children, footer, className = "" }: {
   title: string;
@@ -28,7 +29,7 @@ export function Modal({ title, closeLabel, onClose, children, footer, className 
   };
   return <div className="sf-modal-backdrop" role="presentation" onMouseDown={event => { if (event.target === event.currentTarget) onClose(); }}>
     <section ref={panel} className={`sf-modal ${className}`} role="dialog" aria-modal="true" aria-labelledby={titleId.current} onKeyDown={onKeyDown}>
-      <header><h2 id={titleId.current}>{title}</h2><button type="button" onClick={onClose} aria-label={closeLabel}>×</button></header>
+      <header><h2 id={titleId.current}>{title}</h2><button type="button" onClick={onClose} aria-label={closeLabel}><UiIcon name="close"/></button></header>
       {children}
       {footer && <footer>{footer}</footer>}
     </section>

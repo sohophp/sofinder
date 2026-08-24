@@ -12,4 +12,16 @@
    audit before announcing the release.
 
 The current beta's exact Composer constraint is
-`sohophp/sofinder:0.1.0-beta.6`. Published tags must never be moved.
+`sohophp/sofinder:0.1.0-beta.7`. Published tags must never be moved.
+
+The S3 adapter is maintained in `packages/sofinder-s3` and released as an
+independent repository after the matching core prerelease:
+
+1. Split the package directory from the exact core release commit with
+   `git subtree split --prefix=packages/sofinder-s3 -b release/sofinder-s3`.
+2. Push that branch to `https://github.com/sohophp/sofinder-s3` as `main`.
+3. Run the package's own MinIO CI, then tag its first prerelease
+   `v0.1.0-beta.1` without moving the core tag.
+4. Submit the independent repository as `sohophp/sofinder-s3` to Packagist.
+5. Verify installation in a clean Symfony project before enabling a host
+   resource. Never copy credentials into either repository or release logs.

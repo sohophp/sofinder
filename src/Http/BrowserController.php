@@ -20,7 +20,7 @@ final readonly class BrowserController
         private CsrfTokenManagerInterface $csrf,
         private string $assetVersion,
         private Theme $theme,
-        /** @var array{folder_tree:bool,scale:string} */
+        /** @var array{mode:string,header:bool,logo:bool,search:bool,language_switcher:bool,view_switcher:bool,folder_tree:bool,scale:string} */
         private array $ui,
     ) {
     }
@@ -35,17 +35,28 @@ final readonly class BrowserController
                 ? 'zh-tw'
                 : (str_starts_with($preferred, 'zh') ? 'zh-cn' : 'en');
         }
+        $selectMode = $request->query->has('CKEditorFuncNum') || $request->query->getBoolean('select');
+        $mode = $this->enumOverride($request, 'uiMode', ['auto', 'manager', 'picker'], (string) ($this->ui['mode'] ?? 'auto'));
+        $resolvedMode = $mode === 'auto' ? ($selectMode ? 'picker' : 'manager') : $mode;
+        $ui = [
+            'mode' => $resolvedMode,
+            'header' => $this->booleanOverride($request, 'uiHeader', (bool) ($this->ui['header'] ?? false)),
+            'logo' => $this->booleanOverride($request, 'uiLogo', (bool) ($this->ui['logo'] ?? false)),
+            'search' => $this->booleanOverride($request, 'uiSearch', (bool) ($this->ui['search'] ?? true)),
+            'languageSwitcher' => $this->booleanOverride($request, 'uiLanguage', (bool) ($this->ui['language_switcher'] ?? true)),
+            'viewSwitcher' => $this->booleanOverride($request, 'uiView', (bool) ($this->ui['view_switcher'] ?? true)),
+        ];
         $config = [
             'apiBase' => $this->router->generate('sofinder_api_config'),
             'csrfToken' => $this->csrf->getToken('sofinder')->getValue(),
             'language' => $language,
             'resource' => (string) $request->query->get('type', ''),
-            'selectMode' => $request->query->has('CKEditorFuncNum') || $request->query->getBoolean('select'),
+            'selectMode' => $selectMode,
             'selectionKind' => in_array((string) $request->query->get('selection', ''), ['file', 'image'], true) ? (string) $request->query->get('selection') : 'any',
             'ckeditorFunction' => (int) $request->query->get('CKEditorFuncNum', 0),
             'theme' => $this->theme->values(),
             'featureDefaults' => ['folderTree' => (bool) ($this->ui['folder_tree'] ?? false)],
-            'uiDefaults' => ['scale' => (string) ($this->ui['scale'] ?? 'standard')],
+            'uiDefaults' => ['scale' => (string) ($this->ui['scale'] ?? 'standard'), ...$ui],
         ];
         $encoded = htmlspecialchars(json_encode($config, JSON_THROW_ON_ERROR | JSON_UNESCAPED_SLASHES), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
         $version = rawurlencode($this->assetVersion);
@@ -74,5 +85,26 @@ HTML;
             'Cache-Control' => 'no-store, private',
             'X-Frame-Options' => 'SAMEORIGIN',
         ]);
+    }
+
+    /** @param list<string> $allowed */
+    private function enumOverride(Request $request, string $name, array $allowed, string $fallback): string
+    {
+        $value = (string) $request->query->get($name, '');
+
+        return in_array($value, $allowed, true) ? $value : $fallback;
+    }
+
+    private function booleanOverride(Request $request, string $name, bool $fallback): bool
+    {
+        $value = $request->query->get($name);
+        if ($value === '1') {
+            return true;
+        }
+        if ($value === '0') {
+            return false;
+        }
+
+        return $fallback;
     }
 }

@@ -16,6 +16,7 @@ import { UploadQueue, type UploadTask } from "./components/UploadQueue";
 import { DetailsPanel } from "./components/DetailsPanel";
 import { SettingsDialog, type FeaturePreferences, type ToolPreferences } from "./components/SettingsDialog";
 import { DestinationDialog, type DestinationState } from "./components/DestinationDialog";
+import { UiIcon, type UiIconName } from "./components/UiIcon";
 
 type ViewMode = "grid" | "list";
 type SortMode = "name" | "size" | "modified";
@@ -64,7 +65,10 @@ export default function App({ config }: { config: SoFinderConfig }) {
   const [sort, setSort] = useState<SortMode>("name");
   const [direction, setDirection] = useState<"asc" | "desc">("asc");
   const [offset, setOffset] = useState(0);
-  const [total, setTotal] = useState(0);
+  const [total, setTotal] = useState<number | null>(0);
+  const [pageCursor, setPageCursor] = useState<string | null>(null);
+  const [nextCursor, setNextCursor] = useState<string | null>(null);
+  const [cursorHistory, setCursorHistory] = useState<Array<string | null>>([]);
   const [view, setView] = useState<ViewMode>(() => localStorage.getItem("sofinder.view") === "list" ? "list" : "grid");
   const [loading, setLoading] = useState(true);
   const [notice, setNotice] = useState("");
@@ -75,6 +79,7 @@ export default function App({ config }: { config: SoFinderConfig }) {
   const [tools, setTools] = useState<ToolPreferences>(loadToolPreferences);
   const [features, setFeatures] = useState<FeaturePreferences>(() => loadPreferences("sofinder.features.v2", { ...defaultFeatures, folderTree: config.featureDefaults?.folderTree ?? false }));
   const [settingsOpen, setSettingsOpen] = useState(false);
+  const [utilityOpen, setUtilityOpen] = useState(false);
   const [uiScale, setUiScale] = useState<UiScale>(() => loadScale(config.uiDefaults?.scale ?? "standard"));
   const [destinationDialog, setDestinationDialog] = useState<DestinationState | null>(null);
   const [cropOpen, setCropOpen] = useState(false);
@@ -96,6 +101,7 @@ export default function App({ config }: { config: SoFinderConfig }) {
   const confirmResolver = useRef<((answer: boolean) => void) | null>(null);
   const longPress = useRef<number | null>(null);
   const columnDrag = useRef<{ side: "left" | "right"; startX: number; startWidth: number; currentWidth: number } | null>(null);
+  const searchInitialized = useRef(false);
   const pageSize = 100;
 
   useEffect(() => {
@@ -137,22 +143,24 @@ export default function App({ config }: { config: SoFinderConfig }) {
     setConfirmDialog(null);
     resolve?.(answer);
   };
-  const load = useCallback(async (nextResource = resource, nextPath = path, term = search, nextOffset = offset, nextSort = sort, nextDirection = direction, nextSearchMode = searchMode) => {
+  const load = useCallback(async (nextResource = resource, nextPath = path, term = search, nextOffset = offset, nextSort = sort, nextDirection = direction, nextSearchMode = searchMode, cursor: string | null = pageCursor) => {
     if (!nextResource) return;
     setLoading(true);
     setNotice("");
     try {
-      const result = await api.list(nextResource, nextPath, term, nextSort, nextDirection, nextOffset, pageSize, nextSearchMode);
+      const result = await api.list(nextResource, nextPath, term, nextSort, nextDirection, nextOffset, pageSize, nextSearchMode, cursor);
       setEntries(result.entries);
       setPath(result.path);
       setOffset(result.offset);
       setTotal(result.total);
+      setPageCursor(cursor);
+      setNextCursor(result.nextCursor ?? null);
       setDirectoryCapabilities(result.capabilities || {});
       setSelectedPaths(new Set());
       setSelectionAnchor(null);
     } catch (error) { report(error); }
     finally { setLoading(false); }
-  }, [api, direction, offset, path, report, resource, search, searchMode, sort]);
+  }, [api, direction, offset, pageCursor, path, report, resource, search, searchMode, sort]);
 
   useEffect(() => {
     api.configData().then(({ resources: available, imagePresets: presets, imageCapabilities: capabilities }) => {
@@ -161,7 +169,7 @@ export default function App({ config }: { config: SoFinderConfig }) {
       setImageCapabilities(capabilities || { driver: "", formats: [] });
       const initial = available.some(item => item.name === config.resource) ? config.resource : available[0]?.name || "";
       setResource(initial);
-      if (initial) void load(initial, "", "", 0);
+      if (initial) { setCursorHistory([]); void load(initial, "", "", 0, sort, direction, "name", null); }
     }).catch(report);
   }, [api, config.resource]);
 
@@ -174,7 +182,11 @@ export default function App({ config }: { config: SoFinderConfig }) {
   }, [api, t]);
 
   useEffect(() => {
-    const timer = window.setTimeout(() => { if (resource) void load(resource, path, search, 0); }, 250);
+    if (!searchInitialized.current) {
+      searchInitialized.current = true;
+      return;
+    }
+    const timer = window.setTimeout(() => { if (resource) { setCursorHistory([]); void load(resource, path, search, 0, sort, direction, searchMode, null); } }, 250);
     return () => window.clearTimeout(timer);
   }, [search, searchMode]);
 
@@ -196,7 +208,7 @@ export default function App({ config }: { config: SoFinderConfig }) {
   useEffect(() => {
     const paste = (event: ClipboardEvent) => {
       const files = Array.from(event.clipboardData?.files || []);
-      if (files.length > 0 && !currentResource?.readOnly && directoryCapabilities.upload !== false) {
+      if (uiMode === "manager" && files.length > 0 && !currentResource?.readOnly && directoryCapabilities.upload !== false) {
         event.preventDefault();
         void upload(files);
       }
@@ -232,6 +244,11 @@ export default function App({ config }: { config: SoFinderConfig }) {
   }, [api, resource, selected?.path, selected?.mimeType, report]);
 
   const selectEntry = (entry: Entry, event: React.MouseEvent) => {
+    if (uiMode === "picker") {
+      setSelectedPaths(new Set([entry.path]));
+      setSelectionAnchor(entry.path);
+      return;
+    }
     if (event.shiftKey && selectionAnchor) {
       const anchorIndex = entries.findIndex(item => item.path === selectionAnchor);
       const entryIndex = entries.findIndex(item => item.path === entry.path);
@@ -255,7 +272,7 @@ export default function App({ config }: { config: SoFinderConfig }) {
   };
 
   const openEntry = (entry: Entry) => {
-    if (entry.directory) void load(resource, entry.path, search, 0);
+    if (entry.directory) { setCursorHistory([]); void load(resource, entry.path, search, 0, sort, direction, searchMode, null); }
     else choose(entry);
   };
 
@@ -269,6 +286,7 @@ export default function App({ config }: { config: SoFinderConfig }) {
   };
 
   const upload = async (files: FileList | File[], targetPath = path) => {
+    if (uiMode !== "manager") return;
     const candidates = Array.from(files);
     const accepted = currentResource ? candidates.filter(file => characterLength(file.name) <= currentResource.maxFileNameLength) : candidates;
     if (accepted.length !== candidates.length && currentResource) {
@@ -357,7 +375,7 @@ export default function App({ config }: { config: SoFinderConfig }) {
   };
 
   const remove = async () => {
-    if (selectedEntries.length === 0 || !await ask({ title: t("remove"), message: selectedEntries.length === 1 ? t("confirmDelete") : `${t("confirmDeleteMany")} ${selectedEntries.length}`, detail: t("trashRetention"), danger: true })) return;
+    if (selectedEntries.length === 0 || !await ask({ title: t("remove"), message: selectedEntries.length === 1 ? t("confirmDelete") : `${t("confirmDeleteMany")} ${selectedEntries.length}`, detail: currentResource?.storageCapabilities?.recoverableDelete === false ? t("permanentDeleteWarning") : t("trashRetention"), danger: true })) return;
     try {
       const result = await api.batch("delete", resource, selectedEntries.map(entry => entry.path));
       const summary = result.failed === 0 ? `${result.succeeded} ${t("completed")}` : `${result.succeeded} ${t("completed")}, ${result.failed} ${t("failed")}`;
@@ -566,7 +584,7 @@ export default function App({ config }: { config: SoFinderConfig }) {
     const isEntry = target.matches("button.sf-entry");
     if (target.isContentEditable || (["INPUT", "SELECT", "TEXTAREA", "BUTTON", "A"].includes(target.tagName) && !isEntry)) return;
 
-    if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === "a") {
+    if (uiMode === "manager" && (event.ctrlKey || event.metaKey) && event.key.toLowerCase() === "a") {
       event.preventDefault();
       toggleSelectAll();
       return;
@@ -577,12 +595,12 @@ export default function App({ config }: { config: SoFinderConfig }) {
       setSelectionAnchor(null);
       return;
     }
-    if (event.key === "Delete" && canSelected("delete") && !currentResource?.readOnly) {
+    if (uiMode === "manager" && event.key === "Delete" && canSelected("delete") && !currentResource?.readOnly) {
       event.preventDefault();
       void remove();
       return;
     }
-    if (event.key === "F2" && selectedEntries.length === 1 && canSelected("rename") && !currentResource?.readOnly) {
+    if (uiMode === "manager" && event.key === "F2" && selectedEntries.length === 1 && canSelected("rename") && !currentResource?.readOnly) {
       event.preventDefault();
       void rename();
       return;
@@ -613,92 +631,114 @@ export default function App({ config }: { config: SoFinderConfig }) {
       || (entry.directory && (destinationDialog.path === entry.path || destinationDialog.path.startsWith(`${entry.path}/`)));
   });
   const uploadActive = uploads.some(task => task.status === "queued" || task.status === "uploading");
+  const uiMode = config.uiDefaults.mode ?? (config.selectMode ? "picker" : "manager");
+  const recoverableDelete = currentResource?.storageCapabilities?.recoverableDelete !== false;
+  const showSidebar = resources.length > 1 || features.folderTree || features.recent || Boolean(currentResource?.readOnly || currentResource?.quotaBytes);
+  const showDetails = uiMode === "manager" && selectedEntries.length > 0;
+  const iconButton = (name: UiIconName, label: string) => <><UiIcon name={name}/><span>{label}</span></>;
+  const resetAndLoad = (nextResource: string, nextPath: string, term = search) => {
+    setCursorHistory([]);
+    void load(nextResource, nextPath, term, 0, sort, direction, searchMode, null);
+  };
+  const previousPage = () => {
+    if (cursorHistory.length === 0) return;
+    const history = cursorHistory.slice(0, -1);
+    const cursor = cursorHistory[cursorHistory.length - 1] ?? null;
+    setCursorHistory(history);
+    void load(resource, path, search, Math.max(0, offset - pageSize), sort, direction, searchMode, cursor);
+  };
+  const followingPage = () => {
+    if (nextCursor === null) return;
+    setCursorHistory(current => [...current, pageCursor]);
+    void load(resource, path, search, offset + pageSize, sort, direction, searchMode, nextCursor);
+  };
 
-  return <main className="sf-app" onKeyDown={handleKeyDown} onDragOver={event => event.preventDefault()} onDrop={event => { event.preventDefault(); if (event.dataTransfer.files.length) void upload(event.dataTransfer.files); }}>
-    <header className="sf-header">
-      <div className="sf-brand"><span className="sf-brand-mark">S</span><strong>SoFinder</strong></div>
-      <div className="sf-search"><span aria-hidden="true">⌕</span><select value={searchMode} onChange={event => { const next = event.target.value as "name" | "tags"; setSearchMode(next); setOffset(0); }} aria-label={t("searchScope")}><option value="name" disabled={currentResource?.storageCapabilities?.search === false}>{t("name")}</option><option value="tags" disabled={!features.tags}>{t("tags")}</option></select><input disabled={searchMode === "name" && currentResource?.storageCapabilities?.search === false} value={search} onChange={e => setSearch(e.target.value)} placeholder={searchMode === "tags" ? t("searchTags") : t("search")} aria-label={searchMode === "tags" ? t("searchTags") : t("search")}/></div>
-      <div className="sf-header-actions">
-        <label className="sf-language-switch"><span className="sf-sr-only">{t("language")}</span><select value={language} onChange={event => setLanguage(event.target.value as Language)} aria-label={t("language")}><option value="zh-cn">简中</option><option value="zh-tw">繁中</option><option value="en">EN</option></select></label>
-        <div className="sf-view-toggle" role="group">
-          <button className={view === "grid" ? "active" : ""} onClick={() => setViewMode("grid")} title={t("grid")}>▦</button>
-          <button className={view === "list" ? "active" : ""} onClick={() => setViewMode("list")} title={t("list")}>☷</button>
-        </div>
+  return <main className={`sf-app sf-mode-${uiMode}${showSidebar ? "" : " sf-no-sidebar"}${showDetails ? "" : " sf-no-details"}`} onKeyDown={handleKeyDown} onDragOver={event => { if (uiMode === "manager") event.preventDefault(); }} onDrop={event => { if (uiMode !== "manager") return; event.preventDefault(); if (event.dataTransfer.files.length) void upload(event.dataTransfer.files); }}>
+    {config.uiDefaults.header && <header className="sf-header"><div className="sf-brand">{config.uiDefaults.logo && <span className="sf-brand-mark">S</span>}<strong>SoFinder</strong></div></header>}
+    <div className="sf-commandbar">
+      <nav className="sf-breadcrumb" aria-label="Breadcrumb">
+        <button onClick={() => resetAndLoad(resource, "")}>{t("home")}</button>
+        {crumbs.map((crumb, index) => <span key={`${crumb}-${index}`}>› <button onClick={() => resetAndLoad(resource, crumbs.slice(0, index + 1).join("/"))}>{crumb}</button></span>)}
+      </nav>
+      {config.uiDefaults.search !== false && <div className="sf-search"><UiIcon name="search"/><select value={searchMode} onChange={event => { const next = event.target.value as "name" | "tags"; setSearchMode(next); setOffset(0); }} aria-label={t("searchScope")}><option value="name" disabled={currentResource?.storageCapabilities?.search === false}>{t("name")}</option><option value="tags" disabled={!features.tags}>{t("tags")}</option></select><input disabled={searchMode === "name" && currentResource?.storageCapabilities?.search === false} value={search} onChange={e => setSearch(e.target.value)} placeholder={searchMode === "tags" ? t("searchTags") : t("search")} aria-label={searchMode === "tags" ? t("searchTags") : t("search")}/></div>}
+      {config.uiDefaults.viewSwitcher !== false && <div className="sf-view-toggle" role="group" aria-label={`${t("grid")} / ${t("list")}`}>
+        <button className={view === "grid" ? "active" : ""} onClick={() => setViewMode("grid")} title={t("grid")} aria-label={t("grid")}><UiIcon name="grid"/></button>
+        <button className={view === "list" ? "active" : ""} onClick={() => setViewMode("list")} title={t("list")} aria-label={t("list")}><UiIcon name="list"/></button>
+      </div>}
+      <div className="sf-utility">
+        <button className="sf-icon-only" onClick={() => setUtilityOpen(open => !open)} aria-expanded={utilityOpen} title={t("moreActions")} aria-label={t("moreActions")}><UiIcon name="more"/></button>
+        {utilityOpen && <div className="sf-utility-menu" role="menu">
+          {config.uiDefaults.languageSwitcher !== false && <label><span>{t("language")}</span><select value={language} onChange={event => setLanguage(event.target.value as Language)} aria-label={t("language")}><option value="zh-cn">简中</option><option value="zh-tw">繁中</option><option value="en">EN</option></select></label>}
+          <label><span>{t("sort")}</span><select value={sort} disabled={currentResource?.storageCapabilities?.sort === false} onChange={event => { const next = event.target.value as SortMode; setSort(next); setCursorHistory([]); void load(resource, path, search, 0, next, direction, searchMode, null); }}><option value="name">{t("name")}</option><option value="size">{t("size")}</option><option value="modified">{t("modified")}</option></select></label>
+          <button role="menuitem" disabled={currentResource?.storageCapabilities?.sort === false} onClick={() => { const next = direction === "asc" ? "desc" : "asc"; setDirection(next); setCursorHistory([]); void load(resource, path, search, 0, sort, next, searchMode, null); }}>{iconButton("sort", t("direction"))}</button>
+          <button role="menuitem" onClick={() => { setUtilityOpen(false); void load(); }}>{iconButton("refresh", t("refresh"))}</button>
+          <button role="menuitem" onClick={() => { setUtilityOpen(false); setSettingsOpen(true); }}>{iconButton("settings", t("settings"))}</button>
+          {uiMode === "manager" && features.trash && recoverableDelete && <button role="menuitem" onClick={() => { setUtilityOpen(false); setTrashOpen(true); }}>{iconButton("trash", t("trash"))}</button>}
+        </div>}
       </div>
-    </header>
-    <div className="sf-toolbar" role="toolbar" aria-label={t("fileActions")} title={t("keyboardHelp")}>
-      <button onClick={createFolder} disabled={currentResource?.readOnly || directoryCapabilities.create_folder === false || (currentResource !== undefined && currentDepth >= currentResource.maxFolderDepth)} title={currentResource && currentDepth >= currentResource.maxFolderDepth ? t("folderDepthReached") : undefined}>＋ {t("newFolder")}</button>
-      <button className={`primary sf-upload-trigger${uploadActive ? " is-active" : ""}`} aria-busy={uploadActive} onClick={() => uploadInput.current?.click()} disabled={currentResource?.readOnly || directoryCapabilities.upload === false}>↑ {t("upload")}{uploadActive ? ` (${uploads.filter(task => task.status === "queued" || task.status === "uploading").length})` : ""}</button>
+    </div>
+    {uiMode === "manager" && <div className="sf-toolbar" role="toolbar" aria-label={t("fileActions")} title={t("keyboardHelp")}>
+      <button onClick={createFolder} disabled={currentResource?.readOnly || directoryCapabilities.create_folder === false || (currentResource !== undefined && currentDepth >= currentResource.maxFolderDepth)} title={currentResource && currentDepth >= currentResource.maxFolderDepth ? t("folderDepthReached") : undefined}>{iconButton("add-folder", t("newFolder"))}</button>
+      <button className={`primary sf-upload-trigger${uploadActive ? " is-active" : ""}`} aria-busy={uploadActive} onClick={() => uploadInput.current?.click()} disabled={currentResource?.readOnly || directoryCapabilities.upload === false}>{iconButton("upload", `${t("upload")}${uploadActive ? ` (${uploads.filter(task => task.status === "queued" || task.status === "uploading").length})` : ""}`)}</button>
       <input ref={uploadInput} type="file" multiple hidden onChange={event => { if (event.target.files) void upload(event.target.files); event.target.value = ""; }}/>
-      <span className="sf-separator"/>
-      <button onClick={toggleSelectAll} disabled={entries.length === 0}>☑ {selectedPaths.size === entries.length && entries.length > 0 ? t("clearSelection") : t("selectAll")}</button>
-      <button onClick={rename} disabled={selectedEntries.length !== 1 || !canSelected("rename") || currentResource?.readOnly}>✎ {t("rename")}</button>
-      <button onClick={() => void browseDestination("copy", path)} disabled={!canSelected("copy") || currentResource?.readOnly}>▣ {t("copy")}</button>
-      <button onClick={() => void browseDestination("move", path)} disabled={!canSelected("move") || currentResource?.readOnly}>↗ {t("move")}</button>
-      {features.archive && <button onClick={() => void downloadArchive()} disabled={selectedEntries.length === 0}>⇩ {t("downloadZip")}</button>}
-      {features.favorites && <button onClick={() => void toggleFavorite()} disabled={!selected}>{selected && metadata.favorites.includes(selected.path) ? "★" : "☆"} {t("favorite")}</button>}
-      {features.tags && <button onClick={() => void editTags()} disabled={!selected}># {t("tags")}</button>}
-      <button className="danger" onClick={remove} disabled={!canSelected("delete") || currentResource?.readOnly}>× {t("remove")}{selectedEntries.length > 1 ? ` (${selectedEntries.length})` : ""}</button>
-      {features.trash && <button onClick={() => setTrashOpen(true)}>♲ {t("trash")}</button>}
-      {tools.rotate && <><button onClick={() => void editImage(270)} disabled={!canEditImage(selected) || currentResource?.readOnly}>↶ {t("rotateLeft")}</button>
-      <button onClick={() => void editImage(90)} disabled={!canEditImage(selected) || currentResource?.readOnly}>↷ {t("rotateRight")}</button></>}
-      {tools.resize && <button onClick={resizeImage} disabled={!canEditImage(selected) || currentResource?.readOnly}>↔ {t("resize")}</button>}
-      {tools.crop && <button onClick={openCropEditor} disabled={!canEditImage(selected) || !imageInfo || currentResource?.readOnly}>▣ {t("crop")}</button>}
+      {selectedEntries.length > 0 && <><span className="sf-separator"/><div className="sf-context-actions">
+      <button onClick={toggleSelectAll} disabled={entries.length === 0}>{iconButton("select", selectedPaths.size === entries.length && entries.length > 0 ? t("clearSelection") : t("selectAll"))}</button>
+      <button onClick={rename} disabled={selectedEntries.length !== 1 || !canSelected("rename") || currentResource?.readOnly}>{iconButton("rename", t("rename"))}</button>
+      <button onClick={() => void browseDestination("copy", path)} disabled={!canSelected("copy") || currentResource?.readOnly}>{iconButton("copy", t("copy"))}</button>
+      <button onClick={() => void browseDestination("move", path)} disabled={!canSelected("move") || currentResource?.readOnly}>{iconButton("move", t("move"))}</button>
+      {features.archive && <button onClick={() => void downloadArchive()}>{iconButton("archive", t("downloadZip"))}</button>}
+      {features.favorites && <button onClick={() => void toggleFavorite()} disabled={!selected}>{iconButton("favorite", t("favorite"))}</button>}
+      {features.tags && <button onClick={() => void editTags()} disabled={!selected}>{iconButton("tags", t("tags"))}</button>}
+      <button className="danger" onClick={remove} disabled={!canSelected("delete") || currentResource?.readOnly}>{iconButton("delete", `${t("remove")}${selectedEntries.length > 1 ? ` (${selectedEntries.length})` : ""}`)}</button>
+      {tools.rotate && <><button onClick={() => void editImage(270)} disabled={!canEditImage(selected) || currentResource?.readOnly}>{iconButton("rotate-left", t("rotateLeft"))}</button><button onClick={() => void editImage(90)} disabled={!canEditImage(selected) || currentResource?.readOnly}>{iconButton("rotate-right", t("rotateRight"))}</button></>}
+      {tools.resize && <button onClick={resizeImage} disabled={!canEditImage(selected) || currentResource?.readOnly}>{iconButton("resize", t("resize"))}</button>}
+      {tools.crop && <button onClick={openCropEditor} disabled={!canEditImage(selected) || !imageInfo || currentResource?.readOnly}>{iconButton("crop", t("crop"))}</button>}
       {tools.presets && <label className="sf-sort">{t("preset")}<select value="" disabled={!canEditImage(selected) || currentResource?.readOnly || Object.keys(imagePresets).length === 0} onChange={event => { const name = event.target.value; event.target.value = ""; if (name) void applyPreset(name); }}>
         <option value="">—</option>{Object.entries(imagePresets).map(([name, preset]) => <option key={name} value={name}>{name} ({preset.width}×{preset.height})</option>)}
       </select></label>}
-      <button onClick={() => setSettingsOpen(true)} title={t("settings")}>⚙ {t("settings")}</button>
-      <button onClick={() => void load()}>↻ {t("refresh")}</button>
-      <span className="sf-separator"/>
-      <label className="sf-sort">{t("sort")}<select value={sort} disabled={currentResource?.storageCapabilities?.sort === false} onChange={event => { const next = event.target.value as SortMode; setSort(next); void load(resource, path, search, 0, next, direction); }}>
-        <option value="name">{t("name")}</option><option value="size">{t("size")}</option><option value="modified">{t("modified")}</option>
-      </select></label>
-      <button disabled={currentResource?.storageCapabilities?.sort === false} onClick={() => { const next = direction === "asc" ? "desc" : "asc"; setDirection(next); void load(resource, path, search, 0, sort, next); }} title={t("direction")}>{direction === "asc" ? "↑" : "↓"}</button>
-    </div>
-    {notice && <div className="sf-notice" role="alert">{notice}<button onClick={() => setNotice("")}>×</button></div>}
+      </div></>}
+    </div>}
+    {notice && <div className="sf-notice" role="alert">{notice}<button onClick={() => setNotice("")} aria-label={t("close")}><UiIcon name="close"/></button></div>}
     <UploadQueue tasks={uploads} collapsed={uploadsCollapsed} labels={{ title: t("uploadQueue"), expand: t("expand"), collapse: t("collapse"), cancel: t("cancel"), cancelAll: t("cancelAll"), clearFinished: t("clearFinished"), remove: t("removeUploadTask"), status: status => t(status) }} onToggle={() => setUploadsCollapsed(current => !current)} onCancel={cancelUpload} onCancelAll={cancelAllUploads} onClearFinished={() => setUploads(current => current.filter(task => task.status === "queued" || task.status === "uploading"))} onRemove={removeUploadTask}/>
     <div className="sf-layout" style={{ "--sf-sidebar-width": `${leftWidth}px`, "--sf-details-width": `${rightWidth}px` } as React.CSSProperties}>
-      <aside className="sf-sidebar" aria-label="Resources">
-        <div className="sf-side-title">SoFinder</div>
-        {resources.map(item => <button key={item.name} className={item.name === resource ? "active" : ""} onClick={() => { setResource(item.name); void load(item.name, "", "", 0); }}>
+      {showSidebar && <aside className="sf-sidebar" aria-label="Resources">
+        {resources.map(item => <button key={item.name} className={item.name === resource ? "active" : ""} onClick={() => { setResource(item.name); setSearch(""); setSearchMode("name"); if (item.storageCapabilities?.sort === false) { setSort("name"); setDirection("asc"); setCursorHistory([]); void load(item.name, "", "", 0, "name", "asc", "name", null); } else resetAndLoad(item.name, "", ""); }}>
           <span className="sf-resource-icon"><Icon kind={item.name.toLowerCase().includes("image") ? "image" : "folder"}/></span>
           {item.name.toLowerCase().includes("image") ? t("images") : item.name.toLowerCase() === "files" ? t("files") : item.name}
         </button>)}
-        {features.folderTree && resource && <FolderTree api={api} resource={resource} currentPath={path} rootLabel={t("home")} onNavigate={next => void load(resource, next, "", 0)}/>}
+        {features.folderTree && resource && (
+          <FolderTree api={api} resource={resource} currentPath={path} rootLabel={t("home")} onNavigate={next => resetAndLoad(resource, next, "")}/>
+        )}
         {currentResource && <div className="sf-resource-status">
           {currentResource.readOnly && <strong>{t("readOnly")}</strong>}
           {currentResource.quotaBytes > 0 && <><span>{t("storageUsage")}: {formatSize(currentResource.usedBytes)} / {formatSize(currentResource.quotaBytes)}</span><progress max={currentResource.quotaBytes} value={Math.min(currentResource.usedBytes, currentResource.quotaBytes)}/></>}
         </div>}
-        {features.recent && metadata.recent.length > 0 && <div className="sf-recent"><header><strong>{t("recent")}</strong><span>{metadata.recent.length}</span></header>{metadata.recent.slice(0, 8).map(item => <button key={item.path} title={item.path} onClick={() => void openRecent(item.path)}><span className="sf-recent-icon" aria-hidden="true">↺</span><span><b>{item.path.split("/").pop()}</b><small>{item.path.includes("/") ? item.path.slice(0, item.path.lastIndexOf("/")) : t("home")}</small></span></button>)}</div>}
-      </aside>
-      <div className="sf-column-resizer left" role="separator" tabIndex={0} aria-label={t("resizeLeftPanel")} aria-orientation="vertical" aria-valuemin={columnLimits.left.min} aria-valuemax={columnLimits.left.max} aria-valuenow={leftWidth} onPointerDown={event => beginColumnResize("left", event)} onPointerMove={moveColumnResize} onPointerUp={endColumnResize} onPointerCancel={endColumnResize} onKeyDown={event => resizeColumnWithKeyboard("left", event)} onDoubleClick={() => setColumnWidth("left", columnLimits.left.initial, true)}/>
+        {features.recent && metadata.recent.length > 0 && <div className="sf-recent"><header><strong>{t("recent")}</strong><span>{metadata.recent.length}</span></header>{metadata.recent.slice(0, 8).map(item => <button key={item.path} title={item.path} onClick={() => void openRecent(item.path)}><span className="sf-recent-icon"><UiIcon name="history"/></span><span><b>{item.path.split("/").pop()}</b><small>{item.path.includes("/") ? item.path.slice(0, item.path.lastIndexOf("/")) : t("home")}</small></span></button>)}</div>}
+      </aside>}
+      {showSidebar && <div className="sf-column-resizer left" role="separator" tabIndex={0} aria-label={t("resizeLeftPanel")} aria-orientation="vertical" aria-valuemin={columnLimits.left.min} aria-valuemax={columnLimits.left.max} aria-valuenow={leftWidth} onPointerDown={event => beginColumnResize("left", event)} onPointerMove={moveColumnResize} onPointerUp={endColumnResize} onPointerCancel={endColumnResize} onKeyDown={event => resizeColumnWithKeyboard("left", event)} onDoubleClick={() => setColumnWidth("left", columnLimits.left.initial, true)}/>}
       <section className="sf-content">
-        <nav className="sf-breadcrumb" aria-label="Breadcrumb">
-          <button onClick={() => void load(resource, "", search, 0)}>{t("home")}</button>
-          {crumbs.map((crumb, index) => <span key={`${crumb}-${index}`}>› <button onClick={() => void load(resource, crumbs.slice(0, index + 1).join("/"), search, 0)}>{crumb}</button></span>)}
-        </nav>
         {loading ? <div className="sf-state">{t("loading")}</div> : entries.length === 0 ? <div className="sf-state">{t("empty")}</div> :
-          <div className={`sf-entries ${view}`} role="listbox" aria-multiselectable="true" aria-label={t("files")}>
+          <div className={`sf-entries ${view}`} role="listbox" aria-multiselectable={uiMode === "manager"} aria-label={t("files")}>
             {view === "list" && <div className="sf-list-head" role="presentation" aria-hidden="true"><span>{t("name")}</span><span>{t("size")}</span><span>{t("modified")}</span></div>}
             {entries.map((entry, index) => {
               const image = !entry.directory && canPreviewImage(entry);
-              return <button key={entry.path} data-entry-index={index} role="option" aria-selected={selectedPaths.has(entry.path)} aria-label={`${entry.name}, ${entry.directory ? t("folder") : formatSize(entry.size)}`} className={`sf-entry ${selectedPaths.has(entry.path) ? "selected" : ""}`} onClick={event => selectEntry(entry, event)} onDoubleClick={() => openEntry(entry)} onContextMenu={event => { event.preventDefault(); setSelectedPaths(new Set([entry.path])); setSelectionAnchor(entry.path); setContextMenu({ x: event.clientX, y: event.clientY, entry }); }} onPointerDown={event => { if (event.pointerType === "touch") longPress.current = window.setTimeout(() => { setSelectedPaths(new Set([entry.path])); setSelectionAnchor(entry.path); setContextMenu({ x: event.clientX, y: event.clientY, entry }); }, 550); }} onPointerUp={() => { if (longPress.current !== null) window.clearTimeout(longPress.current); longPress.current = null; }} onPointerCancel={() => { if (longPress.current !== null) window.clearTimeout(longPress.current); longPress.current = null; }} onDragOver={event => { if (entry.directory) event.preventDefault(); }} onDrop={event => { if (entry.directory && event.dataTransfer.files.length) { event.preventDefault(); void uploadTo(entry.path, event.dataTransfer.files); } }}>
+              return <button key={entry.path} data-entry-index={index} role="option" aria-selected={selectedPaths.has(entry.path)} aria-label={`${entry.name}, ${entry.directory ? t("folder") : formatSize(entry.size)}`} className={`sf-entry ${selectedPaths.has(entry.path) ? "selected" : ""}`} onClick={event => selectEntry(entry, event)} onDoubleClick={() => openEntry(entry)} onContextMenu={event => { event.preventDefault(); setSelectedPaths(new Set([entry.path])); setSelectionAnchor(entry.path); setContextMenu({ x: event.clientX, y: event.clientY, entry }); }} onPointerDown={event => { if (event.pointerType === "touch") longPress.current = window.setTimeout(() => { setSelectedPaths(new Set([entry.path])); setSelectionAnchor(entry.path); setContextMenu({ x: event.clientX, y: event.clientY, entry }); }, 550); }} onPointerUp={() => { if (longPress.current !== null) window.clearTimeout(longPress.current); longPress.current = null; }} onPointerCancel={() => { if (longPress.current !== null) window.clearTimeout(longPress.current); longPress.current = null; }} onDragOver={event => { if (uiMode === "manager" && entry.directory) event.preventDefault(); }} onDrop={event => { if (uiMode === "manager" && entry.directory && event.dataTransfer.files.length) { event.preventDefault(); void uploadTo(entry.path, event.dataTransfer.files); } }}>
                 <span className="sf-entry-icon">{image ? <ThumbnailImage src={api.thumbnailUrl(resource, entry)} alt="" lazy/> : <Icon kind={entry.directory ? "folder" : "file"}/>}</span>
-                <span className="sf-entry-name" title={entry.name}>{features.favorites && metadata.favorites.includes(entry.path) && <span aria-label={t("favorite")}>★ </span>}{entry.name}</span>
+                <span className="sf-entry-name" title={entry.name}>{features.favorites && metadata.favorites.includes(entry.path) && <span aria-label={t("favorite")}><UiIcon name="favorite"/> </span>}{entry.name}</span>
                 <span className="sf-entry-size">{entry.directory ? "—" : formatSize(entry.size)}</span>
                 <time dateTime={new Date(entry.modifiedAt * 1000).toISOString()}>{dateFormatter.format(entry.modifiedAt * 1000)}</time>
               </button>;
             })}
           </div>}
-        {total > pageSize && <nav className="sf-pagination" aria-label={t("pagination")}>
-          <button disabled={offset === 0} onClick={() => void load(resource, path, search, Math.max(0, offset - pageSize))}>‹ {t("previous")}</button>
-          <span>{Math.floor(offset / pageSize) + 1} / {Math.ceil(total / pageSize)}</span>
-          <button disabled={offset + pageSize >= total} onClick={() => void load(resource, path, search, offset + pageSize)}>{t("next")} ›</button>
+        {(cursorHistory.length > 0 || nextCursor !== null) && <nav className="sf-pagination" aria-label={t("pagination")}>
+          <button disabled={cursorHistory.length === 0} onClick={previousPage}><UiIcon name="chevron-left"/> {t("previous")}</button>
+          <span>{t("page")} {cursorHistory.length + 1}{total !== null ? ` / ${Math.max(1, Math.ceil(total / pageSize))}` : ""}</span>
+          <button disabled={nextCursor === null} onClick={followingPage}>{t("next")} <UiIcon name="chevron-right"/></button>
         </nav>}
       </section>
-      <div className="sf-column-resizer right" role="separator" tabIndex={0} aria-label={t("resizeRightPanel")} aria-orientation="vertical" aria-valuemin={columnLimits.right.min} aria-valuemax={columnLimits.right.max} aria-valuenow={rightWidth} onPointerDown={event => beginColumnResize("right", event)} onPointerMove={moveColumnResize} onPointerUp={endColumnResize} onPointerCancel={endColumnResize} onKeyDown={event => resizeColumnWithKeyboard("right", event)} onDoubleClick={() => setColumnWidth("right", columnLimits.right.initial, true)}/>
-      <DetailsPanel api={api} resource={resource} selectedEntries={selectedEntries} selected={selected} imageInfo={imageInfo} metadata={metadata} showTags={features.tags} previewImage={canPreviewImage(selected)} selectMode={config.selectMode} selectAllowed={canChooseEntry(selected)} labels={{ details: t("details"), selected: t("selectedCount"), type: t("type"), folder: t("folder"), file: t("file"), size: t("size"), dimensions: t("dimensions"), modified: t("modified"), location: t("location"), select: t("select"), download: t("download"), copyUrl: t("copyUrl"), unsupportedWebImage: t("webImageUnsupported") }} formatDate={timestamp => dateFormatter.format(timestamp * 1000)} onChoose={choose} onOpenUrl={openUrlDialog}/>
+      {showDetails && <><div className="sf-column-resizer right" role="separator" tabIndex={0} aria-label={t("resizeRightPanel")} aria-orientation="vertical" aria-valuemin={columnLimits.right.min} aria-valuemax={columnLimits.right.max} aria-valuenow={rightWidth} onPointerDown={event => beginColumnResize("right", event)} onPointerMove={moveColumnResize} onPointerUp={endColumnResize} onPointerCancel={endColumnResize} onKeyDown={event => resizeColumnWithKeyboard("right", event)} onDoubleClick={() => setColumnWidth("right", columnLimits.right.initial, true)}/><DetailsPanel api={api} resource={resource} selectedEntries={selectedEntries} selected={selected} imageInfo={imageInfo} metadata={metadata} showTags={features.tags} previewImage={canPreviewImage(selected)} selectMode={false} selectAllowed={canChooseEntry(selected)} labels={{ details: t("details"), selected: t("selectedCount"), type: t("type"), folder: t("folder"), file: t("file"), size: t("size"), dimensions: t("dimensions"), modified: t("modified"), location: t("location"), select: t("select"), download: t("download"), copyUrl: t("copyUrl"), unsupportedWebImage: t("webImageUnsupported") }} formatDate={timestamp => dateFormatter.format(timestamp * 1000)} onChoose={choose} onOpenUrl={openUrlDialog}/></>}
     </div>
+    {uiMode === "picker" && selected && !selected.directory && <div className="sf-picker-bar"><div><strong>{selected.name}</strong><small>{formatSize(selected.size)}</small></div>{!canChooseEntry(selected) && <span role="status">{t("webImageUnsupported")}</span>}<button className="primary" disabled={!canChooseEntry(selected)} onClick={() => choose()}>{t("select")}</button></div>}
     {settingsOpen && <SettingsDialog resource={currentResource} tools={tools} features={features} scale={uiScale} translate={t} onToolChange={updateTool} onFeatureChange={(feature, enabled) => { updateFeature(feature, enabled); if (feature === "tags" && !enabled && searchMode === "tags") setSearchMode("name"); }} onScaleChange={setUiScale} onClose={() => setSettingsOpen(false)}/>}
     {destinationDialog && <DestinationDialog state={destinationDialog} unsafe={destinationUnsafe} translate={t} onBrowse={(operation, destination) => void browseDestination(operation, destination)} onConfirm={(operation, destination) => void transfer(operation, destination)} onClose={() => setDestinationDialog(null)}/>}
     {textDialog && <TextDialog title={textDialog.title} label={textDialog.label} initialValue={textDialog.initial} maximum={textDialog.maximum} extension={textDialog.extension} confirmLabel={t("confirm")} cancelLabel={t("cancel")} closeLabel={t("close")} onConfirm={value => void submitTextDialog(value)} onClose={() => setTextDialog(null)}/>}
@@ -747,12 +787,14 @@ export default function App({ config }: { config: SoFinderConfig }) {
     />}
     {contextMenu && <ContextMenu x={contextMenu.x} y={contextMenu.y} onClose={() => setContextMenu(null)} onSelect={runContextCommand} items={[
       { id: contextMenu.entry.directory ? "open" : "preview", label: contextMenu.entry.directory ? t("open") : t("preview") },
-      ...(config.selectMode && !contextMenu.entry.directory ? [{ id: "select", label: t("select"), disabled: !canChooseEntry(contextMenu.entry) }] : []),
+      ...(uiMode === "picker" && !contextMenu.entry.directory ? [{ id: "select", label: t("select"), disabled: !canChooseEntry(contextMenu.entry) }] : []),
       { id: "download", label: t("download"), disabled: contextMenu.entry.directory },
-      { id: "rename", label: t("rename"), disabled: contextMenu.entry.capabilities?.rename === false },
-      { id: "copy", label: t("copy"), disabled: contextMenu.entry.capabilities?.copy === false },
-      { id: "move", label: t("move"), disabled: contextMenu.entry.capabilities?.move === false },
-      { id: "delete", label: t("remove"), disabled: contextMenu.entry.capabilities?.delete === false, danger: true },
+      ...(uiMode === "manager" ? [
+        { id: "rename", label: t("rename"), disabled: contextMenu.entry.capabilities?.rename === false },
+        { id: "copy", label: t("copy"), disabled: contextMenu.entry.capabilities?.copy === false },
+        { id: "move", label: t("move"), disabled: contextMenu.entry.capabilities?.move === false },
+        { id: "delete", label: t("remove"), disabled: contextMenu.entry.capabilities?.delete === false, danger: true },
+      ] : []),
     ]}/>}
     <div className="sf-sr-only" aria-live="polite">{selectedEntries.length > 0 ? `${selectedEntries.length} ${t("selectedCount")}` : notice}</div>
   </main>;

@@ -16,7 +16,15 @@ export interface SoFinderConfig {
     radius: string;
   };
   featureDefaults: { folderTree: boolean };
-  uiDefaults: { scale: UiScale };
+  uiDefaults: {
+    scale: UiScale;
+    mode?: "manager" | "picker";
+    header?: boolean;
+    logo?: boolean;
+    search?: boolean;
+    languageSwitcher?: boolean;
+    viewSwitcher?: boolean;
+  };
 }
 
 export type UiScale = "compact" | "standard" | "large" | "xlarge";

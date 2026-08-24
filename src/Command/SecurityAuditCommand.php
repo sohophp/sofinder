@@ -5,6 +5,8 @@ declare(strict_types=1);
 namespace SohoPHP\SoFinder\Command;
 
 use SohoPHP\SoFinder\Contract\ImageCapabilityProviderInterface;
+use SohoPHP\SoFinder\Contract\LocalPathProviderInterface;
+use SohoPHP\SoFinder\Contract\StorageAuditProviderInterface;
 use SohoPHP\SoFinder\Image\ImageFormatRegistry;
 use SohoPHP\SoFinder\ResourceRegistry;
 use Symfony\Component\Console\Attribute\AsCommand;
@@ -38,26 +40,35 @@ final class SecurityAuditCommand extends Command
         $publicRoot = realpath($this->projectDirectory . '/public') ?: rtrim($this->projectDirectory, '/') . '/public';
         foreach ($this->resources->all() as $item) {
             $resource = $item->resource;
-            $root = realpath($resource->root);
-            if ($root === false || !is_dir($root)) {
-                $findings[] = ['critical', $resource->name, 'Storage root does not exist or cannot be resolved.'];
-                continue;
-            }
-            if (!is_readable($root) || ($resource->readOnly === false && !is_writable($root))) {
-                $findings[] = ['critical', $resource->name, 'Storage root permissions do not match the configured access mode.'];
-            }
-            $permissions = fileperms($root);
-            if ($permissions !== false && ($permissions & 0002) !== 0) {
-                $findings[] = ['warning', $resource->name, 'Storage root is world-writable.'];
-            }
             if ($resource->deliveryMode === 'proxy' && $resource->publicUrl !== '') {
                 $findings[] = ['critical', $resource->name, 'Proxy delivery is configured with a public URL; remove the web-server alias as well.'];
             }
             if ($resource->deliveryMode === 'public' && $resource->publicUrl === '') {
                 $findings[] = ['warning', $resource->name, 'Public delivery has no public URL.'];
             }
-            if ($this->contains($publicRoot, $root) && $resource->deliveryMode === 'proxy') {
-                $findings[] = ['critical', $resource->name, 'Proxy storage is physically located under the public document root.'];
+            if ($item->storage instanceof LocalPathProviderInterface) {
+                $root = realpath($item->storage->absolutePath(''));
+                if ($root === false || !is_dir($root)) {
+                    $findings[] = ['critical', $resource->name, 'Storage root does not exist or cannot be resolved.'];
+                    continue;
+                }
+                if (!is_readable($root) || ($resource->readOnly === false && !is_writable($root))) {
+                    $findings[] = ['critical', $resource->name, 'Storage root permissions do not match the configured access mode.'];
+                }
+                $permissions = fileperms($root);
+                if ($permissions !== false && ($permissions & 0002) !== 0) {
+                    $findings[] = ['warning', $resource->name, 'Storage root is world-writable.'];
+                }
+                if ($this->contains($publicRoot, $root) && $resource->deliveryMode === 'proxy') {
+                    $findings[] = ['critical', $resource->name, 'Proxy storage is physically located under the public document root.'];
+                }
+                $this->scan($root, $resource->name, $findings);
+            } elseif ($item->storage instanceof StorageAuditProviderInterface) {
+                foreach ($item->storage->auditStorage() as $finding) {
+                    $findings[] = [$finding['severity'], $resource->name, $finding['message']];
+                }
+            } else {
+                $findings[] = ['warning', $resource->name, 'Remote storage does not provide adapter-specific security audit results.'];
             }
             if ($this->images !== null && $this->imageFormats !== null) {
                 foreach ($resource->allowedExtensions as $extension) {
@@ -66,7 +77,6 @@ final class SecurityAuditCommand extends Command
                     }
                 }
             }
-            $this->scan($root, $resource->name, $findings);
         }
         foreach (['quarantine' => $this->quarantineDirectory, 'chunks' => $this->chunkDirectory, 'trash' => $this->trashDirectory] as $name => $privateDirectory) {
             $resolved = realpath($privateDirectory) ?: $this->normalizeAbsolute($privateDirectory);
@@ -74,7 +84,11 @@ final class SecurityAuditCommand extends Command
                 $findings[] = ['critical', $name, 'Private working directory is under the public document root.'];
             }
             foreach ($this->resources->all() as $item) {
-                $root = realpath($item->resource->root) ?: $this->normalizeAbsolute($item->resource->root);
+                if (!$item->storage instanceof LocalPathProviderInterface) {
+                    continue;
+                }
+                $storageRoot = $item->storage->absolutePath('');
+                $root = realpath($storageRoot) ?: $this->normalizeAbsolute($storageRoot);
                 if ($this->contains($root, $resolved)) {
                     $findings[] = ['critical', $name, 'Private working directory is inside a resource storage root.'];
                 }

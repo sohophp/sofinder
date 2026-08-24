@@ -1,5 +1,16 @@
 # Changelog
 
+## 0.1.0-beta.7 - 2026-08-24
+
+- Replace the default branded header with mode-aware manager and picker shells,
+  contextual file actions, compact utilities and a picker confirmation bar.
+- Add validated host and browser presentation settings without changing ACLs.
+- Preserve nullable directory totals and opaque cursor pagination end to end.
+- Let non-local adapters opt into security audits and permanent deletion without
+  invoking the local recycle bin.
+- Add the optional `sohophp/sofinder-s3` package with AWS S3, R2 and MinIO-ready
+  endpoint configuration, prefix isolation and bounded recursive operations.
+
 ## 0.1.0-beta.6 - 2026-08-23
 
 - Add a Traditional Chinese project README.

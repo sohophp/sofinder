@@ -1,0 +1,36 @@
+export type UiIconName = "add-folder" | "upload" | "select" | "rename" | "copy" | "move" | "delete" | "trash" | "refresh" | "settings" | "grid" | "list" | "more" | "archive" | "favorite" | "tags" | "rotate-left" | "rotate-right" | "resize" | "crop" | "sort" | "search" | "close" | "add" | "history" | "chevron-left" | "chevron-right" | "chevron-down";
+
+const paths: Record<UiIconName, React.ReactNode> = {
+  "add-folder": <><path d="M3 6.5h6l2 2h10v10.5H3z"/><path d="M12 11v6M9 14h6"/></>,
+  upload: <><path d="M12 16V4M7.5 8.5 12 4l4.5 4.5"/><path d="M4 15v5h16v-5"/></>,
+  select: <><rect x="4" y="4" width="16" height="16" rx="3"/><path d="m8 12 3 3 5-6"/></>,
+  rename: <><path d="m4 20 4.5-1 9.8-9.8-3.5-3.5L5 15.5z"/><path d="m13.8 6.8 3.5 3.5"/></>,
+  copy: <><rect x="8" y="8" width="12" height="12" rx="2"/><path d="M16 8V4H4v12h4"/></>,
+  move: <><path d="M5 12h14M14 7l5 5-5 5"/></>,
+  delete: <><path d="M4 7h16M9 7V4h6v3M7 7l1 13h8l1-13"/><path d="M10 11v5M14 11v5"/></>,
+  trash: <><path d="M5 8h14l-1 12H6zM8 8V5h8v3"/><path d="M9.5 12v4M14.5 12v4"/></>,
+  refresh: <><path d="M19 8a7 7 0 1 0 1 7"/><path d="M19 3v5h-5"/></>,
+  settings: <><circle cx="12" cy="12" r="3"/><path d="M12 3v2M12 19v2M3 12h2M19 12h2M5.6 5.6 7 7M17 17l1.4 1.4M18.4 5.6 17 7M7 17l-1.4 1.4"/></>,
+  grid: <><rect x="4" y="4" width="6" height="6" rx="1"/><rect x="14" y="4" width="6" height="6" rx="1"/><rect x="4" y="14" width="6" height="6" rx="1"/><rect x="14" y="14" width="6" height="6" rx="1"/></>,
+  list: <><path d="M9 6h11M9 12h11M9 18h11"/><circle cx="5" cy="6" r="1"/><circle cx="5" cy="12" r="1"/><circle cx="5" cy="18" r="1"/></>,
+  more: <><circle cx="5" cy="12" r="1.2" fill="currentColor" stroke="none"/><circle cx="12" cy="12" r="1.2" fill="currentColor" stroke="none"/><circle cx="19" cy="12" r="1.2" fill="currentColor" stroke="none"/></>,
+  archive: <><path d="M4 7h16v13H4zM3 4h18v3H3zM9 11h6"/></>,
+  favorite: <path d="m12 3 2.7 5.5 6.1.9-4.4 4.3 1 6.1-5.4-2.9-5.4 2.9 1-6.1-4.4-4.3 6.1-.9z"/>,
+  tags: <><path d="M4 5v6l8 8 7-7-8-8H5z"/><circle cx="8" cy="8" r="1"/></>,
+  "rotate-left": <><path d="M7 8H3V4"/><path d="M4 8a8 8 0 1 1 1 9"/></>,
+  "rotate-right": <><path d="M17 8h4V4"/><path d="M20 8a8 8 0 1 0-1 9"/></>,
+  resize: <><path d="M4 8V4h4M16 4h4v4M20 16v4h-4M8 20H4v-4"/><path d="m9 9 6 6M15 9l-6 6"/></>,
+  crop: <path d="M7 3v14a2 2 0 0 0 2 2h12M3 7h14a2 2 0 0 1 2 2v12"/>,
+  sort: <><path d="M8 5v14M5 8l3-3 3 3M16 19V5M13 16l3 3 3-3"/></>,
+  search: <><circle cx="10.5" cy="10.5" r="6.5"/><path d="m16 16 4 4"/></>,
+  close: <path d="m6 6 12 12M18 6 6 18"/>,
+  add: <path d="M12 5v14M5 12h14"/>,
+  history: <><path d="M5 7H2V4"/><path d="M3 7a9 9 0 1 1 0 10"/><path d="M12 7v5l3 2"/></>,
+  "chevron-left": <path d="m15 5-7 7 7 7"/>,
+  "chevron-right": <path d="m9 5 7 7-7 7"/>,
+  "chevron-down": <path d="m5 9 7 7 7-7"/>,
+};
+
+export function UiIcon({ name }: { name: UiIconName }) {
+  return <svg className="sf-ui-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">{paths[name]}</svg>;
+}

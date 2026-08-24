@@ -77,7 +77,7 @@ final readonly class FileManager
 
     /**
      * @param list<string>|null $onlyPaths
-     * @return array{entries:list<Entry>,total:int,path:string,offset:int,limit:int,sort:string,direction:string,nextCursor:?string,capabilities:array<string,bool>,storageCapabilities:\SohoPHP\SoFinder\Value\StorageCapabilities}
+     * @return array{entries:list<Entry>,total:?int,path:string,offset:int,limit:int,sort:string,direction:string,nextCursor:?string,capabilities:array<string,bool>,storageCapabilities:\SohoPHP\SoFinder\Value\StorageCapabilities}
      */
     public function list(
         string $resourceName,
@@ -119,7 +119,7 @@ final readonly class FileManager
         $sort = $query->sort;
         $direction = $query->direction;
         $limit = $page->limit;
-        $total = $page->total ?? ($page->offset + count($entries) + ($page->nextCursor === null ? 0 : 1));
+        $total = $page->total;
         $offset = $page->offset;
 
         return [
@@ -382,7 +382,7 @@ final readonly class FileManager
         $trashed = $this->usage->mutate($item, function () use ($item, $path): array {
             $removedBytes = $item->storage->size($path);
             $this->before('delete', $item, $path);
-            $trashed = $this->trash?->put($item, $path);
+            $trashed = $item->storage->capabilities()->recoverableDelete ? $this->trash?->put($item, $path) : null;
             if ($trashed === null) {
                 $item->storage->delete($path);
             }

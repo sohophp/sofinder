@@ -36,9 +36,10 @@ export class Api {
 
   configData() { return this.request<{ apiVersion: string; resources: ResourceType[]; plugins: PluginDescriptor[]; imagePresets: Record<string, ImagePreset>; imageCapabilities?: ImageCapabilities; uiDefaults?: { scale: UiScale } }>("/config"); }
 
-  list(resource: string, path: string, search = "", sort = "name", direction = "asc", offset = 0, limit = 100, searchMode: "name" | "tags" = "name") {
+  list(resource: string, path: string, search = "", sort = "name", direction = "asc", offset = 0, limit = 100, searchMode: "name" | "tags" = "name", cursor: string | null = null) {
     const query = new URLSearchParams({ resource, path, search, searchMode, sort, direction, offset: String(offset), limit: String(limit) });
-    return this.request<{ entries: Entry[]; total: number; path: string; offset: number; limit: number; nextCursor: string | null; sort: string; direction: string; capabilities: Record<string, boolean> }>(`/entries?${query}`);
+    if (cursor !== null) query.set("cursor", cursor);
+    return this.request<{ entries: Entry[]; total: number | null; path: string; offset: number; limit: number; nextCursor: string | null; sort: string; direction: string; capabilities: Record<string, boolean> }>(`/entries?${query}`);
   }
 
   createFolder(resource: string, path: string, name: string) {

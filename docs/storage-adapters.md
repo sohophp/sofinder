@@ -39,6 +39,8 @@ Local-only optimizations are separate optional contracts:
 - `LocalPathProviderInterface` supplies an absolute path to the private local
   recycle-bin implementation.
 - `StorageUsageProviderInterface` supplies an authoritative full usage scan.
+- `StorageAuditProviderInterface` supplies secret-safe warning or critical
+  findings for `sofinder:security:audit` when no local path exists.
 - `RecycleBinInterface`, `UsageTrackerInterface`, `MetadataStoreInterface`,
   `ChunkUploadStoreInterface` and `RequestGateStoreInterface` can be replaced
   for clustered deployments.
@@ -47,3 +49,8 @@ An adapter without `LocalPathProviderInterface` must use a compatible custom
 `RecycleBinInterface` or disable recoverable deletion. An adapter without
 `StorageUsageProviderInterface` must use a usage tracker that already has an
 authoritative baseline before quotas are enabled.
+
+`recoverableDelete` must be true only when the configured recycle-bin service
+can restore that adapter's entries. SoFinder permanently deletes through an
+adapter that reports false and presents an explicit non-recoverable warning in
+the browser. The optional `sohophp/sofinder-s3` package follows this model.

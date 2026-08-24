@@ -27,3 +27,8 @@ These packages are distributed under the following MIT license:
 
 Development-only dependencies and their exact versions are recorded in
 `composer.lock` and `frontend/pnpm-lock.yaml`.
+
+The optional `sohophp/sofinder-s3` package depends on AWS SDK for PHP v3,
+which is distributed under the Apache License 2.0. Its transitive dependency
+versions and license metadata are recorded by Composer when that package is
+installed.

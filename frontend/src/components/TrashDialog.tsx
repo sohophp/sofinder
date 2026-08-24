@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from "react";
 import type { Api } from "../api";
 import type { TrashItem, TrashPage } from "../types";
 import { Modal } from "./Modal";
+import { UiIcon } from "./UiIcon";
 
 export function TrashDialog({ api, resource, locale, labels, onClose, onChanged }: {
   api: Api; resource: string; locale: string;
@@ -45,12 +46,12 @@ export function TrashDialog({ api, resource, locale, labels, onClose, onChanged 
   return <><Modal title={labels.title} closeLabel={labels.close} onClose={onClose} className="sf-trash-modal" footer={<button className="primary" onClick={onClose}>{labels.close}</button>}>
     {error && <div className="sf-notice" role="alert">{error}</div>}
     <div className="sf-trash-usage"><div><strong>{labels.usage}</strong><span>{formatSize(page.usedBytes)} / {formatSize(page.maxBytes)} · {page.usedItems} / {page.maxItems} {labels.items}</span></div><progress max={Math.max(1, page.maxBytes)} value={Math.min(page.usedBytes, page.maxBytes)}/></div>
-    <div className="sf-trash-search"><span aria-hidden="true">⌕</span><input value={search} onChange={event => { setSearch(event.target.value); setOffset(0); }} placeholder={labels.search} aria-label={labels.search}/>{search && <button onClick={() => setSearch("")} aria-label={labels.close}>×</button>}</div>
+    <div className="sf-trash-search"><UiIcon name="search"/><input value={search} onChange={event => { setSearch(event.target.value); setOffset(0); }} placeholder={labels.search} aria-label={labels.search}/>{search && <button onClick={() => setSearch("")} aria-label={labels.close}><UiIcon name="close"/></button>}</div>
     <div className="sf-trash-list">{loading ? <p>…</p> : page.items.length === 0 ? <p>{labels.empty}</p> : page.items.map(item => <article key={item.id}>
       <div><strong>{item.path.split("/").pop()}</strong><small title={item.path}>{item.path}</small><small>{item.directory ? labels.items : formatSize(item.size)} · {labels.expires}: {new Intl.DateTimeFormat(locale, { dateStyle: "medium" }).format(item.expiresAt * 1000)}</small></div>
       <button onClick={() => void restore(item)}>{labels.restore}</button><button className="danger" onClick={() => void purge(item)}>{labels.permanentDelete}</button>
     </article>)}</div>
-    {page.total > page.limit && <nav className="sf-trash-pagination" aria-label={labels.title}><button disabled={page.offset === 0 || loading} onClick={() => setOffset(Math.max(0, page.offset - page.limit))}>‹ {labels.previous}</button><span>{first}–{last} / {page.total}</span><button disabled={page.offset + page.limit >= page.total || loading} onClick={() => setOffset(page.offset + page.limit)}>{labels.next} ›</button></nav>}
+    {page.total > page.limit && <nav className="sf-trash-pagination" aria-label={labels.title}><button disabled={page.offset === 0 || loading} onClick={() => setOffset(Math.max(0, page.offset - page.limit))}><UiIcon name="chevron-left"/> {labels.previous}</button><span>{first}–{last} / {page.total}</span><button disabled={page.offset + page.limit >= page.total || loading} onClick={() => setOffset(page.offset + page.limit)}>{labels.next} <UiIcon name="chevron-right"/></button></nav>}
   </Modal>
     {conflictItem && <Modal title={labels.conflict} closeLabel={labels.close} onClose={() => setConflictItem(null)} className="sf-confirm-modal" footer={<><button onClick={() => setConflictItem(null)}>{labels.cancel}</button><button onClick={() => void resolveConflict("rename")}>{labels.autoRename}</button><button className="danger" onClick={() => void resolveConflict("overwrite")}>{labels.overwrite}</button></>}><div className="sf-form-body"><p>{conflictItem.path}</p></div></Modal>}
   </>;

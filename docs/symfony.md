@@ -30,6 +30,12 @@ so_finder:
   trash_max_items: 1000
   trash_max_bytes: 1073741824
   ui:
+    mode: auto          # auto, manager or picker
+    header: false       # Optional brand-only header.
+    logo: false
+    search: true
+    language_switcher: true
+    view_switcher: true
     folder_tree: false # Initial UI preference; each browser can enable it in Settings.
     scale: standard    # compact, standard, large or xlarge; browser preference wins.
   maintenance:
@@ -91,6 +97,12 @@ Resize, crop, rotation, and preset sizes are initially hidden and can be enabled
 in Settings. Copy/move destinations are selected only from folders returned
 by the configured resource API; final paths are normalized and authorized
 again by the server.
+
+`mode: auto` resolves to `picker` for CKEditor and `select=1` requests, and to
+`manager` otherwise. Browser URLs may override presentation only with
+`uiMode=auto|manager|picker` and `uiHeader`, `uiLogo`, `uiSearch`, `uiLanguage`
+or `uiView` set to `0` or `1`. Invalid values fall back to host configuration;
+these parameters never grant operations or bypass authorization.
 
 Name limits count Unicode characters rather than bytes. The resource root is
 folder level zero, so a `max_folder_depth` of 5 allows files inside the fifth

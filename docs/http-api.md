@@ -9,10 +9,10 @@ under the imported SoFinder route prefix and every JSON response uses one of:
 ```
 
 The directory endpoint retains `offset`, `limit` and an exact `total` for the
-supported local adapter. It additionally returns `nextCursor` and
-`storageCapabilities`; clients should tolerate an unknown total for future
-cursor-only adapters. Existing beta.2 query parameters and response fields are
-not renamed.
+supported local adapter. Cursor-only adapters return `total: null` and an opaque
+`nextCursor`; clients send that value back as `cursor` and must not derive it
+from the offset. Existing beta.2 query parameters and response fields are not
+renamed.
 
 Mutation requests require the `X-CSRF-TOKEN` header and an authenticated actor.
 Unknown operations are denied. Entry and directory capability fields are only
