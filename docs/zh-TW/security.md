@@ -1,38 +1,27 @@
 ---
-title: 安全部署
-description: SoFinder 正式環境的驗證、授權、儲存、上傳與維護安全檢查表。
+title: 正式環境安全
+description: SoFinder 部署的驗證、授權、儲存、上傳與運維安全要求。
 ---
 
-# 安全部署
+# 正式環境安全
 
-## 上線前檢查
+SoFinder 將每個設定的 Resource Root 視為 Sandbox。Path Traversal、Control Character、隱藏名稱及 Symbolic Link 存取都會被拒絕。上傳會先進入 Mode 0600 的私有 Quarantine；Byte 數量來自 Stream，而不是信任 Request Metadata；內容經檢查後才以 Atomic 方式發布。圖片副檔名必須符合偵測到的 MIME，而且圖片必須在設定的像素限制內完整 Decode。
 
-- SoFinder 路由必須位於 Symfony 防火牆後方。
-- 每個資源均設定符合需求的 `roles`、`operation_roles` 與 `path_acl`。
-- 私有資源放在 Web Root 外，使用 `delivery_mode: proxy`，且沒有 Web Server alias。
-- quarantine、chunk、trash、metadata 及 usage 路徑不可被 HTTP 直接存取。
-- PHP Runtime 只擁有必要目錄的最小讀寫權限。
-- 明確設定允許的副檔名、MIME、檔案大小、配額與圖片像素上限。
-- 執行安全稽核及圖片能力檢查。
+請將 `quarantine_dir`、`chunk_dir`、`trash_dir`、Metadata，以及 Thumbnail／Archive Cache 放在公開 Resource Root 外。停用公開上傳 Alias 的 Script Execution。Proxy Resource 不得透過另一個 Alias 暴露 Root，否則該 URL 會繞過 Read ACL。
 
-```bash
-bin/console sofinder:security:audit
-bin/console sofinder:image:capabilities
-```
-
-## 維護
-
-使用 `external` 模式時必須排程：
+刪除會把項目移至依 Actor 隔離的私有回收站。Overwrite Conflict 的還原會使用 Atomic Destination Backup。請排程：
 
 ```bash
 bin/console sofinder:trash:cleanup
 bin/console sofinder:uploads:cleanup
 ```
 
-S3 刪除對 SoFinder 而言是永久的；依照復原需求啟用供應商版本控制及 Lifecycle Policy。
+設定或部署變更後執行：
 
-## 回報弱點
+```bash
+bin/console sofinder:security:audit
+```
 
-請勿在公開 Issue 揭露安全問題。使用 [GitHub 私有弱點回報](https://github.com/sohophp/sofinder/security/advisories/new)，並提供受影響版本、已遮蔽機密的設定、重現方式及影響。
+預設 Request Gate 會分別限制一般 API、Upload／Chunk Traffic、唯讀 Thumbnail、圖片編輯、ZIP 產生及 Transfer Batch。因單一目錄頁可能載入大量圖片，Thumbnail 有較高的獨立額度；成功 Response 會由 Browser 私有快取。請依部署調整 `so_finder.limits`。內建 Gate 使用本機 Lock File；多主機部署在分散並行 Traffic 前應改用共用 Limiter。
 
-更完整的威脅與控制說明請閱讀[英文安全指南](/security)及[威脅模型](/threat-model)。
+預設 Inspector 可透過 `FileInspectorInterface` 替換。接受不受信任公開上傳的部署，應以防毒或 Content-disarm Service 裝飾它，並使用 Operation Event 處理應用程式 Audit 與 Quota Policy。

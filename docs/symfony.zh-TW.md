@@ -1,7 +1,5 @@
 # Symfony 整合
 
-英文原文：[symfony.md](symfony.md)
-
 在應用程式 Kernel 註冊 Bundle：
 
 ```php
@@ -76,7 +74,56 @@ Path rule 會繼承到子目錄，最明確的匹配路徑優先，適用的 den
 
 `delivery_mode: public` 可保留直接 URL，但直接請求不經 SoFinder，因此不能套用讀取 ACL。敏感資源必須使用 `proxy`、移除 Web Server 對 storage root 的 alias，並留空 `public_url`。Proxy 支援 Range、ETag 與條件式請求，只有安全 raster image MIME 可使用 inline 顯示。
 
-主題色只接受三位或六位 hexadecimal；圓角只接受 `0px` 至 `32px`，避免設定值變成任意 CSS。公開 Plugin 契約請見 `plugins.md`。
+### 宿主應用程式入口路由
+
+資源可發布宿主路由，而非儲存空間或 SoFinder proxy URL。當應用程式需要提供穩定 URL、記錄下載、查詢資料庫、串流私有物件或重新導向 CDN 時，這個功能很有用：
+
+```yaml
+so_finder:
+  resources:
+    Documents:
+      adapter: s3
+      root: component-files
+      delivery_mode: proxy
+      public_url: ''
+      entry_url:
+        route: file.download
+        absolute: true
+        parameters:
+          resource: '{resource}'
+          path: '{path}'
+          name: '{name}'
+```
+
+SoFinder 顯示檔案入口 URL 時，設定的路由優先。內建樣板值包括 `{resource}`、`{path}`、`{name}`、`{stem}`、`{extension}` 與 `{storage_url}`。不是路由 path variable 的額外參數，會由 Symfony 產生為 query parameter。
+
+無法從 object key 推斷 `{id}` 之類的資料庫值。宿主應用程式可以實作 `EntryUrlContextProviderInterface`；Symfony autoconfiguration 會自動加上 tag：
+
+```php
+use SohoPHP\SoFinder\Contract\EntryUrlContextProviderInterface;
+use SohoPHP\SoFinder\Value\Entry;
+use SohoPHP\SoFinder\Value\ResourceType;
+
+final readonly class FileEntryUrlContext implements EntryUrlContextProviderInterface
+{
+    public function __construct(private FileRepository $files) {}
+
+    public function context(ResourceType $resource, Entry $entry): array
+    {
+        if ($resource->name !== 'Documents') {
+            return [];
+        }
+
+        $record = $this->files->findByStorageKey($entry->path);
+
+        return $record === null ? [] : ['id' => $record->id()];
+    }
+}
+```
+
+資源接著可將 `id: '{id}'` 與 `name: '{name}'` 對應至 `/file/download/{id}-{name}` 之類的路由。路由 controller 仍須負責自己的存取政策，並可透過 `FileManager::read()` 串流，或使用應用程式的儲存服務重新導向公開供應商 URL。
+
+主題色只接受三位或六位 hexadecimal；圓角只接受 `0px` 至 `32px`，避免設定值變成任意 CSS。公開 Plugin 契約請見[外掛系統](/zh-TW/plugins)。
 
 瀏覽器齒輪選單會將圖片工具顯示偏好存在該瀏覽器的 local storage，不會授予 capability 或改變伺服器 ACL。Resize、crop、rotation 與預設尺寸預設隱藏，可在設定中開啟。複製／移動目的地只會顯示資源 API 回傳的資料夾；伺服器仍會正規化並重新授權最終路徑。
 

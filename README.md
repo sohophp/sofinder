@@ -1,6 +1,6 @@
 # SoFinder
 
-> **Documentation:** <https://sofinder.sohophp.app/> · [Traditional Chinese](https://sofinder.sohophp.app/zh-TW/) · [Repository overview in Traditional Chinese](README.zh-TW.md)
+> **Documentation:** [English](https://sofinder.sohophp.app/) · [简体中文](https://sofinder.sohophp.app/zh-CN/) · [繁體中文](https://sofinder.sohophp.app/zh-TW/) · Repository: [简中](README.zh-CN.md) / [繁中](README.zh-TW.md)
 
 SoFinder is an original MIT-licensed file manager for PHP 8.2 through 8.5. It
 provides a framework-independent core, a Symfony 6.4/7.4 bundle, and a React

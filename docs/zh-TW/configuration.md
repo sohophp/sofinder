@@ -1,11 +1,137 @@
 ---
-title: 完整設定參考
-description: SoFinder 完整設定參考的繁中翻譯狀態。
-head: [[meta, { name: robots, content: noindex }]]
+title: 設定參考
+description: SoFinder 全域、UI、維護、圖片、請求限制與資源設定參考。
 ---
 
-# 完整設定參考
+# 設定參考
 
-::: info 翻譯狀態
-本頁尚未完成繁中翻譯。請閱讀最新且完整的[英文設定參考](/configuration)；設定鍵、允許值及預設值不因語言而異。
-:::
+所有設定都位於 `so_finder` 鍵下。Symfony 會在編譯 Container 時驗證每個值，因此拼錯的鍵名及超出範圍的值都會提早失敗。
+
+## 全域路徑與上傳 Session
+
+| 選項 | 預設值 | 用途 |
+| --- | --- | --- |
+| `route_prefix` | `/admin/sofinder` | 保留的相容設定；目前 HTTP URL 由匯入的 Symfony 路由 prefix 控制。 |
+| `cache_dir` | `%kernel.cache_dir%/sofinder` | 縮圖及其他可重新產生的快取資料。 |
+| `metadata_file` | `%kernel.project_dir%/var/sofinder/metadata.json` | 預設的收藏、標籤及最近項目 Metadata Store。 |
+| `quarantine_dir` | `%kernel.cache_dir%/sofinder/quarantine` | 私有上傳檢查區。 |
+| `chunk_dir` | `%kernel.cache_dir%/sofinder/chunks` | 進行中的分塊上傳。 |
+| `usage_dir` | `%kernel.project_dir%/var/sofinder/usage` | 持久化資源使用量計數器。 |
+| `chunk_size` | `5242880` | 分塊大小（byte）；允許範圍為 256 KiB–16 MiB。 |
+| `max_upload_chunks` | `200` | 單次上傳的分塊上限；允許範圍為 1–1000。 |
+
+這些工作目錄必須允許 PHP 寫入，而且不可經由 Web 直接存取。
+
+## 回收站
+
+| 選項 | 預設值 |
+| --- | ---: |
+| `trash_dir` | `%kernel.project_dir%/var/sofinder/trash` |
+| `trash_retention_days` | `30` |
+| `trash_max_items` | `1000` |
+| `trash_max_bytes` | `1073741824` |
+
+本機儲存可使用回收站。對 SoFinder 而言，物件儲存刪除是永久操作；需要復原能力時應啟用供應商版本控制。
+
+## UI
+
+```yaml
+so_finder:
+  ui:
+    mode: auto
+    header: false
+    logo: false
+    search: true
+    language_switcher: true
+    view_switcher: true
+    folder_tree: false
+    scale: standard
+```
+
+`mode` 可設為 `auto`、`manager` 或 `picker`。`scale` 可設為 `compact`、`standard`、`large` 或 `xlarge`。瀏覽器偏好可改變顯示方式，但永遠不會授予伺服器能力。
+
+## 主題
+
+```yaml
+so_finder:
+  theme:
+    accent: '#276ef1'
+    background: '#f4f6f9'
+    panel: '#ffffff'
+    text: '#1c2735'
+    muted: '#667282'
+    danger: '#c13a43'
+    radius: '10px'
+```
+
+色彩只接受三位或六位十六進位值；圓角接受 `0px` 至 `32px`。
+
+## 維護
+
+```yaml
+so_finder:
+  maintenance:
+    mode: inline
+    min_interval_seconds: 300
+    max_items_per_run: 50
+```
+
+模式包括 `inline`、`messenger`、`external` 及 `disabled`。改變預設值前請閱讀[維護模式](/zh-TW/maintenance)。
+
+## 請求與並行限制
+
+`limits` 群組包括 `normal`、`upload`、`image`、`thumbnail`、`archive` 及 `transfer`。每個群組都接受：
+
+| 鍵 | 意義 |
+| --- | --- |
+| `max_requests` | 設定時間區間內允許的請求數；`0` 表示停用此計數。 |
+| `interval` | 滑動時間區間，單位為秒。 |
+| `max_concurrent` | 允許的同時操作數；`0` 表示停用此計數。 |
+
+上傳、圖片異動及壓縮檔的預設限制刻意比瀏覽與縮圖更嚴格。
+
+## 圖片處理
+
+`image_processing.driver` 可設為 `auto`、`gd` 或 `imagick`。全域界線涵蓋尺寸、像素、Frame、Memory、Map、Disk、Thread 及 Timeout；個別資源可設定更嚴格的圖片寬度、高度及像素限制。Runtime Codec 需求請參考[圖片格式](/zh-TW/image-formats)。
+
+Preset 是具名稱及界線的輸出尺寸：
+
+```yaml
+so_finder:
+  image_presets:
+    content: { width: 1200, height: 1200, quality: 88 }
+    thumbnail: { width: 400, height: 400, quality: 82 }
+```
+
+## 資源
+
+至少必須定義一個具名稱的資源。
+
+| 鍵 | 預設值 | 說明 |
+| --- | --- | --- |
+| `adapter` | `local` | Adapter Factory 名稱，例如 `local` 或選用的 `s3`。 |
+| `root` | 必填 | 本機路徑或 Object Key 的安全邊界。 |
+| `public_url` | 空字串 | 只供公開 Delivery 使用的 Base URL。 |
+| `delivery_mode` | `public` | `public` 或經驗證的 `proxy`。 |
+| `allowed_extensions` | 空清單 | 空清單表示不使用 Allowlist；Denylist 仍然生效。 |
+| `denied_extensions` | 可執行／主動內容格式 | 預設包括 PHP、Phar、CGI、Shell、HTML 及 JavaScript。 |
+| `allowed_mime_types` | 空清單 | 上傳時檢查的選用 MIME Allowlist。 |
+| `max_size` | 20 MiB | 檔案大小上限。 |
+| `read_only` | `false` | 啟用時禁止異動。 |
+| `quota` | `0` | Byte；零表示無上限。 |
+| `roles` | 空清單 | 必要 Symfony Role；空清單維持已登入使用者行為。 |
+| `operation_roles` | 空清單 | 覆寫特定操作所需的 Role。 |
+| `path_acl` | 空清單 | 資源相對路徑下可繼承的 Allow 或 Deny 規則。 |
+
+資源也支援 Unicode 檔名／資料夾名稱長度、資料夾深度、批次大小、遞迴操作、壓縮檔項目／Byte，以及圖片尺寸／像素限制。[Symfony 整合指南](/zh-TW/symfony)提供包含 ACL、宿主路由及顯示選項的完整範例。
+
+## 檢查有效設定
+
+使用 Symfony 標準設定工具：
+
+```bash
+bin/console config:dump-reference so_finder
+bin/console debug:config so_finder
+```
+
+`config:dump-reference` 說明可接受的鍵及預設值；`debug:config` 顯示目前環境編譯後的值。

@@ -5,7 +5,7 @@ description: Supported raster formats and the GD or Imagick runtime capabilities
 
 # Image format support
 
-> Traditional Chinese: [Image format support](/zh-TW/image-formats)
+> [繁體中文](/zh-TW/image-formats) · [简体中文](/zh-CN/image-formats)
 
 SoFinder 1.0 only treats formats that can be embedded directly in supported
 web browsers as images. Image content is fully decoded before publication.

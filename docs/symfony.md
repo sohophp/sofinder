@@ -5,7 +5,7 @@ description: Complete SoFinder Symfony Bundle configuration for resources, ACLs,
 
 # Symfony integration
 
-> Traditional Chinese: [Symfony integration](/zh-TW/symfony)
+> [繁體中文](/zh-TW/symfony) · [简体中文](/zh-CN/symfony)
 
 Register the bundle in the application kernel:
 

@@ -39,8 +39,8 @@ features:
 composer require sohophp/sofinder:^0.1@beta
 ```
 
-接著註冊 Bundle、匯入路由並建立至少一個儲存資源。請從[安裝與快速開始](/zh-TW/getting-started)開始，完整選項可參考[英文設定參考](/configuration)。
+接著註冊 Bundle、匯入路由並建立至少一個儲存資源。請從[安裝與快速開始](/zh-TW/getting-started)開始，完整選項可參考[設定參考](/zh-TW/configuration)。
 
 ::: warning Beta 版本
-SoFinder 目前是公開 Beta。請明確指定 Beta 版本條件，升級前閱讀[英文更新紀錄](/changelog)及[升級指南](/upgrading)。
+SoFinder 目前是公開 Beta。請明確指定 Beta 版本條件，升級前閱讀[更新紀錄](/zh-TW/changelog)及[升級指南](/zh-TW/upgrading)。
 :::

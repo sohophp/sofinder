@@ -5,7 +5,7 @@ description: Configure bounded inline, Symfony Messenger, external or disabled S
 
 # Maintenance modes
 
-> Traditional Chinese: [Maintenance modes](/zh-TW/maintenance)
+> [繁體中文](/zh-TW/maintenance) · [简体中文](/zh-CN/maintenance)
 
 SoFinder defaults to bounded `inline` maintenance and therefore does not
 require cron, systemd or a long-running PHP process. Recycle-bin item and byte

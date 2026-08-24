@@ -1,29 +1,43 @@
 ---
 title: 安裝與快速開始
-description: 在 Symfony 6.4 或 7.4 安裝 SoFinder 並設定安全的本機檔案資源。
+description: 在 Symfony 6.4 或 7.4 安裝 SoFinder，並設定安全的本機檔案資源。
 ---
 
 # 安裝與快速開始
+
+本指南會建立一個位於 `/sofinder/browser`、需要登入驗證的檔案瀏覽器，並使用網站公開根目錄以外的本機目錄作為儲存空間。
 
 ## 系統需求
 
 - PHP 8.2–8.5
 - Symfony 6.4 或 7.4
-- `ext-fileinfo`、`ext-json`、`ext-mbstring`
-- 涵蓋 SoFinder 路徑的 Symfony 登入與防火牆
-- 圖片功能可選用 GD 或 Imagick；ZIP 下載需要 `ext-zip`
+- `ext-fileinfo`、`ext-json` 與 `ext-mbstring`
+- 可驗證 SoFinder 使用者的 Symfony Security firewall
+- 選用 GD 或 Imagick，提供縮圖與圖片編輯功能
+- 選用 `ext-zip`，提供 ZIP 下載功能
 
-## 安裝套件
+## 1. 安裝套件
 
 ```bash
 composer require sohophp/sofinder:^0.1@beta
 ```
 
-在 `config/bundles.php` 註冊 Bundle：
+Beta 期間請明確保留 beta 版本限制；變更版本前先閱讀[升級指南](/zh-TW/upgrading)。
+
+## 2. 註冊 Bundle
+
+若應用程式未自動註冊，請將 Bundle 加入 `config/bundles.php`：
 
 ```php
-SohoPHP\SoFinder\SoFinderBundle::class => ['all' => true],
+<?php
+
+return [
+    // ...
+    SohoPHP\SoFinder\SoFinderBundle::class => ['all' => true],
+];
 ```
+
+## 3. 匯入路由
 
 建立 `config/routes/so_finder.yaml`：
 
@@ -32,6 +46,10 @@ sofinder:
   resource: '@SoFinderBundle/Resources/config/routes.yaml'
   prefix: /sofinder
 ```
+
+檔案瀏覽器現在位於 `/sofinder/browser`；JSON、上傳、內容與資產路由使用相同前綴。
+
+## 4. 設定私有本機資源
 
 建立 `config/packages/so_finder.yaml`：
 
@@ -48,9 +66,28 @@ so_finder:
       roles: [ROLE_USER]
 ```
 
-`proxy` 模式會先驗證使用者及路徑權限，再串流檔案。私有資源根目錄不可放在 `public/` 下。
+建立目錄，並讓 PHP 執行使用者擁有寫入權限：
 
-## 驗證安裝
+```bash
+mkdir -p var/sofinder/documents
+```
+
+私有資源不可放在 `public/` 下。使用 `delivery_mode: proxy` 時，SoFinder 會先驗證使用者及其存取權限，再串流檔案。
+
+## 5. 保護路由
+
+SoFinder 預設要求通過完整驗證的 Symfony 使用者。宿主應用程式必須確保路由前綴受適當的 firewall 與存取規則保護，例如：
+
+```yaml
+# config/packages/security.yaml
+security:
+  access_control:
+    - { path: '^/sofinder', roles: ROLE_USER }
+```
+
+宿主應用程式仍負責登入流程與使用者 provider。
+
+## 6. 驗證安裝
 
 ```bash
 bin/console cache:warmup
@@ -58,4 +95,12 @@ bin/console sofinder:security:audit
 bin/console sofinder:image:capabilities
 ```
 
-以已登入使用者開啟 `/sofinder/browser`，測試建立資料夾、上傳、下載及移至回收站。正式環境部署前請繼續閱讀[安全部署](/zh-TW/security)。
+以已登入使用者開啟 `/sofinder/browser`，確認可以建立資料夾、上傳允許的檔案、下載檔案及移至回收站。
+
+## 下一步
+
+- 查看[設定參考](/zh-TW/configuration)的所有選項。
+- 選擇正確的[公開或代理傳遞模式](/zh-TW/symfony#宿主應用程式入口路由)。
+- 透過獨立套件加入 [S3 相容儲存](/zh-TW/s3)，不讓 AWS 相依套件進入核心。
+- 設定[維護模式](/zh-TW/maintenance)與正式環境的[安全控制](/zh-TW/security)。
+- 使用可執行的 [`examples/symfony`](https://github.com/sohophp/sofinder/tree/main/examples/symfony) 應用程式，驗證 Symfony 6.4 與 7.4 整合。

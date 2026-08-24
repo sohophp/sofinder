@@ -1,6 +1,6 @@
 # SoFinder
 
-英文原文：[README.md](README.md)
+其他語言：[English](README.md) · [简体中文](README.zh-CN.md)
 
 SoFinder 是原創、採 MIT 授權的網頁檔案管理器，支援 PHP 8.2 至 8.5，包含與框架無關的核心、Symfony 6.4／7.4 Bundle，以及 React 使用者介面。
 
