@@ -25,7 +25,7 @@ const messages = {
     maximum: "maximum", fileName: "file name", folderDepth: "folder levels", configuredLimits: "Configured limits", fileNameTooLong: "The file name exceeds the character limit:", folderNameTooLong: "The folder name exceeds the character limit:", folderDepthReached: "The configured maximum folder depth has been reached.",
     confirm: "Confirm", save: "Save", saving: "Saving…", overwrite: "Overwrite", trash: "Recycle bin", trashEmpty: "The recycle bin is empty", restore: "Restore", permanentDelete: "Delete permanently", expires: "Expires", restoreConflict: "The original location already contains an entry", restoreOverwrite: "Replace existing", restoreAutoRename: "Restore with new name", trashRetention: "The item will move to the private recycle bin and is retained for 30 days.", trashUsage: "Recycle bin usage", trashAutoPurged: "Recycle bin was full; oldest items automatically removed:", items: "items",
     tagInput: "Add a tag", tagInputHint: "Press Enter or comma to add; Backspace removes the last tag.", tagMaximum: "Up to 10 tags, 30 characters each",
-    ratio: "Ratio", freeRatio: "Free", originalRatio: "Original", zoom: "Zoom", undo: "Undo", redo: "Redo", reset: "Reset", compare: "Hold to compare", saveMode: "Save mode", saveCopy: "Save as copy", imageCreated: "Image created", panHint: "Drag inside to move; drag a corner to resize; Alt-drag pans the image; arrow keys nudge one pixel.", open: "Open", preview: "Preview", previewUnavailable: "A visual preview is not available for this file type.",
+    ratio: "Ratio", freeRatio: "Free", originalRatio: "Original", zoom: "Zoom", undo: "Undo", redo: "Redo", reset: "Reset", compare: "Hold to compare", saveMode: "Save mode", saveCopy: "Save as copy", imageCreated: "Image created", panHint: "Drag outside the selection to draw a new crop; drag its corners or edges to resize it; arrow keys nudge one pixel.", open: "Open", preview: "Preview", previewUnavailable: "A visual preview is not available for this file type.",
   },
   "zh-cn": {
     files: "文件", images: "图片", newFolder: "新建文件夹", upload: "上传", refresh: "刷新",
@@ -53,7 +53,7 @@ const messages = {
     maximum: "最多", fileName: "文件名", folderDepth: "文件夹层数", configuredLimits: "当前限制", fileNameTooLong: "文件名超过字数限制：", folderNameTooLong: "文件夹名超过字数限制：", folderDepthReached: "已经达到配置的最大文件夹层数。",
     confirm: "确认", save: "保存", saving: "保存中…", overwrite: "覆盖原图", trash: "回收站", trashEmpty: "回收站为空", restore: "恢复", permanentDelete: "永久删除", expires: "到期时间", restoreConflict: "原位置已经存在同名项目", restoreOverwrite: "覆盖现有项目", restoreAutoRename: "自动改名恢复", trashRetention: "项目会移入私有回收站，并保留 30 天。", trashUsage: "回收站占用", trashAutoPurged: "回收站已满，已自动清理最旧项目：", items: "项",
     tagInput: "添加标签", tagInputHint: "按回车或逗号添加；空输入时按退格删除最后一个标签。", tagMaximum: "最多 10 个标签，每个 30 个字符",
-    ratio: "比例", freeRatio: "自由比例", originalRatio: "原图比例", zoom: "缩放", undo: "撤销", redo: "重做", reset: "重置", compare: "按住前后对比", saveMode: "保存方式", saveCopy: "另存副本", imageCreated: "已生成图片", panHint: "拖动选区内部可移动，按住四角可缩小或放大；Alt 拖动平移图片，方向键每次微调一个像素。", open: "打开", preview: "预览", previewUnavailable: "此文件类型暂不支持可视化预览。",
+    ratio: "比例", freeRatio: "自由比例", originalRatio: "原图比例", zoom: "缩放", undo: "撤销", redo: "重做", reset: "重置", compare: "按住前后对比", saveMode: "保存方式", saveCopy: "另存副本", imageCreated: "已生成图片", panHint: "在选区外拖动可重新框选；拖动四角或边线可调整大小，方向键每次微调一个像素。", open: "打开", preview: "预览", previewUnavailable: "此文件类型暂不支持可视化预览。",
   },
 } as const;
 
@@ -84,7 +84,7 @@ const traditionalChinese: Record<MessageKey, string> = {
   maximum: "最多", fileName: "檔名", folderDepth: "資料夾層數", configuredLimits: "目前限制", fileNameTooLong: "檔名超過字數限制：", folderNameTooLong: "資料夾名稱超過字數限制：", folderDepthReached: "已達到設定的最大資料夾層數。",
   confirm: "確認", save: "儲存", saving: "儲存中…", overwrite: "覆寫原圖", trash: "資源回收筒", trashEmpty: "資源回收筒是空的", restore: "還原", permanentDelete: "永久刪除", expires: "到期時間", restoreConflict: "原位置已有同名項目", restoreOverwrite: "覆寫現有項目", restoreAutoRename: "自動改名還原", trashRetention: "項目會移入私有資源回收筒，並保留 30 天。", trashUsage: "資源回收筒用量", trashAutoPurged: "資源回收筒已滿，已自動清除最舊項目：", items: "個項目",
   tagInput: "新增標籤", tagInputHint: "按 Enter 或逗號新增；輸入為空時按 Backspace 移除最後一個標籤。", tagMaximum: "最多 10 個標籤，每個 30 個字元",
-  ratio: "比例", freeRatio: "自由比例", originalRatio: "原圖比例", zoom: "縮放", undo: "復原", redo: "重做", reset: "重設", compare: "按住以比較前後差異", saveMode: "儲存方式", saveCopy: "另存副本", imageCreated: "已產生圖片", panHint: "拖曳選取範圍內部可移動，按住四角可縮小或放大；按住 Alt 拖曳可平移圖片，方向鍵每次微調一個像素。", open: "開啟", preview: "預覽", previewUnavailable: "此檔案類型暫不支援視覺預覽。",
+  ratio: "比例", freeRatio: "自由比例", originalRatio: "原圖比例", zoom: "縮放", undo: "復原", redo: "重做", reset: "重設", compare: "按住以比較前後差異", saveMode: "儲存方式", saveCopy: "另存副本", imageCreated: "已產生圖片", panHint: "在選取範圍外拖曳可重新框選；拖曳四角或邊線可調整大小，方向鍵每次微調一個像素。", open: "開啟", preview: "預覽", previewUnavailable: "此檔案類型暫不支援視覺預覽。",
 };
 
 const localizedMessages = { ...messages, "zh-tw": traditionalChinese } as const;

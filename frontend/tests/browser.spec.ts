@@ -48,8 +48,8 @@ test.beforeEach(async ({ page }) => {
       else await route.fulfill({ json: { success: true, data: { entry: { path: "guide (1).txt", name: "guide (1).txt", directory: false, size: 12, modifiedAt: 3, mimeType: "text/plain", url: "/uploads/editor/files/guide%20(1).txt", capabilities: {} } } } });
       return;
     }
-    if (url.pathname === "/uploads/editor/files/photo.png") {
-      await route.fulfill({ contentType: "image/png", body: Buffer.from("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII=", "base64") });
+    if (url.pathname === "/sofinder/api/content") {
+      await route.fulfill({ contentType: "image/svg+xml", body: '<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="400"><rect width="1200" height="400" fill="#dce8f8"/></svg>' });
       return;
     }
     if (url.pathname === "/sofinder/api/images/thumbnail") {
@@ -110,38 +110,61 @@ test("keeps image thumbnails inside list rows", async ({ page }) => {
 test("keeps crop corner and side handles reachable for wide images", async ({ page }) => {
   await page.locator(".sf-entry", { hasText: "photo.png" }).click();
   await page.getByRole("button", { name: "裁剪" }).click();
-  const overlay = page.locator(".sf-crop-overlay");
-  await expect(overlay).toBeVisible();
+  const cropper = page.locator(".cropper-container");
+  await expect(cropper).toBeVisible();
   for (const [handle, cursor] of [
     ["nw", "nwse-resize"], ["ne", "nesw-resize"],
     ["se", "nwse-resize"], ["sw", "nesw-resize"],
     ["w", "ew-resize"], ["e", "ew-resize"],
   ] as const) {
-    await expect(page.locator(`[data-crop-handle="${handle}"]`)).toHaveCSS("cursor", cursor);
+    await expect(page.locator(`.cropper-point.point-${handle}`)).toHaveCSS("cursor", cursor);
   }
 
   const width = page.getByRole("spinbutton", { name: "宽度" });
   const height = page.getByRole("spinbutton", { name: "高度" });
-  const northWest = await page.locator('[data-crop-handle="nw"]').boundingBox();
+  const initialWidth = await width.inputValue();
+  const initialHeight = await height.inputValue();
+  const northWest = await page.locator(".cropper-point.point-nw").boundingBox();
   expect(northWest).not.toBeNull();
   await page.mouse.move(northWest!.x + northWest!.width / 2, northWest!.y + northWest!.height / 2);
   await page.mouse.down();
   await page.mouse.move(northWest!.x + northWest!.width / 2 + 40, northWest!.y + northWest!.height / 2 + 25);
   await page.mouse.up();
-  await expect(width).not.toHaveValue("1200");
-  await expect(height).not.toHaveValue("400");
+  await expect(width).not.toHaveValue(initialWidth);
+  await expect(height).not.toHaveValue(initialHeight);
 
   await page.getByRole("button", { name: "重置" }).click();
-  await expect(width).toHaveValue("1200");
-  await expect(height).toHaveValue("400");
-  const east = await page.locator('[data-crop-handle="e"]').boundingBox();
+  await expect(width).toHaveValue(initialWidth);
+  await expect(height).toHaveValue(initialHeight);
+  const east = await page.locator(".cropper-point.point-e").boundingBox();
   expect(east).not.toBeNull();
   await page.mouse.move(east!.x + east!.width / 2, east!.y + east!.height / 2);
   await page.mouse.down();
   await page.mouse.move(east!.x + east!.width / 2 - 80, east!.y + east!.height / 2);
   await page.mouse.up();
-  await expect(width).not.toHaveValue("1200");
-  await expect(height).toHaveValue("400");
+  await expect(width).not.toHaveValue(initialWidth);
+  await expect(height).toHaveValue(initialHeight);
+
+  const currentBox = await page.locator(".cropper-crop-box").boundingBox();
+  const containerBox = await cropper.boundingBox();
+  expect(currentBox).not.toBeNull();
+  expect(containerBox).not.toBeNull();
+  const startX = currentBox!.x + currentBox!.width + 12;
+  const startY = currentBox!.y + 70;
+  const endX = Math.min(containerBox!.x + containerBox!.width - 15, startX + 45);
+  const endY = startY + 100;
+  await page.mouse.move(startX, startY);
+  await page.mouse.down();
+  await page.mouse.move(startX + 1, startY + 1);
+  await page.mouse.move(endX, endY);
+  await page.mouse.up();
+  await page.waitForTimeout(50);
+  const redrawn = await page.locator(".cropper-crop-box").boundingBox();
+  expect(redrawn).not.toBeNull();
+  expect(Math.abs(redrawn!.x - startX)).toBeLessThanOrEqual(2);
+  expect(Math.abs(redrawn!.y - startY)).toBeLessThanOrEqual(2);
+  expect(Math.abs(redrawn!.x + redrawn!.width - endX)).toBeLessThanOrEqual(10);
+  expect(Math.abs(redrawn!.y + redrawn!.height - endY)).toBeLessThanOrEqual(10);
 });
 
 test("navigates cursor pages with unknown totals", async ({ page }) => {

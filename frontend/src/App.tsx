@@ -777,7 +777,7 @@ export default function App({ config }: { config: SoFinderConfig }) {
     {cropOpen && selected && imageInfo && <ImageEditor
       entry={selected}
       info={imageInfo}
-      imageUrl={api.thumbnailUrl(resource, selected, 512, 512)}
+      imageUrl={api.contentUrl(resource, selected.path)}
       labels={{ crop: t("crop"), close: t("close"), cancel: t("cancel"), save: t("save"), saving: t("saving"), ratio: t("ratio"), free: t("freeRatio"), original: t("originalRatio"), zoom: t("zoom"), undo: t("undo"), redo: t("redo"), reset: t("reset"), compare: t("compare"), x: "X", y: "Y", width: t("width"), height: t("height"), saveMode: t("saveMode"), saveCopy: t("saveCopy"), overwrite: t("overwrite"), fileName: t("fileName"), overwriteWarning: t("confirmImageOverwrite"), panHint: t("panHint") }}
       onClose={() => setCropOpen(false)}
       onSave={async (actions, save) => {

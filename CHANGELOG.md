@@ -4,7 +4,7 @@
 
 - Keep image thumbnails fully contained within fixed-height list rows.
 - Use the intended 270px details-panel width when no saved preference exists.
-- Render explicit draggable crop handles, with diagonal corner resizing and single-axis side resizing, while keeping every handle inside the canvas.
+- Replace the custom crop overlay with CropperJS 1.6.2 for aligned handles, reliable corner/edge resizing, and smoother selection drawing.
 - Document local frontend and Symfony integration testing without publishing a release.
 
 ## 0.1.0-beta.8 - 2026-08-24
