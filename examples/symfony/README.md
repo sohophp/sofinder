@@ -31,7 +31,8 @@ php85 -S 0.0.0.0:8080 -t public
 
 The example can load S3 configuration from `.env.local`, just like a normal
 Symfony application. Copy the template, enter credentials for a non-production
-bucket, and keep `APP_ENV=s3`:
+bucket, and keep `APP_ENV=s3`. The committed `.env` contains only safe defaults
+required by Symfony Runtime; `.env.local` overrides it and remains ignored:
 
 ```bash
 cd examples/symfony

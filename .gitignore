@@ -7,7 +7,6 @@
 /examples/symfony/var/
 /examples/symfony/public/uploads
 /examples/symfony/config/reference.php
-/examples/symfony/.env
 /examples/symfony/.env.*
 !/examples/symfony/.env.example
 /.phpunit.result.cache
