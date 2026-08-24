@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+## 0.1.0-beta.11 - 2026-08-24
+
+- Keep the live-source Symfony example usable in production mode by defining
+  its local `Files` resource in shared configuration.
+
 ## 0.1.0-beta.10 - 2026-08-24
 
 - Clear stale directory entries when switching to a resource that fails to
