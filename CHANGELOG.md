@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## 0.1.0-beta.10 - 2026-08-24
+
 - Clear stale directory entries when switching to a resource that fails to
   load, and ignore superseded asynchronous list responses.
 - Use configured public/CDN entry URLs for copied links and single-file

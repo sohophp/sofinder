@@ -12,15 +12,11 @@
    audit before announcing the release.
 
 The current beta's exact Composer constraint is
-`sohophp/sofinder:0.1.0-beta.9`. Published tags must never be moved.
-The next planned release from the current `Unreleased` section is
-`v0.1.0-beta.10`; do not change the current-version statement until that tag
-and its GitHub release actually exist.
+`sohophp/sofinder:0.1.0-beta.10`. Published tags must never be moved.
 
 The S3 adapter is maintained in `packages/sofinder-s3` and released as an
-independent repository after the matching core prerelease. The currently
-published adapter is `v0.1.0-beta.1`; the next planned adapter release is
-`v0.1.0-beta.2`:
+independent repository after the matching core prerelease. The current adapter
+release is `v0.1.0-beta.2`:
 
 1. Split the package directory from the exact core release commit with
    `git subtree split --prefix=packages/sofinder-s3 -b release/sofinder-s3-beta.2`.
