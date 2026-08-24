@@ -6,6 +6,7 @@
 /examples/symfony/vendor/
 /examples/symfony/var/
 /examples/symfony/public/uploads
+/examples/symfony/config/reference.php
 /.phpunit.result.cache
 /.phpunit.cache/
 /coverage/
