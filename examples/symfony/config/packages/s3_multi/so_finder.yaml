@@ -1,0 +1,20 @@
+imports:
+  - { resource: '../s3/so_finder.yaml' }
+
+so_finder:
+  resources:
+    S3Images:
+      adapter: s3
+      root: '%env(SOFINDER_PROVIDER_IMAGES_PREFIX)%'
+      public_url: ''
+      delivery_mode: proxy
+      allowed_extensions: [jpg, jpeg, png, gif, webp, svg]
+      roles: [ROLE_USER]
+      options:
+        bucket: '%env(SOFINDER_PROVIDER_BUCKET)%'
+        region: '%env(SOFINDER_PROVIDER_REGION)%'
+        endpoint: '%env(SOFINDER_PROVIDER_ENDPOINT)%'
+        use_path_style_endpoint: '%env(bool:SOFINDER_PROVIDER_USE_PATH_STYLE_ENDPOINT)%'
+        access_key_id: '%env(SOFINDER_PROVIDER_IMAGES_ACCESS_KEY)%'
+        secret_access_key: '%env(SOFINDER_PROVIDER_IMAGES_SECRET_KEY)%'
+        session_token: '%env(SOFINDER_PROVIDER_IMAGES_SESSION_TOKEN)%'

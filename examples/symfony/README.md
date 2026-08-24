@@ -44,14 +44,19 @@ php85 -S 0.0.0.0:8080 -t public
 ```
 
 Open `http://rocky.wsl:8080/sofinder/browser`, sign in with `demo` / `demo`,
-and switch between the local `Files`, local `Images`, and remote `S3Test`
-resources. The `dev` environment exposes only `Files`; the `s3` environment
-exposes all three for integration testing. `Images` uses private proxy delivery,
-so it does not need another public symlink. `SOFINDER_PROVIDER_PREFIX` limits
-every S3 browser operation to that bucket prefix. The same
+and switch between local `Files` / `Images` and remote `S3Files`. The `dev`
+environment exposes only `Files`; the `s3` environment exposes those three for
+integration testing. Local `Images` uses private proxy delivery, so it does not
+need another public symlink. `S3Files` uses `SOFINDER_PROVIDER_PREFIX`. The same
 `SOFINDER_PROVIDER_*` values used by the package smoke test can be copied
 without renaming. Backblaze B2 should use its regional HTTPS endpoint and
 `SOFINDER_PROVIDER_USE_PATH_STYLE_ENDPOINT=0`.
+
+To expose a second S3 prefix, fill the `SOFINDER_PROVIDER_IMAGES_*` variables
+and set `APP_ENV=s3_multi`. This adds `S3Images` while retaining `Files`,
+`Images`, and `S3Files`. A Backblaze application key restricted to
+`component-files` cannot read `component-images`; use a second prefix-restricted
+Images key, or copy a bucket-wide key into both credential sets.
 
 The example's root autoload mappings read SoFinder and S3 PHP classes from the
 current checkout, so PHP and committed `dist/` changes are visible without

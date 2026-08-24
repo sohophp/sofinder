@@ -14,7 +14,7 @@ so_finder:
       delivery_mode: proxy
       allowed_extensions: [jpg, jpeg, png, gif, webp, svg]
       roles: [ROLE_USER]
-    S3Test:
+    S3Files:
       adapter: s3
       root: '%env(SOFINDER_PROVIDER_PREFIX)%'
       public_url: ''
