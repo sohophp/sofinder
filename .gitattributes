@@ -1,0 +1,11 @@
+# Keep Composer release archives focused on runtime code and documentation.
+/.gitattributes export-ignore
+/.github export-ignore
+/.gitignore export-ignore
+/composer.lock export-ignore
+/examples export-ignore
+/frontend export-ignore
+/packages export-ignore
+/phpstan.neon export-ignore
+/phpunit.xml export-ignore
+/tests export-ignore

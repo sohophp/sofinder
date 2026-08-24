@@ -2,38 +2,53 @@ so_finder:
   resources:
     Files:
       adapter: local
-      root: '%kernel.project_dir%/var/storage'
-      public_url: '/uploads'
+      root: "%kernel.project_dir%/var/storage"
+      public_url: "/uploads"
       delivery_mode: public
       allowed_extensions: [txt, jpg, jpeg, png, webp, pdf, zip]
       roles: [ROLE_USER]
     Images:
       adapter: local
-      root: '%kernel.project_dir%/var/images'
-      public_url: ''
+      root: "%kernel.project_dir%/var/images"
+      public_url: ""
       delivery_mode: proxy
       allowed_extensions: [jpg, jpeg, png, gif, webp, svg]
       roles: [ROLE_USER]
     S3Files:
       adapter: s3
-      root: '%env(SOFINDER_PROVIDER_PREFIX)%'
-      public_url: '%env(SOFINDER_PROVIDER_PUBLIC_URL)%'
+      root: "%env(SOFINDER_PROVIDER_PREFIX)%"
+      public_url: "%env(SOFINDER_PROVIDER_PUBLIC_URL)%"
       delivery_mode: proxy
       entry_url:
         route: example.file.output
         absolute: true
         parameters:
-          resource: '{resource}'
-          name: '{name}'
-          path: '{path}'
+          resource: "{resource}"
+          name: "{name}"
+          path: "{path}"
           disposition: inline
       allowed_extensions: [txt, jpg, jpeg, png, gif, webp, svg, pdf, zip]
       roles: [ROLE_USER]
       options:
-        bucket: '%env(SOFINDER_PROVIDER_BUCKET)%'
-        region: '%env(SOFINDER_PROVIDER_REGION)%'
-        endpoint: '%env(SOFINDER_PROVIDER_ENDPOINT)%'
-        use_path_style_endpoint: '%env(bool:SOFINDER_PROVIDER_USE_PATH_STYLE_ENDPOINT)%'
-        access_key_id: '%env(SOFINDER_PROVIDER_ACCESS_KEY)%'
-        secret_access_key: '%env(SOFINDER_PROVIDER_SECRET_KEY)%'
-        session_token: '%env(SOFINDER_PROVIDER_SESSION_TOKEN)%'
+        bucket: "%env(SOFINDER_PROVIDER_BUCKET)%"
+        region: "%env(SOFINDER_PROVIDER_REGION)%"
+        endpoint: "%env(SOFINDER_PROVIDER_ENDPOINT)%"
+        use_path_style_endpoint: "%env(bool:SOFINDER_PROVIDER_USE_PATH_STYLE_ENDPOINT)%"
+        access_key_id: "%env(SOFINDER_PROVIDER_ACCESS_KEY)%"
+        secret_access_key: "%env(SOFINDER_PROVIDER_SECRET_KEY)%"
+        session_token: "%env(SOFINDER_PROVIDER_SESSION_TOKEN)%"
+    S3Files2:
+      adapter: s3
+      root: "%env(SOFINDER_PROVIDER_PREFIX2)%"
+      public_url: "%env(SOFINDER_PROVIDER_PUBLIC_URL2)%"
+      delivery_mode: proxy
+      allowed_extensions: [txt, jpg, jpeg, png, gif, webp, svg, pdf, zip]
+      roles: [ROLE_USER]
+      options:
+        bucket: "%env(SOFINDER_PROVIDER_BUCKET2)%"
+        region: "%env(SOFINDER_PROVIDER_REGION2)%"
+        endpoint: "%env(SOFINDER_PROVIDER_ENDPOINT2)%"
+        use_path_style_endpoint: "%env(bool:SOFINDER_PROVIDER_USE_PATH_STYLE_ENDPOINT2)%"
+        access_key_id: "%env(SOFINDER_PROVIDER_ACCESS_KEY2)%"
+        secret_access_key: "%env(SOFINDER_PROVIDER_SECRET_KEY2)%"
+        session_token: "%env(SOFINDER_PROVIDER_SESSION_TOKEN2)%"
