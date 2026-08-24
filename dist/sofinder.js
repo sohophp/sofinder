@@ -9456,10 +9456,15 @@ function se({ entry: e, info: t, imageUrl: n, labels: r, onClose: i, onSave: a }
 	let fe = () => g === "original" ? t.width / t.height : g === "1:1" ? 1 : g === "4:3" ? 4 / 3 : g === "16:9" ? 16 / 9 : 0, pe = (e) => D(e, t), me = (e) => {
 		p((e) => [...e.slice(-39), u]), h([]), d(pe(e));
 	}, he = (e) => {
-		let t = e.currentTarget.getBoundingClientRect(), { scale: n, left: r, top: i } = A();
+		let t = e.currentTarget.getBoundingClientRect(), n = o.current;
+		if (!n) return {
+			x: 0,
+			y: 0
+		};
+		let { scale: r, left: i, top: a } = A();
 		return {
-			x: (e.clientX - t.left) * e.currentTarget.width / t.width / n - r / n,
-			y: (e.clientY - t.top) * e.currentTarget.height / t.height / n - i / n
+			x: (e.clientX - t.left) * n.width / t.width / r - i / r,
+			y: (e.clientY - t.top) * n.height / t.height / r - a / r
 		};
 	}, ge = (e, t = "mouse") => {
 		let { scale: n } = A(), r = (t === "touch" ? 24 : 18) / n, i = (t === "touch" ? 18 : 10) / n, a = [
@@ -9489,7 +9494,7 @@ function se({ entry: e, info: t, imageUrl: n, labels: r, onClose: i, onSave: a }
 		return o && Math.abs(e.y - u.y) <= i ? "n" : s && Math.abs(e.x - u.x - u.width) <= i ? "e" : o && Math.abs(e.y - u.y - u.height) <= i ? "s" : s && Math.abs(e.x - u.x) <= i ? "w" : null;
 	}, _e = (e) => {
 		e.currentTarget.setPointerCapture(e.pointerId);
-		let t = he(e), n = ge(t, e.pointerType), r = t.x >= u.x && t.x <= u.x + u.width && t.y >= u.y && t.y <= u.y + u.height;
+		let t = he(e), n = e.target.closest("[data-crop-handle]")?.dataset.cropHandle || ge(t, e.pointerType), r = t.x >= u.x && t.x <= u.x + u.width && t.y >= u.y && t.y <= u.y + u.height;
 		c.current = {
 			mode: e.altKey || e.button === 1 ? "pan" : n ? "resize" : r ? "move" : "select",
 			handle: n || void 0,
@@ -9552,6 +9557,17 @@ function se({ entry: e, info: t, imageUrl: n, labels: r, onClose: i, onSave: a }
 		} finally {
 			k(!1);
 		}
+	}, Se = (e) => {
+		let t = o.current;
+		if (!t) return {
+			left: "0%",
+			top: "0%"
+		};
+		let { scale: n, left: r, top: i } = A(), a = e.includes("w"), s = e.includes("e"), c = e.includes("n"), l = e.includes("s"), d = r + (a ? u.x : s ? u.x + u.width : u.x + u.width / 2) * n, f = i + (c ? u.y : l ? u.y + u.height : u.y + u.height / 2) * n;
+		return {
+			left: `${d / t.width * 100}%`,
+			top: `${f / t.height * 100}%`
+		};
 	};
 	return /* @__PURE__ */ (0, S.jsxs)(ee, {
 		title: `${r.crop}: ${e.name}`,
@@ -9654,12 +9670,14 @@ function se({ entry: e, info: t, imageUrl: n, labels: r, onClose: i, onSave: a }
 					})
 				]
 			}),
-			/* @__PURE__ */ (0, S.jsx)("div", {
+			/* @__PURE__ */ (0, S.jsxs)("div", {
 				className: "sf-editor-canvas",
-				children: /* @__PURE__ */ (0, S.jsx)("canvas", {
+				children: [/* @__PURE__ */ (0, S.jsx)("canvas", {
 					ref: o,
 					width: "900",
-					height: "560",
+					height: "560"
+				}), /* @__PURE__ */ (0, S.jsx)("div", {
+					className: "sf-crop-overlay",
 					style: { cursor: ue },
 					onPointerDown: _e,
 					onPointerMove: ve,
@@ -9680,8 +9698,23 @@ function se({ entry: e, info: t, imageUrl: n, labels: r, onClose: i, onSave: a }
 							x: u.x + n[0],
 							y: u.y + n[1]
 						})), (e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "z" && (e.preventDefault(), e.shiftKey ? be() : ye());
-					}
-				})
+					},
+					children: [
+						"nw",
+						"n",
+						"ne",
+						"e",
+						"se",
+						"s",
+						"sw",
+						"w"
+					].map((e) => /* @__PURE__ */ (0, S.jsx)("span", {
+						"aria-hidden": "true",
+						className: `sf-crop-handle sf-crop-handle-${e}`,
+						"data-crop-handle": e,
+						style: Se(e)
+					}, e))
+				})]
 			}),
 			/* @__PURE__ */ (0, S.jsxs)("div", {
 				className: "sf-editor-fields",

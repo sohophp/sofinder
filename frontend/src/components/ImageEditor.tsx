@@ -70,10 +70,12 @@ export function ImageEditor({ entry, info, imageUrl, labels, onClose, onSave }: 
   const ratioValue = () => ratio === "original" ? info.width / info.height : ratio === "1:1" ? 1 : ratio === "4:3" ? 4 / 3 : ratio === "16:9" ? 16 / 9 : 0;
   const clamp = (value: Rect): Rect => clampCropRect(value, info);
   const commit = (next: Rect) => { setHistory(current => [...current.slice(-39), rect]); setFuture([]); setRect(clamp(next)); };
-  const point = (event: React.PointerEvent<HTMLCanvasElement>) => {
+  const point = (event: React.PointerEvent<HTMLElement>) => {
     const bounds = event.currentTarget.getBoundingClientRect();
+    const target = canvas.current;
+    if (!target) return { x: 0, y: 0 };
     const { scale, left, top } = geometry();
-    return { x: (event.clientX - bounds.left) * event.currentTarget.width / bounds.width / scale - left / scale, y: (event.clientY - bounds.top) * event.currentTarget.height / bounds.height / scale - top / scale };
+    return { x: (event.clientX - bounds.left) * target.width / bounds.width / scale - left / scale, y: (event.clientY - bounds.top) * target.height / bounds.height / scale - top / scale };
   };
   const hitHandle = (current: { x: number; y: number }, pointerType = "mouse"): ResizeHandle | null => {
     const { scale } = geometry();
@@ -93,16 +95,18 @@ export function ImageEditor({ entry, info, imageUrl, labels, onClose, onSave }: 
     if (withinY && Math.abs(current.x - rect.x) <= edgeTolerance) return "w";
     return null;
   };
-  const pointerDown = (event: React.PointerEvent<HTMLCanvasElement>) => {
+  const pointerDown = (event: React.PointerEvent<HTMLDivElement>) => {
     event.currentTarget.setPointerCapture(event.pointerId);
     const current = point(event);
-    const handle = hitHandle(current, event.pointerType);
+    const handleElement = (event.target as HTMLElement).closest<HTMLElement>("[data-crop-handle]");
+    const explicitHandle = handleElement?.dataset.cropHandle as ResizeHandle | undefined;
+    const handle = explicitHandle || hitHandle(current, event.pointerType);
     const inside = current.x >= rect.x && current.x <= rect.x + rect.width && current.y >= rect.y && current.y <= rect.y + rect.height;
     drag.current = { mode: event.altKey || event.button === 1 ? "pan" : handle ? "resize" : inside ? "move" : "select", handle: handle || undefined, startX: current.x, startY: current.y, original: rect, panX: pan.x, panY: pan.y };
     setCursor(event.altKey || event.button === 1 ? "grabbing" : cropCursorFor(handle, inside));
     setHistory(values => [...values.slice(-39), rect]); setFuture([]);
   };
-  const pointerMove = (event: React.PointerEvent<HTMLCanvasElement>) => {
+  const pointerMove = (event: React.PointerEvent<HTMLDivElement>) => {
     if (!drag.current) {
       const current = point(event);
       const inside = current.x >= rect.x && current.x <= rect.x + rect.width && current.y >= rect.y && current.y <= rect.y + rect.height;
@@ -124,6 +128,16 @@ export function ImageEditor({ entry, info, imageUrl, labels, onClose, onSave }: 
   const undo = () => { const previous = history.at(-1); if (!previous) return; setHistory(history.slice(0, -1)); setFuture([rect, ...future]); setRect(previous); };
   const redo = () => { const next = future[0]; if (!next) return; setFuture(future.slice(1)); setHistory([...history, rect]); setRect(next); };
   const save = async () => { setSaving(true); try { await onSave([{ type: "crop", ...rect }], { mode: saveMode, ...(saveMode === "copy" ? { name } : {}) }); } finally { setSaving(false); } };
+  const cropHandlePosition = (handle: ResizeHandle) => {
+    const target = canvas.current;
+    if (!target) return { left: "0%", top: "0%" };
+    const { scale, left, top } = geometry();
+    const west = handle.includes("w"), east = handle.includes("e");
+    const north = handle.includes("n"), south = handle.includes("s");
+    const x = left + (west ? rect.x : east ? rect.x + rect.width : rect.x + rect.width / 2) * scale;
+    const y = top + (north ? rect.y : south ? rect.y + rect.height : rect.y + rect.height / 2) * scale;
+    return { left: `${x / target.width * 100}%`, top: `${y / target.height * 100}%` };
+  };
 
   return <Modal title={`${labels.crop}: ${entry.name}`} closeLabel={labels.close} onClose={onClose} className="sf-image-editor" footer={<><span>{rect.width} × {rect.height} px</span><button onClick={onClose}>{labels.cancel}</button><button className="primary" disabled={saving || (saveMode === "copy" && name.trim() === "")} onClick={() => void save()}>{saving ? labels.saving : labels.save}</button></>}>
     <div className="sf-editor-toolbar">
@@ -133,12 +147,12 @@ export function ImageEditor({ entry, info, imageUrl, labels, onClose, onSave }: 
       <button onClick={() => { commit({ x: 0, y: 0, width: info.width, height: info.height }); setZoom(1); setPan({ x: 0, y: 0 }); }}>{labels.reset}</button>
       <button onPointerDown={() => setCompare(true)} onPointerUp={() => setCompare(false)} onPointerLeave={() => setCompare(false)}>{labels.compare}</button>
     </div>
-    <div className="sf-editor-canvas"><canvas ref={canvas} width="900" height="560" style={{ cursor }} onPointerDown={pointerDown} onPointerMove={pointerMove} onPointerLeave={() => { if (!drag.current) setCursor("crosshair"); }} onPointerUp={() => { drag.current = null; setCursor("crosshair"); }} onPointerCancel={() => { drag.current = null; setCursor("crosshair"); }} tabIndex={0} onKeyDown={event => {
+    <div className="sf-editor-canvas"><canvas ref={canvas} width="900" height="560"/><div className="sf-crop-overlay" style={{ cursor }} onPointerDown={pointerDown} onPointerMove={pointerMove} onPointerLeave={() => { if (!drag.current) setCursor("crosshair"); }} onPointerUp={() => { drag.current = null; setCursor("crosshair"); }} onPointerCancel={() => { drag.current = null; setCursor("crosshair"); }} tabIndex={0} onKeyDown={event => {
       const step = event.shiftKey ? 10 : 1;
       const delta = event.key === "ArrowLeft" ? [-step, 0] : event.key === "ArrowRight" ? [step, 0] : event.key === "ArrowUp" ? [0, -step] : event.key === "ArrowDown" ? [0, step] : null;
       if (delta) { event.preventDefault(); commit({ ...rect, x: rect.x + delta[0], y: rect.y + delta[1] }); }
       if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === "z") { event.preventDefault(); event.shiftKey ? redo() : undo(); }
-    }}/></div>
+    }}>{(["nw", "n", "ne", "e", "se", "s", "sw", "w"] as ResizeHandle[]).map(handle => <span aria-hidden="true" className={`sf-crop-handle sf-crop-handle-${handle}`} data-crop-handle={handle} key={handle} style={cropHandlePosition(handle)}/>)}</div></div>
     <div className="sf-editor-fields">
       {(["x", "y", "width", "height"] as const).map(field => <label key={field}>{labels[field] || field}<input type="number" min={field === "width" || field === "height" ? 1 : 0} value={rect[field]} onChange={event => commit({ ...rect, [field]: Number(event.target.value) })}/></label>)}
       <label>{labels.saveMode}<select value={saveMode} onChange={event => setSaveMode(event.target.value as "copy" | "overwrite")}><option value="copy">{labels.saveCopy}</option><option value="overwrite">{labels.overwrite}</option></select></label>

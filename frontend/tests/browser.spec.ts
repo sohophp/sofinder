@@ -110,33 +110,38 @@ test("keeps image thumbnails inside list rows", async ({ page }) => {
 test("keeps crop corner and side handles reachable for wide images", async ({ page }) => {
   await page.locator(".sf-entry", { hasText: "photo.png" }).click();
   await page.getByRole("button", { name: "裁剪" }).click();
-  const canvas = page.locator(".sf-editor-canvas canvas");
-  await expect(canvas).toBeVisible();
-  const box = await canvas.boundingBox();
-  expect(box).not.toBeNull();
-  const canvasPoint = (x: number, y: number) => ({ x: box!.x + x / 900 * box!.width, y: box!.y + y / 560 * box!.height });
-  const left = 20;
-  const right = 880;
-  const top = (560 - 400 * ((900 - 40) / 1200)) / 2;
-  const bottom = 560 - top;
-
-  for (const [x, y, cursor] of [
-    [left, top, "nwse-resize"], [right, top, "nesw-resize"],
-    [right, bottom, "nwse-resize"], [left, bottom, "nesw-resize"],
-    [left, 280, "ew-resize"], [right, 280, "ew-resize"],
+  const overlay = page.locator(".sf-crop-overlay");
+  await expect(overlay).toBeVisible();
+  for (const [handle, cursor] of [
+    ["nw", "nwse-resize"], ["ne", "nesw-resize"],
+    ["se", "nwse-resize"], ["sw", "nesw-resize"],
+    ["w", "ew-resize"], ["e", "ew-resize"],
   ] as const) {
-    await page.mouse.move(canvasPoint(x, y).x, canvasPoint(x, y).y);
-    await expect(canvas).toHaveCSS("cursor", cursor);
+    await expect(page.locator(`[data-crop-handle="${handle}"]`)).toHaveCSS("cursor", cursor);
   }
 
-  const start = canvasPoint(right, 280);
-  const end = canvasPoint(right - 100, 280);
-  await page.mouse.move(start.x, start.y);
+  const width = page.getByRole("spinbutton", { name: "宽度" });
+  const height = page.getByRole("spinbutton", { name: "高度" });
+  const northWest = await page.locator('[data-crop-handle="nw"]').boundingBox();
+  expect(northWest).not.toBeNull();
+  await page.mouse.move(northWest!.x + northWest!.width / 2, northWest!.y + northWest!.height / 2);
   await page.mouse.down();
-  await page.mouse.move(end.x, end.y);
+  await page.mouse.move(northWest!.x + northWest!.width / 2 + 40, northWest!.y + northWest!.height / 2 + 25);
   await page.mouse.up();
-  await expect(page.getByRole("spinbutton", { name: "宽度" })).not.toHaveValue("1200");
-  await expect(page.getByRole("spinbutton", { name: "高度" })).toHaveValue("400");
+  await expect(width).not.toHaveValue("1200");
+  await expect(height).not.toHaveValue("400");
+
+  await page.getByRole("button", { name: "重置" }).click();
+  await expect(width).toHaveValue("1200");
+  await expect(height).toHaveValue("400");
+  const east = await page.locator('[data-crop-handle="e"]').boundingBox();
+  expect(east).not.toBeNull();
+  await page.mouse.move(east!.x + east!.width / 2, east!.y + east!.height / 2);
+  await page.mouse.down();
+  await page.mouse.move(east!.x + east!.width / 2 - 80, east!.y + east!.height / 2);
+  await page.mouse.up();
+  await expect(width).not.toHaveValue("1200");
+  await expect(height).toHaveValue("400");
 });
 
 test("navigates cursor pages with unknown totals", async ({ page }) => {

@@ -23,12 +23,16 @@ describe("crop geometry", () => {
 
   it("resizes both dimensions from a corner and keeps the opposite corner fixed", () => {
     expect(resizeCropRect(original, "nw", { x: 100, y: 50 }, bounds)).toEqual({ x: 100, y: 50, width: 500, height: 400 });
+    expect(resizeCropRect(original, "ne", { x: 750, y: 50 }, bounds)).toEqual({ x: 200, y: 50, width: 550, height: 400 });
     expect(resizeCropRect(original, "se", { x: 750, y: 600 }, bounds)).toEqual({ x: 200, y: 150, width: 550, height: 450 });
+    expect(resizeCropRect(original, "sw", { x: 100, y: 600 }, bounds)).toEqual({ x: 100, y: 150, width: 500, height: 450 });
   });
 
   it("uses edge handles for single-axis resizing", () => {
     expect(resizeCropRect(original, "e", { x: 850, y: 0 }, bounds)).toEqual({ x: 200, y: 150, width: 650, height: 300 });
+    expect(resizeCropRect(original, "w", { x: 100, y: 0 }, bounds)).toEqual({ x: 100, y: 150, width: 500, height: 300 });
     expect(resizeCropRect(original, "n", { x: 0, y: 100 }, bounds)).toEqual({ x: 200, y: 100, width: 400, height: 350 });
+    expect(resizeCropRect(original, "s", { x: 0, y: 600 }, bounds)).toEqual({ x: 200, y: 150, width: 400, height: 450 });
   });
 
   it("keeps a fixed ratio while preserving the opposite corner", () => {
