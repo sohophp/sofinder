@@ -19,6 +19,14 @@ so_finder:
       root: '%env(SOFINDER_PROVIDER_PREFIX)%'
       public_url: '%env(SOFINDER_PROVIDER_PUBLIC_URL)%'
       delivery_mode: proxy
+      entry_url:
+        route: example.file.output
+        absolute: true
+        parameters:
+          resource: '{resource}'
+          name: '{name}'
+          path: '{path}'
+          disposition: inline
       allowed_extensions: [txt, jpg, jpeg, png, gif, webp, svg, pdf, zip]
       roles: [ROLE_USER]
       options:

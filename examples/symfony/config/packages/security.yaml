@@ -13,3 +13,4 @@ security:
       http_basic: ~
   access_control:
     - { path: ^/sofinder, roles: ROLE_USER }
+    - { path: ^/host-files, roles: ROLE_USER }

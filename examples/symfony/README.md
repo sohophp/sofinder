@@ -101,6 +101,35 @@ value as `proxy` when the URL is empty or the bucket is private.
 Additional resources may use any environment variable names referenced by
 their YAML blocks, for example `ARCHIVE_PUBLIC_URL` or `CUSTOMER_CDN_URL`.
 
+### Application-owned file routes
+
+An application can make copied, preview, and download URLs point at one of its
+own routes instead of SoFinder's content API. The `S3Files` example uses the
+included `example.file.output` route:
+
+```yaml
+entry_url:
+  route: example.file.output
+  absolute: true
+  parameters:
+    resource: '{resource}'
+    name: '{name}'
+    path: '{path}'
+    disposition: inline
+```
+
+`HostFileController` validates access through `FileManager`, then streams the
+object with the configured MIME type and disposition. Adding `redirect=1` lets
+the same controller redirect to the adapter's public/CDN URL when one is
+available; private resources continue to stream through the application. The
+route is protected by the example's normal `ROLE_USER` access rule.
+
+Real applications can replace the built-in placeholders with values supplied
+by an `EntryUrlContextProviderInterface` implementation. For example, a host
+provider can look up a database row by the entry's storage key and return its
+`id`, allowing route parameters such as `id: '{id}'` and `name: '{name}'` for a
+route like `/file/download/{id}-{name}`.
+
 The example's root autoload mappings read SoFinder and S3 PHP classes from the
 current checkout, so PHP and committed `dist/` changes are visible without
 publishing or reinstalling either package. After changing the frontend, build

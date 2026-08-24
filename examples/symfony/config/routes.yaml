@@ -1,3 +1,11 @@
 sofinder:
   resource: '@SoFinderBundle/Resources/config/routes.yaml'
   prefix: /sofinder
+
+example.file.output:
+  path: '/host-files/{resource}/{name}'
+  controller: 'App\Controller\HostFileController::output'
+  methods: [GET]
+  requirements:
+    resource: '[A-Za-z][A-Za-z0-9_-]*'
+    name: '[^/]+'
