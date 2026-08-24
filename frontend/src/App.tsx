@@ -41,8 +41,10 @@ const loadScale = (fallback: UiScale): UiScale => {
 
 const columnLimits = { left: { initial: 220, min: 110, max: 330 }, right: { initial: 270, min: 135, max: 405 } } as const;
 const loadColumnWidth = (side: "left" | "right") => {
-  const value = Number(localStorage.getItem(`sofinder.column.${side}`));
   const limits = columnLimits[side];
+  const saved = localStorage.getItem(`sofinder.column.${side}`);
+  if (saved === null || saved.trim() === "") return limits.initial;
+  const value = Number(saved);
   return Number.isFinite(value) ? Math.max(limits.min, Math.min(limits.max, value)) : limits.initial;
 };
 

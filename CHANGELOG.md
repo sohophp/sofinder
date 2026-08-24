@@ -3,6 +3,7 @@
 ## Unreleased
 
 - Keep image thumbnails fully contained within fixed-height list rows.
+- Use the intended 270px details-panel width when no saved preference exists.
 - Document local frontend and Symfony integration testing without publishing a release.
 
 ## 0.1.0-beta.8 - 2026-08-24

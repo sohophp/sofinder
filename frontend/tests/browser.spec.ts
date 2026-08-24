@@ -84,6 +84,7 @@ test("uses a minimal shell and reveals manager actions contextually", async ({ p
   await page.waitForTimeout(350);
   await page.locator(".sf-entry", { hasText: "guide.txt" }).click();
   await expect(page.getByRole("button", { name: "重命名" })).toBeVisible();
+  await expect(page.locator(".sf-details")).toHaveCSS("width", "270px");
   await page.getByRole("button", { name: "更多操作" }).click();
   await expect(page.getByLabel("语言")).toBeVisible();
 });

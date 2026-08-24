@@ -10454,8 +10454,10 @@ var ge = {
 		max: 405
 	}
 }, Se = (e) => {
-	let t = Number(localStorage.getItem(`sofinder.column.${e}`)), n = xe[e];
-	return Number.isFinite(t) ? Math.max(n.min, Math.min(n.max, t)) : n.initial;
+	let t = xe[e], n = localStorage.getItem(`sofinder.column.${e}`);
+	if (n === null || n.trim() === "") return t.initial;
+	let r = Number(n);
+	return Number.isFinite(r) ? Math.max(t.min, Math.min(t.max, r)) : t.initial;
 };
 function Ce({ config: e }) {
 	let t = (0, l.useMemo)(() => new g(e), [e]), [n, r] = (0, l.useState)(() => {
