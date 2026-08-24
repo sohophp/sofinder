@@ -48,6 +48,10 @@ test.beforeEach(async ({ page }) => {
       await route.fulfill({ contentType: "image/png", body: Buffer.from("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII=", "base64") });
       return;
     }
+    if (url.pathname === "/sofinder/api/images/thumbnail") {
+      await route.fulfill({ contentType: "image/png", body: Buffer.from("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII=", "base64") });
+      return;
+    }
     await route.fulfill({ status: 200, contentType: "text/html", body: "<!doctype html><title>SoFinder test</title>" });
   });
   await page.goto("http://sofinder.test/");
@@ -82,6 +86,19 @@ test("uses a minimal shell and reveals manager actions contextually", async ({ p
   await expect(page.getByRole("button", { name: "重命名" })).toBeVisible();
   await page.getByRole("button", { name: "更多操作" }).click();
   await expect(page.getByLabel("语言")).toBeVisible();
+});
+
+test("keeps image thumbnails inside list rows", async ({ page }) => {
+  await page.getByRole("button", { name: "列表" }).click();
+  const entry = page.locator(".sf-entry", { hasText: "photo.png" });
+  const thumbnail = entry.locator(".sf-entry-icon img");
+  await expect(thumbnail).toBeVisible();
+  const boxes = await Promise.all([entry.boundingBox(), thumbnail.boundingBox()]);
+  expect(boxes[0]).not.toBeNull();
+  expect(boxes[1]).not.toBeNull();
+  expect(boxes[1]!.height).toBeLessThanOrEqual(32);
+  expect(boxes[1]!.y).toBeGreaterThanOrEqual(boxes[0]!.y);
+  expect(boxes[1]!.y + boxes[1]!.height).toBeLessThanOrEqual(boxes[0]!.y + boxes[0]!.height);
 });
 
 test("navigates cursor pages with unknown totals", async ({ page }) => {

@@ -1,5 +1,10 @@
 # Changelog
 
+## Unreleased
+
+- Keep image thumbnails fully contained within fixed-height list rows.
+- Document local frontend and Symfony integration testing without publishing a release.
+
 ## 0.1.0-beta.8 - 2026-08-24
 
 - Improve crop-box resizing with diagonal corner handles and directional edge handles.
