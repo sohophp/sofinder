@@ -1,5 +1,19 @@
 so_finder:
   resources:
+    Files:
+      adapter: local
+      root: '%kernel.project_dir%/var/storage'
+      public_url: '/uploads'
+      delivery_mode: public
+      allowed_extensions: [txt, jpg, jpeg, png, webp, pdf, zip]
+      roles: [ROLE_USER]
+    Images:
+      adapter: local
+      root: '%kernel.project_dir%/var/images'
+      public_url: ''
+      delivery_mode: proxy
+      allowed_extensions: [jpg, jpeg, png, gif, webp, svg]
+      roles: [ROLE_USER]
     S3Test:
       adapter: s3
       root: '%env(SOFINDER_PROVIDER_PREFIX)%'

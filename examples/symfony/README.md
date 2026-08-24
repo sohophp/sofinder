@@ -44,12 +44,14 @@ php85 -S 0.0.0.0:8080 -t public
 ```
 
 Open `http://rocky.wsl:8080/sofinder/browser`, sign in with `demo` / `demo`,
-and the `S3Test` resource is used directly. The `dev` environment exposes only
-the local `Files` resource, while the `s3` environment exposes only `S3Test`.
-`SOFINDER_PROVIDER_PREFIX` limits every browser operation to that bucket
-prefix. The same `SOFINDER_PROVIDER_*` values used by the package smoke test
-can be copied without renaming. Backblaze B2 should use its regional HTTPS
-endpoint and `SOFINDER_PROVIDER_USE_PATH_STYLE_ENDPOINT=0`.
+and switch between the local `Files`, local `Images`, and remote `S3Test`
+resources. The `dev` environment exposes only `Files`; the `s3` environment
+exposes all three for integration testing. `Images` uses private proxy delivery,
+so it does not need another public symlink. `SOFINDER_PROVIDER_PREFIX` limits
+every S3 browser operation to that bucket prefix. The same
+`SOFINDER_PROVIDER_*` values used by the package smoke test can be copied
+without renaming. Backblaze B2 should use its regional HTTPS endpoint and
+`SOFINDER_PROVIDER_USE_PATH_STYLE_ENDPOINT=0`.
 
 The example's root autoload mappings read SoFinder and S3 PHP classes from the
 current checkout, so PHP and committed `dist/` changes are visible without
