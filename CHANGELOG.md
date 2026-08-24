@@ -8,6 +8,8 @@
   downloads, while private resources continue to use authenticated API URLs.
 - Allow each resource to generate entry URLs through a configured Symfony
   route and parameter templates, with optional host-provided database context.
+- Expand the live-source Symfony example for direct local and multi-resource
+  S3 browser testing without publishing intermediate package versions.
 
 ## 0.1.0-beta.9 - 2026-08-24
 
