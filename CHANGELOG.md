@@ -6,6 +6,8 @@
   load, and ignore superseded asynchronous list responses.
 - Use configured public/CDN entry URLs for copied links and single-file
   downloads, while private resources continue to use authenticated API URLs.
+- Allow each resource to generate entry URLs through a configured Symfony
+  route and parameter templates, with optional host-provided database context.
 
 ## 0.1.0-beta.9 - 2026-08-24
 

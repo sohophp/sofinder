@@ -19,6 +19,7 @@ use SohoPHP\SoFinder\Contract\ImageProcessorInterface;
 use SohoPHP\SoFinder\Contract\ImageCapabilityProviderInterface;
 use SohoPHP\SoFinder\Contract\FileInspectorInterface;
 use SohoPHP\SoFinder\Contract\EntryUrlGeneratorInterface;
+use SohoPHP\SoFinder\Contract\EntryUrlContextProviderInterface;
 use SohoPHP\SoFinder\Contract\MetadataStoreInterface;
 use SohoPHP\SoFinder\Contract\MaintenanceDispatcherInterface;
 use SohoPHP\SoFinder\Contract\PluginInterface;
@@ -111,6 +112,7 @@ final class SoFinderExtension extends Extension
         }
         $container->registerForAutoconfiguration(PluginInterface::class)->addTag('sofinder.plugin');
         $container->registerForAutoconfiguration(StorageAdapterFactoryInterface::class)->addTag('sofinder.storage_factory');
+        $container->registerForAutoconfiguration(EntryUrlContextProviderInterface::class)->addTag('sofinder.entry_url_context_provider');
         $packageDir = dirname(__DIR__, 2);
         $container->setParameter('so_finder.package_dir', $packageDir);
         $assetFiles = [$packageDir . '/dist/sofinder.js', $packageDir . '/dist/sofinder.css'];
@@ -187,7 +189,8 @@ final class SoFinderExtension extends Extension
             ->setArguments([new Reference(ImageProcessorInterface::class), new Reference(ImageFormatRegistry::class)]));
         $container->setAlias(FileInspectorInterface::class, new Alias(DefaultFileInspector::class));
         $container->setDefinition(SymfonyEntryUrlGenerator::class, (new Definition(SymfonyEntryUrlGenerator::class))
-            ->setArgument('$router', new Reference(RouterInterface::class)));
+            ->setArgument('$router', new Reference(RouterInterface::class))
+            ->setArgument('$contextProviders', new TaggedIteratorArgument('sofinder.entry_url_context_provider')));
         $container->setAlias(EntryUrlGeneratorInterface::class, new Alias(SymfonyEntryUrlGenerator::class));
         $container->setDefinition(UploadPipeline::class, (new Definition(UploadPipeline::class))
             ->setArguments([

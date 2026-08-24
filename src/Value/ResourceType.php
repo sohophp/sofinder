@@ -41,6 +41,10 @@ final readonly class ResourceType implements \JsonSerializable
         public int $maxImageWidth = 12_000,
         public int $maxImageHeight = 12_000,
         public string $animatedImagePolicy = 'preserve',
+        public string $entryUrlRoute = '',
+        /** @var array<string, string> */
+        public array $entryUrlParameters = [],
+        public bool $entryUrlAbsolute = false,
     ) {
         if ($name === '' || $root === '') {
             throw new \InvalidArgumentException('Resource name and root are required.');

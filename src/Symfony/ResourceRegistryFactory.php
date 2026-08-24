@@ -72,6 +72,9 @@ final class ResourceRegistryFactory
                 (int) ($values['max_image_width'] ?? 12_000),
                 (int) ($values['max_image_height'] ?? 12_000),
                 (string) ($values['animated_image_policy'] ?? 'preserve'),
+                (string) ($values['entry_url']['route'] ?? ''),
+                array_map('strval', (array) ($values['entry_url']['parameters'] ?? [])),
+                (bool) ($values['entry_url']['absolute'] ?? false),
             );
             $adapter = strtolower((string) ($values['adapter'] ?? 'local'));
             $factory = $this->factories[$adapter] ?? null;

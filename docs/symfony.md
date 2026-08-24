@@ -87,6 +87,65 @@ remove the web-server alias to the storage root, and leave `public_url` empty.
 The proxy supports Range, ETag and conditional requests; only safe raster image
 MIME types may be inline.
 
+### Host application entry routes
+
+A resource may publish a host route instead of its storage or SoFinder proxy
+URL. This is useful when the application owns stable URLs, records downloads,
+looks up a database row, streams a private object, or redirects to a CDN:
+
+```yaml
+so_finder:
+  resources:
+    Documents:
+      adapter: s3
+      root: component-files
+      delivery_mode: proxy
+      public_url: ''
+      entry_url:
+        route: file.download
+        absolute: true
+        parameters:
+          resource: '{resource}'
+          path: '{path}'
+          name: '{name}'
+```
+
+Configured routes take precedence when SoFinder presents file entry URLs.
+Built-in template values are `{resource}`, `{path}`, `{name}`, `{stem}`,
+`{extension}`, and `{storage_url}`. Extra route parameters that are not route
+path variables are generated as query parameters by Symfony.
+
+Database values such as `{id}` cannot be inferred from an object key. A host
+application can implement `EntryUrlContextProviderInterface`; Symfony
+autoconfiguration tags it automatically:
+
+```php
+use SohoPHP\SoFinder\Contract\EntryUrlContextProviderInterface;
+use SohoPHP\SoFinder\Value\Entry;
+use SohoPHP\SoFinder\Value\ResourceType;
+
+final readonly class FileEntryUrlContext implements EntryUrlContextProviderInterface
+{
+    public function __construct(private FileRepository $files) {}
+
+    public function context(ResourceType $resource, Entry $entry): array
+    {
+        if ($resource->name !== 'Documents') {
+            return [];
+        }
+
+        $record = $this->files->findByStorageKey($entry->path);
+
+        return $record === null ? [] : ['id' => $record->id()];
+    }
+}
+```
+
+The resource can then map `id: '{id}'` and `name: '{name}'` to a route such as
+`/file/download/{id}-{name}`. The route controller remains responsible for its
+own access policy and may stream through `FileManager::read()` or use the
+application's storage service to redirect to a public provider URL.
+
 Theme colors accept only three- or six-digit hexadecimal values. Border radius
 accepts `0px` through `32px`; these restrictions prevent configuration values
 from becoming arbitrary CSS. See `plugins.md` for the public plugin contract.

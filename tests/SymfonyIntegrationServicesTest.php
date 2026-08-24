@@ -7,6 +7,7 @@ namespace SohoPHP\SoFinder\Tests;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
 use SohoPHP\SoFinder\Event\OperationEvent;
+use SohoPHP\SoFinder\Contract\EntryUrlContextProviderInterface;
 use SohoPHP\SoFinder\Symfony\OperationAuditSubscriber;
 use SohoPHP\SoFinder\Symfony\SymfonyAuthorization;
 use SohoPHP\SoFinder\Symfony\SymfonyEntryUrlGenerator;
@@ -97,6 +98,41 @@ final class SymfonyIntegrationServicesTest extends TestCase
         self::assertStringStartsWith('/sofinder/api/content', (string) $generator->generate(
             $resource,
             new Entry('photo.jpg', 'photo.jpg', false, 10, 1, 'image/jpeg'),
+        ));
+    }
+
+    public function testResourceEntryUrlsCanUseAHostRouteAndCustomContext(): void
+    {
+        $router = $this->createMock(RouterInterface::class);
+        $router->expects(self::once())->method('generate')->with(
+            'file.download',
+            ['id' => 42, 'name' => 'report.pdf', 'source' => 'S3Files/archive/report.pdf'],
+            RouterInterface::ABSOLUTE_URL,
+        )->willReturn('https://example.test/file/download/42-report.pdf');
+        $provider = new class implements EntryUrlContextProviderInterface {
+            public function context(ResourceType $resource, Entry $entry): array
+            {
+                return ['id' => 42];
+            }
+        };
+        $generator = new SymfonyEntryUrlGenerator($router, [$provider]);
+        $resource = new ResourceType(
+            'S3Files',
+            'archive',
+            '',
+            deliveryMode: 'proxy',
+            entryUrlRoute: 'file.download',
+            entryUrlParameters: [
+                'id' => '{id}',
+                'name' => '{name}',
+                'source' => '{resource}/{path}',
+            ],
+            entryUrlAbsolute: true,
+        );
+
+        self::assertSame('https://example.test/file/download/42-report.pdf', $generator->generate(
+            $resource,
+            new Entry('archive/report.pdf', 'report.pdf', false, 10, 1, 'application/pdf'),
         ));
     }
 }

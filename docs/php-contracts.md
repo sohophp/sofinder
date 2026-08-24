@@ -25,6 +25,11 @@ resource and return the callback's exact byte delta atomically.
 Remote adapters may additionally implement `StorageAuditProviderInterface` to
 return secret-safe `warning` or `critical` findings to the security audit.
 
+`EntryUrlContextProviderInterface` may add host-owned scalar values to a
+resource's configured `entry_url` route templates. It is autoconfigured with
+the `sofinder.entry_url_context_provider` tag. Providers should return an empty
+array for unrelated resources and must not expose secrets in route parameters.
+
 ## Inspection and images
 
 `FileInspectorInterface` receives the private quarantine path, untrusted file

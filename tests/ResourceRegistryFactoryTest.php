@@ -112,6 +112,30 @@ final class ResourceRegistryFactoryTest extends TestCase
         }
     }
 
+    public function testBuildsEntryRouteConfiguration(): void
+    {
+        $root = sys_get_temp_dir() . '/sofinder-registry-' . bin2hex(random_bytes(8));
+        mkdir($root, 0775, true);
+
+        try {
+            $registry = (new ResourceRegistryFactory(new PathGuard(), new RequestStack()))->create([
+                'Files' => $this->resourceConfig($root) + [
+                    'entry_url' => [
+                        'route' => 'file.download',
+                        'parameters' => ['id' => '{id}', 'name' => '{name}'],
+                        'absolute' => true,
+                    ],
+                ],
+            ]);
+            $resource = $registry->get('Files')->resource;
+            self::assertSame('file.download', $resource->entryUrlRoute);
+            self::assertSame(['id' => '{id}', 'name' => '{name}'], $resource->entryUrlParameters);
+            self::assertTrue($resource->entryUrlAbsolute);
+        } finally {
+            rmdir($root);
+        }
+    }
+
     /** @return array<string, mixed> */
     private function resourceConfig(string $root): array
     {
