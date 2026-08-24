@@ -11924,13 +11924,14 @@ function Te({ config: e }) {
 		let r = Ce[e], i = Math.round(Math.max(r.min, Math.min(r.max, t)));
 		e === "left" ? bt(i) : St(i), n && localStorage.setItem(`sofinder.column.${e}`, String(i));
 	}, xn = (e, t) => {
-		t.preventDefault(), t.currentTarget.setPointerCapture(t.pointerId);
+		t.preventDefault(), t.currentTarget.setPointerCapture(t.pointerId), t.currentTarget.classList.add("is-resizing");
 		let n = e === "left" ? yt : xt;
 		kt.current = {
 			side: e,
 			startX: t.clientX,
 			startWidth: n,
-			currentWidth: n
+			currentWidth: n,
+			element: t.currentTarget
 		};
 	}, Sn = (e) => {
 		let t = kt.current;
@@ -11939,7 +11940,7 @@ function Te({ config: e }) {
 		t.currentWidth = Math.round(Math.max(r.min, Math.min(r.max, t.startWidth + (t.side === "left" ? n : -n)))), bn(t.side, t.currentWidth);
 	}, Cn = () => {
 		let e = kt.current;
-		kt.current = null, e && bn(e.side, e.currentWidth, !0);
+		kt.current = null, e && (e.element.classList.remove("is-resizing"), bn(e.side, e.currentWidth, !0));
 	}, wn = (e, t) => {
 		let n = t.key === "ArrowLeft" ? -1 : +(t.key === "ArrowRight");
 		n !== 0 && (t.preventDefault(), bn(e, (e === "left" ? yt : xt) + (e === "left" ? n : -n) * 10, !0));

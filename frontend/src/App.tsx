@@ -103,7 +103,7 @@ export default function App({ config }: { config: SoFinderConfig }) {
   const loadSequence = useRef(0);
   const confirmResolver = useRef<((answer: boolean) => void) | null>(null);
   const longPress = useRef<number | null>(null);
-  const columnDrag = useRef<{ side: "left" | "right"; startX: number; startWidth: number; currentWidth: number } | null>(null);
+  const columnDrag = useRef<{ side: "left" | "right"; startX: number; startWidth: number; currentWidth: number; element: HTMLDivElement } | null>(null);
   const searchInitialized = useRef(false);
   const pageSize = 100;
 
@@ -573,8 +573,9 @@ export default function App({ config }: { config: SoFinderConfig }) {
   const beginColumnResize = (side: "left" | "right", event: React.PointerEvent<HTMLDivElement>) => {
     event.preventDefault();
     event.currentTarget.setPointerCapture(event.pointerId);
+    event.currentTarget.classList.add("is-resizing");
     const startWidth = side === "left" ? leftWidth : rightWidth;
-    columnDrag.current = { side, startX: event.clientX, startWidth, currentWidth: startWidth };
+    columnDrag.current = { side, startX: event.clientX, startWidth, currentWidth: startWidth, element: event.currentTarget };
   };
   const moveColumnResize = (event: React.PointerEvent<HTMLDivElement>) => {
     const active = columnDrag.current;
@@ -587,7 +588,10 @@ export default function App({ config }: { config: SoFinderConfig }) {
   const endColumnResize = () => {
     const active = columnDrag.current;
     columnDrag.current = null;
-    if (active) setColumnWidth(active.side, active.currentWidth, true);
+    if (active) {
+      active.element.classList.remove("is-resizing");
+      setColumnWidth(active.side, active.currentWidth, true);
+    }
   };
   const resizeColumnWithKeyboard = (side: "left" | "right", event: React.KeyboardEvent<HTMLDivElement>) => {
     const direction = event.key === "ArrowLeft" ? -1 : event.key === "ArrowRight" ? 1 : 0;

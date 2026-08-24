@@ -10,6 +10,8 @@
   route and parameter templates, with optional host-provided database context.
 - Expand the live-source Symfony example for direct local and multi-resource
   S3 browser testing without publishing intermediate package versions.
+- Render a single subtle panel divider at rest and reveal the wider two-line
+  resize affordance only on hover, keyboard focus, or active dragging.
 
 ## 0.1.0-beta.9 - 2026-08-24
 

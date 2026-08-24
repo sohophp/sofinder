@@ -102,6 +102,38 @@ test("uses a minimal shell and reveals manager actions contextually", async ({ p
   await expect(page.getByLabel("语言")).toBeVisible();
 });
 
+test("keeps panel separators subtle until they can be dragged", async ({ page }) => {
+  await page.locator(".sf-entry", { hasText: "guide.txt" }).click();
+  const separator = page.locator(".sf-column-resizer.right");
+  await expect(separator).toBeVisible();
+  await expect(separator).toHaveCSS("width", "1px");
+  const handleStyle = () => separator.evaluate(element => {
+    const style = getComputedStyle(element, "::before");
+    return {
+      width: style.width,
+      backgroundColor: style.backgroundColor,
+      borderLeftWidth: style.borderLeftWidth,
+      borderRightWidth: style.borderRightWidth,
+    };
+  });
+  const restingStyle = await handleStyle();
+  expect(restingStyle).toMatchObject({ width: "1px", borderLeftWidth: "0px", borderRightWidth: "0px" });
+  expect(restingStyle.backgroundColor).not.toBe("rgba(0, 0, 0, 0)");
+  await separator.hover();
+  await expect.poll(handleStyle).toEqual({
+    width: "5px",
+    backgroundColor: "rgba(0, 0, 0, 0)",
+    borderLeftWidth: "1px",
+    borderRightWidth: "1px",
+  });
+  await page.mouse.down();
+  await expect(separator).toHaveClass(/is-resizing/);
+  await page.mouse.move(20, 20);
+  await expect.poll(handleStyle).toMatchObject({ width: "5px", borderLeftWidth: "1px", borderRightWidth: "1px" });
+  await page.mouse.up();
+  await expect(separator).not.toHaveClass(/is-resizing/);
+});
+
 test("switches between name and tag search without enabling tag management", async ({ page }) => {
   const scope = page.getByRole("combobox", { name: "搜索范围" });
   await expect(scope).toHaveValue("name");
