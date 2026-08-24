@@ -17,7 +17,7 @@ description: Maintainer checklist for testing, tagging and publishing SoFinder p
    audit before announcing the release.
 
 The current beta's exact Composer constraint is
-`sohophp/sofinder:0.1.0-beta.11`. Published tags must never be moved.
+`sohophp/sofinder:0.1.0-beta.12`. Published tags must never be moved.
 
 The S3 adapter is maintained in `packages/sofinder-s3` and released as an
 independent repository after the matching core prerelease. The current adapter

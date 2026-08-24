@@ -5,6 +5,12 @@ description: 各 SoFinder 预发布版本的兼容性、配置与 adapter 升级
 
 # 升级 SoFinder
 
+## 从 0.1.0-beta.11 升级至 0.1.0-beta.12
+
+- 部署已提交的浏览器资源。只有需要完整 ACL 工具栏的 picker 才添加 `uiTools=full`；默认仍为精简模式。
+- 根据更严格的可移植名称和扩展名不可修改规则检查现有集成。
+- 目录 API 每页数量现在限制为 10–500。
+
 ## 从 0.1.0-beta.6 升级至 0.1.0-beta.7
 
 默认文件浏览器不再显示深色 SoFinder 品牌页首。若要恢复只有品牌的页首，配置 `so_finder.ui.header: true`；显示标志则配置 `so_finder.ui.logo: true`。现有的语言、视图、缩放与功能偏好仍然有效。支持 cursor 的 HTTP client 必须接受 `total: null`。

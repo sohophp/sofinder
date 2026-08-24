@@ -27,7 +27,7 @@ description: 在 Symfony 應用中嵌入 SoFinder、接收選擇結果、呼叫�
 /sofinder/browser?select=1&type=Images&selection=image&uiMode=picker
 ```
 
-`uiMode` 可以是 `auto`、`manager`、`picker`；`type` 選擇初始資源；`selection` 為 `any`、`file`、`image`，圖片必須可嵌入瀏覽器。`uiHeader`、`uiLogo`、`uiSearch`、`uiLanguage`、`uiView` 只接受 `0` 或 `1`。這些引數不會增加權限。
+`uiMode` 可以是 `auto`、`manager`、`picker`；`type` 選擇初始資源；`selection` 為 `any`、`file`、`image`，圖片必須可嵌入瀏覽器。`uiTools=common|full` 可在保留 picker 選擇行為的同時，選擇是否顯示全部受 ACL 控制的管理、詳細資訊和圖片工具。`uiHeader`、`uiLogo`、`uiSearch`、`uiLanguage`、`uiView` 只接受 `0` 或 `1`。這些引數不會增加權限。
 
 不使用 CKEditor 的同視窗或 iframe 選擇器可監聽：
 
@@ -116,4 +116,3 @@ final readonly class DocumentService
 8. 接近生產環境的 Security Audit 和用量重算。
 
 可使用 `examples/symfony` 作為整合 Fixture。部署期間必須執行 `sofinder:security:audit`，Critical 結果應阻止釋出。
-

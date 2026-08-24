@@ -73,6 +73,52 @@ final class ImageManagerTest extends TestCase
         self::assertSame('source-edited-1.png', $images->applyActions('Images', 'source.png', $action)['entry']->name);
     }
 
+    public function testCopyOfLegacyExtensionlessImageGetsAValidImageExtension(): void
+    {
+        copy($this->directory . '/source.png', $this->directory . '/legacy-image');
+
+        $result = $this->manager()->applyActions('Images', 'legacy-image', [
+            ['type' => 'crop', 'x' => 0, 'y' => 0, 'width' => 200, 'height' => 100],
+        ]);
+
+        self::assertSame('legacy-image-edited.png', $result['entry']->name);
+        self::assertFileExists($this->directory . '/legacy-image-edited.png');
+    }
+
+    public function testCustomCopyNameWithoutExtensionKeepsTheImageFormat(): void
+    {
+        $result = $this->manager()->applyActions('Images', 'source.png', [
+            ['type' => 'crop', 'x' => 0, 'y' => 0, 'width' => 200, 'height' => 100],
+        ], ['mode' => 'copy', 'name' => 'custom-copy']);
+
+        self::assertSame('custom-copy.png', $result['entry']->name);
+    }
+
+    public function testEditedCopyCannotChangeItsFileExtension(): void
+    {
+        try {
+            $this->manager()->applyActions('Images', 'source.png', [
+                ['type' => 'crop', 'x' => 0, 'y' => 0, 'width' => 200, 'height' => 100],
+            ], ['mode' => 'copy', 'name' => 'custom-copy.jpg']);
+            self::fail('An edited image must not change its extension.');
+        } catch (SoFinderException $exception) {
+            self::assertSame('image_extension_change_not_allowed', $exception->errorCode);
+            self::assertStringContainsString('.png', $exception->getMessage());
+        }
+    }
+
+    public function testEditedCopyCannotChangeExtensionCase(): void
+    {
+        try {
+            $this->manager()->applyActions('Images', 'source.png', [
+                ['type' => 'crop', 'x' => 0, 'y' => 0, 'width' => 200, 'height' => 100],
+            ], ['mode' => 'copy', 'name' => 'custom-copy.PNG']);
+            self::fail('An edited image must preserve the exact extension.');
+        } catch (SoFinderException $exception) {
+            self::assertSame('image_extension_change_not_allowed', $exception->errorCode);
+        }
+    }
+
     public function testAnimatedImageEditingIsRejectedExplicitly(): void
     {
         $gif = base64_decode('R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7', true);

@@ -27,11 +27,11 @@ final readonly class DefaultFileInspector implements FileInspectorInterface
         }
         $mimeType = (new \finfo(FILEINFO_MIME_TYPE))->file($path) ?: 'application/octet-stream';
         $resource->assertMimeAllowed($mimeType);
-        $this->assertNoActiveContent($path);
 
         $extension = strtolower((string) pathinfo($fileName, PATHINFO_EXTENSION));
         $format = $this->formats->formatForExtension($extension);
         if ($format === null) {
+            $this->assertNoActiveContent($path);
             return new InspectedFile((int) $size, $mimeType);
         }
         if (!$this->formats->mimeMatches($format, strtolower($mimeType))) {

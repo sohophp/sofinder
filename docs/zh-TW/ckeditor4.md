@@ -13,8 +13,8 @@ SoFinder 支援 CKEditor 4 的檔案瀏覽回呼協議和快速上傳回應。�
 
 ```javascript
 CKEDITOR.replace("editor", {
-  filebrowserBrowseUrl: "/sofinder/browser?type=Files&selection=file",
-  filebrowserImageBrowseUrl: "/sofinder/browser?type=Images&selection=image",
+  filebrowserBrowseUrl: "/sofinder/browser?type=Files&selection=file&uiMode=picker&uiTools=full",
+  filebrowserImageBrowseUrl: "/sofinder/browser?type=Images&selection=image&uiMode=picker&uiTools=full",
   filebrowserUploadUrl: "/sofinder/compat/ckeditor4/upload?type=Files&selection=file&_token="
     + encodeURIComponent(soFinderCsrfToken),
   filebrowserImageUploadUrl: "/sofinder/compat/ckeditor4/upload?type=Images&selection=image&_token="
@@ -35,7 +35,7 @@ CKEditor 會在瀏覽和傳統上傳請求中附加 `CKEditorFuncNum`。SoFinder
 5. 點擊**選擇**。SoFinder 呼叫 CKEditor Callback、填寫 URL 並關閉選擇視窗。
 6. 返回 CKEditor 後，檢查替代文字、尺寸、對齊等內容，再完成插入。
 
-Picker 模式會隱藏管理操作。如果使用者需要先上傳或編輯再選擇，應提供獨立且有權限的 manager 入口，或使用 CKEditor 的“上傳”頁籤。
+範例保留 picker 的選擇與 Callback 行為，同時透過 `uiTools=full` 顯示完整工具，讓有權限的使用者可在選擇前上傳、新增資料夾、重新命名、複製、移動、刪除和編輯圖片。所有按鈕仍受資源能力和伺服器 ACL 限制。省略該參數或使用 `uiTools=common` 可恢復精簡工具列。
 
 ## 從 CKEditor 快速上傳
 
@@ -78,4 +78,3 @@ Picker 模式會隱藏管理操作。如果使用者需要先上傳或編輯再�
 | 圖片不能選擇 | 格式不可嵌入、沒有入口 URL，或伺服器無法解碼。 |
 
 管理員還應閱讀 [Symfony 整合](/zh-TW/symfony)、[生產安全](/zh-TW/security)和[圖片格式](/zh-TW/image-formats)。
-

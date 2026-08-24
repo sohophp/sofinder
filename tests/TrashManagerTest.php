@@ -50,6 +50,26 @@ final class TrashManagerTest extends TestCase
         self::assertSame([], $manager->list('Files'));
     }
 
+    public function testRestoreAutoRenameRechecksGeneratedFileNameLength(): void
+    {
+        file_put_contents($this->directory . '/report.txt', 'original');
+        $manager = $this->manager('actor-one');
+        $type = new ResourceType('Files', $this->directory, '/files', allowedExtensions: ['txt'], maxFileNameLength: 10);
+        $resource = new ResourceStorage($type, new LocalStorageAdapter($this->directory, '/files'));
+        $item = $manager->put($resource, 'report.txt')['item'];
+        file_put_contents($this->directory . '/report.txt', 'new');
+
+        try {
+            $manager->restore($resource, $item->id, 'rename');
+            self::fail('An auto-renamed restore must enforce the generated name length.');
+        } catch (\SohoPHP\SoFinder\Exception\SoFinderException $exception) {
+            self::assertSame('file_name_too_long', $exception->errorCode);
+        }
+
+        self::assertSame('new', file_get_contents($this->directory . '/report.txt'));
+        self::assertSame([$item->id], array_map(static fn ($entry): string => $entry->id, $manager->list('Files')));
+    }
+
     public function testTrashIsActorIsolatedAndCanBePermanentlyDeleted(): void
     {
         file_put_contents($this->directory . '/secret.txt', 'secret');

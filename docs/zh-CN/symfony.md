@@ -32,8 +32,8 @@ so_finder:
   trash_max_bytes: 1073741824
   ui:
     mode: auto          # auto、manager 或 picker
-    header: false       # 可选、只显示品牌的页首
-    logo: false
+    header: true        # 在 Logo 旁显示品牌文字
+    logo: true          # 命令栏内的紧凑 Logo，默认启用
     search: true
     language_switcher: true
     view_switcher: true
@@ -132,7 +132,7 @@ final readonly class FileEntryUrlContext implements EntryUrlContextProviderInter
 浏览器齿轮菜单会将图片工具显示偏好存在该浏览器的 local storage，不会授予 capability 或改变服务器 ACL。Resize、crop、rotation 与默认尺寸默认隐藏，可在配置中开启。复制／移动目的地只会显示资源 API 返回的文件夹；服务器仍会规范化并重新授权最终路径。
 
 `mode: auto` 会在 CKEditor 与 `select=1` 请求使用 `picker`，其他入口使用
-`manager`。浏览器 URL 只能以 `uiMode=auto|manager|picker`，以及值为 `0`
+`manager`。浏览器 URL 只能以 `uiMode=auto|manager|picker`、`uiTools=common|full`，以及值为 `0`
 或 `1` 的 `uiHeader`、`uiLogo`、`uiSearch`、`uiLanguage`、`uiView` 覆盖外观；
 无效值回退到宿主配置，且这些参数不会授予操作权限或略过服务器授权。
 

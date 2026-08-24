@@ -230,6 +230,24 @@ final class FileManagerTest extends TestCase
         self::assertFileDoesNotExist($this->directory . '/payload.php.jpg');
     }
 
+    public function testCopyAndMoveRecheckLegacyFileExtensionPolicy(): void
+    {
+        mkdir($this->directory . '/destination');
+        file_put_contents($this->directory . '/legacy.php', 'legacy');
+
+        foreach (['copy', 'move'] as $operation) {
+            try {
+                $this->manager(true)->transfer($operation, 'Files', 'legacy.php', 'destination');
+                self::fail(ucfirst($operation) . ' should enforce the current extension policy.');
+            } catch (SoFinderException $exception) {
+                self::assertSame('invalid_extension', $exception->errorCode);
+            }
+        }
+
+        self::assertFileExists($this->directory . '/legacy.php');
+        self::assertFileDoesNotExist($this->directory . '/destination/legacy.php');
+    }
+
     public function testBatchDeleteIsolatesFailuresAndReportsEveryResult(): void
     {
         file_put_contents($this->directory . '/first.txt', '1');

@@ -17,6 +17,9 @@ use Symfony\Component\HttpFoundation\Request;
 
 final readonly class ApiController
 {
+    private const MIN_PAGE_SIZE = 10;
+    private const MAX_PAGE_SIZE = 500;
+
     public function __construct(
         private FileManager $files,
         private CsrfGuard $csrf,
@@ -44,8 +47,8 @@ final readonly class ApiController
             'uiDefaults' => [
                 'scale' => (string) ($this->ui['scale'] ?? 'standard'),
                 'mode' => (string) ($this->ui['mode'] ?? 'auto'),
-                'header' => (bool) ($this->ui['header'] ?? false),
-                'logo' => (bool) ($this->ui['logo'] ?? false),
+                'header' => (bool) ($this->ui['header'] ?? true),
+                'logo' => (bool) ($this->ui['logo'] ?? true),
                 'search' => (bool) ($this->ui['search'] ?? true),
                 'languageSwitcher' => (bool) ($this->ui['language_switcher'] ?? true),
                 'viewSwitcher' => (bool) ($this->ui['view_switcher'] ?? true),
@@ -70,7 +73,7 @@ final readonly class ApiController
             (string) $request->query->get('sort', 'name'),
             (string) $request->query->get('direction', 'asc'),
             $request->query->getInt('offset'),
-            $request->query->getInt('limit', 100),
+            max(self::MIN_PAGE_SIZE, min(self::MAX_PAGE_SIZE, $request->query->getInt('limit', 100))),
             $onlyPaths,
             $request->query->get('cursor') !== null ? (string) $request->query->get('cursor') : null,
         ));

@@ -6,11 +6,16 @@ description: Authentication, authorization, storage, upload and operational secu
 # Production security
 
 SoFinder treats every configured resource root as a sandbox. Traversal,
-control characters, hidden names and symbolic-link access are rejected.
+control characters, hidden names, bidirectional text controls, portable
+reserved characters and Windows device names are rejected, as are trailing
+dots or spaces and symbolic-link access. These checks are repeated for rename,
+copy/move destinations, generated copy names and recycle-bin restores.
 Uploads first enter a mode-0600 private quarantine, are counted from the stream
 rather than trusted request metadata, inspected, and only then atomically
 published. Image extensions must match detected MIME and the image must fully
-decode within the configured pixel limit.
+decode within the configured pixel limit. Rename and edited-image copies keep
+the exact original extension; generated output is validated by the same upload
+quarantine before publication.
 
 Keep `quarantine_dir`, `chunk_dir`, `trash_dir`, metadata and thumbnail/archive
 caches outside public resource roots. Disable script execution in public upload

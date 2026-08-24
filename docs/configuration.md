@@ -39,8 +39,8 @@ Recycle-bin behavior is available to local storage. Object-storage deletion is p
 so_finder:
   ui:
     mode: auto
-    header: false
-    logo: false
+    header: true
+    logo: true
     search: true
     language_switcher: true
     view_switcher: true
@@ -48,7 +48,7 @@ so_finder:
     scale: standard
 ```
 
-`mode` accepts `auto`, `manager` or `picker`. `scale` accepts `compact`, `standard`, `large` or `xlarge`. Browser preferences can change presentation, but never grant server capabilities.
+`mode` accepts `auto`, `manager` or `picker`. With `logo: true`, the logo and optional SoFinder brand name are shown at the left, search is centered, and the breadcrumb sits above the file list or grid. With `logo: false`, the breadcrumb uses the former logo slot and search shifts right on wide screens. Set `header: false` to hide only the brand name when the logo is enabled. `scale` accepts `compact`, `standard`, `large` or `xlarge`. Browser preferences and `uiTools=common|full` can change presentation, but never grant server capabilities.
 
 ## Theme
 

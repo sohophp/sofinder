@@ -24,6 +24,7 @@ export interface SoFinderConfig {
     search?: boolean;
     languageSwitcher?: boolean;
     viewSwitcher?: boolean;
+    fullTools?: boolean;
   };
 }
 

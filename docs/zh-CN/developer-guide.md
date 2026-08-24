@@ -27,7 +27,7 @@ description: 在 Symfony 应用中嵌入 SoFinder、接收选择结果、调用�
 /sofinder/browser?select=1&type=Images&selection=image&uiMode=picker
 ```
 
-`uiMode` 可以是 `auto`、`manager`、`picker`；`type` 选择初始资源；`selection` 为 `any`、`file`、`image`，图片必须可嵌入浏览器。`uiHeader`、`uiLogo`、`uiSearch`、`uiLanguage`、`uiView` 只接受 `0` 或 `1`。这些参数不会增加权限。
+`uiMode` 可以是 `auto`、`manager`、`picker`；`type` 选择初始资源；`selection` 为 `any`、`file`、`image`，图片必须可嵌入浏览器。`uiTools=common|full` 可在保留 picker 选择行为的同时，选择是否显示全部受 ACL 控制的管理、详情和图片工具。`uiHeader`、`uiLogo`、`uiSearch`、`uiLanguage`、`uiView` 只接受 `0` 或 `1`。这些参数不会增加权限。
 
 不使用 CKEditor 的同窗口或 iframe 选择器可监听：
 

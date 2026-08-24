@@ -27,7 +27,7 @@ Presentation query parameters are optional and validated:
 /sofinder/browser?select=1&type=Images&selection=image&uiMode=picker
 ```
 
-`uiMode` is `auto`, `manager` or `picker`. `type` chooses the initial resource. `selection` is `any`, `file` or `image`; an image selection must be web-embeddable. `uiHeader`, `uiLogo`, `uiSearch`, `uiLanguage` and `uiView` accept only `0` or `1`. These options never add permissions.
+`uiMode` is `auto`, `manager` or `picker`. `type` chooses the initial resource. `selection` is `any`, `file` or `image`; an image selection must be web-embeddable. `uiTools=common|full` keeps picker selection behavior while optionally exposing all ACL-controlled management, detail and image tools. `uiHeader`, `uiLogo`, `uiSearch`, `uiLanguage` and `uiView` accept only `0` or `1`. These options never add permissions.
 
 For an iframe or same-window picker without CKEditor, listen for the selection event:
 

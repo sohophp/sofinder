@@ -1,7 +1,22 @@
 # Changelog
 
-## Unreleased
+## 0.1.0-beta.12 - 2026-08-25
 
+- Allow picker integrations to opt into the complete ACL-controlled management, detail and image toolbar with `uiTools=full`, without changing picker selection callbacks.
+- Move breadcrumbs into the former brand slot when the logo is disabled, shifting search right on wide layouts while keeping a compact two-row mobile command bar.
+- Apply portable-name, length, immutable-extension and resource-extension checks to rename, crop copies, copy/move destinations and auto-renamed trash restores, with actionable browser validation.
+- Allow the browser page size to be typed or selected from common values, persist the choice locally, and enforce a 10–500 HTTP limit.
+- Show the compact SoFinder logo by default inside the command bar instead of
+  adding a separate branded header; `ui.header` now adds the adjacent brand name.
+- Keep common create-folder and upload tools, including drop and paste upload,
+  available in picker mode; management actions remain hidden unless the host explicitly requests `uiTools=full`.
+- Preserve or infer the raster extension for edited copies, avoid binary-image
+  script-signature false positives, and present crop-save errors in the editor.
+- Lock the crop-copy extension in both the editor and server contract, explain
+  the validation performed on save, and reject tampered format changes clearly.
+- Restore the default Logo and SoFinder wordmark at a readable size, with the
+  centered search and right-aligned controls in the responsive command bar;
+  keep the breadcrumb directly above the file list or grid.
 - Add comprehensive English, Simplified Chinese and Traditional Chinese user,
   image, CKEditor 4, developer-integration and HTTP API documentation.
 

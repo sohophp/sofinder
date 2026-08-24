@@ -13,8 +13,8 @@ The route examples below assume SoFinder is imported at `/sofinder`. Make the CS
 
 ```javascript
 CKEDITOR.replace("editor", {
-  filebrowserBrowseUrl: "/sofinder/browser?type=Files&selection=file",
-  filebrowserImageBrowseUrl: "/sofinder/browser?type=Images&selection=image",
+  filebrowserBrowseUrl: "/sofinder/browser?type=Files&selection=file&uiMode=picker&uiTools=full",
+  filebrowserImageBrowseUrl: "/sofinder/browser?type=Images&selection=image&uiMode=picker&uiTools=full",
   filebrowserUploadUrl: "/sofinder/compat/ckeditor4/upload?type=Files&selection=file&_token="
     + encodeURIComponent(soFinderCsrfToken),
   filebrowserImageUploadUrl: "/sofinder/compat/ckeditor4/upload?type=Images&selection=image&_token="
@@ -35,7 +35,7 @@ The host route must be protected by the same-origin Symfony session and firewall
 5. Press **Select**. SoFinder calls the CKEditor callback, fills the URL field and closes the picker window.
 6. Complete the CKEditor dialog. For images, review alternative text, size and alignment before confirming.
 
-Picker mode intentionally hides manager mutations. If users must upload or edit before selecting, provide a separate authorized manager entry or use CKEditor's Upload tab.
+The example keeps picker selection and callback behavior but requests `uiTools=full`, so authorized users can upload, create folders, rename, copy, move, delete and use image tools before selecting. Every control remains constrained by resource capabilities and server ACLs. Omit the parameter or use `uiTools=common` for the smaller picker toolbar.
 
 ## Quick upload from CKEditor
 

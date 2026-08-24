@@ -5,6 +5,12 @@ description: 各 SoFinder 預發布版本的相容性、設定與 adapter 升級
 
 # 升級 SoFinder
 
+## 從 0.1.0-beta.11 升級至 0.1.0-beta.12
+
+- 部署已提交的瀏覽器資源。只有需要完整 ACL 工具列的 picker 才加入 `uiTools=full`；預設仍為精簡模式。
+- 依照更嚴格的可攜名稱和副檔名不可修改規則檢查既有整合。
+- 目錄 API 每頁數量現在限制為 10–500。
+
 ## 從 0.1.0-beta.6 升級至 0.1.0-beta.7
 
 預設檔案瀏覽器不再顯示深色 SoFinder 品牌頁首。若要還原只有品牌的頁首，設定 `so_finder.ui.header: true`；顯示標誌則設定 `so_finder.ui.logo: true`。現有的語言、檢視、縮放與功能偏好仍然有效。支援 cursor 的 HTTP client 必須接受 `total: null`。

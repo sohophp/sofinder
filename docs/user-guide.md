@@ -35,6 +35,8 @@ Select **New folder**, enter a name and confirm. Folder depth and name length ar
 
 Select exactly one item and choose **Rename**, or press `F2`. For files, SoFinder keeps the extension outside the editable base name so it is not changed accidentally. The server validates the final Unicode name, extension, path and permissions again.
 
+Names cannot start with a dot, end with a dot or space, contain control or bidirectional text characters, use `< > : " / \\ | ? *`, or equal a reserved Windows device name such as `CON` or `LPT1`. The same checks apply to crop copies, automatic copy/move names and recycle-bin restores.
+
 ## Upload files
 
 You can upload by:
@@ -52,7 +54,7 @@ If a destination already contains the same file name, SoFinder asks before overw
 
 Select one or more entries, then choose **Copy** or **Move**. Browse the destination dialog and select **Copy here** or **Move here**. SoFinder prevents moving an item into its current parent, moving a folder into itself or a descendant, and exceeding the destination depth.
 
-Batch transfers use conflict-safe automatic names by default. Each item is authorized separately; the completion message shows successful and failed counts rather than hiding partial failures.
+Batch transfers use conflict-safe automatic names by default. Generated names are rechecked against the destination resource's name length and extension policy. Each item is authorized separately; the completion message shows successful and failed counts rather than hiding partial failures.
 
 ## Download and copy a URL
 
@@ -75,6 +77,8 @@ Open **More → Recycle bin** to search deleted entries, review expiration and u
 ## Search, sort and personal metadata
 
 Name search applies to the current folder and waits briefly while you type. Sort by name, size or modification date and reverse the direction from **More**. Some remote adapters do not support server-side search or sorting; those controls are disabled.
+
+The pagination bar accepts a typed page size or a common value from its suggestion list. The allowed range is 10–500 files per page; changing it returns to the first page and the browser remembers the choice.
 
 Settings can enable:
 

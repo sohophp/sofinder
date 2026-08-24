@@ -91,6 +91,35 @@ final class UploadPipelineTest extends TestCase
         }
     }
 
+    public function testDoesNotScanDecodedRasterBytesAsExecutableText(): void
+    {
+        if (!extension_loaded('gd')) {
+            self::markTestSkipped('GD is not installed.');
+        }
+        $image = imagecreatetruecolor(80, 40);
+        ob_start();
+        imagepng($image);
+        $contents = ob_get_clean();
+        unset($image);
+        self::assertIsString($contents);
+        $text = "Comment\0compressed bytes may contain <script";
+        $chunkData = 'tEXt' . $text;
+        $textChunk = pack('N', strlen($text)) . $chunkData . pack('N', crc32($chunkData));
+        $iend = strpos($contents, "\0\0\0\0IEND");
+        self::assertIsInt($iend);
+        $contents = substr($contents, 0, $iend) . $textChunk . substr($contents, $iend);
+        $stream = fopen('php://temp', 'w+b');
+        fwrite($stream, $contents);
+        rewind($stream);
+
+        try {
+            $inspection = $this->pipeline()->quarantine($stream, 'processed.png', new ResourceType('Images', '/tmp', '/images', ['png']));
+            self::assertSame('image/png', $inspection['inspection']->mimeType);
+        } finally {
+            fclose($stream);
+        }
+    }
+
     private function pipeline(): UploadPipeline
     {
         return new UploadPipeline(new DefaultFileInspector(new GdImageProcessor()), $this->directory);

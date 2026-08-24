@@ -40,11 +40,12 @@ final readonly class BrowserController
         $resolvedMode = $mode === 'auto' ? ($selectMode ? 'picker' : 'manager') : $mode;
         $ui = [
             'mode' => $resolvedMode,
-            'header' => $this->booleanOverride($request, 'uiHeader', (bool) ($this->ui['header'] ?? false)),
-            'logo' => $this->booleanOverride($request, 'uiLogo', (bool) ($this->ui['logo'] ?? false)),
+            'header' => $this->booleanOverride($request, 'uiHeader', (bool) ($this->ui['header'] ?? true)),
+            'logo' => $this->booleanOverride($request, 'uiLogo', (bool) ($this->ui['logo'] ?? true)),
             'search' => $this->booleanOverride($request, 'uiSearch', (bool) ($this->ui['search'] ?? true)),
             'languageSwitcher' => $this->booleanOverride($request, 'uiLanguage', (bool) ($this->ui['language_switcher'] ?? true)),
             'viewSwitcher' => $this->booleanOverride($request, 'uiView', (bool) ($this->ui['view_switcher'] ?? true)),
+            'fullTools' => $this->enumOverride($request, 'uiTools', ['common', 'full'], 'common') === 'full',
         ];
         $config = [
             'apiBase' => $this->router->generate('sofinder_api_config'),

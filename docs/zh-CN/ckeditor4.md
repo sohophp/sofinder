@@ -13,8 +13,8 @@ SoFinder 支持 CKEditor 4 的文件浏览回调协议和快速上传响应。�
 
 ```javascript
 CKEDITOR.replace("editor", {
-  filebrowserBrowseUrl: "/sofinder/browser?type=Files&selection=file",
-  filebrowserImageBrowseUrl: "/sofinder/browser?type=Images&selection=image",
+  filebrowserBrowseUrl: "/sofinder/browser?type=Files&selection=file&uiMode=picker&uiTools=full",
+  filebrowserImageBrowseUrl: "/sofinder/browser?type=Images&selection=image&uiMode=picker&uiTools=full",
   filebrowserUploadUrl: "/sofinder/compat/ckeditor4/upload?type=Files&selection=file&_token="
     + encodeURIComponent(soFinderCsrfToken),
   filebrowserImageUploadUrl: "/sofinder/compat/ckeditor4/upload?type=Images&selection=image&_token="
@@ -35,7 +35,7 @@ CKEditor 会在浏览和传统上传请求中附加 `CKEditorFuncNum`。SoFinder
 5. 点击**选择**。SoFinder 调用 CKEditor Callback、填写 URL 并关闭选择窗口。
 6. 返回 CKEditor 后，检查替代文本、尺寸、对齐等内容，再完成插入。
 
-Picker 模式会隐藏管理操作。如果用户需要先上传或编辑再选择，应提供独立且有权限的 manager 入口，或使用 CKEditor 的“上传”页签。
+示例保留 picker 的选择与 Callback 行为，同时通过 `uiTools=full` 显示完整工具，让有权限的用户可在选择前上传、新建文件夹、重命名、复制、移动、删除和编辑图片。所有按钮仍受资源能力和服务器 ACL 限制。省略该参数或使用 `uiTools=common` 可恢复精简工具栏。
 
 ## 从 CKEditor 快速上传
 

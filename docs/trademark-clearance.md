@@ -60,3 +60,12 @@ retain the project name. Dynamic registry search interfaces can omit results
 from ordinary web indexing; this record is not a legal clearance opinion and
 does not replace a formal registry or counsel review before broader commercial
 promotion.
+
+## 2026-08-25 beta.12 engineering recheck
+
+- Exact-name searches scoped to the WIPO, USPTO, EUIPO and CNIPA public search surfaces did not return a class 9, 35, 38 or 42 file-management/software mark in indexed results.
+- USPTO serial 97045626 remains an unrelated class 7 household-machinery filing; serial 97046433 is an unrelated class 11 appliance registration.
+- `sofinder.me` remains a social-profile link service. A recent automotive promotion uses “SOFINDER” as a vehicle-matching feature, but no file-management product, PHP package or developer-tool source confusion was identified.
+- Public GitHub, Packagist and npm searches did not identify another file-manager package using the intended `sohophp/sofinder` or `@sohophp/sofinder-ui` identities before the release check.
+
+No blocking software/file-management conflict was identified by this engineering recheck, so beta.12 retains the name. Dynamic registry interfaces and ordinary indexing are incomplete; this is not a legal clearance opinion.

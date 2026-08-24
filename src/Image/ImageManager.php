@@ -18,6 +18,7 @@ final readonly class ImageManager
         private string $cacheDirectory,
         /** @var array<string, array{width:int,height:int,quality:int}> */
         private array $presets = [],
+        private ImageFormatRegistry $formats = new ImageFormatRegistry(),
     ) {
     }
 
@@ -165,7 +166,22 @@ final readonly class ImageManager
                 ? $entry->name
                 : trim((string) ($save['name'] ?? ''));
             if ($mode === 'copy' && $name === '') {
-                $name = $this->suggestCopyName($resource, $directory, $entry->name);
+                $name = $this->suggestCopyName($resource, $directory, $entry);
+            } elseif ($mode === 'copy' && pathinfo($name, PATHINFO_EXTENSION) === '') {
+                $extension = $this->outputExtension($entry);
+                if ($extension !== '') {
+                    $name .= '.' . $extension;
+                }
+            } elseif ($mode === 'copy') {
+                $extension = $this->outputExtension($entry);
+                $requestedExtension = (string) pathinfo($name, PATHINFO_EXTENSION);
+                if ($extension !== '' && $requestedExtension !== $extension) {
+                    throw new SoFinderException(
+                        sprintf('The edited image must keep its original .%s file extension.', $extension),
+                        'image_extension_change_not_allowed',
+                        422,
+                    );
+                }
             }
             $stream = fopen($working, 'rb');
             if ($stream === false) {
@@ -292,10 +308,11 @@ final readonly class ImageManager
         }
     }
 
-    private function suggestCopyName(string $resource, string $directory, string $name): string
+    private function suggestCopyName(string $resource, string $directory, Entry $entry): string
     {
-        $extension = pathinfo($name, PATHINFO_EXTENSION);
-        $stem = $extension === '' ? $name : substr($name, 0, -(strlen($extension) + 1));
+        $extension = $this->outputExtension($entry);
+        $originalExtension = (string) pathinfo($entry->name, PATHINFO_EXTENSION);
+        $stem = $originalExtension === '' ? $entry->name : substr($entry->name, 0, -(strlen($originalExtension) + 1));
         for ($index = 0; $index <= 999; ++$index) {
             $candidate = $stem . '-edited' . ($index === 0 ? '' : '-' . $index) . ($extension === '' ? '' : '.' . $extension);
             $path = ($directory === '' ? '' : $directory . '/') . $candidate;
@@ -307,6 +324,17 @@ final readonly class ImageManager
         }
 
         throw new SoFinderException('Unable to find an available edited image name.', 'conflict', 409);
+    }
+
+    private function outputExtension(Entry $entry): string
+    {
+        $extension = (string) pathinfo($entry->name, PATHINFO_EXTENSION);
+        $mimeFormat = $entry->mimeType === null ? null : $this->formats->formatForMime($entry->mimeType);
+        if ($extension !== '' && $this->formats->formatForExtension(strtolower($extension)) === $mimeFormat) {
+            return $extension;
+        }
+
+        return $entry->mimeType === null ? '' : (string) $this->formats->preferredExtensionForMime($entry->mimeType);
     }
 
     private function maintainCache(string $directory): void

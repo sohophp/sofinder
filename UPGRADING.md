@@ -1,5 +1,11 @@
 # Upgrading SoFinder
 
+## From 0.1.0-beta.11 to 0.1.0-beta.12
+
+- Rebuild or deploy the committed `dist/` assets. Picker integrations that need the complete authenticated toolbar should add `uiTools=full`; the default remains the smaller common picker toolbar.
+- File names are now rejected when they use non-portable reserved characters or names, trailing dots/spaces, bidirectional controls or invalid UTF-8. Rename and edited-image copy extensions are immutable.
+- HTTP directory page sizes are bounded to 10–500; the browser default remains 100.
+
 ## From 0.1.0-beta.6 to 0.1.0-beta.7
 
 The default browser no longer renders the dark SoFinder brand header. Restore a

@@ -68,11 +68,37 @@ select:focus-visible,
 }
 
 .sf-pagination {
-  display: flex;
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
   align-items: center;
-  justify-content: center;
   gap: 12px;
   padding: 10px 16px 18px;
+}
+
+.sf-page-navigation {
+  grid-column: 2;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.sf-page-size {
+  justify-self: end;
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  color: var(--sf-muted);
+  font-size: 12px;
+  white-space: nowrap;
+}
+
+.sf-page-size input {
+  width: 76px;
+  border: 1px solid var(--sf-line);
+  border-radius: 7px;
+  background: #fff;
+  color: var(--sf-text);
+  padding: 7px 6px;
 }
 
 .sf-pagination button {
@@ -184,6 +210,16 @@ select:focus-visible,
 }
 
 @media (max-width: 620px) {
+  .sf-pagination {
+    grid-template-columns: 1fr;
+  }
+
+  .sf-page-navigation,
+  .sf-page-size {
+    grid-column: 1;
+    justify-self: center;
+  }
+
   .sf-upload-task {
     grid-template-columns: minmax(100px, 1fr) 90px auto 28px;
   }
@@ -1307,28 +1343,35 @@ select:focus-visible,
   background: var(--sf-bg);
 }
 
-.sf-header {
-  height: 48px;
-  display: flex;
-  align-items: center;
-  border-bottom: 1px solid var(--sf-line);
-  padding: 0 16px;
-  background: var(--sf-panel);
+.sf-brand {
+  min-width: 0;
+  gap: 9px;
   color: var(--sf-text);
+  white-space: nowrap;
+}
+
+.sf-brand strong {
+  font-size: 16px;
+  font-weight: 700;
+  letter-spacing: 0.01em;
 }
 
 .sf-brand-mark {
-  width: 28px;
-  height: 28px;
+  width: 30px;
+  height: 30px;
+  flex: 0 0 30px;
   border-radius: 8px;
   color: #fff;
+  font-size: 14px;
+  line-height: 1;
+  box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.28), 0 1px 2px rgb(23 34 51 / 0.16);
 }
 
 .sf-commandbar {
   position: relative;
   z-index: 12;
   display: grid;
-  grid-template-columns: minmax(160px, 1fr) minmax(240px, 520px) auto auto;
+  grid-template-columns: minmax(240px, 1fr) auto;
   align-items: center;
   gap: 10px;
   min-height: 52px;
@@ -1337,12 +1380,52 @@ select:focus-visible,
   background: var(--sf-panel);
 }
 
-.sf-commandbar .sf-breadcrumb {
-  height: auto;
+.sf-commandbar.sf-has-brand {
+  grid-template-areas: "brand search actions";
+  grid-template-columns: minmax(150px, 1fr) minmax(240px, 560px) minmax(150px, 1fr);
+}
+
+.sf-commandbar.sf-has-brand .sf-brand {
+  grid-area: brand;
+}
+
+.sf-commandbar.sf-has-brand .sf-search {
+  grid-area: search;
+  width: 100%;
+}
+
+.sf-commandbar.sf-has-brand .sf-command-actions {
+  grid-area: actions;
+}
+
+.sf-commandbar.sf-no-brand {
+  grid-template-areas: "breadcrumb search actions";
+  grid-template-columns: minmax(240px, 1fr) minmax(240px, 560px) auto;
+}
+
+.sf-commandbar.sf-no-brand .sf-command-breadcrumb {
+  grid-area: breadcrumb;
+  height: var(--sf-control-height);
   min-width: 0;
-  border: 0;
   padding: 0;
-  background: transparent;
+  border: 0;
+  overflow: hidden;
+}
+
+.sf-commandbar.sf-no-brand .sf-search {
+  grid-area: search;
+  width: 100%;
+}
+
+.sf-commandbar.sf-no-brand .sf-command-actions {
+  grid-area: actions;
+}
+
+.sf-command-actions {
+  display: flex;
+  align-items: center;
+  justify-self: end;
+  gap: 10px;
 }
 
 .sf-commandbar .sf-search {
@@ -1597,7 +1680,16 @@ select:focus-visible,
 
 @media (max-width: 900px) {
   .sf-commandbar {
-    grid-template-columns: minmax(130px, 1fr) minmax(200px, 1.3fr) auto auto;
+    grid-template-columns: minmax(200px, 1fr) auto;
+  }
+  .sf-commandbar.sf-has-brand {
+    grid-template-columns: minmax(130px, auto) minmax(200px, 1fr) auto;
+  }
+  .sf-commandbar.sf-no-brand {
+    grid-template-columns: minmax(130px, 1fr) minmax(200px, 1fr) auto;
+  }
+  .sf-commandbar.sf-has-brand .sf-brand strong {
+    font-size: 14px;
   }
   .sf-no-sidebar .sf-layout,
   .sf-no-sidebar.sf-no-details .sf-layout {
@@ -1609,20 +1701,32 @@ select:focus-visible,
 }
 
 @media (max-width: 620px) {
-  .sf-header {
-    display: none;
-  }
   .sf-commandbar {
-    grid-template-columns: minmax(0, 1fr) auto auto;
+    grid-template-columns: minmax(0, 1fr) auto;
     gap: 7px;
     padding: 7px 9px;
   }
-  .sf-commandbar .sf-breadcrumb {
-    grid-column: 1/-1;
-    min-height: 28px;
-  }
   .sf-commandbar .sf-search {
     grid-column: 1;
+  }
+  .sf-commandbar.sf-has-brand {
+    grid-template-areas: "brand search actions";
+    grid-template-columns: auto minmax(0, 1fr) auto;
+  }
+  .sf-commandbar.sf-has-brand .sf-brand {
+    grid-area: brand;
+  }
+  .sf-commandbar.sf-has-brand .sf-search {
+    grid-area: search;
+  }
+  .sf-commandbar.sf-has-brand .sf-brand strong {
+    display: none;
+  }
+  .sf-commandbar.sf-no-brand {
+    grid-template-areas:
+      "breadcrumb actions"
+      "search search";
+    grid-template-columns: minmax(0, 1fr) auto;
   }
   .sf-toolbar {
     padding-inline: 9px;

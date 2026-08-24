@@ -9,8 +9,8 @@ so_finder:
       roles: [ROLE_USER]
   ui:
     mode: auto
-    header: false
-    logo: false
+    header: true
+    logo: true
     search: true
     language_switcher: true
     view_switcher: true

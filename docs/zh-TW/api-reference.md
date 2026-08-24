@@ -77,7 +77,7 @@ HTTP Status 是最終依據；`429` 包含 `Retry-After: 2`。批次請求可能
 | `sort` | `name` | `name`、`size`、`modified`。 |
 | `direction` | `asc` | `asc` 或 `desc`。 |
 | `offset` | `0` | 支援 Offset 的 Adapter 使用。 |
-| `limit` | `100` | 請求頁大小，伺服器會限制。 |
+| `limit` | `100` | 請求頁大小，伺服器限制為 10–500。 |
 | `cursor` | 無 | 上一頁返回的不透明 Cursor。 |
 
 Response Data 包含 `entries`、`total`、`path`、`offset`、`limit`、`sort`、`direction`、`nextCursor`、目錄 `capabilities` 和 `storageCapabilities`。Cursor Adapter 可返回 `total: null`；禁止自行構造或修改 Cursor。

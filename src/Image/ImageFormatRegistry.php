@@ -43,6 +43,13 @@ final readonly class ImageFormatRegistry
         return null;
     }
 
+    public function preferredExtensionForMime(string $mime): ?string
+    {
+        $format = $this->formatForMime($mime);
+
+        return $format === null ? null : (self::FORMATS[$format]['extensions'][0] ?? null);
+    }
+
     public function detectFormat(string $path): ?string
     {
         $mime = (new \finfo(FILEINFO_MIME_TYPE))->file($path);

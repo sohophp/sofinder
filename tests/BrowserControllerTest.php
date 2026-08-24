@@ -36,7 +36,7 @@ final class BrowserControllerTest extends TestCase
 
     public function testResolvesPickerModeAndAllowlistedPresentationOverrides(): void
     {
-        $config = $this->config(Request::create('/browser?select=1&uiMode=auto&uiHeader=1&uiLogo=1&uiSearch=0&uiLanguage=0&uiView=0'));
+        $config = $this->config(Request::create('/browser?select=1&uiMode=auto&uiTools=full&uiHeader=1&uiLogo=1&uiSearch=0&uiLanguage=0&uiView=0'));
 
         self::assertTrue($config['selectMode']);
         self::assertSame('picker', $config['uiDefaults']['mode']);
@@ -45,6 +45,7 @@ final class BrowserControllerTest extends TestCase
         self::assertFalse($config['uiDefaults']['search']);
         self::assertFalse($config['uiDefaults']['languageSwitcher']);
         self::assertFalse($config['uiDefaults']['viewSwitcher']);
+        self::assertTrue($config['uiDefaults']['fullTools']);
     }
 
     public function testInvalidOverridesFallBackToHostDefaults(): void
@@ -54,6 +55,7 @@ final class BrowserControllerTest extends TestCase
         self::assertSame('manager', $config['uiDefaults']['mode']);
         self::assertFalse($config['uiDefaults']['header']);
         self::assertTrue($config['uiDefaults']['search']);
+        self::assertFalse($config['uiDefaults']['fullTools']);
     }
 
     /** @return array<string,mixed> */

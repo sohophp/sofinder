@@ -182,6 +182,13 @@ final readonly class TrashManager implements RecycleBinInterface
         if ($conflict === 'rename') {
             $destinationPath = $this->availableName($resource, $destinationPath);
         }
+        $destinationPath = $this->paths->normalize($destinationPath);
+        if ($item->directory) {
+            $resource->resource->assertEntryPathAllowed($destinationPath, true);
+        } else {
+            $resource->resource->assertFileNameAllowed(basename($destinationPath));
+            $resource->resource->assertEntryPathAllowed($destinationPath, false);
+        }
         $destination = $this->destinationAbsolute($resource, $destinationPath);
         $exists = file_exists($destination) || is_link($destination);
         if ($exists && $conflict === 'cancel') {

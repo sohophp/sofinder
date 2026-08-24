@@ -10,11 +10,11 @@ final class PathGuard
 {
     public function normalize(string $path): string
     {
-        if (str_contains($path, "\0") || preg_match('/[\x00-\x1F\x7F]/u', $path) === 1) {
+        if ($path !== trim($path) || preg_match('//u', $path) !== 1 || str_contains($path, "\0") || preg_match('/[\x00-\x1F\x7F]/u', $path) === 1) {
             throw new InvalidPathException();
         }
 
-        $path = str_replace('\\', '/', trim($path));
+        $path = str_replace('\\', '/', $path);
         $segments = [];
         foreach (explode('/', $path) as $segment) {
             if ($segment === '') {
@@ -40,18 +40,22 @@ final class PathGuard
 
     public function assertName(string $name): void
     {
-        $name = trim($name);
+        $reserved = '/^(?:CON|PRN|AUX|NUL|COM[1-9]|LPT[1-9])(?:\.|$)/iu';
         if (
-            $name === ''
+            preg_match('//u', $name) !== 1
+            || $name === ''
+            || $name !== trim($name)
             || $name === '.'
             || $name === '..'
             || str_starts_with($name, '.')
+            || str_ends_with($name, '.')
             || str_contains($name, '/')
             || str_contains($name, '\\')
             || str_contains($name, "\0")
-            || preg_match('/[\x00-\x1F\x7F]/u', $name) === 1
+            || preg_match('/[<>:"|?*\x00-\x1F\x7F\x{202A}-\x{202E}\x{2066}-\x{2069}]/u', $name) === 1
+            || preg_match($reserved, $name) === 1
         ) {
-            throw new InvalidPathException('The file or folder name is invalid.');
+            throw new InvalidPathException('The file or folder name contains an unsafe or unsupported character or reserved name.');
         }
     }
 }

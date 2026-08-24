@@ -255,6 +255,9 @@ final readonly class FileManager
         $destination = $this->pathGuard->join($destinationDirectory, basename($path));
         $item = $this->authorized($resourceName, $operation, $path, true);
         $source = $item->storage->entry($path);
+        if (!$source->directory) {
+            $item->resource->assertFileNameAllowed(basename($destination));
+        }
         $additionalFolderDepth = $source->directory ? $this->maximumDescendantDepth($item, $path, $operation) : 0;
         if ($destination === $path || ($source->directory && str_starts_with($destination, $path . '/'))) {
             throw new InvalidPathException('An entry cannot be copied or moved into itself.');
@@ -267,6 +270,9 @@ final readonly class FileManager
         $this->assertGranted($item, $operation, $destination);
         if ($autoRename) {
             $destination = $this->availableName($item, $destination);
+            if (!$source->directory) {
+                $item->resource->assertFileNameAllowed(basename($destination));
+            }
             $item->resource->assertEntryPathAllowed(
                 $destination,
                 $source->directory,

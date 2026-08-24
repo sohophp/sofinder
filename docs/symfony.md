@@ -36,8 +36,8 @@ so_finder:
   trash_max_bytes: 1073741824
   ui:
     mode: auto          # auto, manager or picker
-    header: false       # Optional brand-only header.
-    logo: false
+    header: true        # Show the brand name beside the logo.
+    logo: true          # Compact command-bar logo; enabled by default.
     search: true
     language_switcher: true
     view_switcher: true
@@ -164,7 +164,7 @@ again by the server.
 
 `mode: auto` resolves to `picker` for CKEditor and `select=1` requests, and to
 `manager` otherwise. Browser URLs may override presentation only with
-`uiMode=auto|manager|picker` and `uiHeader`, `uiLogo`, `uiSearch`, `uiLanguage`
+`uiMode=auto|manager|picker`, `uiTools=common|full` and `uiHeader`, `uiLogo`, `uiSearch`, `uiLanguage`
 or `uiView` set to `0` or `1`. Invalid values fall back to host configuration;
 these parameters never grant operations or bypass authorization.
 

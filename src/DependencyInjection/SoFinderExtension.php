@@ -262,6 +262,7 @@ final class SoFinderExtension extends Extension
                 new Reference(ImageProcessorInterface::class),
                 $config['cache_dir'],
                 $config['image_presets'],
+                new Reference(ImageFormatRegistry::class),
             ]));
         $container->setDefinition(ArchiveManager::class, (new Definition(ArchiveManager::class))
             ->setArguments([

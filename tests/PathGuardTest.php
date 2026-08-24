@@ -32,5 +32,11 @@ final class PathGuardTest extends TestCase
         yield 'control character' => ["safe\nname"];
         yield 'null byte' => ["safe\0name"];
         yield 'hidden entry' => ['folder/.private'];
+        yield 'portable reserved character' => ['report?.txt'];
+        yield 'windows device name' => ['CON.txt'];
+        yield 'trailing dot' => ['report.txt.'];
+        yield 'trailing whitespace' => ['report.txt '];
+        yield 'bidirectional override' => ["safe\u{202E}txt"];
+        yield 'invalid utf-8' => ["safe\xFF.txt"];
     }
 }

@@ -86,7 +86,7 @@ Query parameters:
 | `sort` | `name` | `name`, `size` or `modified`. |
 | `direction` | `asc` | `asc` or `desc`. |
 | `offset` | `0` | Offset for adapters that support it. |
-| `limit` | `100` | Requested page size; the server bounds it. |
+| `limit` | `100` | Requested page size, bounded to 10–500. |
 | `cursor` | absent | Opaque cursor returned by the previous page. |
 
 Response data contains `entries`, `total`, `path`, `offset`, `limit`, `sort`, `direction`, `nextCursor`, directory `capabilities` and `storageCapabilities`. Cursor adapters may return `total: null`. Treat `nextCursor` as opaque and never construct or modify it.

@@ -39,8 +39,8 @@ description: SoFinder 全域、UI、維護、圖片、請求限制與資源設�
 so_finder:
   ui:
     mode: auto
-    header: false
-    logo: false
+    header: true
+    logo: true
     search: true
     language_switcher: true
     view_switcher: true
@@ -48,7 +48,7 @@ so_finder:
     scale: standard
 ```
 
-`mode` 可設為 `auto`、`manager` 或 `picker`。`scale` 可設為 `compact`、`standard`、`large` 或 `xlarge`。瀏覽器偏好可改變顯示方式，但永遠不會授予伺服器能力。
+`mode` 可設為 `auto`、`manager` 或 `picker`。啟用 `logo` 時，左側顯示 Logo 和可選品牌文字，搜尋置中，麵包屑位於檔案清單或網格上方；關閉 `logo` 時，麵包屑占用原 Logo 位置，寬螢幕搜尋框向右移動。啟用 Logo 時，設定 `header: false` 只隱藏品牌文字。`scale` 可設為 `compact`、`standard`、`large` 或 `xlarge`。瀏覽器偏好和 `uiTools=common|full` 只能改變顯示方式，不會授予伺服器能力。
 
 ## 主題
 

@@ -12,7 +12,7 @@ const config = {
   ckeditorFunction: 0,
   theme: { accent: "#276ef1", background: "#f4f6f9", panel: "#ffffff", text: "#1c2735", muted: "#667282", danger: "#c13a43", radius: "10px" },
   featureDefaults: { folderTree: false },
-  uiDefaults: { scale: "standard" as const, mode: "manager" as const, header: false, logo: false, search: true, languageSwitcher: true, viewSwitcher: true },
+  uiDefaults: { scale: "standard" as const, mode: "manager" as const, header: true, logo: true, search: true, languageSwitcher: true, viewSwitcher: true },
 };
 
 test.beforeEach(async ({ page }) => {
@@ -93,6 +93,21 @@ test("has no serious automated accessibility violations", async ({ page }) => {
 
 test("uses a minimal shell and reveals manager actions contextually", async ({ page }) => {
   await expect(page.locator(".sf-header")).toHaveCount(0);
+  await expect(page.locator(".sf-commandbar > .sf-brand .sf-brand-mark")).toHaveText("S");
+  await expect(page.locator(".sf-commandbar > .sf-brand strong")).toHaveText("SoFinder");
+  await expect(page.locator(".sf-commandbar > .sf-brand .sf-brand-mark")).toHaveCSS("width", "30px");
+  const commandLayout = await page.locator(".sf-commandbar").evaluate(element => {
+    const command = element.getBoundingClientRect();
+    const search = element.querySelector(".sf-search")!.getBoundingClientRect();
+    return { commandCenter: command.x + command.width / 2, searchCenter: search.x + search.width / 2 };
+  });
+  expect(Math.abs(commandLayout.commandCenter - commandLayout.searchCenter)).toBeLessThanOrEqual(1);
+  const contentLayout = await page.locator(".sf-content").evaluate(element => {
+    const breadcrumb = element.querySelector(":scope > .sf-breadcrumb")!.getBoundingClientRect();
+    const entries = element.querySelector(":scope > .sf-entries")!.getBoundingClientRect();
+    return { breadcrumbBottom: breadcrumb.bottom, entriesTop: entries.top };
+  });
+  expect(contentLayout.breadcrumbBottom).toBeLessThanOrEqual(contentLayout.entriesTop);
   await expect(page.getByRole("button", { name: "重命名" })).toHaveCount(0);
   await page.waitForTimeout(350);
   await page.locator(".sf-entry", { hasText: "guide.txt" }).click();
@@ -100,6 +115,30 @@ test("uses a minimal shell and reveals manager actions contextually", async ({ p
   await expect(page.locator(".sf-details")).toHaveCSS("width", "270px");
   await page.getByRole("button", { name: "更多操作" }).click();
   await expect(page.getByLabel("语言")).toBeVisible();
+});
+
+test("uses the logo slot for breadcrumbs and shifts search right when the logo is disabled", async ({ page }) => {
+  const noLogoConfig = { ...config, uiDefaults: { ...config.uiDefaults, logo: false } };
+  await page.setContent(`<!doctype html><html lang="zh-CN"><head><title>SoFinder</title></head><body><main id="sofinder-root" data-config='${JSON.stringify(noLogoConfig)}'></main></body></html>`);
+  await page.addStyleTag({ path: resolve(import.meta.dirname, "../../dist/sofinder.css") });
+  await page.addScriptTag({ path: resolve(import.meta.dirname, "../../dist/sofinder.js"), type: "module" });
+  await expect(page.getByText("guide.txt").first()).toBeVisible();
+
+  await expect(page.locator(".sf-commandbar > .sf-brand")).toHaveCount(0);
+  await expect(page.locator(".sf-commandbar > .sf-command-breadcrumb")).toBeVisible();
+  await expect(page.locator(".sf-content > .sf-breadcrumb")).toHaveCount(0);
+  const layout = await page.locator(".sf-commandbar").evaluate(element => {
+    const command = element.getBoundingClientRect();
+    const breadcrumb = element.querySelector(":scope > .sf-command-breadcrumb")!.getBoundingClientRect();
+    const search = element.querySelector(":scope > .sf-search")!.getBoundingClientRect();
+    return {
+      commandCenter: command.x + command.width / 2,
+      breadcrumbLeft: breadcrumb.left,
+      searchCenter: search.x + search.width / 2,
+    };
+  });
+  expect(layout.breadcrumbLeft).toBeLessThan(layout.commandCenter);
+  expect(layout.searchCenter).toBeGreaterThan(layout.commandCenter);
 });
 
 test("keeps panel separators subtle until they can be dragged", async ({ page }) => {
@@ -171,12 +210,30 @@ test("supports keyboard selection and keeps the picker confirmation bar compact"
   const selected = page.locator('.sf-entry[aria-selected="true"]');
   await expect(selected).toHaveCount(1);
   await expect(page.locator(".sf-picker-bar")).toBeVisible();
-  await expect(page.getByRole("button", { name: "上传" })).toHaveCount(0);
+  await expect(page.getByRole("button", { name: "新建文件夹" })).toBeVisible();
+  await expect(page.getByRole("button", { name: "上传" })).toBeVisible();
+  await expect(page.getByRole("button", { name: "重命名" })).toHaveCount(0);
   const bounds = await page.locator(".sf-picker-bar").boundingBox();
   expect(bounds).not.toBeNull();
   expect(bounds!.x + bounds!.width).toBeLessThanOrEqual(560);
   const results = await new AxeBuilder({ page }).analyze();
   expect(results.violations.filter(item => ["serious", "critical"].includes(item.impact || ""))).toEqual([]);
+});
+
+test("keeps picker selection while exposing full ACL-controlled tools", async ({ page }) => {
+  await page.setContent(`<!doctype html><html lang="zh-CN"><head><title>SoFinder full picker</title></head><body><main id="sofinder-root" data-config='${JSON.stringify({ ...config, selectMode: true, selectionKind: "image", uiDefaults: { ...config.uiDefaults, mode: "picker", fullTools: true } })}'></main></body></html>`);
+  await page.addStyleTag({ path: resolve(import.meta.dirname, "../../dist/sofinder.css") });
+  await page.addScriptTag({ path: resolve(import.meta.dirname, "../../dist/sofinder.js"), type: "module" });
+  await expect(page.getByText("photo.png").first()).toBeVisible();
+  await page.locator(".sf-entry", { hasText: "photo.png" }).click();
+
+  await expect(page.locator(".sf-picker-bar")).toBeVisible();
+  await expect(page.getByRole("button", { name: "重命名" })).toBeVisible();
+  await expect(page.getByRole("button", { name: "复制", exact: true })).toBeVisible();
+  await expect(page.getByRole("button", { name: "移动" })).toBeVisible();
+  await expect(page.getByRole("button", { name: "删除" })).toBeVisible();
+  await expect(page.getByRole("button", { name: "裁剪" })).toBeVisible();
+  await expect(page.locator(".sf-details")).toBeVisible();
 });
 
 test("keeps image thumbnails inside list rows", async ({ page }) => {
@@ -285,7 +342,9 @@ test("keeps crop corner and side handles reachable for wide images", async ({ pa
 test("lets the server auto-rename an unchanged default crop copy", async ({ page }) => {
   await page.locator(".sf-entry", { hasText: "photo.png" }).click();
   await page.getByRole("button", { name: "裁剪" }).click();
-  await expect(page.getByRole("textbox", { name: "文件名" })).toHaveValue("photo-edited.png");
+  await expect(page.getByRole("textbox", { name: "文件名" })).toHaveValue("photo-edited");
+  await expect(page.getByRole("dialog").getByText(".png", { exact: true })).toBeVisible();
+  await expect(page.getByText(/图片格式固定为 \.png/)).toBeVisible();
 
   const requestPromise = page.waitForRequest(request => request.url().endsWith("/sofinder/api/images/edit") && request.method() === "PATCH");
   await page.getByRole("dialog").getByRole("button", { name: "保存" }).click();
@@ -295,12 +354,62 @@ test("lets the server auto-rename an unchanged default crop copy", async ({ page
   await expect(page.getByRole("dialog")).toBeHidden();
 });
 
+test("blocks unsafe crop copy names before saving", async ({ page }) => {
+  await page.locator(".sf-entry", { hasText: "photo.png" }).click();
+  await page.getByRole("button", { name: "裁剪" }).click();
+  const dialog = page.getByRole("dialog");
+  await dialog.getByRole("textbox", { name: "文件名" }).fill("CON");
+
+  await expect(dialog.getByRole("alert")).toContainText("名称不能使用系统保留名");
+  await expect(dialog.getByRole("button", { name: "保存" })).toBeDisabled();
+});
+
+test("keeps the crop editor open and presents save errors", async ({ page }) => {
+  await page.route("**/sofinder/api/images/edit", route => route.fulfill({
+    status: 415,
+    json: { success: false, error: { code: "invalid_extension", message: "This file extension is not allowed." } },
+  }));
+  await page.locator(".sf-entry", { hasText: "photo.png" }).click();
+  await page.getByRole("button", { name: "裁剪" }).click();
+  const dialog = page.getByRole("dialog");
+  await dialog.getByRole("button", { name: "保存" }).click();
+
+  await expect(dialog).toBeVisible();
+  await expect(dialog.getByRole("alert")).toContainText("This file extension is not allowed.");
+  await expect(dialog.getByRole("button", { name: "保存" })).toBeEnabled();
+});
+
 test("navigates cursor pages with unknown totals", async ({ page }) => {
   await page.getByRole("button", { name: /下一页/ }).click();
   await expect(page.getByText("later.txt")).toBeVisible();
   await expect(page.getByText(/第 2/)).toBeVisible();
   await page.getByRole("button", { name: /上一页/ }).click();
   await expect(page.getByText("guide.txt").first()).toBeVisible();
+});
+
+test("accepts and persists a bounded page size", async ({ page }) => {
+  const pageSize = page.getByRole("spinbutton", { name: "每页数量 (10–500)" });
+  await expect(pageSize).toHaveValue("100");
+  await expect(pageSize).toHaveAttribute("min", "10");
+  await expect(pageSize).toHaveAttribute("max", "500");
+
+  const request = page.waitForRequest(candidate => {
+    const url = new URL(candidate.url());
+    return url.pathname === "/sofinder/api/entries" && url.searchParams.get("limit") === "25";
+  });
+  await pageSize.fill("25");
+  await pageSize.press("Enter");
+  expect(new URL((await request).url()).searchParams.get("offset")).toBe("0");
+  await expect.poll(() => page.evaluate(() => localStorage.getItem("sofinder.pageSize.v1"))).toBe("25");
+
+  const boundedRequest = page.waitForRequest(candidate => {
+    const url = new URL(candidate.url());
+    return url.pathname === "/sofinder/api/entries" && url.searchParams.get("limit") === "500";
+  });
+  await pageSize.fill("999");
+  await pageSize.press("Enter");
+  await boundedRequest;
+  await expect(pageSize).toHaveValue("500");
 });
 
 test("warns when the current storage deletes permanently", async ({ page }) => {
@@ -363,8 +472,8 @@ test("treats non-web image formats as ordinary files and blocks image selection"
   await page.addScriptTag({ path: resolve(import.meta.dirname, "../../dist/sofinder.js"), type: "module" });
   const heic = page.locator(".sf-entry", { hasText: "camera.heic" });
   await expect(heic).toBeVisible();
-  await expect(page.getByRole("button", { name: "新建文件夹" })).toHaveCount(0);
-  await expect(page.getByRole("button", { name: "上传" })).toHaveCount(0);
+  await expect(page.getByRole("button", { name: "新建文件夹" })).toBeVisible();
+  await expect(page.getByRole("button", { name: "上传" })).toBeVisible();
   await expect(heic.locator("img")).toHaveCount(0);
   await heic.click();
   await expect(page.getByRole("button", { name: "选择" })).toBeDisabled();
