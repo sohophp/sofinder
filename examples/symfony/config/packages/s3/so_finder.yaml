@@ -1,0 +1,17 @@
+so_finder:
+  resources:
+    S3Test:
+      adapter: s3
+      root: '%env(SOFINDER_S3_ROOT)%'
+      public_url: ''
+      delivery_mode: proxy
+      allowed_extensions: [txt, jpg, jpeg, png, gif, webp, svg, pdf, zip]
+      roles: [ROLE_USER]
+      options:
+        bucket: '%env(SOFINDER_S3_BUCKET)%'
+        region: '%env(SOFINDER_S3_REGION)%'
+        endpoint: '%env(SOFINDER_S3_ENDPOINT)%'
+        use_path_style_endpoint: '%env(bool:SOFINDER_S3_USE_PATH_STYLE_ENDPOINT)%'
+        access_key_id: '%env(SOFINDER_S3_ACCESS_KEY)%'
+        secret_access_key: '%env(SOFINDER_S3_SECRET_KEY)%'
+        session_token: '%env(SOFINDER_S3_SESSION_TOKEN)%'

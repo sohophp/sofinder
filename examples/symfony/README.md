@@ -1,17 +1,18 @@
 # Symfony compatibility example
 
 Choose one tested dependency line, then install and run. The example resolves
-SoFinder from the current checkout through a Composer path repository and does
-not require a tagged release:
+SoFinder and its S3 adapter from the current checkout at runtime. Composer uses
+the remote core development package only to resolve dependencies; the root PSR-4
+mapping takes precedence and loads the current checkout instead:
 
 ```bash
 cp composer-7.4.json composer.json
-composer install
+php85 /usr/local/bin/composer install
 mkdir -p var/storage
 test -e public/uploads || ln -s ../var/storage public/uploads
-php bin/console cache:warmup
-php bin/console sofinder:security:audit
-php -S 127.0.0.1:8080 -t public
+php85 bin/console cache:warmup
+php85 bin/console sofinder:security:audit
+php85 -S 127.0.0.1:8080 -t public
 ```
 
 Use `composer-6.4.json` for Symfony 6.4. Browse `/sofinder/browser` and sign in
@@ -23,17 +24,38 @@ configured `/uploads` URL. On WSL, bind the development server to all WSL IPv4
 interfaces so a Windows browser can use the distro hostname:
 
 ```bash
-php -S 0.0.0.0:8080 -t public
+php85 -S 0.0.0.0:8080 -t public
 ```
 
-The example's root autoload mapping reads SoFinder PHP classes from the current
-checkout, so PHP and committed `dist/` changes are visible without publishing
-or reinstalling the package. After changing the frontend, build `dist/` first.
+## Browser testing with S3
+
+The example can load S3 configuration from `.env.local`, just like a normal
+Symfony application. Copy the template, enter credentials for a non-production
+bucket, and keep `APP_ENV=s3`:
+
+```bash
+cd examples/symfony
+cp .env.example .env.local
+# Edit .env.local without committing it.
+php85 /usr/local/bin/composer update sohophp/sofinder-s3 symfony/dotenv --with-dependencies
+php85 bin/console cache:clear
+php85 -S 0.0.0.0:8080 -t public
+```
+
+Open `http://rocky.wsl:8080/sofinder/browser`, sign in with `demo` / `demo`,
+then choose the `S3Test` resource. `SOFINDER_S3_ROOT` limits every browser
+operation to that bucket prefix. Backblaze B2 should use its regional HTTPS
+endpoint and `SOFINDER_S3_USE_PATH_STYLE_ENDPOINT=0`.
+
+The example's root autoload mappings read SoFinder and S3 PHP classes from the
+current checkout, so PHP and committed `dist/` changes are visible without
+publishing or reinstalling either package. After changing the frontend, build
+`dist/` first.
 Clear the example cache when PHP services, configuration, or `dist/` changed:
 
 ```bash
 cd frontend
 pnpm build
 cd ../examples/symfony
-php bin/console cache:clear
+php85 bin/console cache:clear
 ```
