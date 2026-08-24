@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.1.0-beta.8 - 2026-08-24
+
+- Improve crop-box resizing with diagonal corner handles and directional edge handles.
+- Keep the opposite corner fixed while resizing with a locked aspect ratio.
+- Prevent crop-box drift and keep resized selections inside image boundaries.
+- Add unit tests for crop geometry and rounding behavior.
+
 ## 0.1.0-beta.7 - 2026-08-24
 
 - Replace the default branded header with mode-aware manager and picker shells,

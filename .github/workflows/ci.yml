@@ -64,7 +64,7 @@ jobs:
         with:
           php-version: '8.5'
           coverage: none
-      - run: composer config repositories.sofinder '{"type":"path","url":"../..","options":{"versions":{"sohophp/sofinder":"0.1.0-beta.7"}}}'
+      - run: composer config repositories.sofinder '{"type":"path","url":"../..","options":{"versions":{"sohophp/sofinder":"0.1.0-beta.8"}}}'
         working-directory: packages/sofinder-s3
       - run: composer install --no-interaction --prefer-dist
         working-directory: packages/sofinder-s3

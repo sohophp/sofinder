@@ -1,10 +1,9 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import type { Entry, ImageAction, ImageInfo } from "../types";
+import { clampCropRect, cropCursorFor, resizeCropRect, type CropRect as Rect, type CropResizeHandle as ResizeHandle } from "../cropGeometry";
 import { Modal } from "./Modal";
 
-interface Rect { x: number; y: number; width: number; height: number }
 type Ratio = "free" | "original" | "1:1" | "4:3" | "16:9";
-type ResizeHandle = "nw" | "n" | "ne" | "e" | "se" | "s" | "sw" | "w";
 
 export function ImageEditor({ entry, info, imageUrl, labels, onClose, onSave }: {
   entry: Entry; info: ImageInfo; imageUrl: string;
@@ -14,7 +13,7 @@ export function ImageEditor({ entry, info, imageUrl, labels, onClose, onSave }: 
 }) {
   const canvas = useRef<HTMLCanvasElement>(null);
   const image = useRef<HTMLImageElement | null>(null);
-  const drag = useRef<{ mode: "select" | "move" | "resize" | "pan"; handle?: string; startX: number; startY: number; original: Rect; panX: number; panY: number } | null>(null);
+  const drag = useRef<{ mode: "select" | "move" | "resize" | "pan"; handle?: ResizeHandle; startX: number; startY: number; original: Rect; panX: number; panY: number } | null>(null);
   const [rect, setRect] = useState<Rect>({ x: 0, y: 0, width: info.width, height: info.height });
   const [history, setHistory] = useState<Rect[]>([]);
   const [future, setFuture] = useState<Rect[]>([]);
@@ -71,12 +70,7 @@ export function ImageEditor({ entry, info, imageUrl, labels, onClose, onSave }: 
   useEffect(() => { if (imageReady) draw(); }, [draw, imageReady]);
 
   const ratioValue = () => ratio === "original" ? info.width / info.height : ratio === "1:1" ? 1 : ratio === "4:3" ? 4 / 3 : ratio === "16:9" ? 16 / 9 : 0;
-  const clamp = (value: Rect): Rect => ({
-    x: Math.max(0, Math.min(Math.round(value.x), info.width - 1)),
-    y: Math.max(0, Math.min(Math.round(value.y), info.height - 1)),
-    width: Math.max(1, Math.min(Math.round(value.width), info.width - Math.max(0, value.x))),
-    height: Math.max(1, Math.min(Math.round(value.height), info.height - Math.max(0, value.y))),
-  });
+  const clamp = (value: Rect): Rect => clampCropRect(value, info);
   const commit = (next: Rect) => { setHistory(current => [...current.slice(-39), rect]); setFuture([]); setRect(clamp(next)); };
   const point = (event: React.PointerEvent<HTMLCanvasElement>) => {
     const bounds = event.currentTarget.getBoundingClientRect();
@@ -101,41 +95,27 @@ export function ImageEditor({ entry, info, imageUrl, labels, onClose, onSave }: 
     if (withinY && Math.abs(current.x - rect.x) <= edgeTolerance) return "w";
     return null;
   };
-  const cursorFor = (handle: ResizeHandle | null, inside: boolean) => handle === "nw" || handle === "se" ? "nwse-resize" : handle === "ne" || handle === "sw" ? "nesw-resize" : handle === "n" || handle === "s" ? "ns-resize" : handle === "e" || handle === "w" ? "ew-resize" : inside ? "move" : "crosshair";
   const pointerDown = (event: React.PointerEvent<HTMLCanvasElement>) => {
     event.currentTarget.setPointerCapture(event.pointerId);
     const current = point(event);
     const handle = hitHandle(current, event.pointerType);
     const inside = current.x >= rect.x && current.x <= rect.x + rect.width && current.y >= rect.y && current.y <= rect.y + rect.height;
     drag.current = { mode: event.altKey || event.button === 1 ? "pan" : handle ? "resize" : inside ? "move" : "select", handle: handle || undefined, startX: current.x, startY: current.y, original: rect, panX: pan.x, panY: pan.y };
-    setCursor(event.altKey || event.button === 1 ? "grabbing" : cursorFor(handle, inside));
+    setCursor(event.altKey || event.button === 1 ? "grabbing" : cropCursorFor(handle, inside));
     setHistory(values => [...values.slice(-39), rect]); setFuture([]);
   };
   const pointerMove = (event: React.PointerEvent<HTMLCanvasElement>) => {
     if (!drag.current) {
       const current = point(event);
       const inside = current.x >= rect.x && current.x <= rect.x + rect.width && current.y >= rect.y && current.y <= rect.y + rect.height;
-      setCursor(cursorFor(hitHandle(current, event.pointerType), inside));
+      setCursor(cropCursorFor(hitHandle(current, event.pointerType), inside));
       return;
     }
     const current = point(event), active = drag.current;
     if (active.mode === "pan") { const { scale } = geometry(); setPan({ x: active.panX + (current.x - active.startX) * scale, y: active.panY + (current.y - active.startY) * scale }); return; }
     if (active.mode === "move") { setRect(clamp({ ...active.original, x: active.original.x + current.x - active.startX, y: active.original.y + current.y - active.startY })); return; }
     if (active.mode === "resize") {
-      let left = active.original.x, top = active.original.y, right = left + active.original.width, bottom = top + active.original.height;
-      if (active.handle?.includes("w")) left = current.x;
-      if (active.handle?.includes("e")) right = current.x;
-      if (active.handle?.includes("n")) top = current.y;
-      if (active.handle?.includes("s")) bottom = current.y;
-      if (right < left) [left, right] = [right, left];
-      if (bottom < top) [top, bottom] = [bottom, top];
-      const locked = ratioValue();
-      if (locked > 0) {
-        const width = Math.max(1, right - left), height = Math.max(1, bottom - top);
-        if (width / height > locked) right = left + height * locked;
-        else bottom = top + width / locked;
-      }
-      setRect(clamp({ x: left, y: top, width: right - left, height: bottom - top }));
+      setRect(resizeCropRect(active.original, active.handle!, current, info, ratioValue()));
       return;
     }
     let width = Math.abs(current.x - active.startX), height = Math.abs(current.y - active.startY);
