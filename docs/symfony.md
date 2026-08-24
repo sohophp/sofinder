@@ -182,6 +182,8 @@ checks, never replacements for CSRF validation.
 
 ## CKEditor 4
 
+For browser selection, quick upload, delivery choices and troubleshooting, see the complete [CKEditor 4 guide](/ckeditor4).
+
 ```javascript
 CKEDITOR.replace("editor", {
   filebrowserBrowseUrl: "/sofinder/browser",

@@ -5,6 +5,8 @@ description: Stable browser, API and content-delivery routes exposed by SoFinder
 
 # HTTP API stability
 
+For endpoint-by-endpoint requests, schemas, examples and error handling, see the [HTTP API reference](/api-reference). This page defines the compatibility rules clients can rely on.
+
 `GET /api/config` returns `apiVersion: "1.0"`. The browser endpoints remain
 under the imported SoFinder route prefix and every JSON response uses one of:
 

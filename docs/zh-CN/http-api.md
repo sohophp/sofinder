@@ -5,6 +5,8 @@ description: SoFinder 公开的稳定 Browser、API 与内容 Delivery 路由。
 
 # HTTP API 稳定性
 
+逐个 Endpoint 的请求字段、Schema、示例和错误处理参见 [HTTP API 参考](/zh-CN/api-reference)。本页说明客户端可以依赖的兼容规则。
+
 `GET /api/config` 会返回 `apiVersion: "1.0"`。Browser Endpoint 位于导入的 SoFinder 路由 Prefix 下，每个 JSON Response 都使用以下其中一种格式：
 
 ```json

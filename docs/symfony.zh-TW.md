@@ -138,6 +138,8 @@ final readonly class FileEntryUrlContext implements EntryUrlContextProviderInter
 
 ## CKEditor 4
 
+瀏覽選擇、快速上傳、內容傳遞與疑難排解請參考完整的 [CKEditor 4 指南](/zh-TW/ckeditor4)。
+
 ```javascript
 CKEDITOR.replace("editor", {
   filebrowserBrowseUrl: "/sofinder/browser",

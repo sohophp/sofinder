@@ -99,8 +99,10 @@ Then open `/sofinder/browser` as an authenticated user. Confirm that you can cre
 
 ## Next steps
 
+- Give users the [file manager](/user-guide), [image](/image-guide) and [CKEditor 4](/ckeditor4) guides.
 - Review every option in [configuration](/configuration).
 - Choose the correct [public or proxy delivery model](/symfony#host-application-entry-routes).
 - Add [S3-compatible storage](/s3) without pulling AWS dependencies into the core package.
 - Configure [maintenance](/maintenance) and production [security controls](/security).
 - Use the runnable applications in [`examples/symfony`](https://github.com/sohophp/sofinder/tree/main/examples/symfony) to verify Symfony 6.4 and 7.4 integration.
+- Build custom integrations with the [developer guide](/developer-guide) and [HTTP API reference](/api-reference).

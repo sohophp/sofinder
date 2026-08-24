@@ -6,6 +6,8 @@ SoFinder 是原创、采 MIT 授权的网页文件管理器，支持 PHP 8.2 至
 
 本项目采独立设计，不包含专有文件管理器的程序码、美术、翻译、样式或其他资产。Runtime 相依软件包声明记录于 `THIRD_PARTY_NOTICES.md`。
 
+普通用户可阅读[文件管理器指南](https://sofinder.sohophp.app/zh-CN/user-guide)、[图片管理](https://sofinder.sohophp.app/zh-CN/image-guide)和 [CKEditor 4](https://sofinder.sohophp.app/zh-CN/ckeditor4)。开发者请使用[集成指南](https://sofinder.sohophp.app/zh-CN/developer-guide)及 [HTTP API 参考](https://sofinder.sohophp.app/zh-CN/api-reference)。
+
 ## Symfony 安装
 
 完整文件站位于 <https://sofinder.sohophp.app/zh-CN/>。注册 `SohoPHP\SoFinder\SoFinderBundle`，导入 `@SoFinderBundle/Resources/config/routes.yaml`，并在 `so_finder.resources` 配置一个或多个资源类型。完整示例请见[简体中文 Symfony 整合](https://sofinder.sohophp.app/zh-CN/symfony)。

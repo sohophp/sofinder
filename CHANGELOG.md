@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- Add comprehensive English, Simplified Chinese and Traditional Chinese user,
+  image, CKEditor 4, developer-integration and HTTP API documentation.
+
 ## 0.1.0-beta.11 - 2026-08-24
 
 - Keep the live-source Symfony example usable in production mode by defining

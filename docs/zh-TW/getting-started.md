@@ -99,8 +99,10 @@ bin/console sofinder:image:capabilities
 
 ## 下一步
 
+- 為一般使用者提供[檔案管理](/zh-TW/user-guide)、[圖片管理](/zh-TW/image-guide)和 [CKEditor 4](/zh-TW/ckeditor4) 指南。
 - 查看[設定參考](/zh-TW/configuration)的所有選項。
 - 選擇正確的[公開或代理傳遞模式](/zh-TW/symfony#宿主應用程式入口路由)。
 - 透過獨立套件加入 [S3 相容儲存](/zh-TW/s3)，不讓 AWS 相依套件進入核心。
 - 設定[維護模式](/zh-TW/maintenance)與正式環境的[安全控制](/zh-TW/security)。
 - 使用可執行的 [`examples/symfony`](https://github.com/sohophp/sofinder/tree/main/examples/symfony) 應用程式，驗證 Symfony 6.4 與 7.4 整合。
+- 使用[開發者指南](/zh-TW/developer-guide)和 [HTTP API 參考](/zh-TW/api-reference)建置自訂整合。

@@ -8,6 +8,9 @@ const englishSidebar = [
     items: [
       { text: 'Introduction', link: '/' },
       { text: 'Installation', link: '/getting-started' },
+      { text: 'File manager user guide', link: '/user-guide' },
+      { text: 'Managing images', link: '/image-guide' },
+      { text: 'CKEditor 4', link: '/ckeditor4' },
       { text: 'Symfony integration', link: '/symfony' },
       { text: 'Configuration', link: '/configuration' },
       { text: 'Troubleshooting', link: '/troubleshooting' },
@@ -34,7 +37,9 @@ const englishSidebar = [
     text: 'Reference',
     items: [
       { text: 'Console commands', link: '/console-commands' },
-      { text: 'HTTP API', link: '/http-api' },
+      { text: 'Developer integration', link: '/developer-guide' },
+      { text: 'HTTP API reference', link: '/api-reference' },
+      { text: 'HTTP API stability', link: '/http-api' },
       { text: 'PHP contracts', link: '/php-contracts' },
       { text: 'Plugin API', link: '/plugins' },
       { text: 'Versioning', link: '/versioning' },
@@ -58,6 +63,9 @@ const traditionalChineseSidebar = [
     items: [
       { text: 'SoFinder 簡介', link: '/zh-TW/' },
       { text: '安裝與快速開始', link: '/zh-TW/getting-started' },
+      { text: '檔案管理器使用指南', link: '/zh-TW/user-guide' },
+      { text: '圖片管理', link: '/zh-TW/image-guide' },
+      { text: 'CKEditor 4', link: '/zh-TW/ckeditor4' },
       { text: 'Symfony 整合', link: '/zh-TW/symfony' },
       { text: '設定參考', link: '/zh-TW/configuration' },
       { text: '疑難排解', link: '/zh-TW/troubleshooting' },
@@ -78,7 +86,9 @@ const traditionalChineseSidebar = [
     text: '參考資料',
     items: [
       { text: 'Console 命令', link: '/zh-TW/console-commands' },
-      { text: 'HTTP API', link: '/zh-TW/http-api' },
+      { text: '開發者整合', link: '/zh-TW/developer-guide' },
+      { text: 'HTTP API 參考', link: '/zh-TW/api-reference' },
+      { text: 'HTTP API 相容性', link: '/zh-TW/http-api' },
       { text: 'PHP 契約', link: '/zh-TW/php-contracts' },
       { text: 'Plugin API', link: '/zh-TW/plugins' },
       { text: '版本與相容性', link: '/zh-TW/versioning' },
@@ -102,6 +112,9 @@ const simplifiedChineseSidebar = [
     items: [
       { text: 'SoFinder 简介', link: '/zh-CN/' },
       { text: '安装与快速开始', link: '/zh-CN/getting-started' },
+      { text: '文件管理器使用指南', link: '/zh-CN/user-guide' },
+      { text: '图片管理', link: '/zh-CN/image-guide' },
+      { text: 'CKEditor 4', link: '/zh-CN/ckeditor4' },
       { text: 'Symfony 集成', link: '/zh-CN/symfony' },
       { text: '配置参考', link: '/zh-CN/configuration' },
       { text: '故障排查', link: '/zh-CN/troubleshooting' },
@@ -122,7 +135,9 @@ const simplifiedChineseSidebar = [
     text: '参考资料',
     items: [
       { text: 'Console 命令', link: '/zh-CN/console-commands' },
-      { text: 'HTTP API', link: '/zh-CN/http-api' },
+      { text: '开发者集成', link: '/zh-CN/developer-guide' },
+      { text: 'HTTP API 参考', link: '/zh-CN/api-reference' },
+      { text: 'HTTP API 兼容性', link: '/zh-CN/http-api' },
       { text: 'PHP 契约', link: '/zh-CN/php-contracts' },
       { text: 'Plugin API', link: '/zh-CN/plugins' },
       { text: '版本与兼容性', link: '/zh-CN/versioning' },
@@ -280,10 +295,11 @@ export default defineConfig({
     locales: {
       root: {
         nav: [
-          { text: 'Guide', link: '/getting-started', activeMatch: '^/(getting-started|symfony|configuration|troubleshooting)' },
+          { text: 'User guide', link: '/user-guide', activeMatch: '^/(user-guide|image-guide|ckeditor4)' },
+          { text: 'Developers', link: '/developer-guide', activeMatch: '^/(developer-guide|api-reference|http-api|php-contracts|plugins|console-commands)' },
           { text: 'Storage', link: '/storage-adapters', activeMatch: '^/(storage-adapters|s3|image-formats|maintenance)' },
           { text: 'Security', link: '/security', activeMatch: '^/(security|threat-model)' },
-          { text: 'Reference', link: '/http-api', activeMatch: '^/(http-api|php-contracts|plugins|console-commands)' },
+          { text: 'Setup', link: '/getting-started', activeMatch: '^/(getting-started|symfony|configuration|troubleshooting)' },
           { text: 'Releases', link: '/changelog' },
         ],
         sidebar: englishSidebar,
@@ -291,7 +307,8 @@ export default defineConfig({
       'zh-TW': {
         nav: [
           { text: '開始使用', link: '/zh-TW/getting-started' },
-          { text: 'Symfony', link: '/zh-TW/symfony' },
+          { text: '使用指南', link: '/zh-TW/user-guide' },
+          { text: '開發者', link: '/zh-TW/developer-guide' },
           { text: '儲存', link: '/zh-TW/s3' },
           { text: '安全', link: '/zh-TW/security' },
           { text: 'GitHub', link: repository },
@@ -318,7 +335,8 @@ export default defineConfig({
       'zh-CN': {
         nav: [
           { text: '开始使用', link: '/zh-CN/getting-started' },
-          { text: 'Symfony', link: '/zh-CN/symfony' },
+          { text: '使用帮助', link: '/zh-CN/user-guide' },
+          { text: '开发者', link: '/zh-CN/developer-guide' },
           { text: '存储', link: '/zh-CN/storage-adapters' },
           { text: '安全', link: '/zh-CN/security' },
           { text: 'GitHub', link: repository },

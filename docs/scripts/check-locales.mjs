@@ -9,6 +9,27 @@ const sourcePages = readdirSync(docsRoot)
 const sourceRoutes = new Set(sourcePages.map((name) => name === 'index.md' ? '' : basename(name, '.md')))
 const errors = []
 
+const routeLines = readFileSync(join(docsRoot, '..', 'src', 'Resources', 'config', 'routes.yaml'), 'utf8').split('\n')
+const httpRoutes = []
+let routePath = ''
+for (const line of routeLines) {
+  const pathMatch = /^\s*path:\s*(\S+)/.exec(line)
+  if (pathMatch) routePath = pathMatch[1]
+  const methodMatch = /^\s*methods:\s*\[([A-Z]+)\]/.exec(line)
+  if (methodMatch && (routePath.startsWith('/api/') || routePath.startsWith('/compat/'))) {
+    httpRoutes.push(`${methodMatch[1]} ${routePath}`)
+  }
+}
+
+for (const [prefix, apiPage] of [['', 'api-reference.md'], ['zh-TW', 'api-reference.md'], ['zh-CN', 'api-reference.md']]) {
+  const content = readFileSync(join(docsRoot, prefix, apiPage), 'utf8')
+  for (const route of httpRoutes) {
+    if (!content.includes(`\`${route}\``) && !content.includes(`\`${route}?`)) {
+      errors.push(`${prefix || 'en'}/${apiPage}: missing route ${route}`)
+    }
+  }
+}
+
 for (const locale of locales) {
   const localeRoot = join(docsRoot, locale)
 
@@ -47,4 +68,4 @@ if (errors.length > 0) {
   process.exit(1)
 }
 
-console.log(`Locale completeness check passed: ${sourcePages.length} pages × ${locales.length} translations.`)
+console.log(`Locale completeness check passed: ${sourcePages.length} pages × ${locales.length} translations; ${httpRoutes.length} API routes documented.`)

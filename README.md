@@ -10,6 +10,8 @@ The project is independently designed and does not contain code, artwork,
 translations, styles, or other assets from proprietary file managers.
 Runtime dependency notices are recorded in `THIRD_PARTY_NOTICES.md`.
 
+Users can start with the [file manager guide](https://sofinder.sohophp.app/user-guide), [image guide](https://sofinder.sohophp.app/image-guide) and [CKEditor 4 guide](https://sofinder.sohophp.app/ckeditor4). Developers should use the [integration guide](https://sofinder.sohophp.app/developer-guide) and [HTTP API reference](https://sofinder.sohophp.app/api-reference).
+
 ## Symfony installation
 
 Register `SohoPHP\SoFinder\SoFinderBundle`, import
