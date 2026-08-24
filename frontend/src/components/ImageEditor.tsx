@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import type { Entry, ImageAction, ImageInfo } from "../types";
-import { clampCropRect, cropCursorFor, resizeCropRect, type CropRect as Rect, type CropResizeHandle as ResizeHandle } from "../cropGeometry";
+import { clampCropRect, cropCursorFor, fitCropGeometry, resizeCropRect, type CropRect as Rect, type CropResizeHandle as ResizeHandle } from "../cropGeometry";
 import { Modal } from "./Modal";
 
 type Ratio = "free" | "original" | "1:1" | "4:3" | "16:9";
@@ -32,9 +32,7 @@ export function ImageEditor({ entry, info, imageUrl, labels, onClose, onSave }: 
   const geometry = useCallback(() => {
     const target = canvas.current;
     if (!target) return { scale: 1, left: 0, top: 0 };
-    const fit = Math.min(target.width / info.width, target.height / info.height);
-    const scale = fit * zoom;
-    return { scale, left: (target.width - info.width * scale) / 2 + pan.x, top: (target.height - info.height * scale) / 2 + pan.y };
+    return fitCropGeometry(target, info, zoom, pan);
   }, [info.height, info.width, pan.x, pan.y, zoom]);
 
   const draw = useCallback(() => {

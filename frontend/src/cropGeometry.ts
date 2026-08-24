@@ -1,6 +1,7 @@
 export interface CropRect { x: number; y: number; width: number; height: number }
 export interface CropPoint { x: number; y: number }
 export interface CropBounds { width: number; height: number }
+export interface CropPan { x: number; y: number }
 export type CropResizeHandle = "nw" | "n" | "ne" | "e" | "se" | "s" | "sw" | "w";
 
 const limit = (value: number, minimum: number, maximum: number) => Math.max(minimum, Math.min(value, maximum));
@@ -11,6 +12,18 @@ export function cropCursorFor(handle: CropResizeHandle | null, inside: boolean):
   if (handle === "n" || handle === "s") return "ns-resize";
   if (handle === "e" || handle === "w") return "ew-resize";
   return inside ? "move" : "crosshair";
+}
+
+export function fitCropGeometry(viewport: CropBounds, image: CropBounds, zoom: number, pan: CropPan, handleGutter = 20) {
+  const availableWidth = Math.max(1, viewport.width - handleGutter * 2);
+  const availableHeight = Math.max(1, viewport.height - handleGutter * 2);
+  const fit = Math.min(availableWidth / image.width, availableHeight / image.height);
+  const scale = fit * zoom;
+  return {
+    scale,
+    left: (viewport.width - image.width * scale) / 2 + pan.x,
+    top: (viewport.height - image.height * scale) / 2 + pan.y,
+  };
 }
 
 export function clampCropRect(value: CropRect, bounds: CropBounds): CropRect {

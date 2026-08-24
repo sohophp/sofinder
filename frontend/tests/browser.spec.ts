@@ -34,6 +34,10 @@ test.beforeEach(async ({ page }) => {
       ], total: null, path: "", offset: 0, limit: 100, nextCursor: "page-2", sort: "name", direction: "asc", capabilities: { upload: true, create_folder: true } } } });
       return;
     }
+    if (url.pathname === "/sofinder/api/images/info") {
+      await route.fulfill({ json: { success: true, data: { width: 1200, height: 400, format: "png", mimeType: "image/png", editable: true } } });
+      return;
+    }
     if (url.pathname === "/sofinder/api/trash" && route.request().method() === "GET") {
       await route.fulfill({ json: { success: true, data: { items: [{ id: "1234567890abcdef1234567890abcdef", resource: "Files", path: "guide.txt", directory: false, size: 12, deletedAt: 1, expiresAt: 9999999999 }], total: 1, offset: 0, limit: 50, usedItems: 1, usedBytes: 12, maxItems: 1000, maxBytes: 1000000 } } });
       return;
@@ -55,6 +59,7 @@ test.beforeEach(async ({ page }) => {
     await route.fulfill({ status: 200, contentType: "text/html", body: "<!doctype html><title>SoFinder test</title>" });
   });
   await page.goto("http://sofinder.test/");
+  await page.evaluate(() => localStorage.setItem("sofinder.imageTools.v2", JSON.stringify({ resize: false, crop: true, rotate: false, presets: false })));
   await page.setContent(`<!doctype html><html lang="zh-CN"><head><title>SoFinder</title></head><body><main id="sofinder-root" data-config='${JSON.stringify(config)}'></main></body></html>`);
   await page.addStyleTag({ path: resolve(import.meta.dirname, "../../dist/sofinder.css") });
   await page.addScriptTag({ path: resolve(import.meta.dirname, "../../dist/sofinder.js"), type: "module" });
@@ -100,6 +105,38 @@ test("keeps image thumbnails inside list rows", async ({ page }) => {
   expect(boxes[1]!.height).toBeLessThanOrEqual(32);
   expect(boxes[1]!.y).toBeGreaterThanOrEqual(boxes[0]!.y);
   expect(boxes[1]!.y + boxes[1]!.height).toBeLessThanOrEqual(boxes[0]!.y + boxes[0]!.height);
+});
+
+test("keeps crop corner and side handles reachable for wide images", async ({ page }) => {
+  await page.locator(".sf-entry", { hasText: "photo.png" }).click();
+  await page.getByRole("button", { name: "裁剪" }).click();
+  const canvas = page.locator(".sf-editor-canvas canvas");
+  await expect(canvas).toBeVisible();
+  const box = await canvas.boundingBox();
+  expect(box).not.toBeNull();
+  const canvasPoint = (x: number, y: number) => ({ x: box!.x + x / 900 * box!.width, y: box!.y + y / 560 * box!.height });
+  const left = 20;
+  const right = 880;
+  const top = (560 - 400 * ((900 - 40) / 1200)) / 2;
+  const bottom = 560 - top;
+
+  for (const [x, y, cursor] of [
+    [left, top, "nwse-resize"], [right, top, "nesw-resize"],
+    [right, bottom, "nwse-resize"], [left, bottom, "nesw-resize"],
+    [left, 280, "ew-resize"], [right, 280, "ew-resize"],
+  ] as const) {
+    await page.mouse.move(canvasPoint(x, y).x, canvasPoint(x, y).y);
+    await expect(canvas).toHaveCSS("cursor", cursor);
+  }
+
+  const start = canvasPoint(right, 280);
+  const end = canvasPoint(right - 100, 280);
+  await page.mouse.move(start.x, start.y);
+  await page.mouse.down();
+  await page.mouse.move(end.x, end.y);
+  await page.mouse.up();
+  await expect(page.getByRole("spinbutton", { name: "宽度" })).not.toHaveValue("1200");
+  await expect(page.getByRole("spinbutton", { name: "高度" })).toHaveValue("400");
 });
 
 test("navigates cursor pages with unknown totals", async ({ page }) => {

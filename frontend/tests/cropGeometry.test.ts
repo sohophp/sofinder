@@ -1,10 +1,19 @@
 import { describe, expect, it } from "vitest";
-import { clampCropRect, cropCursorFor, resizeCropRect } from "../src/cropGeometry";
+import { clampCropRect, cropCursorFor, fitCropGeometry, resizeCropRect } from "../src/cropGeometry";
 
 const bounds = { width: 1000, height: 800 };
 const original = { x: 200, y: 150, width: 400, height: 300 };
 
 describe("crop geometry", () => {
+  it("keeps wide and tall image handles inside the canvas", () => {
+    const wide = fitCropGeometry({ width: 900, height: 560 }, { width: 1800, height: 600 }, 1, { x: 0, y: 0 });
+    expect(wide.left).toBe(20);
+    expect(wide.left + 1800 * wide.scale).toBe(880);
+    const tall = fitCropGeometry({ width: 900, height: 560 }, { width: 600, height: 1800 }, 1, { x: 0, y: 0 });
+    expect(tall.top).toBe(20);
+    expect(tall.top + 1800 * tall.scale).toBe(540);
+  });
+
   it("uses diagonal cursors for corners and axis cursors for edges", () => {
     expect(["nw", "se"].map(handle => cropCursorFor(handle as "nw" | "se", false))).toEqual(["nwse-resize", "nwse-resize"]);
     expect(["ne", "sw"].map(handle => cropCursorFor(handle as "ne" | "sw", false))).toEqual(["nesw-resize", "nesw-resize"]);
