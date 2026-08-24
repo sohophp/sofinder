@@ -10642,7 +10642,8 @@ function F({ entry: e, info: t, imageUrl: n, labels: r, onClose: i, onSave: a })
 			/* @__PURE__ */ (0, k.jsxs)("div", {
 				className: "sf-editor-toolbar",
 				children: [
-					/* @__PURE__ */ (0, k.jsxs)("label", { children: [r.ratio, /* @__PURE__ */ (0, k.jsxs)("select", {
+					/* @__PURE__ */ (0, k.jsxs)("select", {
+						"aria-label": r.ratio,
 						value: x,
 						onChange: (e) => ue(e.target.value),
 						children: [
@@ -10667,7 +10668,7 @@ function F({ entry: e, info: t, imageUrl: n, labels: r, onClose: i, onSave: a })
 								children: "16:9"
 							})
 						]
-					})] }),
+					}),
 					/* @__PURE__ */ (0, k.jsxs)("label", { children: [r.zoom, /* @__PURE__ */ (0, k.jsx)("input", {
 						type: "range",
 						min: "1",

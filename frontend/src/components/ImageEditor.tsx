@@ -144,7 +144,7 @@ export function ImageEditor({ entry, info, imageUrl, labels, onClose, onSave }: 
 
   return <Modal title={`${labels.crop}: ${entry.name}`} closeLabel={labels.close} onClose={onClose} className="sf-image-editor" footer={<><span>{rect.width} × {rect.height} px</span><button onClick={onClose}>{labels.cancel}</button><button className="primary" disabled={saving || (saveMode === "copy" && name.trim() === "")} onClick={() => void save()}>{saving ? labels.saving : labels.save}</button></>}>
     <div className="sf-editor-toolbar">
-      <label>{labels.ratio}<select value={ratio} onChange={event => changeRatio(event.target.value as Ratio)}><option value="free">{labels.free}</option><option value="original">{labels.original}</option><option value="1:1">1:1</option><option value="4:3">4:3</option><option value="16:9">16:9</option></select></label>
+      <select aria-label={labels.ratio} value={ratio} onChange={event => changeRatio(event.target.value as Ratio)}><option value="free">{labels.free}</option><option value="original">{labels.original}</option><option value="1:1">1:1</option><option value="4:3">4:3</option><option value="16:9">16:9</option></select>
       <label>{labels.zoom}<input type="range" min="1" max="3" step="0.05" value={zoom} onChange={event => { const value = Number(event.target.value); setZoom(value); cropper.current?.zoomTo(baseZoom.current * value); }}/></label>
       <button disabled={history.length === 0} onClick={undo}>{labels.undo}</button><button disabled={future.length === 0} onClick={redo}>{labels.redo}</button>
       <button onClick={reset}>{labels.reset}</button>

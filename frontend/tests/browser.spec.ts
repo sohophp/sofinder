@@ -110,6 +110,7 @@ test("keeps image thumbnails inside list rows", async ({ page }) => {
 test("keeps crop corner and side handles reachable for wide images", async ({ page }) => {
   await page.locator(".sf-entry", { hasText: "photo.png" }).click();
   await page.getByRole("button", { name: "裁剪" }).click();
+  await expect(page.getByRole("combobox", { name: "比例" })).toBeVisible();
   const cropper = page.locator(".cropper-container");
   await expect(cropper).toBeVisible();
   for (const [handle, cursor] of [
