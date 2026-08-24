@@ -52,11 +52,35 @@ need another public symlink. `S3Files` uses `SOFINDER_PROVIDER_PREFIX`. The same
 without renaming. Backblaze B2 should use its regional HTTPS endpoint and
 `SOFINDER_PROVIDER_USE_PATH_STYLE_ENDPOINT=0`.
 
-To expose a second S3 prefix, fill the `SOFINDER_PROVIDER_IMAGES_*` variables
-and set `APP_ENV=s3_multi`. This adds `S3Images` while retaining `Files`,
-`Images`, and `S3Files`. A Backblaze application key restricted to
-`component-files` cannot read `component-images`; use a second prefix-restricted
-Images key, or copy a bucket-wide key into both credential sets.
+There is no fixed limit or prescribed naming for S3 resources. Add another
+entry under `so_finder.resources` in `config/packages/s3/so_finder.yaml` for
+each bucket or prefix. Resource names such as `BackblazeFiles`, `MediaArchive`,
+or `CustomerUploads` are application-defined. Connection options may reuse the
+same environment variables or reference a separate set for another provider,
+bucket, or restricted key. For example:
+
+```yaml
+so_finder:
+  resources:
+    AnyResourceName:
+      adapter: s3
+      root: '%env(ANY_S3_PREFIX)%'
+      public_url: ''
+      delivery_mode: proxy
+      allowed_extensions: [jpg, jpeg, png, webp]
+      roles: [ROLE_USER]
+      options:
+        bucket: '%env(ANY_S3_BUCKET)%'
+        region: '%env(ANY_S3_REGION)%'
+        endpoint: '%env(ANY_S3_ENDPOINT)%'
+        use_path_style_endpoint: false
+        access_key_id: '%env(ANY_S3_ACCESS_KEY)%'
+        secret_access_key: '%env(ANY_S3_SECRET_KEY)%'
+```
+
+Repeat that block as many times as needed. Keep resource structure in YAML and
+credentials in `.env.local`. A Backblaze key restricted to one prefix cannot be
+reused for another prefix unless its permissions cover both.
 
 The example's root autoload mappings read SoFinder and S3 PHP classes from the
 current checkout, so PHP and committed `dist/` changes are visible without
