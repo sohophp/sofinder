@@ -26,13 +26,14 @@ interfaces so a Windows browser can use the distro hostname:
 php -S 0.0.0.0:8080 -t public
 ```
 
-After changing PHP source, reinstall the local path package. After changing the
-frontend, build `dist/` first. Then clear the example cache before refreshing:
+The example's root autoload mapping reads SoFinder PHP classes from the current
+checkout, so PHP and committed `dist/` changes are visible without publishing
+or reinstalling the package. After changing the frontend, build `dist/` first.
+Clear the example cache when PHP services, configuration, or `dist/` changed:
 
 ```bash
 cd frontend
 pnpm build
 cd ../examples/symfony
-composer reinstall sohophp/sofinder --no-interaction
 php bin/console cache:clear
 ```
