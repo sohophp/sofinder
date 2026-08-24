@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- Clear stale directory entries when switching to a resource that fails to
+  load, and ignore superseded asynchronous list responses.
+
 ## 0.1.0-beta.9 - 2026-08-24
 
 - Keep image thumbnails fully contained within fixed-height list rows.

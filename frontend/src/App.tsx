@@ -100,6 +100,7 @@ export default function App({ config }: { config: SoFinderConfig }) {
   const uploadInput = useRef<HTMLInputElement>(null);
   const uploadControllers = useRef(new Map<string, AbortController>());
   const uploadSequence = useRef(0);
+  const loadSequence = useRef(0);
   const confirmResolver = useRef<((answer: boolean) => void) | null>(null);
   const longPress = useRef<number | null>(null);
   const columnDrag = useRef<{ side: "left" | "right"; startX: number; startWidth: number; currentWidth: number } | null>(null);
@@ -147,10 +148,12 @@ export default function App({ config }: { config: SoFinderConfig }) {
   };
   const load = useCallback(async (nextResource = resource, nextPath = path, term = search, nextOffset = offset, nextSort = sort, nextDirection = direction, nextSearchMode = searchMode, cursor: string | null = pageCursor) => {
     if (!nextResource) return;
+    const sequence = ++loadSequence.current;
     setLoading(true);
     setNotice("");
     try {
       const result = await api.list(nextResource, nextPath, term, nextSort, nextDirection, nextOffset, pageSize, nextSearchMode, cursor);
+      if (sequence !== loadSequence.current) return;
       setEntries(result.entries);
       setPath(result.path);
       setOffset(result.offset);
@@ -160,8 +163,21 @@ export default function App({ config }: { config: SoFinderConfig }) {
       setDirectoryCapabilities(result.capabilities || {});
       setSelectedPaths(new Set());
       setSelectionAnchor(null);
-    } catch (error) { report(error); }
-    finally { setLoading(false); }
+    } catch (error) {
+      if (sequence !== loadSequence.current) return;
+      setEntries([]);
+      setPath(nextPath);
+      setOffset(nextOffset);
+      setTotal(null);
+      setPageCursor(cursor);
+      setNextCursor(null);
+      setDirectoryCapabilities({});
+      setSelectedPaths(new Set());
+      setSelectionAnchor(null);
+      report(error);
+    } finally {
+      if (sequence === loadSequence.current) setLoading(false);
+    }
   }, [api, direction, offset, pageCursor, path, report, resource, search, searchMode, sort]);
 
   useEffect(() => {
