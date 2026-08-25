@@ -149,7 +149,15 @@ final readonly class FileManager
     }
 
     /** @param resource $stream */
-    public function upload(string $resourceName, string $directory, string $name, int $size, mixed $stream, bool $overwrite = false): Entry
+    public function upload(
+        string $resourceName,
+        string $directory,
+        string $name,
+        int $size,
+        mixed $stream,
+        bool $overwrite = false,
+        bool $autoRename = false,
+    ): Entry
     {
         $path = $this->pathGuard->join($directory, trim($name));
         $authorizationOperation = $overwrite ? 'overwrite' : 'upload';
@@ -165,14 +173,38 @@ final readonly class FileManager
                 throw new SoFinderException('Unable to read the inspected upload.', 'upload_quarantine_failed', 500);
             }
 
-            return $this->usage->mutate($item, function (int $currentUsage) use ($item, $path, $input, $overwrite, $actualSize, $size, $authorizationOperation): array {
+            return $this->usage->mutate($item, function (int $currentUsage) use ($item, $path, $input, $overwrite, $autoRename, $actualSize, $size, $authorizationOperation): array {
                 $replacedBytes = $overwrite ? $this->existingSize($item, $path) : 0;
                 $this->assertQuota($item, $currentUsage, $replacedBytes, $actualSize);
-                $this->before($authorizationOperation, $item, $path, ['size' => $actualSize, 'reported_size' => $size]);
-                $entry = $item->storage->writeStream($path, $input, $overwrite);
-                $this->after($authorizationOperation, $item, $path, ['entry' => $entry, 'size' => $actualSize]);
 
-                return ['value' => $this->present($item, $entry), 'delta' => $actualSize - $replacedBytes];
+                $attempts = $autoRename && !$overwrite ? 1000 : 1;
+                for ($attempt = 0; $attempt < $attempts; ++$attempt) {
+                    $destination = $autoRename && !$overwrite
+                        ? $this->availableName($item, $path, true)
+                        : $path;
+                    $destinationName = basename($destination);
+                    $item->resource->assertFileNameAllowed($destinationName);
+                    $item->resource->assertEntryPathAllowed($destination, false);
+                    $this->assertGranted($item, $authorizationOperation, $destination);
+                    $this->before($authorizationOperation, $item, $destination, ['size' => $actualSize, 'reported_size' => $size]);
+                    try {
+                        $entry = $item->storage->writeStream($destination, $input, $overwrite);
+                    } catch (ConflictException $exception) {
+                        if (!$autoRename || $overwrite || $attempt === $attempts - 1) {
+                            throw $exception;
+                        }
+                        if (fseek($input, 0) !== 0) {
+                            throw new SoFinderException('Unable to retry the inspected upload.', 'upload_quarantine_failed', 500);
+                        }
+
+                        continue;
+                    }
+                    $this->after($authorizationOperation, $item, $destination, ['entry' => $entry, 'size' => $actualSize]);
+
+                    return ['value' => $this->present($item, $entry), 'delta' => $actualSize - $replacedBytes];
+                }
+
+                throw new ConflictException('Unable to find an available upload name.');
             });
         } finally {
             if (is_resource($input)) {
@@ -552,7 +584,7 @@ final readonly class FileManager
         $this->events->dispatch(new OperationEvent('after.' . $operation, $item->resource, $path, $context));
     }
 
-    private function availableName(ResourceStorage $item, string $destination): string
+    private function availableName(ResourceStorage $item, string $destination, bool $compactSuffix = false): string
     {
         try {
             $item->storage->entry($destination);
@@ -566,7 +598,7 @@ final readonly class FileManager
         $extension = pathinfo($name, PATHINFO_EXTENSION);
         $stem = $extension === '' ? $name : substr($name, 0, -(strlen($extension) + 1));
         for ($index = 1; $index <= 999; ++$index) {
-            $candidateName = $stem . ' (' . $index . ')' . ($extension === '' ? '' : '.' . $extension);
+            $candidateName = $stem . ($compactSuffix ? '(' : ' (') . $index . ')' . ($extension === '' ? '' : '.' . $extension);
             $candidate = $this->pathGuard->join($directory, $candidateName);
             try {
                 $item->storage->entry($candidate);

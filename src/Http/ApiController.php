@@ -136,6 +136,7 @@ final readonly class ApiController
                 (int) $uploaded->getSize(),
                 $stream,
                 $request->request->getBoolean('overwrite'),
+                $request->request->getBoolean('autoRename'),
             );
         } finally {
             fclose($stream);

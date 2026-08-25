@@ -44,13 +44,21 @@ CKEditor 會在瀏覽和傳統上傳請求中附加 `CKEditorFuncNum`。SoFinder
 3. SoFinder 驗證並儲存到指定資源，然後返回入口 URL。
 4. CKEditor 切換到 URL 資訊，使用者完成插入。
 
-檔案欄位名必須是 `upload`。可在上傳 URL 中增加 `currentFolder`，指定固定且規範化的目標資料夾。同名衝突不會靜默覆蓋。圖片快速上傳會拒絕 HEIC、HEIF、TIFF，以及目前伺服器不能嵌入網頁的格式。
+檔案欄位名必須是 `upload`。可在上傳 URL 中增加 `currentFolder`，指定固定且規範化的目標資料夾。預設情況下，同名衝突仍屬於上傳成功：SoFinder 保留原檔案，把新檔案依序儲存為 `photo(1).jpg`、`photo(2).jpg`，向 CKEditor 返回實際 URL，並提示發生了改名。圖片快速上傳會拒絕 HEIC、HEIF、TIFF，以及目前伺服器不能嵌入網頁的格式。
 
 需要 JSON 的整合可使用 `responseType=json` 或 `Accept: application/json`。成功回應：
 
 ```json
 {"uploaded":1,"fileName":"photo.jpg","url":"https://cdn.example.com/images/photo.jpg"}
 ```
+
+自動改名成功時會帶上 CKEditor 支援的可選訊息物件：
+
+```json
+{"uploaded":1,"fileName":"photo(1).jpg","url":"https://cdn.example.com/images/photo%281%29.jpg","error":{"message":"A file with the same name already exists. The uploaded file was renamed to \"photo(1).jpg\"."}}
+```
+
+傳統 Callback 回應也會返回改名後的 URL，並透過第三個參數提示改名。只有確實需要 CKEditor 上傳覆蓋同名檔案時，才設定 `so_finder.ckeditor4.overwrite_on_upload: true`；每次覆蓋仍須通過資源獨立的 `overwrite` 權限檢查。
 
 失敗回應：
 

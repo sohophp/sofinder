@@ -22,6 +22,16 @@ Configuration lives below the `so_finder` key. Symfony validates all values whil
 
 These working directories must be writable by PHP and must not be directly web-accessible.
 
+## CKEditor 4 uploads
+
+```yaml
+so_finder:
+  ckeditor4:
+    overwrite_on_upload: false
+```
+
+The safe default auto-renames quick-upload conflicts using names such as `photo(1).jpg`. Enabling `overwrite_on_upload` replaces an existing file only when the current actor also has the resource's independent `overwrite` permission.
+
 ## Recycle bin
 
 | Option | Default |

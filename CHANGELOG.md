@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.1.0-beta.13 - 2026-08-25
+
+- Auto-rename CKEditor 4 quick-upload conflicts with CKFinder-style suffixes,
+  return the actual URL plus a success warning, and require explicit configuration
+  together with independent overwrite authorization before replacing a file.
+
 ## 0.1.0-beta.12 - 2026-08-25
 
 - Allow picker integrations to opt into the complete ACL-controlled management, detail and image toolbar with `uiTools=full`, without changing picker selection callbacks.

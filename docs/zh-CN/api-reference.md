@@ -128,7 +128,7 @@ Response Data 包含 `entries`、`total`、`path`、`offset`、`limit`、`sort`�
 
 ### `POST /api/uploads`
 
-使用 `multipart/form-data`，字段为 `resource`、`path`、`upload`，可选 `overwrite=1`。返回 `{entry}` 和 HTTP 201。服务器检查真实字节，不信任客户端大小或 MIME Metadata。
+使用 `multipart/form-data`，字段为 `resource`、`path`、`upload`，可选 `overwrite=1` 或 `autoRename=1`。返回 `{entry}` 和 HTTP 201。`autoRename=1` 且不覆盖时，同名文件会以 `photo(1).jpg` 这类 CKFinder 风格的首个可用名称保存。服务器检查真实字节，不信任客户端大小或 MIME Metadata。
 
 ### 分块上传
 
@@ -201,7 +201,7 @@ Action 为 `crop`、`resize`、`rotate`、`preset`。Rotation 为 0／90／180�
 
 ## CKEditor 兼容上传
 
-`POST /compat/ckeditor4/upload` 使用 Multipart `upload` 字段；Query 包括 `type`、`selection`、`currentFolder`、`_token`、`CKEditorFuncNum`，可选 `responseType=json`。回调和 JSON 格式参见 [CKEditor 指南](/zh-CN/ckeditor4)。
+`POST /compat/ckeditor4/upload` 使用 Multipart `upload` 字段；Query 包括 `type`、`selection`、`currentFolder`、`_token`、`CKEditorFuncNum`，可选 `responseType=json`。除非显式开启 `ckeditor4.overwrite_on_upload`，否则同名文件会自动改名。回调和 JSON 格式参见 [CKEditor 指南](/zh-CN/ckeditor4)。
 
 ## 常见状态和错误
 

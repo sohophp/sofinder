@@ -5,6 +5,12 @@ description: 各 SoFinder 預發布版本的相容性、設定與 adapter 升級
 
 # 升級 SoFinder
 
+## 從 0.1.0-beta.12 升級至 0.1.0-beta.13
+
+- CKEditor 4 快速上傳現在會保留同名原檔案，並把新檔案儲存為 `photo(1).jpg` 這類 CKFinder 風格名稱；整合會收到實際改名 URL 與上傳成功提示。
+- 確實需要取代同名檔案的宿主必須設定 `so_finder.ckeditor4.overwrite_on_upload: true`，並授予獨立的 `overwrite` 操作權限；安全預設值為 `false`。
+- 自訂 Multipart 上傳客戶端可透過 `autoRename=1` 使用相同行為。無需遷移儲存檔案、資料庫或前端資源。
+
 ## 從 0.1.0-beta.11 升級至 0.1.0-beta.12
 
 - 部署已提交的瀏覽器資源。只有需要完整 ACL 工具列的 picker 才加入 `uiTools=full`；預設仍為精簡模式。

@@ -19,6 +19,7 @@ final readonly class QuickUploadController
         private FileManager $files,
         private CsrfGuard $csrf,
         private ?ImageCapabilityProviderInterface $imageCapabilities = null,
+        private bool $overwriteOnUpload = false,
     ) {
     }
 
@@ -51,15 +52,26 @@ final readonly class QuickUploadController
                 $uploaded->getClientOriginalName(),
                 (int) $uploaded->getSize(),
                 $stream,
+                $this->overwriteOnUpload,
+                !$this->overwriteOnUpload,
             );
         } finally {
             fclose($stream);
         }
         $url = $entry->url ?? '';
+        $renamed = $entry->name !== $uploaded->getClientOriginalName();
+        $message = $renamed
+            ? sprintf('A file with the same name already exists. The uploaded file was renamed to "%s".', $entry->name)
+            : '';
         if ($expectsJson) {
-            return new JsonResponse(['uploaded' => 1, 'fileName' => $entry->name, 'url' => $url]);
+            $payload = ['uploaded' => 1, 'fileName' => $entry->name, 'url' => $url];
+            if ($renamed) {
+                $payload['error'] = ['message' => $message];
+            }
+
+            return new JsonResponse($payload);
         }
-        $payload = json_encode([$function, $url, ''], JSON_THROW_ON_ERROR | JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT);
+        $payload = json_encode([$function, $url, $message], JSON_THROW_ON_ERROR | JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT);
         $nonce = rtrim(strtr(base64_encode(random_bytes(18)), '+/', '-_'), '=');
         $html = sprintf('<script nonce="%s">(function(){var p=%s;window.parent.CKEDITOR.tools.callFunction(p[0],p[1],p[2]);})();</script>', $nonce, $payload);
 

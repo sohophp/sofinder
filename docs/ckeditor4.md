@@ -44,13 +44,21 @@ The example keeps picker selection and callback behavior but requests `uiTools=f
 3. SoFinder validates and stores it in the configured resource, then returns its entry URL.
 4. CKEditor switches to the URL information and allows the user to finish insertion.
 
-The field name must be `upload`. `currentFolder` may be added to the upload URL to target a fixed normalized folder. A name conflict is not overwritten silently. Image quick upload rejects HEIC, HEIF, TIFF and any format that the current server cannot embed in a browser.
+The field name must be `upload`. `currentFolder` may be added to the upload URL to target a fixed normalized folder. By default, a name conflict remains a successful upload: SoFinder preserves the existing file, stores the new one as `photo(1).jpg`, `photo(2).jpg`, and so on, returns that actual URL, and reports the rename to CKEditor. Image quick upload rejects HEIC, HEIF, TIFF and any format that the current server cannot embed in a browser.
 
 Modern CKEditor upload integrations may request JSON with `responseType=json` or `Accept: application/json`. Success is:
 
 ```json
 {"uploaded":1,"fileName":"photo.jpg","url":"https://cdn.example.com/images/photo.jpg"}
 ```
+
+A successful auto-rename includes CKEditor's optional message object:
+
+```json
+{"uploaded":1,"fileName":"photo(1).jpg","url":"https://cdn.example.com/images/photo%281%29.jpg","error":{"message":"A file with the same name already exists. The uploaded file was renamed to \"photo(1).jpg\"."}}
+```
+
+Legacy callback responses likewise return the renamed URL and use the callback's third argument for this message. Set `so_finder.ckeditor4.overwrite_on_upload: true` only when CKEditor uploads should replace conflicts; every replacement is still checked against the resource's independent `overwrite` permission.
 
 Failure is:
 

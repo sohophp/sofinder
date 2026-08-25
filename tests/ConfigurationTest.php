@@ -20,5 +20,18 @@ final class ConfigurationTest extends TestCase
 
         self::assertTrue($config['ui']['logo']);
         self::assertTrue($config['ui']['header']);
+        self::assertFalse($config['ckeditor4']['overwrite_on_upload']);
+    }
+
+    public function testCkeditorUploadOverwriteCanBeEnabledExplicitly(): void
+    {
+        $config = (new Processor())->processConfiguration(new Configuration(), [[
+            'ckeditor4' => ['overwrite_on_upload' => true],
+            'resources' => [
+                'Files' => ['root' => '/tmp/sofinder'],
+            ],
+        ]]);
+
+        self::assertTrue($config['ckeditor4']['overwrite_on_upload']);
     }
 }

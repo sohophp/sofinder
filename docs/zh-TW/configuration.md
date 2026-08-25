@@ -22,6 +22,16 @@ description: SoFinder 全域、UI、維護、圖片、請求限制與資源設�
 
 這些工作目錄必須允許 PHP 寫入，而且不可經由 Web 直接存取。
 
+## CKEditor 4 上傳
+
+```yaml
+so_finder:
+  ckeditor4:
+    overwrite_on_upload: false
+```
+
+安全預設值會把快速上傳的同名檔案自動改名為 `photo(1).jpg` 這類名稱。啟用 `overwrite_on_upload` 後，也只有目前使用者擁有資源獨立的 `overwrite` 權限時才會取代原檔案。
+
 ## 回收站
 
 | 選項 | 預設值 |

@@ -305,6 +305,7 @@ final class SoFinderExtension extends Extension
             new Reference(FileManager::class),
             new Reference(CsrfGuard::class),
             new Reference(ImageCapabilityProviderInterface::class),
+            $config['ckeditor4']['overwrite_on_upload'],
         ]);
         $this->controller($container, ChunkUploadController::class, [
             new Reference(FileManager::class),

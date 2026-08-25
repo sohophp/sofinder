@@ -1,5 +1,11 @@
 # Upgrading SoFinder
 
+## From 0.1.0-beta.12 to 0.1.0-beta.13
+
+- CKEditor 4 quick uploads now preserve an existing conflicting file and save the new upload with a CKFinder-style suffix such as `photo(1).jpg`. Integrations receive the actual renamed URL and a successful-upload warning.
+- Hosts that intentionally require the previous replacement behavior must set `so_finder.ckeditor4.overwrite_on_upload: true` and grant the independent `overwrite` operation. The safe default is `false`.
+- Custom multipart upload clients may opt into the same behavior with `autoRename=1`. No stored-file, database or asset migration is required.
+
 ## From 0.1.0-beta.11 to 0.1.0-beta.12
 
 - Rebuild or deploy the committed `dist/` assets. Picker integrations that need the complete authenticated toolbar should add `uiTools=full`; the default remains the smaller common picker toolbar.

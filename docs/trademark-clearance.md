@@ -69,3 +69,12 @@ promotion.
 - Public GitHub, Packagist and npm searches did not identify another file-manager package using the intended `sohophp/sofinder` or `@sohophp/sofinder-ui` identities before the release check.
 
 No blocking software/file-management conflict was identified by this engineering recheck, so beta.12 retains the name. Dynamic registry interfaces and ordinary indexing are incomplete; this is not a legal clearance opinion.
+
+## 2026-08-25 beta.13 engineering recheck
+
+- Exact-name indexed searches scoped to the WIPO, USPTO, EUIPO and CNIPA public surfaces did not expose a class 9, 35, 38 or 42 file-management/software mark that changes the beta.12 assessment.
+- USPTO serials 97045626 and 97046433 remain the known unrelated class 7 household-machinery and class 11 appliance records.
+- `sofinder.me` remains a social-profile link service, while the recent automotive “Sofinder” feature remains unrelated to PHP, developer tooling or file management.
+- GitHub and Packagist identify this project at `sohophp/sofinder`; Packagist listed releases through beta.12 immediately before this release. The `@sohophp/sofinder-ui` npm endpoint remained unclaimed/private (HTTP 404).
+
+No blocking software/file-management conflict was identified by this engineering recheck, so beta.13 retains the name. Dynamic registry interfaces and ordinary indexing are incomplete; this is not a legal clearance opinion.

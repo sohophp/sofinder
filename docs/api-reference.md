@@ -168,7 +168,7 @@ Returns `trash`, which is null for permanent-delete adapters or an object contai
 
 ### `POST /api/uploads`
 
-Send `multipart/form-data` fields `resource`, `path`, `upload` and optional `overwrite=1`. Returns `{entry}` with HTTP 201. The server validates actual bytes rather than trusting client size or MIME metadata.
+Send `multipart/form-data` fields `resource`, `path`, `upload` and optional `overwrite=1` or `autoRename=1`. Returns `{entry}` with HTTP 201. When `autoRename=1` and overwrite is false, a conflict is stored with the first available CKFinder-style suffix such as `photo(1).jpg`. The server validates actual bytes rather than trusting client size or MIME metadata.
 
 ### Chunk upload
 
@@ -246,7 +246,7 @@ An entry accepts at most 10 unique tags of 1–30 visible characters.
 
 ## CKEditor compatibility upload
 
-`POST /compat/ckeditor4/upload` accepts multipart field `upload`. Query parameters include `type`, `selection`, `currentFolder`, `_token`, `CKEditorFuncNum` and optional `responseType=json`. See the [CKEditor 4 guide](/ckeditor4) for callback and JSON responses.
+`POST /compat/ckeditor4/upload` accepts multipart field `upload`. Query parameters include `type`, `selection`, `currentFolder`, `_token`, `CKEditorFuncNum` and optional `responseType=json`. Name conflicts are auto-renamed unless `ckeditor4.overwrite_on_upload` is explicitly enabled. See the [CKEditor 4 guide](/ckeditor4) for callback and JSON responses.
 
 ## Common status and error codes
 

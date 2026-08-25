@@ -333,6 +333,27 @@ final class FileManagerTest extends TestCase
         self::assertSame('new', file_get_contents($this->directory . '/document.txt'));
     }
 
+    public function testUploadCanChooseACkfinderStyleConflictSafeName(): void
+    {
+        file_put_contents($this->directory . '/document.txt', 'original');
+        file_put_contents($this->directory . '/document(1).txt', 'first duplicate');
+        $stream = fopen('php://temp', 'w+b');
+        self::assertIsResource($stream);
+        fwrite($stream, 'uploaded');
+        rewind($stream);
+
+        try {
+            $entry = $this->manager(true)->upload('Files', '', 'document.txt', 8, $stream, false, true);
+        } finally {
+            fclose($stream);
+        }
+
+        self::assertSame('document(2).txt', $entry->name);
+        self::assertSame('original', file_get_contents($this->directory . '/document.txt'));
+        self::assertSame('first duplicate', file_get_contents($this->directory . '/document(1).txt'));
+        self::assertSame('uploaded', file_get_contents($this->directory . '/document(2).txt'));
+    }
+
     public function testQuotaRejectsUploadWithoutChangingExistingFiles(): void
     {
         file_put_contents($this->directory . '/existing.txt', '1234');
