@@ -1,5 +1,22 @@
 # Upgrading SoFinder
 
+## From 0.1.0-beta.13 to 0.1.0-beta.14
+
+Thumbnail cache files now receive the configured filesystem mode after atomic
+publication. Defaults remain `0775` for directories and `0664` for files. Hosts
+where PHP-FPM and deployment processes share a group may opt into setgid
+directories explicitly:
+
+```yaml
+so_finder:
+  filesystem_permissions:
+    directory_mode: '2775'
+    file_mode: '0664'
+```
+
+The values must be quoted octal strings. Existing files are not changed; repair
+historical ownership or modes once before deploying when required.
+
 ## From 0.1.0-beta.12 to 0.1.0-beta.13
 
 - CKEditor 4 quick uploads now preserve an existing conflicting file and save the new upload with a CKFinder-style suffix such as `photo(1).jpg`. Integrations receive the actual renamed URL and a successful-upload warning.

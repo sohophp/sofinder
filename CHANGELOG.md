@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.1.0-beta.14 - 2026-08-26
+
+- Add validated `filesystem_permissions.directory_mode` and `file_mode`
+  configuration for local storage and generated thumbnail caches.
+- Normalize published thumbnail cache files after atomic `tempnam()` promotion,
+  preventing private `0600` work-file permissions from leaking into shared
+  deployment directories.
+
 ## 0.1.0-beta.13 - 2026-08-25
 
 - Auto-rename CKEditor 4 quick-upload conflicts with CKFinder-style suffixes,

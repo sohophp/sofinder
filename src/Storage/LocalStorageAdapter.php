@@ -25,9 +25,15 @@ final class LocalStorageAdapter implements StorageAdapterInterface, LocalPathPro
         string $root,
         private readonly string $baseUrl = '',
         private readonly PathGuard $pathGuard = new PathGuard(),
+        private readonly int $directoryMode = 0775,
+        private readonly int $fileMode = 0664,
     ) {
-        if (!is_dir($root) && !@mkdir($root, 0775, true) && !is_dir($root)) {
+        $created = !is_dir($root);
+        if (!is_dir($root) && !@mkdir($root, $this->directoryMode, true) && !is_dir($root)) {
             throw new \RuntimeException(sprintf('Unable to create SoFinder storage root "%s".', $root));
+        }
+        if ($created) {
+            @chmod($root, $this->directoryMode);
         }
         $resolved = realpath($root);
         if ($resolved === false) {
@@ -134,9 +140,10 @@ final class LocalStorageAdapter implements StorageAdapterInterface, LocalPathPro
         if (file_exists($absolute) || is_link($absolute)) {
             throw new ConflictException();
         }
-        if (!@mkdir($absolute, 0775) && !is_dir($absolute)) {
+        if (!@mkdir($absolute, $this->directoryMode) && !is_dir($absolute)) {
             throw new SoFinderException('Unable to create the folder.');
         }
+        @chmod($absolute, $this->directoryMode);
 
         return $this->makeEntry($relative, $absolute);
     }
@@ -163,7 +170,7 @@ final class LocalStorageAdapter implements StorageAdapterInterface, LocalPathPro
             }
             fclose($output);
             $this->promoteStaged($temporary, $absolute, $overwrite);
-            @chmod($absolute, 0664);
+            @chmod($absolute, $this->fileMode);
         } finally {
             if (is_file($temporary)) {
                 @unlink($temporary);
@@ -403,9 +410,10 @@ final class LocalStorageAdapter implements StorageAdapterInterface, LocalPathPro
             throw new InvalidPathException('Symbolic links are not accessible.');
         }
         if (is_dir($source)) {
-            if (!@mkdir($destination, 0775) && !is_dir($destination)) {
+            if (!@mkdir($destination, $this->directoryMode) && !is_dir($destination)) {
                 throw new SoFinderException('Unable to copy the folder.');
             }
+            @chmod($destination, $this->directoryMode);
             foreach (new \FilesystemIterator($source, \FilesystemIterator::SKIP_DOTS | \FilesystemIterator::CURRENT_AS_FILEINFO) as $child) {
                 if (!$child instanceof \SplFileInfo) {
                     continue;
@@ -417,6 +425,7 @@ final class LocalStorageAdapter implements StorageAdapterInterface, LocalPathPro
         if (!@copy($source, $destination)) {
             throw new SoFinderException('Unable to copy the file.');
         }
+        @chmod($destination, $this->fileMode);
     }
 
     private function sizeAbsolute(string $path): int

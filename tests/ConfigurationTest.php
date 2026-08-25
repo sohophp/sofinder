@@ -21,6 +21,24 @@ final class ConfigurationTest extends TestCase
         self::assertTrue($config['ui']['logo']);
         self::assertTrue($config['ui']['header']);
         self::assertFalse($config['ckeditor4']['overwrite_on_upload']);
+        self::assertSame('0775', $config['filesystem_permissions']['directory_mode']);
+        self::assertSame('0664', $config['filesystem_permissions']['file_mode']);
+    }
+
+    public function testFilesystemPermissionsAcceptQuotedOctalModes(): void
+    {
+        $config = (new Processor())->processConfiguration(new Configuration(), [[
+            'filesystem_permissions' => [
+                'directory_mode' => '2775',
+                'file_mode' => '0664',
+            ],
+            'resources' => [
+                'Files' => ['root' => '/tmp/sofinder'],
+            ],
+        ]]);
+
+        self::assertSame('2775', $config['filesystem_permissions']['directory_mode']);
+        self::assertSame('0664', $config['filesystem_permissions']['file_mode']);
     }
 
     public function testCkeditorUploadOverwriteCanBeEnabledExplicitly(): void

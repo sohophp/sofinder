@@ -5,6 +5,20 @@ description: 各 SoFinder 預發布版本的相容性、設定與 adapter 升級
 
 # 升級 SoFinder
 
+## 從 0.1.0-beta.13 升級至 0.1.0-beta.14
+
+縮圖快取現在會在原子發布後套用設定的權限。預設目錄為 `0775`、檔案為 `0664`。
+PHP-FPM 與部署程序使用共享群組的專案可設定：
+
+```yaml
+so_finder:
+  filesystem_permissions:
+    directory_mode: '2775'
+    file_mode: '0664'
+```
+
+權限值必須是加上引號的八進位字串。升級不會修改歷史檔案的 owner 或權限。
+
 ## 從 0.1.0-beta.12 升級至 0.1.0-beta.13
 
 - CKEditor 4 快速上傳現在會保留同名原檔案，並把新檔案儲存為 `photo(1).jpg` 這類 CKFinder 風格名稱；整合會收到實際改名 URL 與上傳成功提示。

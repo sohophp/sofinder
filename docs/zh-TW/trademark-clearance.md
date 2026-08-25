@@ -46,6 +46,14 @@ description: SoFinder 維護者使用的專案名稱與商標查核記錄。
 - GitHub 與 Packagist 上的 `sohophp/sofinder` 均指向本專案；發布前 Packagist 已列出至 beta.12。`@sohophp/sofinder-ui` 的 npm Endpoint 仍未占用／為私有狀態（HTTP 404）。
 
 本次工程複查沒有發現阻止 beta.13 發布的軟體／檔案管理衝突，因此保留目前名稱。動態註冊系統和一般搜尋索引並不完整，本記錄不構成法律意見。
+
+## 2026-08-26 beta.14 工程差異檢查
+
+- 本修補版本僅修改檔案系統權限處理，沒有改變專案名稱、套件識別、產品定位或視覺品牌。
+- GitHub 仍將規範專案識別為 `sohophp/sofinder`；發布前 Packagist 已列出至不可變的 beta.13。
+- `@sohophp/sofinder-ui` 的 npm Registry Endpoint 仍回傳 HTTP 404。
+
+本次發布差異檢查沒有發現新的套件識別衝突，因此 beta.14 保留目前名稱。beta.13 工程複查的限制及非法律意見性質維持不變。
 - 公開 Web 與套件 registry 搜尋未發現新近確立、容易混淆且足以要求停止發布的檔案管理套件或服務。
 
 本次工程複查未發現阻擋衝突，因此 beta.9 可保留專案名稱。動態商標搜尋介面可能不會被一般 Web 索引完整收錄；此記錄不是法律上的商標核准意見，也不能取代更廣泛商業推廣前的正式資料庫查核或法律顧問審查。

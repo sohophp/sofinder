@@ -52,6 +52,25 @@ final class LocalStorageAdapterTest extends TestCase
         self::assertSame([], $this->storage->list(new ListQuery())->entries);
     }
 
+    public function testConfiguredFilesystemPermissionsApplyToNewEntries(): void
+    {
+        $root = $this->directory . '/shared';
+        $storage = new LocalStorageAdapter($root, directoryMode: 02775, fileMode: 0660);
+        $storage->createDirectory('documents');
+        $stream = fopen('php://temp', 'w+b');
+        if ($stream === false) {
+            self::fail('Unable to create the test stream.');
+        }
+        fwrite($stream, 'shared');
+        rewind($stream);
+        $storage->writeStream('documents/shared.txt', $stream);
+        fclose($stream);
+
+        self::assertSame(02775, fileperms($root) & 07777);
+        self::assertSame(02775, fileperms($root . '/documents') & 07777);
+        self::assertSame(0660, fileperms($root . '/documents/shared.txt') & 07777);
+    }
+
     public function testDoesNotOverwriteByDefault(): void
     {
         file_put_contents($this->directory . '/one.txt', 'one');

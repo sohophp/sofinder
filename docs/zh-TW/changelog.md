@@ -5,6 +5,11 @@ description: SoFinder 每個公開版本的重要變更。
 
 # 更新紀錄
 
+## 0.1.0-beta.14 - 2026-08-26
+
+- 新增經驗證的 `filesystem_permissions.directory_mode` 與 `file_mode` 設定，供本機儲存及縮圖快取使用。
+- 原子發布縮圖後統一其權限，避免 `tempnam()` 工作檔案的 `0600` 權限進入共享部署目錄。
+
 ## 0.1.0-beta.13 - 2026-08-25
 
 - CKEditor 4 快速上傳遇到同名檔案時使用 CKFinder 風格後綴自動改名，返回實際 URL 與成功提示；只有明確設定並通過獨立覆蓋權限檢查後才取代原檔案。

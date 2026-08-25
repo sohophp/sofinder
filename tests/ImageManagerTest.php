@@ -18,6 +18,7 @@ use SohoPHP\SoFinder\Storage\LocalStorageAdapter;
 use SohoPHP\SoFinder\Value\ResourceStorage;
 use SohoPHP\SoFinder\Value\ResourceType;
 use Symfony\Component\EventDispatcher\EventDispatcher;
+use Symfony\Component\Filesystem\Filesystem;
 
 final class ImageManagerTest extends TestCase
 {
@@ -37,10 +38,7 @@ final class ImageManagerTest extends TestCase
 
     protected function tearDown(): void
     {
-        foreach (glob($this->directory . '/*') ?: [] as $file) {
-            @unlink($file);
-        }
-        @rmdir($this->directory);
+        (new Filesystem())->remove($this->directory);
     }
 
     public function testActionSequenceSavesCopyAndPreservesOriginal(): void
@@ -62,6 +60,22 @@ final class ImageManagerTest extends TestCase
         $result = $this->manager()->applyActions('Images', 'source.png', [['type' => 'preset', 'name' => 'thumb']]);
         self::assertSame(80, $result['result']['width']);
         self::assertSame(40, $result['result']['height']);
+    }
+
+    public function testThumbnailUsesConfiguredSharedFilesystemPermissions(): void
+    {
+        $authorization = new class implements AuthorizationInterface {
+            public function isAuthenticated(): bool { return true; }
+            public function isGranted(string $operation, ResourceType $resource, string $path): bool { return true; }
+        };
+        $type = new ResourceType('Images', $this->directory, '/images', allowedExtensions: ['png'], allowedMimeTypes: ['image/png']);
+        $files = new FileManager(new ResourceRegistry([new ResourceStorage($type, new LocalStorageAdapter($this->directory, '/images'))]), $authorization, new EventDispatcher());
+        $images = new ImageManager($files, new GdImageProcessor(), $this->directory . '/cache', formats: new ImageFormatRegistry(), directoryMode: 02775, fileMode: 0664);
+
+        $thumbnail = $images->thumbnail('Images', 'source.png', 100, 100);
+
+        self::assertSame(02775, fileperms($this->directory . '/cache/thumbnails') & 07777);
+        self::assertSame(0664, fileperms($thumbnail['path']) & 07777);
     }
 
     public function testRepeatedImplicitCopyUsesConflictSafeName(): void

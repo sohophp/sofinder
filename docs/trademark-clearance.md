@@ -78,3 +78,11 @@ No blocking software/file-management conflict was identified by this engineering
 - GitHub and Packagist identify this project at `sohophp/sofinder`; Packagist listed releases through beta.12 immediately before this release. The `@sohophp/sofinder-ui` npm endpoint remained unclaimed/private (HTTP 404).
 
 No blocking software/file-management conflict was identified by this engineering recheck, so beta.13 retains the name. Dynamic registry interfaces and ordinary indexing are incomplete; this is not a legal clearance opinion.
+
+## 2026-08-26 beta.14 engineering delta check
+
+- This patch release changes filesystem permission handling and does not change the project name, package identity, positioning or visual branding.
+- GitHub still identifies the canonical project as `sohophp/sofinder`; Packagist listed the immutable releases through beta.13 immediately before publication.
+- The `@sohophp/sofinder-ui` npm registry endpoint still returned HTTP 404.
+
+No new package-identity conflict was identified in this release delta check, so beta.14 retains the name. The limitations and non-legal nature of the beta.13 engineering recheck remain unchanged.

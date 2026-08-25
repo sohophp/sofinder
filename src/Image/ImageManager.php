@@ -19,6 +19,8 @@ final readonly class ImageManager
         /** @var array<string, array{width:int,height:int,quality:int}> */
         private array $presets = [],
         private ImageFormatRegistry $formats = new ImageFormatRegistry(),
+        private int $directoryMode = 0775,
+        private int $fileMode = 0664,
     ) {
     }
 
@@ -29,9 +31,10 @@ final readonly class ImageManager
         $width = max(32, min($width, 512));
         $height = max(32, min($height, 512));
         $directory = rtrim($this->cacheDirectory, DIRECTORY_SEPARATOR) . '/thumbnails';
-        if (!is_dir($directory) && !@mkdir($directory, 0775, true) && !is_dir($directory)) {
+        if (!is_dir($directory) && !@mkdir($directory, $this->directoryMode, true) && !is_dir($directory)) {
             throw new SoFinderException('Unable to create the thumbnail cache.', 'image_processing_failed', 500);
         }
+        @chmod($directory, $this->directoryMode);
         $this->maintainCache($directory);
         $processorVersion = $this->processor instanceof ImageCapabilityProviderInterface ? $this->processor->cacheVersion() : get_debug_type($this->processor);
         $cachePath = $directory . '/' . hash('sha256', implode('|', [$processorVersion, $resource, $entry->path, $entry->modifiedAt, $entry->size, $width, $height])) . '.png';
@@ -45,6 +48,7 @@ final readonly class ImageManager
                 if (!@rename($temporary, $cachePath) && !is_file($cachePath)) {
                     throw new SoFinderException('Unable to store the thumbnail.', 'image_processing_failed', 500);
                 }
+                @chmod($cachePath, $this->fileMode);
             } finally {
                 @unlink($temporary);
             }

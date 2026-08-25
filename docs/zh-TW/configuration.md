@@ -22,6 +22,17 @@ description: SoFinder 全域、UI、維護、圖片、請求限制與資源設�
 
 這些工作目錄必須允許 PHP 寫入，而且不可經由 Web 直接存取。
 
+## 檔案系統權限
+
+```yaml
+so_finder:
+  filesystem_permissions:
+    directory_mode: '0775'
+    file_mode: '0664'
+```
+
+這些模式套用於新建的本機儲存項目和縮圖快取。必須使用加上引號的八進位字串，避免 YAML 解讀成十進位。PHP-FPM 與部署程序使用共享群組時，可設定 `directory_mode: '2775'` 保持群組繼承。SoFinder 不會修改 owner，也不會修復歷史項目。
+
 ## CKEditor 4 上傳
 
 ```yaml

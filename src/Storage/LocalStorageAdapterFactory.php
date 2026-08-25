@@ -11,7 +11,11 @@ use SohoPHP\SoFinder\Value\ResourceType;
 
 final readonly class LocalStorageAdapterFactory implements StorageAdapterFactoryInterface
 {
-    public function __construct(private PathGuard $pathGuard = new PathGuard())
+    public function __construct(
+        private PathGuard $pathGuard = new PathGuard(),
+        private int $directoryMode = 0775,
+        private int $fileMode = 0664,
+    )
     {
     }
 
@@ -22,6 +26,6 @@ final readonly class LocalStorageAdapterFactory implements StorageAdapterFactory
 
     public function create(ResourceType $resource, array $options = []): StorageAdapterInterface
     {
-        return new LocalStorageAdapter($resource->root, $resource->publicUrl, $this->pathGuard);
+        return new LocalStorageAdapter($resource->root, $resource->publicUrl, $this->pathGuard, $this->directoryMode, $this->fileMode);
     }
 }

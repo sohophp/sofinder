@@ -106,6 +106,8 @@ final class SoFinderExtension extends Extension
         $container->setParameter('so_finder.chunk_dir', $config['chunk_dir']);
         $container->setParameter('so_finder.usage_dir', $config['usage_dir']);
         $container->setParameter('so_finder.trash_dir', $config['trash_dir']);
+        $directoryMode = octdec($config['filesystem_permissions']['directory_mode']);
+        $fileMode = octdec($config['filesystem_permissions']['file_mode']);
         $maintenanceConfig = $config['maintenance'];
         if ($maintenanceConfig['mode'] === 'messenger' && !interface_exists('Symfony\\Component\\Messenger\\MessageBusInterface')) {
             throw new \InvalidArgumentException('SoFinder maintenance.mode is messenger, but symfony/messenger is not installed.');
@@ -127,6 +129,8 @@ final class SoFinderExtension extends Extension
         $container->setDefinition(PathGuard::class, new Definition(PathGuard::class));
         $container->setDefinition(LocalStorageAdapterFactory::class, (new Definition(LocalStorageAdapterFactory::class))
             ->setArgument('$pathGuard', new Reference(PathGuard::class))
+            ->setArgument('$directoryMode', $directoryMode)
+            ->setArgument('$fileMode', $fileMode)
             ->addTag('sofinder.storage_factory'));
         $container->setDefinition(StoragePaginator::class, new Definition(StoragePaginator::class));
         $container->setDefinition(ResourceRegistryFactory::class, (new Definition(ResourceRegistryFactory::class))
@@ -263,6 +267,8 @@ final class SoFinderExtension extends Extension
                 $config['cache_dir'],
                 $config['image_presets'],
                 new Reference(ImageFormatRegistry::class),
+                $directoryMode,
+                $fileMode,
             ]));
         $container->setDefinition(ArchiveManager::class, (new Definition(ArchiveManager::class))
             ->setArguments([

@@ -22,6 +22,21 @@ Configuration lives below the `so_finder` key. Symfony validates all values whil
 
 These working directories must be writable by PHP and must not be directly web-accessible.
 
+## Filesystem permissions
+
+```yaml
+so_finder:
+  filesystem_permissions:
+    directory_mode: '0775'
+    file_mode: '0664'
+```
+
+The modes apply to newly created local-storage entries and generated thumbnail
+caches. They are quoted octal strings so YAML cannot reinterpret them as decimal
+numbers. Shared PHP-FPM/deployment groups can use `directory_mode: '2775'` to
+preserve group inheritance. SoFinder does not change file ownership or repair
+historical entries.
+
 ## CKEditor 4 uploads
 
 ```yaml
