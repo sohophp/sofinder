@@ -53,7 +53,10 @@ final class SignedUrlManagerTest extends TestCase
         $manager = $this->manager();
         $issued = $manager->issue('Private', 'private.txt', 30);
 
-        try { $manager->open(substr($issued['token'], 0, -1) . 'A'); self::fail('A tampered token must fail.'); }
+        [$payload, $signature] = explode('.', $issued['token'], 2);
+        $replacement = $signature[0] === 'A' ? 'B' : 'A';
+        $tampered = $payload . '.' . $replacement . substr($signature, 1);
+        try { $manager->open($tampered); self::fail('A tampered token must fail.'); }
         catch (SoFinderException $exception) { self::assertSame('signed_url_invalid', $exception->errorCode); }
 
         file_put_contents($this->directory . '/private.txt', 'changed and longer');
