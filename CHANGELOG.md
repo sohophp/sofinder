@@ -14,8 +14,8 @@
   dedicated upload/limiter metrics and a versioned capability endpoint.
 - Add runtime config Schema checks and reviewed API snapshots; freeze the 1.0
   plugin UI contract to declaration-only same-origin actions and previewers.
-- Make Composer and release commands select PHP 8.2+ consistently when the
-  machine's default `php` still points to an unsupported legacy version.
+- Pin local development to `.php-version`, route PHP and Composer commands
+  through repository launchers, and retain `PHP_BIN` for compatibility runs.
 
 ## 0.1.0-beta.16 - 2026-08-26
 

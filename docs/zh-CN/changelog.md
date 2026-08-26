@@ -13,7 +13,7 @@ description: SoFinder 每个公开版本的重要变更。
 - 新增上传、覆盖、配额、回收站及断点续传领域并发测试，并为恢复／永久删除加入原子锁。
 - 新增图片与维护健康检查、存储耗时观察、上传／限流专用指标及带版本 Capability Endpoint。
 - 新增运行时 Config Schema 与 API Snapshot 检查；冻结 1.0 Plugin UI 为声明式同源 Action/Previewer。
-- Composer 和发布命令会统一选择 PHP 8.2+，不再受本机旧版默认 `php` 影响。
+- 通过 `.php-version` 固定本地开发版本，PHP 与 Composer 命令统一使用仓库执行器，并保留 `PHP_BIN` 供兼容性测试覆盖。
 
 ## 0.1.0-beta.16 - 2026-08-26
 
