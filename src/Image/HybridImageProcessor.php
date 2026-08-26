@@ -6,9 +6,10 @@ namespace SohoPHP\SoFinder\Image;
 
 use SohoPHP\SoFinder\Contract\ImageProcessorInterface;
 use SohoPHP\SoFinder\Contract\ImageCapabilityProviderInterface;
+use SohoPHP\SoFinder\Contract\ImageEffectsProcessorInterface;
 use SohoPHP\SoFinder\Exception\SoFinderException;
 
-final readonly class HybridImageProcessor implements ImageProcessorInterface, ImageCapabilityProviderInterface
+final readonly class HybridImageProcessor implements ImageProcessorInterface, ImageCapabilityProviderInterface, ImageEffectsProcessorInterface
 {
     public function __construct(
         private ImageFormatRegistry $formats,
@@ -60,6 +61,41 @@ final readonly class HybridImageProcessor implements ImageProcessorInterface, Im
     public function crop(string $source, string $destination, int $x, int $y, int $width, int $height, int $quality = 88): void
     {
         $this->processorForSource($source)->crop($source, $destination, $x, $y, $width, $height, $quality);
+    }
+
+    public function optimize(string $source, string $destination, string $mimeType, int $quality): void
+    {
+        $sourceFormat = $this->formats->detectFormat($source);
+        $sourceMime = $sourceFormat === null ? null : $this->formats->canonicalMime($sourceFormat);
+        $processor = match ($this->driver) {
+            'gd' => $sourceMime !== null && $this->gd->supports($sourceMime) && $this->gd->supports($mimeType) ? $this->gd : null,
+            'imagick' => $sourceMime !== null && $this->imagick->supports($sourceMime) && $this->imagick->canEncode($mimeType) ? $this->imagick : null,
+            default => $sourceMime !== null && $this->gd->supports($sourceMime) && $this->gd->supports($mimeType)
+                ? $this->gd
+                : ($sourceMime !== null && $this->imagick->supports($sourceMime) && $this->imagick->canEncode($mimeType) ? $this->imagick : null),
+        };
+        if (!$processor instanceof ImageEffectsProcessorInterface) {
+            throw new SoFinderException('The requested source/output image format combination is unavailable.', 'unsupported_image_output_format', 415);
+        }
+        $processor->optimize($source, $destination, $mimeType, $quality);
+    }
+
+    public function textWatermark(string $source, string $destination, string $text, string $position, int $opacity, int $scale, string $color, int $quality): void
+    {
+        $processor = $this->processorForSource($source);
+        if (!$processor instanceof ImageEffectsProcessorInterface) {
+            throw new SoFinderException('Image watermarking is unavailable.', 'image_effects_unavailable', 501);
+        }
+        $processor->textWatermark($source, $destination, $text, $position, $opacity, $scale, $color, $quality);
+    }
+
+    public function imageWatermark(string $source, string $watermark, string $destination, string $position, int $opacity, int $scale, int $quality): void
+    {
+        $processor = $this->processorForSource($source);
+        if (!$processor instanceof ImageEffectsProcessorInterface) {
+            throw new SoFinderException('Image watermarking is unavailable.', 'image_effects_unavailable', 501);
+        }
+        $processor->imageWatermark($source, $watermark, $destination, $position, $opacity, $scale, $quality);
     }
 
     /** @return list<array{format:string,extensions:list<string>,mimes:list<string>,processor:string,read:bool,edit:bool,thumbnail:bool,webEmbeddable:bool}> */

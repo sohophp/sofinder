@@ -1,0 +1,14 @@
+#!/usr/bin/env php
+<?php
+
+declare(strict_types=1);
+
+$outputDirectory = null;
+foreach ($argv as $index => $argument) {
+    if ($argument === '--outdir') $outputDirectory = $argv[$index + 1] ?? null;
+}
+$source = $argv[count($argv) - 1] ?? '';
+if (!is_string($outputDirectory) || $outputDirectory === '' || !is_file($source)) exit(2);
+$target = rtrim($outputDirectory, '/') . '/' . pathinfo($source, PATHINFO_FILENAME) . '.pdf';
+file_put_contents($target, "%PDF-1.4\n% SoFinder test converter\n");
+exit(0);

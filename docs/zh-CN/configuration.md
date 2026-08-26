@@ -22,6 +22,27 @@ description: SoFinder 全局、UI、维护、图片、请求限制与资源配�
 
 这些工作目录必须允许 PHP 写入，而且不可经由 Web 直接存取。
 
+## 集群 Service
+
+`cluster.state_service` 可指定实现 `AtomicStateStoreInterface` 的宿主 Symfony Service，
+自动把 metadata、请求 Gate 和 Usage 切换为共享原子 Store。
+`cluster.chunk_upload_store_service` 可指定共享 `ChunkUploadStoreInterface`。默认均为
+`null`，保留单节点文件实现。详见[生产运行](/zh-CN/production)。
+
+## 临时签名 URL
+
+```yaml
+so_finder:
+  signed_urls:
+    enabled: true
+    secret: '%kernel.secret%'
+    default_ttl_seconds: 300
+    max_ttl_seconds: 3600
+```
+
+Secret 至少 32 Byte。签名 URL 绑定文件版本且只适用于 `proxy` 资源。需要匿名访问时，
+在通用 SoFinder Firewall 规则前为 `/sofinder/signed/` 配置严格范围的 `PUBLIC_ACCESS`。
+
 ## 文件系统权限
 
 ```yaml
@@ -42,6 +63,22 @@ so_finder:
 ```
 
 安全默认值会把快速上传的同名文件自动改名为 `photo(1).jpg` 这类名称。启用 `overwrite_on_upload` 后，也只有当前用户拥有资源独立的 `overwrite` 权限时才会替换原文件。
+
+## 病毒扫描
+
+```yaml
+so_finder:
+  malware_scanning:
+    enabled: true
+    endpoint: 'unix:///run/clamav/clamd.ctl'
+    timeout_seconds: 8
+    history_limit: 100
+    status_roles: [ROLE_ADMIN]
+```
+
+启用后，SoFinder 会自动把内置 ClamAV Client 注册为同步、fail-closed 的上传扫描器和
+就绪检查。只有管理员角色能打开“安全状态”，其中会明确显示 clamd 是否可用，以及有界的
+通过、拦截、失败和待扫描记录；记录不保存文件内容。
 
 ## 回收站
 

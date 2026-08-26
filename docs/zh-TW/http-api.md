@@ -9,6 +9,8 @@ description: SoFinder 公開的穩定 Browser、API 與內容 Delivery 路由。
 
 `GET /api/config` 會回傳 `apiVersion: "1.0"`。Browser Endpoint 位於匯入的 SoFinder 路由 Prefix 下，每個 JSON Response 都使用以下其中一種格式：
 
+每個 Response 同時回傳 `X-SoFinder-API-Version: 1.0`。內建 UI 接受 `1.x` 範圍；Major 不一致時會在寫入操作前以 `incompatible_api_version` 停止。舊欄位會回傳 `Deprecation`、`Sunset`、`Link` 與 `X-SoFinder-Deprecated-Fields` Header。契約來源包括 [OpenAPI 3.1](/openapi.json)、[JSON Schema](/schema/picker-entry.schema.json) 與完整的[機器錯誤目錄](/error-codes.json)。
+
 ```json
 {"success":true,"data":{}}
 {"success":false,"error":{"code":"stable_machine_code","message":"Human-readable message"}}

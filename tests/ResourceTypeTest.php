@@ -29,6 +29,13 @@ final class ResourceTypeTest extends TestCase
         self::assertSame(5, $this->resource->maxFolderDepth);
     }
 
+    public function testDiscoveryDeclaresWhetherAHostEntryRouteIsConfigured(): void
+    {
+        self::assertFalse($this->resource->jsonSerialize()['entryUrlConfigured']);
+        $resource = new ResourceType('Private', '/tmp/private', '', deliveryMode: 'proxy', entryUrlRoute: 'file.output');
+        self::assertTrue($resource->jsonSerialize()['entryUrlConfigured']);
+    }
+
     public function testRejectsDoubleExtension(): void
     {
         $this->expectException(SoFinderException::class);

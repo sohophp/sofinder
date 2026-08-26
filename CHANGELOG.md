@@ -1,5 +1,22 @@
 # Changelog
 
+## 0.1.0-beta.16 - 2026-08-26
+
+- Add authenticated PDF previews and optional LibreOffice-backed Office previews
+  with private versioned caches, health checks and safe inline responses.
+- Add visible malware-scanning status and history, fail-closed ClamAV integration
+  and upload states for passed, quarantined, failed and pending scans.
+- Add short-lived signed private URLs, configurable stable host-controller URLs,
+  hardened Unicode download headers and browser security response policies.
+- Add bounded batch image compression, format conversion, text watermarks and
+  image watermarks with runtime capability reporting.
+- Add lightweight type-specific file icons, independent persistent grid-item and
+  list-row sizes, and make batch rename plus optimize/watermark user opt-in tools.
+- Add maintenance status, cache cleanup and metadata repair commands with JSON,
+  dry-run and machine-readable failure behavior.
+- Expand plugin preview and UI extension contracts, API schemas, error catalogs,
+  fuzz coverage and release validation for the new public behavior.
+
 ## 0.1.0-beta.15 - 2026-08-26
 
 - Add a versioned popup Picker SDK with deep links and adapters for CKEditor 5,

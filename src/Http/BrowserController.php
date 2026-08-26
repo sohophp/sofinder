@@ -12,6 +12,7 @@ use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
 use Symfony\Component\Routing\RouterInterface;
 use Symfony\Component\Security\Csrf\CsrfTokenManagerInterface;
+use Symfony\Component\Security\Core\Authorization\AuthorizationCheckerInterface;
 
 final readonly class BrowserController
 {
@@ -24,6 +25,8 @@ final readonly class BrowserController
         /** @var array{mode:string,header:bool,logo:bool,search:bool,language_switcher:bool,view_switcher:bool,folder_tree:bool,scale:string} */
         private array $ui,
         private ?FeaturePolicy $features = null,
+        private ?AuthorizationCheckerInterface $authorization = null,
+        /** @var list<string> */ private array $securityStatusRoles = [],
     ) {
     }
 
@@ -65,6 +68,7 @@ final readonly class BrowserController
             'theme' => $this->theme->values(),
             'featureDefaults' => ['folderTree' => (bool) ($this->ui['folder_tree'] ?? false)],
             'featureAvailability' => $this->features?->browserAvailability() ?? (new FeaturePolicy())->browserAvailability(),
+            'securityStatusAvailable' => $this->securityStatusRoles === [] || ($this->authorization !== null && (bool) array_filter($this->securityStatusRoles, $this->authorization->isGranted(...))),
             'uiDefaults' => ['scale' => (string) ($this->ui['scale'] ?? 'standard'), ...$ui],
         ];
         $encoded = htmlspecialchars(json_encode($config, JSON_THROW_ON_ERROR | JSON_UNESCAPED_SLASHES), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');

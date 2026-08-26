@@ -136,6 +136,7 @@ final readonly class ResourceType implements \JsonSerializable
             'maxFolderDepth' => $this->maxFolderDepth,
             'maxImagePixels' => $this->maxImagePixels,
             'deliveryMode' => $this->deliveryMode,
+            'entryUrlConfigured' => $this->entryUrlRoute !== '',
             'maxBatchItems' => $this->maxBatchItems,
             'maxRecursiveItems' => $this->maxRecursiveItems,
             'maxArchiveItems' => $this->maxArchiveItems,

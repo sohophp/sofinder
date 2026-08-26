@@ -5,13 +5,14 @@ security:
     demo_users:
       memory:
         users:
-          demo: { password: demo, roles: [ROLE_USER] }
+          demo: { password: demo, roles: [ROLE_USER, ROLE_ADMIN] }
   firewalls:
     main:
       lazy: true
       provider: demo_users
       http_basic: ~
   access_control:
+    - { path: ^/sofinder/signed/, roles: PUBLIC_ACCESS }
     - { path: ^/sofinder, roles: ROLE_USER }
     - { path: ^/integrations, roles: ROLE_USER }
     - { path: ^/host-files, roles: ROLE_USER }

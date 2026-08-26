@@ -46,9 +46,41 @@ Removes expired chunk-upload sessions. Schedule this with recycle-bin cleanup wh
 
 ```bash
 bin/console sofinder:usage:recalculate
+bin/console sofinder:usage:recalculate --dry-run --json
 ```
 
 Rebuilds persisted resource-usage counters from storage. Use it after importing, restoring or modifying files outside SoFinder.
+Dry-run reports scanned values without updating persisted counters.
+
+## Maintenance status
+
+```bash
+bin/console sofinder:maintenance:status
+bin/console sofinder:maintenance:status --json
+```
+
+Reports queued, running, successful and failed tasks. A recorded failure returns a non-zero exit status.
+
+## Metadata repair
+
+```bash
+bin/console sofinder:metadata:repair --dry-run --json
+bin/console sofinder:metadata:repair
+```
+
+Normalizes the local JSON metadata shape and removes references to missing
+resources or entries. Dry-run acquires the same lock but never writes. Hosts
+using a shared metadata service must use provider-specific repair tooling.
+
+## Cache cleanup
+
+```bash
+bin/console sofinder:cache:cleanup --older-than=86400 --dry-run --json
+bin/console sofinder:cache:cleanup --older-than=86400
+```
+
+Only matches generated thumbnail PNG and document-preview PDF files. Metrics,
+scan history, maintenance state, upload sessions and source files are outside its scope.
 
 Add `--help` to any command to see its current arguments and options:
 

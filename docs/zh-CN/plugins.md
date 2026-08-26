@@ -33,10 +33,14 @@ Descriptor 只能包含 Browser-safe Metadata。名称在全局范围内必须�
 
 Plugin 行为应通过订阅 `OperationEvent`，或替换 `AuthorizationInterface`、`ImageProcessorInterface`、`MetadataStoreInterface` 等公开 Contract 实现。Storage 整合应实现 `StorageAdapterInterface`，并在发布前执行共用 Storage Contract Test Suite。Plugin 不得依赖 SoFinder Internal，也不得复制第三方文件管理器的 Asset 或实现细节。
 
-`uiActions` 是可选的声明式扩展槽，`slot` 可为 `utility`、`toolbar` 或 `context`，
+`uiActions` 是可选的声明式扩展槽，`slot` 可为 `utility`、`toolbar`、`context` 或 `details`，
 `selection` 可为 `none`、`any`、`file` 或 `image`。SoFinder 只接受同源绝对路径并以
 `noopener` 打开；Host Route 必须重新授权。Descriptor 不能注入脚本、HTML、React
 Component 或远程 URL。
+
+`previewers` 声明 ID、同源 URL，以及有界的 `mimeTypes` 和／或 `extensions`。SoFinder
+会加入已鉴权的 `resource` 和逻辑 `path` Query，并在 CSP 限制的同源 iframe 内显示 Response。
+预览端点必须重新授权并返回严格安全 Header。参考内置的 [PDF 与 Office 预览](/zh-CN/document-preview)。
 
 仓库中的 `examples/symfony/src/Plugin/FileInspectorPlugin.php` 及配套
 `PluginInspectorController` 是可直接运行的参考实现，覆盖自动注册、右键动作、通过

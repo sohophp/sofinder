@@ -88,7 +88,7 @@ final readonly class RequestGate implements EventSubscriberInterface
     {
         return match ($route) {
             'sofinder_api_upload', 'sofinder_api_chunk_upload', 'sofinder_api_chunk_cancel', 'sofinder_quick_upload' => 'upload',
-            'sofinder_image_edit' => 'image',
+            'sofinder_image_edit', 'sofinder_image_batch' => 'image',
             'sofinder_image_thumbnail' => 'thumbnail',
             'sofinder_archive_download' => 'archive',
             'sofinder_api_copy', 'sofinder_api_move', 'sofinder_api_batch' => 'transfer',

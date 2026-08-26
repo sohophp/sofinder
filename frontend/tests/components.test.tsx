@@ -7,6 +7,8 @@ import { UploadQueue } from "../src/components/UploadQueue";
 import { characterLength, formatSize } from "../src/format";
 import { Api } from "../src/api";
 import type { SoFinderConfig } from "../src/types";
+import { SecurityStatusDialog } from "../src/components/SecurityStatusDialog";
+import { entryIconKind } from "../src/components/EntryVisuals";
 
 afterEach(cleanup);
 
@@ -16,13 +18,26 @@ describe("UploadQueue", () => {
     render(<UploadQueue
       tasks={[{ id: "one", name: "large.jpg", progress: 40, status: "uploading" }]}
       collapsed={false}
-      labels={{ title: "Uploads", expand: "Expand", collapse: "Collapse", cancel: "Cancel", cancelAll: "Cancel all", clearFinished: "Clear", remove: "Remove", status: status => status }}
-      onToggle={vi.fn()} onCancel={cancel} onCancelAll={vi.fn()} onClearFinished={vi.fn()} onRemove={vi.fn()}
+      labels={{ title: "Uploads", expand: "Expand", collapse: "Collapse", cancel: "Cancel", cancelAll: "Cancel all", clearFinished: "Clear", retry: "Retry", remove: "Remove", status: status => status }}
+      onToggle={vi.fn()} onCancel={cancel} onCancelAll={vi.fn()} onClearFinished={vi.fn()} onRetry={vi.fn()} onRemove={vi.fn()}
     />);
 
     expect(screen.getByRole("progressbar")).toHaveValue(40);
     fireEvent.click(screen.getByRole("button", { name: "Cancel" }));
     expect(cancel).toHaveBeenCalledWith("one");
+  });
+
+  it("offers retry for an interrupted upload", () => {
+    const retry = vi.fn();
+    render(<UploadQueue
+      tasks={[{ id: "failed", name: "archive.zip", progress: 55, status: "error" }]}
+      collapsed={false}
+      labels={{ title: "Uploads", expand: "Expand", collapse: "Collapse", cancel: "Cancel", cancelAll: "Cancel all", clearFinished: "Clear", retry: "Retry", remove: "Remove", status: status => status }}
+      onToggle={vi.fn()} onCancel={vi.fn()} onCancelAll={vi.fn()} onClearFinished={vi.fn()} onRetry={retry} onRemove={vi.fn()}
+    />);
+
+    fireEvent.click(screen.getByRole("button", { name: "Retry" }));
+    expect(retry).toHaveBeenCalledWith("failed");
   });
 });
 
@@ -30,6 +45,18 @@ describe("format helpers", () => {
   it("counts Unicode characters and formats file sizes", () => {
     expect(characterLength("图😀")).toBe(2);
     expect(formatSize(1536)).toBe("1.5 KB");
+  });
+});
+
+describe("file type icons", () => {
+  it("classifies common formats without loading external icon assets", () => {
+    expect(entryIconKind("report.pdf", "application/pdf")).toBe("pdf");
+    expect(entryIconKind("proposal.docx", "application/octet-stream")).toBe("word");
+    expect(entryIconKind("预算.xlsx", null)).toBe("sheet");
+    expect(entryIconKind("deck.pptx", null)).toBe("slides");
+    expect(entryIconKind("source.ts", "text/plain")).toBe("code");
+    expect(entryIconKind("backup.tar.gz", "application/gzip")).toBe("archive");
+    expect(entryIconKind("anything", null, true)).toBe("folder");
   });
 });
 
@@ -42,5 +69,16 @@ describe("resumable upload state", () => {
     ]));
 
     expect(api.pendingUploads().map(item => item.id)).toEqual(["current"]);
+  });
+});
+
+describe("SecurityStatusDialog", () => {
+  it("makes disabled malware scanning explicit", async () => {
+    const api = new Api({ apiBase: "/sofinder/api/config", csrfToken: "token", language: "en", resource: "Files", initialPath: "", selectMode: false, selectionKind: "any", ckeditorFunction: 0, pickerRequestId: "", pickerOrigin: "", theme: { accent: "#000", background: "#fff", panel: "#fff", text: "#000", muted: "#666", danger: "#f00", radius: "1px" }, featureDefaults: { folderTree: false }, uiDefaults: { scale: "standard" } } satisfies SoFinderConfig);
+    vi.spyOn(api, "securityStatus").mockResolvedValue({ malwareScanning: { enabled: false, provider: null, status: "disabled", message: "Malware scanning is not enabled.", counts: { passed: 0, quarantined: 0, failed: 0, pending: 0 }, recent: [] } });
+    render(<SecurityStatusDialog api={api} formatDate={String} labels={{ title: "Security status", close: "Close", loading: "Loading", enabled: "Enabled", disabled: "Disabled", provider: "Provider", service: "Service", scans: "Scans", passed: "Passed", quarantined: "Blocked", failed: "Failed", pending: "Pending", recent: "Recent", none: "No scans" }} onClose={vi.fn()}/>);
+
+    expect(await screen.findByText("Disabled")).toBeInTheDocument();
+    expect(screen.getByText("No scans")).toBeInTheDocument();
   });
 });

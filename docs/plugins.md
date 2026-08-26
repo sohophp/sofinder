@@ -45,10 +45,16 @@ test suite before release. Plugins must not depend on SoFinder internals or
 copy assets or implementation details from third-party file managers.
 
 `uiActions` are optional declaration-only extension slots. `slot` is `utility`,
-`toolbar` or `context`; selection is `none`, `any`, `file` or `image`. SoFinder
+`toolbar`, `context` or `details`; selection is `none`, `any`, `file` or `image`. SoFinder
 accepts only same-origin absolute paths and opens them with `noopener`. The host
 route must repeat authorization. Descriptors cannot inject scripts, HTML, React
 components or remote URLs.
+
+`previewers` declare an ID, same-origin URL and bounded `mimeTypes` and/or
+`extensions`. SoFinder adds the authorized `resource` and logical `path` query
+parameters and embeds the response in a CSP-restricted same-origin frame. Preview endpoints must
+repeat authorization and return restrictive response headers. See the bundled
+[PDF and Office preview](/document-preview) plugin.
 
 The repository includes a runnable reference in
 `examples/symfony/src/Plugin/FileInspectorPlugin.php` with its matching

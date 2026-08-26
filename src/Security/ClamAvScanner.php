@@ -4,7 +4,9 @@ declare(strict_types=1);
 
 namespace SohoPHP\SoFinder\Security;
 
+use Psr\Log\LoggerInterface;
 use SohoPHP\SoFinder\Contract\HealthCheckInterface;
+use SohoPHP\SoFinder\Contract\MetricsStoreInterface;
 use SohoPHP\SoFinder\Contract\UploadScannerInterface;
 use SohoPHP\SoFinder\Exception\SoFinderException;
 use SohoPHP\SoFinder\Value\HealthCheckResult;
@@ -19,6 +21,10 @@ final readonly class ClamAvScanner implements UploadScannerInterface, HealthChec
         private string $endpoint = 'tcp://127.0.0.1:3310',
         private float $timeoutSeconds = 5.0,
         private ?\Closure $connector = null,
+        private ?MetricsStoreInterface $metrics = null,
+        private ?MalwareScanStatusStore $statusStore = null,
+        private ?LoggerInterface $logger = null,
+        private bool $enabled = true,
     ) {
         if (preg_match('#^(?:tcp://[A-Za-z0-9.:-]+|unix:///[^\x00-\x1F]+)$#D', $endpoint) !== 1 || $timeoutSeconds <= 0 || $timeoutSeconds > 60) {
             throw new \InvalidArgumentException('The ClamAV endpoint or timeout is invalid.');
@@ -27,35 +33,54 @@ final readonly class ClamAvScanner implements UploadScannerInterface, HealthChec
 
     public function scan(string $path, string $fileName, ResourceType $resource, InspectedFile $inspection): void
     {
-        $socket = $this->connect();
-        $input = @fopen($path, 'rb');
-        if ($input === false) {
-            fclose($socket);
-            throw new SoFinderException('The quarantined upload cannot be scanned.', 'malware_scanner_unavailable', 503);
+        if (!$this->enabled) return;
+
+        $started = hrtime(true);
+        try {
+            $scanId = $this->statusStore?->start($fileName, $resource->name, $inspection->size);
+        } catch (\Throwable) {
+            $scanId = null;
         }
         try {
-            $this->write($socket, "zINSTREAM\0");
-            while (!feof($input)) {
-                $chunk = fread($input, 8192);
-                if ($chunk === false) throw new SoFinderException('The quarantined upload cannot be scanned.', 'malware_scanner_unavailable', 503);
-                if ($chunk !== '') $this->write($socket, pack('N', strlen($chunk)) . $chunk);
+            $socket = $this->connect();
+            $input = @fopen($path, 'rb');
+            if ($input === false) {
+                fclose($socket);
+                throw new SoFinderException('The quarantined upload cannot be scanned.', 'malware_scanner_unavailable', 503);
             }
-            $this->write($socket, pack('N', 0));
-            $response = $this->response($socket);
-        } finally {
-            fclose($input);
-            fclose($socket);
-        }
-        if (str_contains($response, ' FOUND')) {
-            throw new SoFinderException('The upload was rejected by malware scanning.', 'malware_detected', 415);
-        }
-        if (!str_ends_with($response, ' OK')) {
-            throw new SoFinderException('The malware scanner could not verify the upload.', 'malware_scanner_unavailable', 503);
+            try {
+                $this->write($socket, "zINSTREAM\0");
+                while (!feof($input)) {
+                    $chunk = fread($input, 8192);
+                    if ($chunk === false) throw new SoFinderException('The quarantined upload cannot be scanned.', 'malware_scanner_unavailable', 503);
+                    if ($chunk !== '') $this->write($socket, pack('N', strlen($chunk)) . $chunk);
+                }
+                $this->write($socket, pack('N', 0));
+                $response = $this->response($socket);
+            } finally {
+                fclose($input);
+                fclose($socket);
+            }
+            if (str_contains($response, ' FOUND')) {
+                throw new SoFinderException('The upload was rejected by malware scanning.', 'malware_detected', 415);
+            }
+            if (!str_ends_with($response, ' OK')) {
+                throw new SoFinderException('The malware scanner could not verify the upload.', 'malware_scanner_unavailable', 503);
+            }
+            $this->record($scanId, 'passed', null, $resource, $fileName, $inspection->size, $started);
+        } catch (\Throwable $exception) {
+            $code = $exception instanceof SoFinderException ? $exception->errorCode : 'malware_scanner_unavailable';
+            $this->record($scanId, $code === 'malware_detected' ? 'quarantined' : 'failed', $code, $resource, $fileName, $inspection->size, $started);
+            throw $exception;
         }
     }
 
     public function check(): HealthCheckResult
     {
+        if (!$this->enabled) {
+            return new HealthCheckResult('clamav-disabled', 'ready', 'ClamAV scanning is disabled by configuration.');
+        }
+
         try {
             $socket = $this->connect();
             try {
@@ -102,5 +127,26 @@ final readonly class ClamAvScanner implements UploadScannerInterface, HealthChec
         $meta = stream_get_meta_data($stream);
         if ($meta['timed_out'] === true) throw new SoFinderException('The malware scanner timed out.', 'malware_scanner_unavailable', 503);
         return trim($response, "\0\r\n ");
+    }
+
+    private function record(?string $scanId, string $status, ?string $code, ResourceType $resource, string $fileName, int $bytes, int $started): void
+    {
+        $duration = max(0, (int) round((hrtime(true) - $started) / 1_000_000));
+        try {
+            if ($scanId !== null) $this->statusStore?->finish($scanId, $status, $code, $duration);
+        } catch (\Throwable) {
+        }
+        try {
+            $this->metrics?->increment('sofinder_malware_scans_total', ['provider' => 'clamav', 'result' => $status]);
+            $this->metrics?->increment('sofinder_malware_scan_bytes_total', ['provider' => 'clamav', 'result' => $status], max(0, $bytes));
+            $this->metrics?->increment('sofinder_malware_scan_duration_milliseconds_total', ['provider' => 'clamav', 'result' => $status], $duration);
+        } catch (\Throwable) {
+        }
+        $context = ['provider' => 'clamav', 'result' => $status, 'code' => $code, 'resource' => $resource->name, 'file_name' => $fileName, 'bytes' => $bytes, 'duration_ms' => $duration];
+        try {
+            if ($status === 'passed') $this->logger?->info('SoFinder malware scan completed.', $context);
+            else $this->logger?->warning('SoFinder malware scan rejected or failed.', $context);
+        } catch (\Throwable) {
+        }
     }
 }

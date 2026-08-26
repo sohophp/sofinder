@@ -1,5 +1,19 @@
 # Upgrading SoFinder
 
+## From 0.1.0-beta.15 to 0.1.0-beta.16
+
+Deploy `sofinder.js`, `sofinder-picker.js` and `sofinder.css` together. Stored
+files and metadata need no migration. Browser tool preferences now use the
+`sofinder.tools.v3` key; batch rename and optimize/watermark are intentionally
+off until each user enables them in Settings. Grid and list sizes are stored
+independently under `sofinder.viewSizes.v1`.
+
+PDF preview works without LibreOffice. Office preview requires
+`document_preview.office: true` and a working LibreOffice binary; check `/health`
+after deployment. Private resources may use signed URLs or a configured
+`entry_url` host route. Review the new security headers against any host-level
+CSP before enabling third-party plugin UI assets.
+
 ## From 0.1.0-beta.14 to 0.1.0-beta.15
 
 Deploy the rebuilt `sofinder.js`, `sofinder-picker.js` and `sofinder.css`

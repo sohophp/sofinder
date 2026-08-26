@@ -76,6 +76,36 @@ final class PluginRegistryTest extends TestCase
         new PluginRegistry([$plugin]);
     }
 
+    public function testNormalizesSafeSameOriginPreviewersAndDetailsActions(): void
+    {
+        $plugin = new class implements PluginInterface {
+            public function descriptor(): array
+            {
+                return ['name' => 'document-preview', 'version' => '1.0.0', 'capabilities' => ['preview.pdf'],
+                    'uiActions' => [['id' => 'properties', 'label' => ['en' => 'Properties'], 'slot' => 'details', 'url' => '/documents/properties']],
+                    'previewers' => [['id' => 'pdf', 'mimeTypes' => ['application/pdf'], 'extensions' => ['PDF'], 'url' => '/sofinder/api/preview/document']],
+                ];
+            }
+        };
+        $descriptor = (new PluginRegistry([$plugin]))->descriptors()[0];
+
+        self::assertSame('details', $descriptor['uiActions'][0]['slot']);
+        self::assertSame(['pdf'], $descriptor['previewers'][0]['extensions']);
+        self::assertSame(['application/pdf'], $descriptor['previewers'][0]['mimeTypes']);
+    }
+
+    public function testRejectsCrossOriginPreviewers(): void
+    {
+        $this->expectException(\InvalidArgumentException::class);
+        $plugin = new class implements PluginInterface {
+            public function descriptor(): array
+            {
+                return ['name' => 'unsafe-preview', 'version' => '1.0.0', 'capabilities' => [], 'previewers' => [['id' => 'pdf', 'extensions' => ['pdf'], 'url' => '//attacker.invalid/render']]];
+            }
+        };
+        new PluginRegistry([$plugin]);
+    }
+
     /** @param list<string> $capabilities */
     private function plugin(string $name, string $version, array $capabilities): PluginInterface
     {

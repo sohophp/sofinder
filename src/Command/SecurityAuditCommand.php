@@ -7,6 +7,7 @@ namespace SohoPHP\SoFinder\Command;
 use SohoPHP\SoFinder\Contract\ImageCapabilityProviderInterface;
 use SohoPHP\SoFinder\Contract\LocalPathProviderInterface;
 use SohoPHP\SoFinder\Contract\StorageAuditProviderInterface;
+use SohoPHP\SoFinder\Contract\HealthCheckInterface;
 use SohoPHP\SoFinder\Image\ImageFormatRegistry;
 use SohoPHP\SoFinder\ResourceRegistry;
 use Symfony\Component\Console\Attribute\AsCommand;
@@ -30,6 +31,8 @@ final class SecurityAuditCommand extends Command
         private readonly string $trashDirectory,
         private readonly ?ImageCapabilityProviderInterface $images = null,
         private readonly ?ImageFormatRegistry $imageFormats = null,
+        private readonly bool $malwareScanningEnabled = false,
+        private readonly ?HealthCheckInterface $malwareScanner = null,
     ) {
         parent::__construct();
     }
@@ -98,6 +101,20 @@ final class SecurityAuditCommand extends Command
                 if ($this->contains($root, $resolved)) {
                     $findings[] = ['critical', $name, 'Private working directory is inside a resource storage root.'];
                 }
+            }
+        }
+        if (!$this->malwareScanningEnabled) {
+            $findings[] = ['warning', 'malware-scanning', 'Malware scanning is disabled.'];
+        } elseif ($this->malwareScanner === null) {
+            $findings[] = ['critical', 'malware-scanning', 'Malware scanning is enabled but no scanner service is registered.'];
+        } else {
+            try {
+                $scanHealth = $this->malwareScanner->check();
+                if ($scanHealth->status !== 'ready') {
+                    $findings[] = ['critical', 'malware-scanning', 'The configured malware scanner is unavailable.'];
+                }
+            } catch (\Throwable) {
+                $findings[] = ['critical', 'malware-scanning', 'The configured malware scanner health check failed.'];
             }
         }
 

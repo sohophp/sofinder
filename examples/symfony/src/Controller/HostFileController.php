@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Controller;
 
 use SohoPHP\SoFinder\FileManager;
+use SohoPHP\SoFinder\Http\ContentDisposition;
 use SohoPHP\SoFinder\ResourceRegistry;
 use Symfony\Component\HttpFoundation\RedirectResponse;
 use Symfony\Component\HttpFoundation\Request;
@@ -45,7 +46,7 @@ final readonly class HostFileController
         });
         $response->headers->set('Content-Type', $entry->mimeType ?? 'application/octet-stream');
         $response->headers->set('Content-Length', (string) $entry->size);
-        $response->headers->set('Content-Disposition', $response->headers->makeDisposition($disposition, $entry->name));
+        $response->headers->set('Content-Disposition', ContentDisposition::make($disposition, $entry->name));
         $response->headers->set('X-Content-Type-Options', 'nosniff');
 
         return $response;

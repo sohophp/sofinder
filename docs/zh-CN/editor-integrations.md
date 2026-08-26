@@ -8,6 +8,8 @@ description: 通过通用 Picker SDK 连接 CKEditor 5、TinyMCE、TipTap、Quil
 SoFinder 将 `sofinder-picker.js` 作为独立 ES Module 发布。所有编辑器使用同一
 Picker URL 和带版本的返回对象，不依赖 React 内部实现。
 
+返回对象遵循公开的 [Picker Entry JSON Schema](/schema/picker-entry.schema.json)，固定包含 `resource`、`path`、`name`、`url`、`mimeType`、`size`、`modifiedAt`、`width`、`height` 和 `capabilities`。非图片尺寸为 `null`；Consumer 必须忽略 1.x 新增字段。消息 Envelope 另见 [JSON Schema](/schema/picker-message.schema.json)。
+
 ```js
 import { openPicker } from '/sofinder/assets/sofinder-picker.js'
 

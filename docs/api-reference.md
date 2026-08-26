@@ -75,6 +75,10 @@ HTTP status is authoritative. `429` responses include `Retry-After: 2`. A batch 
 
 Returns `apiVersion`, visible `resources`, plugin descriptors, image presets, effective image capabilities and UI defaults. The current API version is `1.0`.
 
+### `GET /api/security/status`
+
+Returns malware scanner readiness, pending/passed/quarantined/failed counts and bounded recent history. Access is restricted by `malware_scanning.status_roles`.
+
 ### `GET /api/entries`
 
 Query parameters:
@@ -205,9 +209,22 @@ Authorizes `read` and returns an attachment. Folders return `invalid_type`.
 
 Returns private authenticated content with ETag, Last-Modified, conditional request and a single byte `Range`. Only safe browser raster MIME types can be inline; every other type is forced to attachment. Invalid or unsatisfiable ranges return 416.
 
+### Temporary signed URLs
+
+`GET /api/signed-url?resource=Private&path=manual.pdf&ttl=300` first authorizes the
+current user and returns `{url,expiresAt}`. The URL targets `/signed/{token}` and
+may be opened without a session only when the host firewall explicitly grants
+that route public access. Tokens are HMAC protected, work only with
+`delivery_mode: proxy`, and are bound to the file size and modified time.
+Expired or replaced files return 410; token tampering returns 403.
+
 ### `GET /api/preview/text?resource=Files&path=readme.txt`
 
 Returns at most the first 256 KiB of an authorized UTF-8 text, JSON, XML or YAML file as JSON `{content,truncated,mimeType,size}`. Content is rendered as text by the bundled UI and is never treated as HTML.
+
+### `GET /api/preview/document?resource=Files&path=manual.pdf`
+
+Returns an authorized inline PDF. Optional Office files are converted by the configured bounded LibreOffice process. See [PDF and Office preview](/document-preview).
 
 ### `GET /api/checksum?resource=Files&path=manual.pdf`
 
@@ -226,6 +243,7 @@ Trash IDs are actor-private 32-character hexadecimal values. Overwrite restore r
 - `GET /api/images/thumbnail?resource=Images&path=photo.jpg&width=240&height=180` returns a private cached thumbnail with ETag.
 - `GET /api/images/info?resource=Images&path=photo.jpg` returns decoded `width` and `height`.
 - `PATCH /api/images/edit` applies one to ten ordered actions.
+- `PATCH /api/images/batch` applies the same actions to 1–100 paths and returns per-item success/error records.
 
 ```json
 {
@@ -240,7 +258,7 @@ Trash IDs are actor-private 32-character hexadecimal values. Overwrite restore r
 }
 ```
 
-Action types are `crop`, `resize`, `rotate` and `preset`. Rotate degrees are 0/90/180/270; preset takes `name`. `save.mode` is `copy` or `overwrite`. The response contains `entry`, and `original`/`result` dimensions and byte size. Legacy single transform and crop bodies remain supported but new clients should use actions.
+Action types are `crop`, `resize`, `rotate`, `preset`, `optimize`, `watermarkText` and `watermarkImage`; complete bounds are in [image-actions.schema.json](/schema/image-actions.schema.json). `save.mode` is `copy` or `overwrite`, and format conversion requires copy mode. Legacy transform/crop bodies remain until the advertised `Sunset` and return deprecation headers.
 
 ## ZIP and metadata
 
@@ -273,6 +291,8 @@ An entry accepts at most 10 unique tags of 1–30 visible characters.
 `POST /compat/ckeditor4/upload` accepts multipart field `upload`. Query parameters include `type`, `selection`, `currentFolder`, `_token`, `CKEditorFuncNum` and optional `responseType=json`. Name conflicts are auto-renamed unless `ckeditor4.overwrite_on_upload` is explicitly enabled. See the [CKEditor 4 guide](/ckeditor4) for callback and JSON responses.
 
 ## Common status and error codes
+
+The exhaustive code/status/category catalog is [error-codes.json](/error-codes.json) and CI checks it against literal server exceptions.
 
 | Status | Representative codes | Client behavior |
 | --- | --- | --- |

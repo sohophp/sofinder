@@ -1,0 +1,14 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://sofinder.sohophp.app/schema/picker-message.schema.json",
+  "title": "SoFinder picker selection message",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["type", "version", "requestId", "entry"],
+  "properties": {
+    "type": {"const": "sofinder:select"},
+    "version": {"const": "1.0"},
+    "requestId": {"type": "string", "minLength": 8, "maxLength": 128, "pattern": "^[A-Za-z0-9._:-]+$"},
+    "entry": {"$ref": "picker-entry.schema.json"}
+  }
+}

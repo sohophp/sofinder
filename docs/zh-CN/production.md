@@ -29,26 +29,39 @@ $state = new RedisAtomicStateStore($redis, 'myapp:sofinder:');
 ```
 
 PDO Store 会创建可移植的 `sofinder_state` 表，也可以在部署阶段显式执行 `install()`。
-连接凭证、TLS 和重试策略由 Host 管理，并在 Symfony Container 中覆盖相应 Contract
-Alias。分块文件仍须使用共享私有文件系统或自定义 `ChunkUploadStoreInterface`；共享状态
+连接凭证、TLS 和重试策略由 Host 管理。把状态对象注册为 Symfony Service 后配置：
+
+```yaml
+so_finder:
+  cluster:
+    state_service: 'app.sofinder_shared_state'
+    chunk_upload_store_service: 'app.sofinder_shared_chunks' # 可选
+```
+
+`state_service` 自动替换 metadata、请求限流与配额 Store；`/health` 会执行原子读写探针。
+两个 Service 分别实现 `AtomicStateStoreInterface` 与 `ChunkUploadStoreInterface`。
+分块文件仍须使用共享私有文件系统或自定义 `ChunkUploadStoreInterface`；共享状态
 不能代替对象存储的版本恢复能力。
 
 ## ClamAV
 
-将 `ClamAvScanner` 注册为 Symfony Service，Autoconfiguration 会同时添加上传扫描和
-健康检查 Tag。它通过 clamd `INSTREAM` 协议传送隔离文件，不执行 Shell，并采用
-fail-closed 策略。
+在 SoFinder 配置中启用内置 ClamAV 整合。它通过 clamd `INSTREAM` 协议传送隔离文件，
+不执行 Shell，并采用 fail-closed 策略。
 
 ```yaml
-services:
-  SohoPHP\SoFinder\Security\ClamAvScanner:
-    arguments:
-      $endpoint: 'unix:///run/clamav/clamd.ctl'
-      $timeoutSeconds: 8
+so_finder:
+  malware_scanning:
+    enabled: true
+    endpoint: 'unix:///run/clamav/clamd.ctl'
+    timeout_seconds: 8
+    history_limit: 100
+    status_roles: [ROLE_ADMIN]
 ```
 
 病毒文件返回 `malware_detected`；扫描器不可用或响应不确定时返回
 `malware_scanner_unavailable`，隔离文件随后删除。
+“安全状态”和 `GET /api/security/status` 会显示配置状态、clamd 实时就绪结果、有界的
+最近扫描记录及数量。Prometheus 也会按结果输出扫描次数、扫描 Byte 与累计耗时 Counter。
 
 ## 健康检查与指标
 

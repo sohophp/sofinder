@@ -29,9 +29,17 @@ so_finder:
     disk_bytes: 1073741824
     threads: 1
     timeout_seconds: 30
+    # 非 ASCII 文字浮水印必須設定；僅使用 ASCII 時可保持 null。
+    watermark_font: /usr/share/fonts/truetype/noto/NotoSansCJK-Regular.ttc
 ```
 
 Imagick 只會接收由 Registry 產生的固定 Coder，永遠不執行自動 SVG、PDF、PostScript、URL 或 Pseudo-protocol Dispatch。Memory、Map、Disk、Thread 與 Time Limit 僅套用於各次操作，完成後還原。公開 Edit Capability 前，會透過有界 Round Trip 驗證 Encoder Availability。
+
+## 壓縮、轉換與浮水印
+
+「壓縮 / 浮水印」圖片工具在使用者工具列中預設關閉，可在「設定」中啟用。它提供品質可調的重新壓縮、Runtime 支援的 JPEG/PNG/WebP/AVIF 轉換、文字浮水印與圖片浮水印。單批最多處理 100 張已選圖片，並為每項回傳獨立結果。
+
+格式轉換一律另存副本；同格式壓縮與浮水印可另存或覆寫。動畫與多頁圖片會被拒絕以避免靜默遺失 Frame，浮水印圖片仍經過一般資源權限檢查。Unicode 文字必須設定可讀的絕對路徑 `watermark_font`；否則 API 回傳 `watermark_font_unavailable`，不會產生亂碼。
 
 ## 一般非 Web 圖片檔
 

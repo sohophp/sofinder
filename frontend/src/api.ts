@@ -1,4 +1,6 @@
-import type { ApiResponse, BatchResult, Entry, ImageAction, ImageCapabilities, ImageEditResult, ImagePreset, ImageInfo, MetadataState, PluginDescriptor, ResourceType, SoFinderConfig, TrashPage, UiScale } from "./types";
+import type { ApiResponse, BatchResult, Entry, ImageAction, ImageBatchResult, ImageCapabilities, ImageEditResult, ImagePreset, ImageInfo, MetadataState, PluginDescriptor, ResourceType, SecurityStatus, SoFinderConfig, TrashPage, UiScale } from "./types";
+
+export const isApiVersionSupported = (version: string): boolean => /^1(?:\.|$)/.test(version);
 
 export class ApiError extends Error {
   constructor(message: string, public readonly code: string, public readonly status: number) {
@@ -34,7 +36,21 @@ export class Api {
     this.base = config.apiBase.replace(/\/config$/, "");
   }
 
-  configData() { return this.request<{ apiVersion: string; resources: ResourceType[]; plugins: PluginDescriptor[]; imagePresets: Record<string, ImagePreset>; imageCapabilities?: ImageCapabilities; featureAvailability?: SoFinderConfig["featureAvailability"]; uiDefaults?: { scale: UiScale } }>("/config"); }
+  async configData() {
+    const data = await this.request<{ apiVersion: string; resources: ResourceType[]; plugins: PluginDescriptor[]; imagePresets: Record<string, ImagePreset>; imageCapabilities?: ImageCapabilities; featureAvailability?: SoFinderConfig["featureAvailability"]; uiDefaults?: { scale: UiScale }; signedUrls?: { enabled: boolean; defaultTtlSeconds: number; maxTtlSeconds: number } }>("/config");
+    if (!isApiVersionSupported(data.apiVersion)) {
+      throw new ApiError(`SoFinder UI requires API 1.x; server reported ${data.apiVersion || "an unknown version"}.`, "incompatible_api_version", 426);
+    }
+    return data;
+  }
+
+  securityStatus() { return this.request<SecurityStatus>("/security/status"); }
+
+  signedUrl(resource: string, path: string, ttl?: number, disposition: "inline" | "attachment" = "attachment") {
+    const query = new URLSearchParams({ resource, path, disposition });
+    if (ttl !== undefined) query.set("ttl", String(ttl));
+    return this.request<{ url: string; expiresAt: number }>(`/signed-url?${query}`);
+  }
 
   list(resource: string, path: string, search = "", sort = "name", direction = "asc", offset = 0, limit = 100, searchMode: "name" | "tags" = "name", cursor: string | null = null) {
     const query = new URLSearchParams({ resource, path, search, searchMode, sort, direction, offset: String(offset), limit: String(limit) });
@@ -252,6 +268,13 @@ export class Api {
     return this.request<ImageEditResult>("/images/edit", {
       method: "PATCH",
       body: JSON.stringify({ resource, path, actions, save }),
+    });
+  }
+
+  applyImageBatch(resource: string, paths: string[], actions: ImageAction[], save: { mode: "copy" | "overwrite" }) {
+    return this.request<ImageBatchResult>("/images/batch", {
+      method: "PATCH",
+      body: JSON.stringify({ resource, paths, actions, save }),
     });
   }
 

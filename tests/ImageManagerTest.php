@@ -171,13 +171,62 @@ final class ImageManagerTest extends TestCase
         }
     }
 
+    public function testOptimizationCanConvertFormatAndReportsSize(): void
+    {
+        $result = $this->manager()->applyActions('Images', 'source.png', [
+            ['type' => 'optimize', 'format' => 'jpeg', 'quality' => 72],
+        ]);
+
+        self::assertSame('source-edited.jpg', $result['entry']->name);
+        self::assertSame('image/jpeg', $result['entry']->mimeType);
+        self::assertGreaterThan(0, $result['result']['size']);
+    }
+
+    public function testTextAndImageWatermarksCreateValidImages(): void
+    {
+        $images = $this->manager();
+        $text = $images->applyActions('Images', 'source.png', [[
+            'type' => 'watermarkText', 'text' => 'SoFinder', 'position' => 'bottom-right', 'opacity' => 55, 'scale' => 30, 'color' => '#ffffff',
+        ]]);
+        $mark = $images->applyActions('Images', 'source.png', [[
+            'type' => 'watermarkImage', 'resource' => 'Images', 'path' => 'source.png', 'position' => 'center', 'opacity' => 35, 'scale' => 20,
+        ]]);
+
+        self::assertSame(['width' => 400, 'height' => 200], $images->info('Images', $text['entry']->path));
+        self::assertSame(['width' => 400, 'height' => 200], $images->info('Images', $mark['entry']->path));
+    }
+
+    public function testBatchOptimizationReportsPartialResults(): void
+    {
+        $result = $this->manager()->applyBatch('Images', ['source.png', 'missing.png'], [
+            ['type' => 'optimize', 'format' => 'original', 'quality' => 75],
+        ]);
+
+        self::assertSame(2, $result['total']);
+        self::assertSame(1, $result['succeeded']);
+        self::assertSame(1, $result['failed']);
+        self::assertFalse($result['items'][1]['success']);
+    }
+
+    public function testUnicodeWatermarkRequiresConfiguredFont(): void
+    {
+        try {
+            $this->manager()->applyActions('Images', 'source.png', [[
+                'type' => 'watermarkText', 'text' => '内部资料', 'position' => 'center', 'opacity' => 60, 'scale' => 25,
+            ]]);
+            self::fail('Unicode text must not be rendered with the GD bitmap font.');
+        } catch (SoFinderException $exception) {
+            self::assertSame('watermark_font_unavailable', $exception->errorCode);
+        }
+    }
+
     private function manager(): ImageManager
     {
         $authorization = new class implements AuthorizationInterface {
             public function isAuthenticated(): bool { return true; }
             public function isGranted(string $operation, ResourceType $resource, string $path): bool { return true; }
         };
-        $type = new ResourceType('Images', $this->directory, '/images', allowedExtensions: ['png', 'gif'], allowedMimeTypes: ['image/png', 'image/gif']);
+        $type = new ResourceType('Images', $this->directory, '/images', allowedExtensions: ['png', 'gif', 'jpg', 'jpeg'], allowedMimeTypes: ['image/png', 'image/gif', 'image/jpeg']);
         $files = new FileManager(new ResourceRegistry([new ResourceStorage($type, new LocalStorageAdapter($this->directory, '/images'))]), $authorization, new EventDispatcher());
 
         return new ImageManager($files, new GdImageProcessor(), $this->directory . '/cache', ['thumb' => ['width' => 80, 'height' => 80, 'quality' => 82]]);

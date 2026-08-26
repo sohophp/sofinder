@@ -8,9 +8,10 @@
   "servers": [{"url": "/sofinder"}],
   "security": [{"sessionCookie": []}],
   "paths": {
-    "/api/config": {"get": {"operationId": "getConfig", "responses": {"200": {"$ref": "#/components/responses/Success"}}}},
+    "/api/config": {"get": {"operationId": "getConfig", "responses": {"200": {"description": "Versioned discovery data", "content": {"application/json": {"schema": {"type": "object", "required": ["success", "data"], "properties": {"success": {"const": true}, "data": {"$ref": "./schema/config-data.schema.json"}}}}}}}}},
     "/health": {"get": {"operationId": "getHealth", "responses": {"200": {"$ref": "#/components/responses/Success"}, "503": {"$ref": "#/components/responses/Error"}}}},
     "/metrics": {"get": {"operationId": "getMetrics", "responses": {"200": {"description": "Prometheus text exposition", "content": {"text/plain": {"schema": {"type": "string"}}}}}}},
+    "/api/security/status": {"get": {"operationId": "getSecurityStatus", "responses": {"200": {"$ref": "#/components/responses/Success"}}}},
     "/api/entries": {
       "get": {"operationId": "listEntries", "parameters": [{"$ref": "#/components/parameters/resource"}, {"$ref": "#/components/parameters/path"}], "responses": {"200": {"$ref": "#/components/responses/Success"}}},
       "delete": {"operationId": "deleteEntry", "parameters": [{"$ref": "#/components/parameters/csrf"}], "requestBody": {"$ref": "#/components/requestBodies/JsonMutation"}, "responses": {"200": {"$ref": "#/components/responses/Success"}, "409": {"$ref": "#/components/responses/Error"}}}
@@ -30,14 +31,18 @@
     "/api/entries/batch-rename": {"post": {"operationId": "batchRenameEntries", "parameters": [{"$ref": "#/components/parameters/csrf"}], "requestBody": {"$ref": "#/components/requestBodies/JsonMutation"}, "responses": {"200": {"$ref": "#/components/responses/Success"}}}},
     "/api/download": {"get": {"operationId": "downloadEntry", "parameters": [{"$ref": "#/components/parameters/resource"}, {"$ref": "#/components/parameters/path"}], "responses": {"200": {"description": "File attachment", "content": {"application/octet-stream": {"schema": {"type": "string", "contentEncoding": "binary"}}}}}}},
     "/api/content": {"get": {"operationId": "streamContent", "parameters": [{"$ref": "#/components/parameters/resource"}, {"$ref": "#/components/parameters/path"}], "responses": {"200": {"description": "Authorized content"}, "206": {"description": "Single byte range"}, "416": {"$ref": "#/components/responses/Error"}}}},
+    "/api/signed-url": {"get": {"operationId": "issueSignedUrl", "parameters": [{"$ref": "#/components/parameters/resource"}, {"$ref": "#/components/parameters/path"}, {"name": "ttl", "in": "query", "schema": {"type": "integer", "minimum": 30}}, {"name": "disposition", "in": "query", "schema": {"enum": ["inline", "attachment"]}}], "responses": {"200": {"$ref": "#/components/responses/Success"}, "422": {"$ref": "#/components/responses/Error"}}}},
+    "/signed/{token}": {"get": {"operationId": "consumeSignedUrl", "security": [], "parameters": [{"name": "token", "in": "path", "required": true, "schema": {"type": "string"}}], "responses": {"200": {"description": "Revision-bound temporary file content"}, "206": {"description": "Single byte range"}, "403": {"$ref": "#/components/responses/Error"}, "410": {"$ref": "#/components/responses/Error"}}}},
     "/api/checksum": {"get": {"operationId": "getChecksum", "parameters": [{"$ref": "#/components/parameters/resource"}, {"$ref": "#/components/parameters/path"}], "responses": {"200": {"$ref": "#/components/responses/Success"}}}},
     "/api/preview/text": {"get": {"operationId": "getTextPreview", "parameters": [{"$ref": "#/components/parameters/resource"}, {"$ref": "#/components/parameters/path"}], "responses": {"200": {"$ref": "#/components/responses/Success"}, "415": {"$ref": "#/components/responses/Error"}}}},
+    "/api/preview/document": {"get": {"operationId": "getDocumentPreview", "parameters": [{"$ref": "#/components/parameters/resource"}, {"$ref": "#/components/parameters/path"}], "responses": {"200": {"description": "Inline sandboxed PDF preview"}, "413": {"$ref": "#/components/responses/Error"}, "415": {"$ref": "#/components/responses/Error"}, "503": {"$ref": "#/components/responses/Error"}}}},
     "/api/trash": {"get": {"operationId": "listTrash", "parameters": [{"$ref": "#/components/parameters/resource"}], "responses": {"200": {"$ref": "#/components/responses/Success"}}}},
     "/api/trash/{id}/restore": {"post": {"operationId": "restoreTrash", "parameters": [{"$ref": "#/components/parameters/id"}, {"$ref": "#/components/parameters/csrf"}], "requestBody": {"$ref": "#/components/requestBodies/JsonMutation"}, "responses": {"200": {"$ref": "#/components/responses/Success"}}}},
     "/api/trash/{id}": {"delete": {"operationId": "deleteTrash", "parameters": [{"$ref": "#/components/parameters/id"}, {"$ref": "#/components/parameters/csrf"}], "requestBody": {"$ref": "#/components/requestBodies/JsonMutation"}, "responses": {"200": {"$ref": "#/components/responses/Success"}}}},
     "/api/images/thumbnail": {"get": {"operationId": "getThumbnail", "parameters": [{"$ref": "#/components/parameters/resource"}, {"$ref": "#/components/parameters/path"}], "responses": {"200": {"description": "Browser-safe thumbnail"}}}},
     "/api/images/info": {"get": {"operationId": "getImageInfo", "parameters": [{"$ref": "#/components/parameters/resource"}, {"$ref": "#/components/parameters/path"}], "responses": {"200": {"$ref": "#/components/responses/Success"}}}},
-    "/api/images/edit": {"patch": {"operationId": "editImage", "parameters": [{"$ref": "#/components/parameters/csrf"}], "requestBody": {"$ref": "#/components/requestBodies/JsonMutation"}, "responses": {"200": {"$ref": "#/components/responses/Success"}}}},
+    "/api/images/edit": {"patch": {"operationId": "editImage", "parameters": [{"$ref": "#/components/parameters/csrf"}], "requestBody": {"$ref": "#/components/requestBodies/ImageEdit"}, "responses": {"200": {"$ref": "#/components/responses/Success"}, "415": {"$ref": "#/components/responses/Error"}, "422": {"$ref": "#/components/responses/Error"}}}},
+    "/api/images/batch": {"patch": {"operationId": "batchEditImages", "parameters": [{"$ref": "#/components/parameters/csrf"}], "requestBody": {"$ref": "#/components/requestBodies/ImageBatch"}, "responses": {"200": {"$ref": "#/components/responses/Success"}, "415": {"$ref": "#/components/responses/Error"}, "422": {"$ref": "#/components/responses/Error"}}}},
     "/api/archive": {"post": {"operationId": "downloadArchive", "parameters": [{"$ref": "#/components/parameters/csrf"}], "requestBody": {"$ref": "#/components/requestBodies/JsonMutation"}, "responses": {"200": {"description": "Bounded ZIP archive"}}}},
     "/api/metadata": {
       "get": {"operationId": "getMetadata", "parameters": [{"$ref": "#/components/parameters/resource"}], "responses": {"200": {"$ref": "#/components/responses/Success"}}},
@@ -53,10 +58,19 @@
       "id": {"name": "id", "in": "path", "required": true, "schema": {"type": "string"}},
       "csrf": {"name": "X-CSRF-TOKEN", "in": "header", "required": true, "schema": {"type": "string"}}
     },
-    "requestBodies": {"JsonMutation": {"required": true, "content": {"application/json": {"schema": {"type": "object"}}}}},
+    "requestBodies": {
+      "JsonMutation": {"required": true, "content": {"application/json": {"schema": {"type": "object"}}}},
+      "ImageEdit": {"required": true, "content": {"application/json": {"schema": {"$ref": "#/components/schemas/ImageEditRequest"}}}},
+      "ImageBatch": {"required": true, "content": {"application/json": {"schema": {"$ref": "#/components/schemas/ImageBatchRequest"}}}}
+    },
     "schemas": {
       "SuccessEnvelope": {"type": "object", "required": ["success", "data"], "properties": {"success": {"const": true}, "data": {"type": "object"}}},
-      "ErrorEnvelope": {"type": "object", "required": ["success", "error"], "properties": {"success": {"const": false}, "error": {"type": "object", "required": ["code", "message"], "properties": {"code": {"type": "string"}, "message": {"type": "string"}}}}}
+      "ErrorEnvelope": {"$ref": "./schema/error-envelope.schema.json"},
+      "PickerEntry": {"$ref": "./schema/picker-entry.schema.json"},
+      "ImageActions": {"$ref": "./schema/image-actions.schema.json"},
+      "ImageSave": {"type": "object", "additionalProperties": false, "required": ["mode"], "properties": {"mode": {"enum": ["copy", "overwrite"]}, "name": {"type": "string"}}},
+      "ImageEditRequest": {"type": "object", "additionalProperties": false, "required": ["resource", "path", "actions", "save"], "properties": {"resource": {"type": "string", "minLength": 1}, "path": {"type": "string", "minLength": 1}, "actions": {"$ref": "#/components/schemas/ImageActions"}, "save": {"$ref": "#/components/schemas/ImageSave"}}},
+      "ImageBatchRequest": {"type": "object", "additionalProperties": false, "required": ["resource", "paths", "actions", "save"], "properties": {"resource": {"type": "string", "minLength": 1}, "paths": {"type": "array", "minItems": 1, "maxItems": 100, "uniqueItems": true, "items": {"type": "string", "minLength": 1}}, "actions": {"$ref": "#/components/schemas/ImageActions"}, "save": {"$ref": "#/components/schemas/ImageSave"}}}
     },
     "responses": {
       "Success": {"description": "Successful SoFinder envelope", "content": {"application/json": {"schema": {"$ref": "#/components/schemas/SuccessEnvelope"}}}},

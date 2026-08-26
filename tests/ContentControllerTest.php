@@ -27,6 +27,7 @@ final class ContentControllerTest extends TestCase
         $this->directory = sys_get_temp_dir() . '/sofinder-content-' . bin2hex(random_bytes(8));
         mkdir($this->directory, 0775, true);
         file_put_contents($this->directory . '/sample.txt', '0123456789');
+        file_put_contents($this->directory . '/测试文件.txt', 'unicode');
         $resource = new ResourceType('Files', $this->directory, '/files', ['txt']);
         $authorization = new class implements AuthorizationInterface {
             public function isAuthenticated(): bool { return true; }
@@ -43,6 +44,7 @@ final class ContentControllerTest extends TestCase
     protected function tearDown(): void
     {
         @unlink($this->directory . '/sample.txt');
+        @unlink($this->directory . '/测试文件.txt');
         @rmdir($this->directory);
     }
 
@@ -71,6 +73,16 @@ final class ContentControllerTest extends TestCase
 
         self::assertSame(Response::HTTP_NOT_MODIFIED, $response->getStatusCode());
         self::assertSame($etag, $response->getEtag());
+    }
+
+    public function testUnicodeDownloadNameHasASafeFallbackAndUtf8Filename(): void
+    {
+        $response = $this->controller->download(Request::create('/api/download?resource=Files&path=' . rawurlencode('测试文件.txt')));
+        $disposition = (string) $response->headers->get('Content-Disposition');
+
+        self::assertStringStartsWith('attachment;', $disposition);
+        self::assertStringContainsString('filename=download.txt', $disposition);
+        self::assertStringContainsString("filename*=utf-8''%E6%B5%8B%E8%AF%95%E6%96%87%E4%BB%B6.txt", $disposition);
     }
 
     public function testInvalidRangeUsesTheStableDomainError(): void

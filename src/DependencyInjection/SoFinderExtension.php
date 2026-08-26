@@ -11,8 +11,12 @@ use SohoPHP\SoFinder\Command\TrashCleanupCommand;
 use SohoPHP\SoFinder\Command\UsageRecalculateCommand;
 use SohoPHP\SoFinder\Command\UploadCleanupCommand;
 use SohoPHP\SoFinder\Command\ImageCapabilitiesCommand;
+use SohoPHP\SoFinder\Command\MaintenanceStatusCommand;
+use SohoPHP\SoFinder\Command\CacheCleanupCommand;
+use SohoPHP\SoFinder\Command\MetadataRepairCommand;
 use SohoPHP\SoFinder\Archive\ArchiveManager;
 use SohoPHP\SoFinder\Contract\AuthorizationInterface;
+use SohoPHP\SoFinder\Contract\AtomicStateStoreInterface;
 use SohoPHP\SoFinder\Contract\ChunkUploadStoreInterface;
 use SohoPHP\SoFinder\Contract\ActorProviderInterface;
 use SohoPHP\SoFinder\Contract\ImageProcessorInterface;
@@ -47,6 +51,9 @@ use SohoPHP\SoFinder\Http\RequestIdSubscriber;
 use SohoPHP\SoFinder\Http\MetadataController;
 use SohoPHP\SoFinder\Http\QuickUploadController;
 use SohoPHP\SoFinder\Http\SecurityResponseSubscriber;
+use SohoPHP\SoFinder\Http\SecurityStatusController;
+use SohoPHP\SoFinder\Http\SignedUrlController;
+use SohoPHP\SoFinder\Http\DocumentPreviewController;
 use SohoPHP\SoFinder\ResourceRegistry;
 use SohoPHP\SoFinder\Image\GdImageProcessor;
 use SohoPHP\SoFinder\Image\HybridImageProcessor;
@@ -57,6 +64,8 @@ use SohoPHP\SoFinder\Metadata\JsonMetadataStore;
 use SohoPHP\SoFinder\Health\HealthManager;
 use SohoPHP\SoFinder\Health\RuntimeHealthCheck;
 use SohoPHP\SoFinder\Health\StorageHealthCheck;
+use SohoPHP\SoFinder\Health\DocumentPreviewHealthCheck;
+use SohoPHP\SoFinder\Health\SharedStateHealthCheck;
 use SohoPHP\SoFinder\Observability\LocalMetricsStore;
 use SohoPHP\SoFinder\Observability\OperationMetricsSubscriber;
 use SohoPHP\SoFinder\Metadata\MetadataManager;
@@ -64,12 +73,22 @@ use SohoPHP\SoFinder\Maintenance\MaintenanceCoordinator;
 use SohoPHP\SoFinder\Maintenance\MaintenanceMessageHandler;
 use SohoPHP\SoFinder\Maintenance\MaintenanceRunner;
 use SohoPHP\SoFinder\Maintenance\MessengerMaintenanceDispatcher;
+use SohoPHP\SoFinder\Maintenance\CacheCleaner;
+use SohoPHP\SoFinder\Maintenance\MetadataRepairer;
 use SohoPHP\SoFinder\Plugin\PluginRegistry;
+use SohoPHP\SoFinder\Preview\DocumentPreviewManager;
+use SohoPHP\SoFinder\Preview\DocumentPreviewPlugin;
 use SohoPHP\SoFinder\Security\PathGuard;
 use SohoPHP\SoFinder\Security\DefaultFileInspector;
 use SohoPHP\SoFinder\Security\UploadPipeline;
 use SohoPHP\SoFinder\Security\RequestGate;
 use SohoPHP\SoFinder\Security\LocalRequestGateStore;
+use SohoPHP\SoFinder\Security\ClamAvScanner;
+use SohoPHP\SoFinder\Security\MalwareScanStatusStore;
+use SohoPHP\SoFinder\Security\SignedUrlManager;
+use SohoPHP\SoFinder\State\SharedMetadataStore;
+use SohoPHP\SoFinder\State\SharedRequestGateStore;
+use SohoPHP\SoFinder\State\SharedUsageTracker;
 use SohoPHP\SoFinder\Storage\LocalStorageAdapterFactory;
 use SohoPHP\SoFinder\Storage\StoragePaginator;
 use SohoPHP\SoFinder\Symfony\CsrfGuard;
@@ -121,6 +140,10 @@ final class SoFinderExtension extends Extension
         $directoryMode = octdec($config['filesystem_permissions']['directory_mode']);
         $fileMode = octdec($config['filesystem_permissions']['file_mode']);
         $maintenanceConfig = $config['maintenance'];
+        $malwareConfig = $config['malware_scanning'];
+        $documentPreviewConfig = $config['document_preview'];
+        $clusterConfig = $config['cluster'];
+        $signedUrlConfig = $config['signed_urls'];
         if ($maintenanceConfig['mode'] === 'messenger' && !interface_exists('Symfony\\Component\\Messenger\\MessageBusInterface')) {
             throw new \InvalidArgumentException('SoFinder maintenance.mode is messenger, but symfony/messenger is not installed.');
         }
@@ -191,9 +214,10 @@ final class SoFinderExtension extends Extension
         ]));
         $container->setDefinition(GdImageProcessor::class, (new Definition(GdImageProcessor::class))
             ->setArgument('$maximumPixels', $imageConfig['max_single_frame_pixels'])
-            ->setArgument('$formats', new Reference(ImageFormatRegistry::class)));
+            ->setArgument('$formats', new Reference(ImageFormatRegistry::class))
+            ->setArgument('$watermarkFont', $imageConfig['watermark_font']));
         $container->setDefinition(ImagickImageProcessor::class, (new Definition(ImagickImageProcessor::class))
-            ->setArguments([new Reference(ImageFormatRegistry::class), new Reference(ImageProcessingLimits::class)]));
+            ->setArguments([new Reference(ImageFormatRegistry::class), new Reference(ImageProcessingLimits::class), $imageConfig['watermark_font']]));
         $container->setDefinition(HybridImageProcessor::class, (new Definition(HybridImageProcessor::class))
             ->setArguments([
                 new Reference(ImageFormatRegistry::class),
@@ -262,6 +286,10 @@ final class SoFinderExtension extends Extension
                 new Reference(MaintenanceRunner::class),
                 $dispatcher,
             ]));
+        $container->setDefinition(CacheCleaner::class, (new Definition(CacheCleaner::class))
+            ->setArgument('$cacheDirectory', $config['cache_dir']));
+        $container->setDefinition(MetadataRepairer::class, (new Definition(MetadataRepairer::class))
+            ->setArguments([$config['metadata_file'], new Reference(ResourceRegistry::class), $clusterConfig['state_service'] === null]));
         $container->setDefinition(FileManager::class, (new Definition(FileManager::class))
             ->setArguments([
                 new Reference(ResourceRegistry::class),
@@ -298,6 +326,24 @@ final class SoFinderExtension extends Extension
                 new Reference(ActorProviderInterface::class),
             ]));
         $container->setDefinition(Theme::class, (new Definition(Theme::class))->setArgument('$values', $config['theme']));
+        $container->setDefinition(DocumentPreviewManager::class, (new Definition(DocumentPreviewManager::class))
+            ->setArguments([
+                new Reference(FileManager::class),
+                $config['cache_dir'],
+                $documentPreviewConfig['pdf'],
+                $documentPreviewConfig['office'],
+                $documentPreviewConfig['office_binary'],
+                $documentPreviewConfig['timeout_seconds'],
+                $documentPreviewConfig['max_bytes'],
+            ]));
+        if ($documentPreviewConfig['pdf'] || $documentPreviewConfig['office']) {
+            $container->setDefinition(DocumentPreviewPlugin::class, (new Definition(DocumentPreviewPlugin::class))
+                ->setArguments([new Reference(RouterInterface::class), $documentPreviewConfig['pdf'], $documentPreviewConfig['office']])
+                ->addTag('sofinder.plugin'));
+            $container->setDefinition(DocumentPreviewHealthCheck::class, (new Definition(DocumentPreviewHealthCheck::class))
+                ->setArguments([$documentPreviewConfig['pdf'], $documentPreviewConfig['office'], $documentPreviewConfig['office_binary']])
+                ->addTag('sofinder.health_check', ['priority' => 70]));
+        }
         $container->setDefinition(PluginRegistry::class, (new Definition(PluginRegistry::class))
             ->setArgument('$plugins', new TaggedIteratorArgument('sofinder.plugin')));
         $container->setDefinition(FeaturePolicy::class, (new Definition(FeaturePolicy::class))
@@ -316,6 +362,35 @@ final class SoFinderExtension extends Extension
         $container->setDefinition(LocalMetricsStore::class, (new Definition(LocalMetricsStore::class))
             ->setArgument('$file', rtrim((string) $config['cache_dir'], '/') . '/metrics.json'));
         $container->setAlias(MetricsStoreInterface::class, new Alias(LocalMetricsStore::class));
+        $container->setDefinition(MalwareScanStatusStore::class, (new Definition(MalwareScanStatusStore::class))
+            ->setArguments([
+                rtrim((string) $config['cache_dir'], '/') . '/malware-scans.json',
+                $malwareConfig['history_limit'],
+            ]));
+        // Always register the adapter so runtime-resolved env(bool:...) values can
+        // enable or disable scanning without making a compile-time branch on an
+        // unresolved environment placeholder. Disabled adapters are no-op scanners
+        // and report a ready/disabled health result.
+        $container->setDefinition(ClamAvScanner::class, (new Definition(ClamAvScanner::class))
+            ->setArgument('$endpoint', $malwareConfig['endpoint'])
+            ->setArgument('$timeoutSeconds', $malwareConfig['timeout_seconds'])
+            ->setArgument('$metrics', new Reference(MetricsStoreInterface::class))
+            ->setArgument('$statusStore', new Reference(MalwareScanStatusStore::class))
+            ->setArgument('$logger', new Reference(LoggerInterface::class))
+            ->setArgument('$enabled', $malwareConfig['enabled'])
+            ->addTag('sofinder.upload_scanner')
+            ->addTag('sofinder.health_check', ['priority' => 80]));
+        $clamAvReference = new Reference(ClamAvScanner::class);
+        $container->setDefinition(SignedUrlManager::class, (new Definition(SignedUrlManager::class))
+            ->setArguments([
+                new Reference(FileManager::class),
+                new Reference(ResourceRegistry::class),
+                new Reference(PathGuard::class),
+                $signedUrlConfig['enabled'],
+                $signedUrlConfig['secret'],
+                $signedUrlConfig['default_ttl_seconds'],
+                $signedUrlConfig['max_ttl_seconds'],
+            ]));
 
         $this->controller($container, BrowserController::class, [
             new Reference(FileManager::class),
@@ -325,6 +400,8 @@ final class SoFinderExtension extends Extension
             new Reference(Theme::class),
             $config['ui'],
             new Reference(FeaturePolicy::class),
+            new Reference(AuthorizationCheckerInterface::class),
+            $malwareConfig['status_roles'],
         ]);
         $this->controller($container, ApiController::class, [
             new Reference(FileManager::class),
@@ -335,6 +412,9 @@ final class SoFinderExtension extends Extension
             new Reference(ImageCapabilityProviderInterface::class),
             $config['ui'],
             new Reference(FeaturePolicy::class),
+            $signedUrlConfig['enabled'],
+            $signedUrlConfig['default_ttl_seconds'],
+            $signedUrlConfig['max_ttl_seconds'],
         ]);
         $this->controller($container, ContentController::class, [
             new Reference(FileManager::class),
@@ -368,6 +448,19 @@ final class SoFinderExtension extends Extension
         ]);
         $this->controller($container, HealthController::class, [new Reference(HealthManager::class)]);
         $this->controller($container, MetricsController::class, [new Reference(MetricsStoreInterface::class), new Reference(HealthManager::class)]);
+        $this->controller($container, SecurityStatusController::class, [
+            $malwareConfig['enabled'],
+            new Reference(MalwareScanStatusStore::class),
+            $clamAvReference,
+            new Reference(AuthorizationCheckerInterface::class),
+            $malwareConfig['status_roles'],
+        ]);
+        $this->controller($container, DocumentPreviewController::class, [new Reference(DocumentPreviewManager::class)]);
+        $this->controller($container, SignedUrlController::class, [
+            new Reference(SignedUrlManager::class),
+            new Reference(ContentController::class),
+            new Reference(RouterInterface::class),
+        ]);
         $this->controller($container, AssetController::class, [$container->getParameter('so_finder.package_dir')]);
 
         $container->setDefinition(ExceptionSubscriber::class, (new Definition(ExceptionSubscriber::class))
@@ -379,6 +472,24 @@ final class SoFinderExtension extends Extension
         $container->setDefinition(LocalRequestGateStore::class, (new Definition(LocalRequestGateStore::class))
             ->setArgument('$directory', rtrim((string) $config['cache_dir'], '/') . '/rate-limit'));
         $container->setAlias(RequestGateStoreInterface::class, new Alias(LocalRequestGateStore::class));
+        if ($clusterConfig['state_service'] !== null) {
+            $container->setAlias(AtomicStateStoreInterface::class, new Alias((string) $clusterConfig['state_service']));
+            $container->setDefinition(SharedMetadataStore::class, (new Definition(SharedMetadataStore::class))
+                ->setArgument('$state', new Reference(AtomicStateStoreInterface::class)));
+            $container->setDefinition(SharedRequestGateStore::class, (new Definition(SharedRequestGateStore::class))
+                ->setArgument('$state', new Reference(AtomicStateStoreInterface::class)));
+            $container->setDefinition(SharedUsageTracker::class, (new Definition(SharedUsageTracker::class))
+                ->setArgument('$state', new Reference(AtomicStateStoreInterface::class)));
+            $container->setAlias(MetadataStoreInterface::class, new Alias(SharedMetadataStore::class));
+            $container->setAlias(RequestGateStoreInterface::class, new Alias(SharedRequestGateStore::class));
+            $container->setAlias(UsageTrackerInterface::class, new Alias(SharedUsageTracker::class));
+            $container->setDefinition(SharedStateHealthCheck::class, (new Definition(SharedStateHealthCheck::class))
+                ->setArgument('$state', new Reference(AtomicStateStoreInterface::class))
+                ->addTag('sofinder.health_check', ['priority' => 85]));
+        }
+        if ($clusterConfig['chunk_upload_store_service'] !== null) {
+            $container->setAlias(ChunkUploadStoreInterface::class, new Alias((string) $clusterConfig['chunk_upload_store_service']));
+        }
         $container->setDefinition(RequestGate::class, (new Definition(RequestGate::class))
             ->setArguments([
                 new Reference(RequestGateStoreInterface::class),
@@ -417,6 +528,8 @@ final class SoFinderExtension extends Extension
                 $config['trash_dir'],
                 new Reference(ImageCapabilityProviderInterface::class),
                 new Reference(ImageFormatRegistry::class),
+                $malwareConfig['enabled'],
+                $clamAvReference,
             ])
             ->addTag('console.command'));
         $container->setDefinition(ImageCapabilitiesCommand::class, (new Definition(ImageCapabilitiesCommand::class))
@@ -435,6 +548,15 @@ final class SoFinderExtension extends Extension
             ->addTag('console.command'));
         $container->setDefinition(UploadCleanupCommand::class, (new Definition(UploadCleanupCommand::class))
             ->setArgument('$runner', new Reference(MaintenanceRunner::class))
+            ->addTag('console.command'));
+        $container->setDefinition(MaintenanceStatusCommand::class, (new Definition(MaintenanceStatusCommand::class))
+            ->setArgument('$runner', new Reference(MaintenanceRunner::class))
+            ->addTag('console.command'));
+        $container->setDefinition(CacheCleanupCommand::class, (new Definition(CacheCleanupCommand::class))
+            ->setArgument('$cleaner', new Reference(CacheCleaner::class))
+            ->addTag('console.command'));
+        $container->setDefinition(MetadataRepairCommand::class, (new Definition(MetadataRepairCommand::class))
+            ->setArgument('$repairer', new Reference(MetadataRepairer::class))
             ->addTag('console.command'));
     }
 

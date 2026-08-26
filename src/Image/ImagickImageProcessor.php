@@ -5,15 +5,17 @@ declare(strict_types=1);
 namespace SohoPHP\SoFinder\Image;
 
 use SohoPHP\SoFinder\Contract\ImageProcessorInterface;
+use SohoPHP\SoFinder\Contract\ImageEffectsProcessorInterface;
 use SohoPHP\SoFinder\Exception\SoFinderException;
 use SohoPHP\SoFinder\Value\ImageProcessingLimits;
 
 /** Optional processor that only permits raster coders declared by ImageFormatRegistry. */
-final readonly class ImagickImageProcessor implements ImageProcessorInterface
+final readonly class ImagickImageProcessor implements ImageProcessorInterface, ImageEffectsProcessorInterface
 {
     public function __construct(
         private ImageFormatRegistry $formats = new ImageFormatRegistry(),
         private ImageProcessingLimits $limits = new ImageProcessingLimits(),
+        private ?string $watermarkFont = null,
     ) {
     }
 
@@ -191,6 +193,137 @@ final readonly class ImagickImageProcessor implements ImageProcessorInterface
                 $this->release($image);
             }
         });
+    }
+
+    public function optimize(string $source, string $destination, string $mimeType, int $quality): void
+    {
+        $this->assertQuality($quality);
+        $format = $this->formats->formatForMime($mimeType);
+        $coder = $format === null ? null : $this->formats->coder($format);
+        if ($coder === null || !$this->canEncode($mimeType)) {
+            throw new SoFinderException('The requested output image format is unavailable.', 'unsupported_image_output_format', 415);
+        }
+        $this->withResourceLimits(function () use ($source, $destination, $coder, $quality): void {
+            $probe = $this->probe($source);
+            $this->assertEditableFrames($probe['frames']);
+            $image = $this->read($source, $probe['coder'], true);
+            try {
+                $this->orient($image);
+                $image->setImageFormat($coder);
+                $image->setImageCompressionQuality($quality);
+                $image->stripImage();
+                $this->write($image, $destination);
+            } finally {
+                $this->release($image);
+            }
+        });
+    }
+
+    public function textWatermark(string $source, string $destination, string $text, string $position, int $opacity, int $scale, string $color, int $quality): void
+    {
+        $text = trim($text);
+        if ($text === '' || mb_strlen($text) > 200) {
+            throw new SoFinderException('Watermark text must contain between 1 and 200 characters.', 'invalid_watermark_text', 422);
+        }
+        if (preg_match('/^#[0-9a-fA-F]{6}$/D', $color) !== 1) {
+            throw new SoFinderException('Watermark color must be a six-digit hexadecimal color.', 'invalid_watermark_color', 422);
+        }
+        $this->assertWatermarkSettings($position, $opacity, $scale);
+        $this->assertQuality($quality);
+        $this->withResourceLimits(function () use ($source, $destination, $text, $position, $opacity, $scale, $color, $quality): void {
+            $probe = $this->probe($source);
+            $this->assertEditableFrames($probe['frames']);
+            $image = $this->read($source, $probe['coder'], true);
+            $draw = new \ImagickDraw();
+            try {
+                $format = $image->getImageFormat();
+                $this->orient($image);
+                $draw->setFillColor(new \ImagickPixel($color));
+                $draw->setFillOpacity($opacity / 100);
+                if ($this->watermarkFont !== null && is_readable($this->watermarkFont)) {
+                    $draw->setFont($this->watermarkFont);
+                } elseif (preg_match('/[^\x20-\x7E]/', $text) === 1) {
+                    throw new SoFinderException('A configured TrueType font is required for Unicode watermark text.', 'watermark_font_unavailable', 503);
+                }
+                $draw->setFontSize(max(10, (int) round(min($image->getImageWidth(), $image->getImageHeight()) * $scale / 500)));
+                $metrics = $image->queryFontMetrics($draw, $text);
+                $markWidth = max(1, (int) ceil((float) ($metrics['textWidth'] ?? 1)));
+                $markHeight = max(1, (int) ceil((float) ($metrics['textHeight'] ?? 1)));
+                [$x, $top] = $this->watermarkCoordinates($image->getImageWidth(), $image->getImageHeight(), $markWidth, $markHeight, $position);
+                $image->annotateImage($draw, $x, $top + $markHeight, 0, $text);
+                $image->setImageFormat($format);
+                $image->setImageCompressionQuality($quality);
+                $image->stripImage();
+                $this->write($image, $destination);
+            } catch (\ImagickException $exception) {
+                throw new SoFinderException('Unable to draw the text watermark.', 'image_processing_failed', 500, $exception);
+            } finally {
+                $draw->clear();
+                $this->release($image);
+            }
+        });
+    }
+
+    public function imageWatermark(string $source, string $watermark, string $destination, string $position, int $opacity, int $scale, int $quality): void
+    {
+        $this->assertWatermarkSettings($position, $opacity, $scale);
+        $this->assertQuality($quality);
+        $this->withResourceLimits(function () use ($source, $watermark, $destination, $position, $opacity, $scale, $quality): void {
+            $probe = $this->probe($source);
+            $markProbe = $this->probe($watermark);
+            $this->assertEditableFrames($probe['frames']);
+            $this->assertEditableFrames($markProbe['frames']);
+            $image = $this->read($source, $probe['coder'], true);
+            $mark = $this->read($watermark, $markProbe['coder'], true);
+            try {
+                $format = $image->getImageFormat();
+                $this->orient($image);
+                $this->orient($mark);
+                $targetWidth = max(1, (int) round($image->getImageWidth() * $scale / 100));
+                $targetHeight = max(1, (int) round($mark->getImageHeight() * $targetWidth / $mark->getImageWidth()));
+                if ($targetHeight > $image->getImageHeight()) {
+                    $targetHeight = $image->getImageHeight();
+                    $targetWidth = max(1, (int) round($mark->getImageWidth() * $targetHeight / $mark->getImageHeight()));
+                }
+                $mark->resizeImage($targetWidth, $targetHeight, \Imagick::FILTER_LANCZOS, 1);
+                $mark->setImageAlphaChannel(\Imagick::ALPHACHANNEL_ACTIVATE);
+                $mark->evaluateImage(\Imagick::EVALUATE_MULTIPLY, $opacity / 100, \Imagick::CHANNEL_ALPHA);
+                [$x, $y] = $this->watermarkCoordinates($image->getImageWidth(), $image->getImageHeight(), $targetWidth, $targetHeight, $position);
+                $image->compositeImage($mark, \Imagick::COMPOSITE_OVER, $x, $y);
+                $image->setImageFormat($format);
+                $image->setImageCompressionQuality($quality);
+                $image->stripImage();
+                $this->write($image, $destination);
+            } catch (\ImagickException $exception) {
+                throw new SoFinderException('Unable to composite the image watermark.', 'image_processing_failed', 500, $exception);
+            } finally {
+                $this->release($mark);
+                $this->release($image);
+            }
+        });
+    }
+
+    private function assertWatermarkSettings(string $position, int $opacity, int $scale): void
+    {
+        if (!in_array($position, ['top-left', 'top-right', 'center', 'bottom-left', 'bottom-right'], true)) {
+            throw new SoFinderException('The watermark position is invalid.', 'invalid_watermark_position', 422);
+        }
+        if ($opacity < 1 || $opacity > 100 || $scale < 5 || $scale > 80) {
+            throw new SoFinderException('Watermark opacity or scale is outside the allowed range.', 'invalid_watermark_settings', 422);
+        }
+    }
+
+    /** @return array{int,int} */
+    private function watermarkCoordinates(int $width, int $height, int $markWidth, int $markHeight, string $position): array
+    {
+        $margin = max(4, (int) round(min($width, $height) * 0.02));
+        return match ($position) {
+            'top-left' => [$margin, $margin],
+            'top-right' => [max(0, $width - $markWidth - $margin), $margin],
+            'bottom-left' => [$margin, max(0, $height - $markHeight - $margin)],
+            'bottom-right' => [max(0, $width - $markWidth - $margin), max(0, $height - $markHeight - $margin)],
+            default => [max(0, intdiv($width - $markWidth, 2)), max(0, intdiv($height - $markHeight, 2))],
+        };
     }
 
     /** @return array{format:string,coder:string,frames:int,totalPixels:int} */

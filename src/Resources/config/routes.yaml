@@ -29,6 +29,12 @@ sofinder_metrics:
   methods: [GET]
   defaults: { _sofinder: true }
 
+sofinder_security_status:
+  path: /api/security/status
+  controller: SohoPHP\SoFinder\Http\SecurityStatusController
+  methods: [GET]
+  defaults: { _sofinder: true }
+
 sofinder_api_entries:
   path: /api/entries
   controller: SohoPHP\SoFinder\Http\ApiController::entries
@@ -115,6 +121,19 @@ sofinder_api_content:
   methods: [GET]
   defaults: { _sofinder: true }
 
+sofinder_api_signed_url:
+  path: /api/signed-url
+  controller: SohoPHP\SoFinder\Http\SignedUrlController::issue
+  methods: [GET]
+  defaults: { _sofinder: true }
+
+sofinder_signed_content:
+  path: /signed/{token}
+  controller: SohoPHP\SoFinder\Http\SignedUrlController::consume
+  methods: [GET]
+  requirements: { token: '[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+' }
+  defaults: { _sofinder: true, _sofinder_signed_public: true }
+
 sofinder_api_checksum:
   path: /api/checksum
   controller: SohoPHP\SoFinder\Http\ContentController::checksum
@@ -124,6 +143,12 @@ sofinder_api_checksum:
 sofinder_api_text_preview:
   path: /api/preview/text
   controller: SohoPHP\SoFinder\Http\ContentController::textPreview
+  methods: [GET]
+  defaults: { _sofinder: true }
+
+sofinder_document_preview:
+  path: /api/preview/document
+  controller: SohoPHP\SoFinder\Http\DocumentPreviewController
   methods: [GET]
   defaults: { _sofinder: true }
 
@@ -162,6 +187,12 @@ sofinder_image_info:
 sofinder_image_edit:
   path: /api/images/edit
   controller: SohoPHP\SoFinder\Http\ImageController::edit
+  methods: [PATCH]
+  defaults: { _sofinder: true }
+
+sofinder_image_batch:
+  path: /api/images/batch
+  controller: SohoPHP\SoFinder\Http\ImageController::batch
   methods: [PATCH]
   defaults: { _sofinder: true }
 

@@ -6,6 +6,7 @@ namespace SohoPHP\SoFinder\Image;
 
 use SohoPHP\SoFinder\Contract\ImageProcessorInterface;
 use SohoPHP\SoFinder\Contract\ImageCapabilityProviderInterface;
+use SohoPHP\SoFinder\Contract\ImageEffectsProcessorInterface;
 use SohoPHP\SoFinder\Exception\SoFinderException;
 use SohoPHP\SoFinder\FileManager;
 use SohoPHP\SoFinder\Value\Entry;
@@ -123,6 +124,7 @@ final readonly class ImageManager
             throw new SoFinderException('Unable to create an image work file.', 'image_processing_failed', 500);
         }
         $working = $source;
+        $outputMimeType = $entry->mimeType;
         try {
             $this->copySource($resource, $path, $source);
             if ($this->processor->isAnimated($source)) {
@@ -150,6 +152,50 @@ final readonly class ImageManager
                             throw new SoFinderException('The requested image preset does not exist.', 'unknown_image_preset', 404);
                         }
                         $this->processor->transform($working, $output, 0, $preset['width'], $preset['height'], $preset['quality']);
+                    } elseif ($type === 'optimize') {
+                        $effects = $this->effectsProcessor();
+                        $format = strtolower((string) ($action['format'] ?? 'original'));
+                        $outputMimeType = $format === 'original' ? $outputMimeType : $this->formats->canonicalMime($format);
+                        if ($outputMimeType === null) {
+                            throw new SoFinderException('The requested output image format is invalid.', 'unsupported_image_output_format', 415);
+                        }
+                        $effects->optimize($working, $output, $outputMimeType, $quality);
+                    } elseif ($type === 'watermarkText') {
+                        $this->effectsProcessor()->textWatermark(
+                            $working,
+                            $output,
+                            (string) ($action['text'] ?? ''),
+                            (string) ($action['position'] ?? 'bottom-right'),
+                            (int) ($action['opacity'] ?? 60),
+                            (int) ($action['scale'] ?? 25),
+                            (string) ($action['color'] ?? '#ffffff'),
+                            $quality,
+                        );
+                    } elseif ($type === 'watermarkImage') {
+                        $watermarkResource = (string) ($action['resource'] ?? $resource);
+                        $watermarkPath = (string) ($action['path'] ?? '');
+                        $this->imageEntry($watermarkResource, $watermarkPath);
+                        $watermark = tempnam(sys_get_temp_dir(), 'sofinder-watermark-');
+                        if ($watermark === false) {
+                            throw new SoFinderException('Unable to create a watermark work file.', 'image_processing_failed', 500);
+                        }
+                        try {
+                            $this->copySource($watermarkResource, $watermarkPath, $watermark);
+                            if ($this->processor->isAnimated($watermark)) {
+                                throw new SoFinderException('Animated images cannot be used as watermarks.', 'animated_watermark_unsupported', 415);
+                            }
+                            $this->effectsProcessor()->imageWatermark(
+                                $working,
+                                $watermark,
+                                $output,
+                                (string) ($action['position'] ?? 'bottom-right'),
+                                (int) ($action['opacity'] ?? 60),
+                                (int) ($action['scale'] ?? 25),
+                                $quality,
+                            );
+                        } finally {
+                            @unlink($watermark);
+                        }
                     } else {
                         throw new SoFinderException('The image action is not supported.', 'invalid_image_action', 422);
                     }
@@ -166,23 +212,30 @@ final readonly class ImageManager
             $resultDimensions = $this->processor->dimensions($working);
             $directory = dirname($entry->path);
             $directory = $directory === '.' ? '' : $directory;
+            $extension = $this->outputExtension($entry, $outputMimeType);
+            $originalExtension = strtolower((string) pathinfo($entry->name, PATHINFO_EXTENSION));
+            if ($mode === 'overwrite' && $extension !== '' && !in_array($originalExtension, $this->formats->extensionsForMime($outputMimeType ?? ''), true)) {
+                throw new SoFinderException('Changing image format requires saving a copy.', 'image_format_overwrite_not_allowed', 422);
+            }
             $name = $mode === 'overwrite'
                 ? $entry->name
                 : trim((string) ($save['name'] ?? ''));
             if ($mode === 'copy' && $name === '') {
-                $name = $this->suggestCopyName($resource, $directory, $entry);
+                $name = $this->suggestCopyName($resource, $directory, $entry, $extension);
             } elseif ($mode === 'copy' && pathinfo($name, PATHINFO_EXTENSION) === '') {
-                $extension = $this->outputExtension($entry);
                 if ($extension !== '') {
                     $name .= '.' . $extension;
                 }
             } elseif ($mode === 'copy') {
-                $extension = $this->outputExtension($entry);
-                $requestedExtension = (string) pathinfo($name, PATHINFO_EXTENSION);
-                if ($extension !== '' && $requestedExtension !== $extension) {
+                $requestedExtension = strtolower((string) pathinfo($name, PATHINFO_EXTENSION));
+                $formatChanged = $outputMimeType !== $entry->mimeType;
+                $extensionMatches = $formatChanged
+                    ? in_array($requestedExtension, $this->formats->extensionsForMime($outputMimeType ?? ''), true)
+                    : (string) pathinfo($name, PATHINFO_EXTENSION) === $extension;
+                if ($extension !== '' && !$extensionMatches) {
                     throw new SoFinderException(
-                        sprintf('The edited image must keep its original .%s file extension.', $extension),
-                        'image_extension_change_not_allowed',
+                        sprintf('The edited image name must use a .%s extension.', $extension),
+                        $formatChanged ? 'image_extension_mismatch' : 'image_extension_change_not_allowed',
                         422,
                     );
                 }
@@ -214,6 +267,33 @@ final readonly class ImageManager
     public function presets(): array
     {
         return $this->presets;
+    }
+
+    /**
+     * @param list<string> $paths
+     * @param list<array<string, mixed>> $actions
+     * @param array{mode?:string} $save
+     * @return array{total:int,succeeded:int,failed:int,items:list<array{path:string,success:bool,entry?:Entry,error?:array{code:string,message:string}}>}
+     */
+    public function applyBatch(string $resource, array $paths, array $actions, array $save = []): array
+    {
+        $paths = array_values(array_unique(array_filter($paths, static fn (mixed $path): bool => is_string($path) && $path !== '')));
+        if ($paths === [] || count($paths) > 100) {
+            throw new SoFinderException('A batch image operation requires between 1 and 100 paths.', 'invalid_image_batch', 422);
+        }
+        $items = [];
+        $succeeded = 0;
+        foreach ($paths as $path) {
+            try {
+                $result = $this->applyActions($resource, $path, $actions, $save);
+                $items[] = ['path' => $path, 'success' => true, 'entry' => $result['entry']];
+                ++$succeeded;
+            } catch (SoFinderException $exception) {
+                $items[] = ['path' => $path, 'success' => false, 'error' => ['code' => $exception->errorCode, 'message' => $exception->getMessage()]];
+            }
+        }
+
+        return ['total' => count($paths), 'succeeded' => $succeeded, 'failed' => count($paths) - $succeeded, 'items' => $items];
     }
 
     private function imageEntry(string $resource, string $path): Entry
@@ -312,9 +392,9 @@ final readonly class ImageManager
         }
     }
 
-    private function suggestCopyName(string $resource, string $directory, Entry $entry): string
+    private function suggestCopyName(string $resource, string $directory, Entry $entry, ?string $extension = null): string
     {
-        $extension = $this->outputExtension($entry);
+        $extension ??= $this->outputExtension($entry);
         $originalExtension = (string) pathinfo($entry->name, PATHINFO_EXTENSION);
         $stem = $originalExtension === '' ? $entry->name : substr($entry->name, 0, -(strlen($originalExtension) + 1));
         for ($index = 0; $index <= 999; ++$index) {
@@ -330,15 +410,25 @@ final readonly class ImageManager
         throw new SoFinderException('Unable to find an available edited image name.', 'conflict', 409);
     }
 
-    private function outputExtension(Entry $entry): string
+    private function outputExtension(Entry $entry, ?string $mimeType = null): string
     {
+        $mimeType ??= $entry->mimeType;
         $extension = (string) pathinfo($entry->name, PATHINFO_EXTENSION);
-        $mimeFormat = $entry->mimeType === null ? null : $this->formats->formatForMime($entry->mimeType);
+        $mimeFormat = $mimeType === null ? null : $this->formats->formatForMime($mimeType);
         if ($extension !== '' && $this->formats->formatForExtension(strtolower($extension)) === $mimeFormat) {
             return $extension;
         }
 
-        return $entry->mimeType === null ? '' : (string) $this->formats->preferredExtensionForMime($entry->mimeType);
+        return $mimeType === null ? '' : (string) $this->formats->preferredExtensionForMime($mimeType);
+    }
+
+    private function effectsProcessor(): ImageEffectsProcessorInterface
+    {
+        if (!$this->processor instanceof ImageEffectsProcessorInterface) {
+            throw new SoFinderException('Image optimization and watermarking are unavailable.', 'image_effects_unavailable', 501);
+        }
+
+        return $this->processor;
     }
 
     private function maintainCache(string $directory): void

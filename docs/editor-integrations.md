@@ -9,6 +9,8 @@ SoFinder ships `sofinder-picker.js` as a small framework-independent ES module.
 Every integration uses the same picker URL and returns the same versioned entry
 object; editor-specific code never calls private React APIs.
 
+The resolved object follows the published [picker entry JSON Schema](/schema/picker-entry.schema.json) and always includes `resource`, `path`, `name`, `url`, `mimeType`, `size`, `modifiedAt`, `width`, `height` and `capabilities`. Dimensions are `null` for non-images. Consumers must ignore additional 1.x fields. The message envelope has its own [JSON Schema](/schema/picker-message.schema.json).
+
 ```js
 import { openPicker } from '/sofinder/assets/sofinder-picker.js'
 

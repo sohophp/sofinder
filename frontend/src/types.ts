@@ -27,6 +27,7 @@ export interface SoFinderConfig {
     archive: boolean;
     trash: boolean;
   };
+  securityStatusAvailable?: boolean;
   uiDefaults: {
     scale: UiScale;
     mode?: "manager" | "picker";
@@ -46,16 +47,47 @@ export interface PluginDescriptor {
   version: string;
   capabilities: string[];
   uiActions?: PluginUiAction[];
+  previewers?: PluginPreviewer[];
 }
 
 export interface PluginUiAction {
   id: string;
   label: { en: string; "zh-cn"?: string; "zh-tw"?: string };
-  slot: "utility" | "toolbar" | "context";
+  slot: "utility" | "toolbar" | "context" | "details";
   url: string;
   selection: "none" | "any" | "file" | "image";
   requires: string;
   plugin?: string;
+}
+
+export interface PluginPreviewer {
+  id: string;
+  mimeTypes: string[];
+  extensions: string[];
+  url: string;
+}
+
+export interface MalwareScanEvent {
+  id: string;
+  fileName: string;
+  resource: string;
+  bytes: number;
+  status: "pending" | "passed" | "quarantined" | "failed";
+  code: string | null;
+  startedAt: number;
+  finishedAt: number | null;
+  durationMilliseconds: number | null;
+}
+
+export interface SecurityStatus {
+  malwareScanning: {
+    enabled: boolean;
+    provider: "clamav" | null;
+    status: "disabled" | "ready" | "degraded" | "down";
+    message: string;
+    counts: { pending: number; passed: number; quarantined: number; failed: number };
+    recent: MalwareScanEvent[];
+  };
 }
 
 export interface ImageFormatCapability {
@@ -86,6 +118,7 @@ export interface ResourceType {
   maxFolderNameLength: number;
   maxFolderDepth: number;
   deliveryMode: "public" | "proxy";
+  entryUrlConfigured?: boolean;
   storageCapabilities?: StorageCapabilities;
 }
 
@@ -136,7 +169,19 @@ export type ImageAction =
   | { type: "crop"; x: number; y: number; width: number; height: number; quality?: number }
   | { type: "rotate"; degrees: 0 | 90 | 180 | 270; quality?: number }
   | { type: "resize"; width: number; height: number; quality?: number }
-  | { type: "preset"; name: string };
+  | { type: "preset"; name: string }
+  | { type: "optimize"; format: "original" | string; quality: number }
+  | { type: "watermarkText"; text: string; position: WatermarkPosition; opacity: number; scale: number; color: string; quality: number }
+  | { type: "watermarkImage"; resource: string; path: string; position: WatermarkPosition; opacity: number; scale: number; quality: number };
+
+export type WatermarkPosition = "top-left" | "top-right" | "center" | "bottom-left" | "bottom-right";
+
+export interface ImageBatchResult {
+  total: number;
+  succeeded: number;
+  failed: number;
+  items: Array<{ path: string; success: boolean; entry?: Entry; error?: { code: string; message: string } }>;
+}
 
 export interface ImageEditResult {
   entry: Entry;

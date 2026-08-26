@@ -66,6 +66,9 @@ final readonly class PluginRegistry
         if (array_key_exists('uiActions', $descriptor)) {
             $result['uiActions'] = $this->normalizeUiActions($name, $descriptor['uiActions']);
         }
+        if (array_key_exists('previewers', $descriptor)) {
+            $result['previewers'] = $this->normalizePreviewers($name, $descriptor['previewers']);
+        }
 
         return $result;
     }
@@ -102,7 +105,7 @@ final readonly class PluginRegistry
                 }
                 $normalizedLabels[$locale] = trim($labels[$locale]);
             }
-            if (!is_string($slot) || !in_array($slot, ['utility', 'toolbar', 'context'], true)
+            if (!is_string($slot) || !in_array($slot, ['utility', 'toolbar', 'context', 'details'], true)
                 || !is_string($selection) || !in_array($selection, ['none', 'any', 'file', 'image'], true)
                 || !is_string($requires) || preg_match('/^[a-z][a-z0-9_-]{0,31}$/D', $requires) !== 1
                 || !is_string($url) || !str_starts_with($url, '/') || str_starts_with($url, '//') || strlen($url) > 512 || preg_match('/[\x00-\x20\x7F]/', $url) === 1) {
@@ -113,5 +116,44 @@ final readonly class PluginRegistry
         }
 
         return $result;
+    }
+
+    /** @return list<array{id:string,mimeTypes:list<string>,extensions:list<string>,url:string}> */
+    private function normalizePreviewers(string $plugin, mixed $previewers): array
+    {
+        if (!is_array($previewers) || count($previewers) > 20) {
+            throw new \InvalidArgumentException(sprintf('SoFinder plugin "%s" previewers must be an array of at most 20 entries.', $plugin));
+        }
+        $result = [];
+        $ids = [];
+        foreach ($previewers as $previewer) {
+            if (!is_array($previewer)) throw new \InvalidArgumentException(sprintf('SoFinder plugin "%s" contains an invalid previewer.', $plugin));
+            $id = $previewer['id'] ?? null;
+            $url = $previewer['url'] ?? null;
+            $mimeTypes = $this->safeStringList($previewer['mimeTypes'] ?? [], '#^[a-z0-9.+_-]+/[a-z0-9.+*_-]+$#D', 32);
+            $extensions = $this->safeStringList($previewer['extensions'] ?? [], '/^[a-z0-9][a-z0-9.+_-]{0,15}$/D', 32);
+            if (!is_string($id) || preg_match('/^[a-z][a-z0-9_-]{1,31}$/D', $id) !== 1 || isset($ids[$id])
+                || !is_string($url) || !str_starts_with($url, '/') || str_starts_with($url, '//') || strlen($url) > 512 || preg_match('/[\x00-\x20\x7F]/', $url) === 1
+                || ($mimeTypes === [] && $extensions === [])) {
+                throw new \InvalidArgumentException(sprintf('SoFinder plugin "%s" contains an unsafe previewer.', $plugin));
+            }
+            $ids[$id] = true;
+            $result[] = ['id' => $id, 'mimeTypes' => $mimeTypes, 'extensions' => $extensions, 'url' => $url];
+        }
+
+        return $result;
+    }
+
+    /** @return list<string> */
+    private function safeStringList(mixed $values, string $pattern, int $maximum): array
+    {
+        if (!is_array($values) || count($values) > $maximum) return [];
+        $result = [];
+        foreach ($values as $value) {
+            if (!is_string($value) || preg_match($pattern, strtolower($value)) !== 1) return [];
+            $result[strtolower($value)] = true;
+        }
+
+        return array_keys($result);
     }
 }

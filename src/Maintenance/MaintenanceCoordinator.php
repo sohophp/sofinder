@@ -23,6 +23,7 @@ final readonly class MaintenanceCoordinator
         if ($this->mode === 'external' || $this->mode === 'disabled' || !$this->claimInterval($task)) return;
         if ($this->mode === 'messenger') {
             if ($this->dispatcher === null) throw new \LogicException('SoFinder messenger maintenance requires a maintenance dispatcher.');
+            $this->runner->queued($task);
             $this->dispatcher->dispatch($task);
             return;
         }

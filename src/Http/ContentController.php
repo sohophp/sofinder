@@ -7,6 +7,7 @@ namespace SohoPHP\SoFinder\Http;
 use SohoPHP\SoFinder\Exception\SoFinderException;
 use SohoPHP\SoFinder\FileManager;
 use SohoPHP\SoFinder\Image\ImageFormatRegistry;
+use SohoPHP\SoFinder\Value\Entry;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Response;
@@ -42,7 +43,7 @@ final readonly class ContentController
             }
         });
         $response->headers->set('Content-Type', $entry->mimeType ?? 'application/octet-stream');
-        $response->headers->set('Content-Disposition', $response->headers->makeDisposition(ResponseHeaderBag::DISPOSITION_ATTACHMENT, $entry->name));
+        $response->headers->set('Content-Disposition', ContentDisposition::make(ResponseHeaderBag::DISPOSITION_ATTACHMENT, $entry->name));
         $response->headers->set('X-Content-Type-Options', 'nosniff');
 
         return $response;
@@ -58,6 +59,13 @@ final readonly class ContentController
         }
 
         $stream = $this->files->read($resource, $path);
+
+        return $this->stream($request, $resource, $entry, $stream);
+    }
+
+    /** @param resource $stream */
+    public function stream(Request $request, string $resource, Entry $entry, mixed $stream, ?string $disposition = null): Response
+    {
         $etag = hash('sha256', $resource . "\0" . $entry->path . "\0" . $entry->size . "\0" . $entry->modifiedAt);
         $response = new StreamedResponse();
         $response->setEtag($etag);
@@ -76,9 +84,9 @@ final readonly class ContentController
 
         $mime = $entry->mimeType ?? 'application/octet-stream';
         $safeInline = $this->imageFormats->isWebEmbeddableMime($mime);
-        $requestedInline = strtolower((string) $request->query->get('disposition', 'inline')) === 'inline';
+        $requestedInline = strtolower($disposition ?? (string) $request->query->get('disposition', 'inline')) === 'inline';
         $response->headers->set('Content-Type', $mime);
-        $response->headers->set('Content-Disposition', $response->headers->makeDisposition(
+        $response->headers->set('Content-Disposition', ContentDisposition::make(
             $requestedInline && $safeInline ? ResponseHeaderBag::DISPOSITION_INLINE : ResponseHeaderBag::DISPOSITION_ATTACHMENT,
             $entry->name,
         ));
@@ -87,7 +95,12 @@ final readonly class ContentController
         $end = max(0, $entry->size - 1);
         $range = $request->headers->get('Range');
         if ($range !== null && $range !== '') {
-            [$start, $end] = $this->parseRange($range, $entry->size);
+            try {
+                [$start, $end] = $this->parseRange($range, $entry->size);
+            } catch (\Throwable $exception) {
+                fclose($stream);
+                throw $exception;
+            }
             $response->setStatusCode(Response::HTTP_PARTIAL_CONTENT);
             $response->headers->set('Content-Range', sprintf('bytes %d-%d/%d', $start, $end, $entry->size));
         }

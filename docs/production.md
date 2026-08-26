@@ -23,8 +23,8 @@ with:
 
 Create the PDO store once with the host-owned connection; it creates the portable
 `sofinder_state` table automatically, or call `install()` during deployment.
-Override the corresponding Symfony aliases in the host container. The host owns
-connection credentials, retry policy and TLS settings.
+Register the host-owned state object as a Symfony service. Connection
+credentials, retry policy and TLS settings remain outside bundle configuration.
 
 ```php
 $state = new PdoAtomicStateStore($pdo);
@@ -39,6 +39,17 @@ For Redis:
 $state = new RedisAtomicStateStore($redis, 'myapp:sofinder:');
 ```
 
+```yaml
+so_finder:
+  cluster:
+    state_service: 'app.sofinder_shared_state'
+    chunk_upload_store_service: 'app.sofinder_shared_chunks' # optional
+```
+
+`state_service` automatically replaces metadata, request-gate and usage stores.
+`/health` then performs an atomic shared-state read/write probe. The configured
+services implement `AtomicStateStoreInterface` and `ChunkUploadStoreInterface`.
+
 Chunk bytes still need a shared private filesystem or a host implementation of
 `ChunkUploadStoreInterface`. Remote recycle behavior belongs to the storage
 provider (for example bucket versioning); state storage is not a substitute for
@@ -46,20 +57,25 @@ file recovery.
 
 ## ClamAV
 
-Register `ClamAvScanner` as a Symfony service. Autoconfiguration tags it as both
-an `UploadScannerInterface` and a `HealthCheckInterface`. It streams the private
-quarantine file to clamd's `INSTREAM` protocol, invokes no shell and fails closed.
+Enable the built-in ClamAV integration in SoFinder configuration. It streams the
+private quarantine file to clamd's `INSTREAM` protocol, invokes no shell and
+fails closed.
 
 ```yaml
-services:
-  SohoPHP\SoFinder\Security\ClamAvScanner:
-    arguments:
-      $endpoint: 'unix:///run/clamav/clamd.ctl'
-      $timeoutSeconds: 8
+so_finder:
+  malware_scanning:
+    enabled: true
+    endpoint: 'unix:///run/clamav/clamd.ctl'
+    timeout_seconds: 8
+    history_limit: 100
+    status_roles: [ROLE_ADMIN]
 ```
 
 Rejected files return `malware_detected`; unavailable or ambiguous scanners
 return `malware_scanner_unavailable` and the quarantine file is removed.
+The Security status dialog and `GET /api/security/status` show the configured
+state, live clamd readiness, bounded recent results and counts. Prometheus also
+exports scan count, scanned bytes and cumulative duration counters by result.
 
 ## Readiness and metrics
 

@@ -1,10 +1,11 @@
 import { useEffect, useRef, useState } from "react";
 import { Modal } from "./Modal";
 
-export function UrlDialog({ url, loginRequired, labels, onClose }: {
+export function UrlDialog({ url, loginRequired, expiresAt, labels, onClose }: {
   url: string;
   loginRequired: boolean;
-  labels: { title: string; close: string; copied: string; failed: string; hint: string; loginRequired: string };
+  expiresAt?: number;
+  labels: { title: string; close: string; copied: string; failed: string; hint: string; loginRequired: string; expires: string };
   onClose: () => void;
 }) {
   const input = useRef<HTMLInputElement>(null);
@@ -28,6 +29,7 @@ export function UrlDialog({ url, loginRequired, labels, onClose }: {
       <p>{labels.hint}</p>
       <input ref={input} autoFocus readOnly value={url} aria-label={labels.title} onFocus={event => event.currentTarget.select()} onClick={() => void copy()}/>
       {loginRequired && <small>{labels.loginRequired}</small>}
+      {expiresAt && <small>{labels.expires}: <time dateTime={new Date(expiresAt * 1000).toISOString()}>{new Date(expiresAt * 1000).toLocaleString()}</time></small>}
       <span role="status" aria-live="polite">{status === "copied" ? labels.copied : status === "failed" ? labels.failed : ""}</span>
     </div>
   </Modal>;

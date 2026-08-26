@@ -34,9 +34,16 @@ so_finder:
 bin/console sofinder:uploads:cleanup
 bin/console sofinder:trash:cleanup
 bin/console sofinder:usage:recalculate
+bin/console sofinder:usage:recalculate --dry-run --json
+bin/console sofinder:maintenance:status --json
+bin/console sofinder:metadata:repair --dry-run --json
+bin/console sofinder:cache:cleanup --dry-run --json
 ```
 
 The commands and message handler share the same non-blocking locks. Starting a
 second copy of the same task safely reports a skip instead of running twice.
 Full usage recalculation is intentionally kept out of web requests unless a
 dirty persisted usage state must be recovered for a quota decision.
+Task state records queued/running/succeeded/failed status, attempts, timestamps
+and processed counts. `maintenance:status` exits non-zero when a task failed.
+Usage dry-run scans adapters but does not change persisted counters.

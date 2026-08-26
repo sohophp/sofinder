@@ -22,6 +22,30 @@ Configuration lives below the `so_finder` key. Symfony validates all values whil
 
 These working directories must be writable by PHP and must not be directly web-accessible.
 
+## Cluster services
+
+`cluster.state_service` optionally names a host Symfony service implementing
+`AtomicStateStoreInterface`; it switches metadata, request gates and usage to
+shared atomic stores. `cluster.chunk_upload_store_service` optionally names a
+shared `ChunkUploadStoreInterface`. Both default to `null`, preserving the
+single-node file stores. See [production operation](/production).
+
+## Temporary signed URLs
+
+```yaml
+so_finder:
+  signed_urls:
+    enabled: true
+    secret: '%kernel.secret%'
+    default_ttl_seconds: 300
+    max_ttl_seconds: 3600
+```
+
+The secret must contain at least 32 bytes. Signed URLs are revision-bound and
+only available for `proxy` resources. To allow access without login, place a
+narrow `PUBLIC_ACCESS` firewall rule for `/sofinder/signed/` before the general
+SoFinder access rule.
+
 ## Filesystem permissions
 
 ```yaml
@@ -46,6 +70,23 @@ so_finder:
 ```
 
 The safe default auto-renames quick-upload conflicts using names such as `photo(1).jpg`. Enabling `overwrite_on_upload` replaces an existing file only when the current actor also has the resource's independent `overwrite` permission.
+
+## Malware scanning
+
+```yaml
+so_finder:
+  malware_scanning:
+    enabled: true
+    endpoint: 'unix:///run/clamav/clamd.ctl'
+    timeout_seconds: 8
+    history_limit: 100
+    status_roles: [ROLE_ADMIN]
+```
+
+When enabled, SoFinder registers the bundled ClamAV client as a synchronous,
+fail-closed upload scanner and readiness check. The administrator-only Security
+status dialog reports whether clamd is ready and shows a bounded history of
+passed, blocked, failed and pending scans. It never stores file contents.
 
 ## Recycle bin
 

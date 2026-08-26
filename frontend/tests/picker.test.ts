@@ -21,9 +21,10 @@ describe("picker SDK", () => {
     const promise = openPicker({ baseUrl: "/sofinder/browser", kind: "file" });
     const opened = new URL(String(vi.mocked(window.open).mock.calls[0][0]), window.location.href);
     const id = opened.searchParams.get("pickerRequestId");
-    const entry = { path: "manual.pdf", name: "manual.pdf", directory: false, size: 12, modifiedAt: 1, mimeType: "application/pdf", url: "/files/manual.pdf", capabilities: {} };
+    const entry = { resource: "Files", path: "manual.pdf", name: "manual.pdf", directory: false, size: 12, modifiedAt: 1, mimeType: "application/pdf", url: "/files/manual.pdf", width: null, height: null, capabilities: {} };
 
     window.dispatchEvent(new MessageEvent("message", { source: popup, origin: "https://attacker.invalid", data: { type: "sofinder:select", version: "1.0", requestId: id, entry } }));
+    window.dispatchEvent(new MessageEvent("message", { source: popup, origin: window.location.origin, data: { type: "sofinder:select", version: "1.0", requestId: id, entry: { ...entry, resource: "" } } }));
     window.dispatchEvent(new MessageEvent("message", { source: popup, origin: window.location.origin, data: { type: "sofinder:select", version: "1.0", requestId: id, entry } }));
 
     await expect(promise).resolves.toEqual(entry);
@@ -35,7 +36,7 @@ describe("picker SDK", () => {
     const editor = { execute: vi.fn(), editing: { view: { focus: vi.fn() } } };
     const promise = selectForCkeditor5(editor, { baseUrl: "/sofinder/browser" });
     const opened = new URL(String(vi.mocked(window.open).mock.calls.at(-1)?.[0]), window.location.href);
-    const entry = { path: "photo.png", name: "photo.png", directory: false, size: 12, modifiedAt: 1, mimeType: "image/png", url: "/files/photo.png", capabilities: {} };
+    const entry = { resource: "Images", path: "photo.png", name: "photo.png", directory: false, size: 12, modifiedAt: 1, mimeType: "image/png", url: "/files/photo.png", width: 320, height: 180, capabilities: {} };
     window.dispatchEvent(new MessageEvent("message", { source: popup, origin: window.location.origin, data: { type: "sofinder:select", version: "1.0", requestId: opened.searchParams.get("pickerRequestId"), entry } }));
     await promise;
     expect(editor.execute).toHaveBeenCalledWith("insertImage", { source: entry.url });

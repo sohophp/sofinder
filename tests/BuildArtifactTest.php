@@ -21,5 +21,6 @@ final class BuildArtifactTest extends TestCase
         self::assertIsString($bundle);
         self::assertStringContainsString('sofinder:select', $bundle);
         self::assertStringContainsString('openPicker', $bundle);
+        self::assertDoesNotMatchRegularExpression('/\bfrom\s+["\']\.\//', $bundle, 'The picker asset route must remain a self-contained ES module.');
     }
 }

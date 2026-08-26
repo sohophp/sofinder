@@ -26,9 +26,9 @@ pnpm install --frozen-lockfile
 pnpm check
 
 cd "$project_dir/examples/symfony"
-"$php_bin" bin/console cache:warmup --env=prod --no-interaction
-"$php_bin" bin/console sofinder:image:capabilities --env=prod --json
-"$php_bin" bin/console sofinder:security:audit --env=prod
+"$php_bin" bin/console cache:clear --env=prod --no-debug --no-interaction
+"$php_bin" bin/console sofinder:image:capabilities --env=prod --no-debug --json
+"$php_bin" bin/console sofinder:security:audit --env=prod --no-debug
 
 cd "$project_dir"
 git diff --check

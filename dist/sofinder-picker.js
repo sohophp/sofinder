@@ -1,59 +1,63 @@
 //#region src/picker.ts
-var e = () => typeof crypto < "u" && typeof crypto.randomUUID == "function" ? crypto.randomUUID() : `sf-${Date.now().toString(36)}-${Math.random().toString(36).slice(2)}`, t = (t, n = e()) => {
-	let r = new URL(t.baseUrl, window.location.href);
-	return r.searchParams.set("select", "1"), r.searchParams.set("uiMode", "picker"), r.searchParams.set("selection", t.kind ?? "any"), r.searchParams.set("pickerRequestId", n), t.resource && r.searchParams.set("type", t.resource), t.path && r.searchParams.set("path", t.path), t.language && r.searchParams.set("lang", t.language), t.tools && r.searchParams.set("uiTools", t.tools), r;
-}, n = (n) => {
-	let r = e(), i = t(n, r), a = Math.max(640, n.width ?? 1100), o = Math.max(480, n.height ?? 760), s = window.open(i, n.windowName ?? "sofinder-picker", `popup=yes,width=${a},height=${o},resizable=yes,scrollbars=yes`);
-	return s ? new Promise((e, t) => {
-		let n = 0, a = () => {
-			window.removeEventListener("message", o), n && window.clearInterval(n);
-		}, o = (t) => {
+var e = "1.0", t = () => typeof crypto < "u" && typeof crypto.randomUUID == "function" ? crypto.randomUUID() : `sf-${Date.now().toString(36)}-${Math.random().toString(36).slice(2)}`, n = (e, n = t()) => {
+	let r = new URL(e.baseUrl, window.location.href);
+	return r.searchParams.set("select", "1"), r.searchParams.set("uiMode", "picker"), r.searchParams.set("selection", e.kind ?? "any"), r.searchParams.set("pickerRequestId", n), e.resource && r.searchParams.set("type", e.resource), e.path && r.searchParams.set("path", e.path), e.language && r.searchParams.set("lang", e.language), e.tools && r.searchParams.set("uiTools", e.tools), r;
+}, r = (e) => {
+	let r = t(), a = n(e, r), o = Math.max(640, e.width ?? 1100), s = Math.max(480, e.height ?? 760), c = window.open(a, e.windowName ?? "sofinder-picker", `popup=yes,width=${o},height=${s},resizable=yes,scrollbars=yes`);
+	return c ? new Promise((e, t) => {
+		let n = 0, o = () => {
+			window.removeEventListener("message", s), n && window.clearInterval(n);
+		}, s = (t) => {
 			let n = t.data;
-			t.source !== s || t.origin !== i.origin || n?.type !== "sofinder:select" || n.version !== "1.0" || n.requestId !== r || !n.entry || (a(), e(n.entry));
+			t.source !== c || t.origin !== a.origin || n?.type !== "sofinder:select" || n.version !== "1.0" || n.requestId !== r || !i(n.entry) || (o(), e(n.entry));
 		};
-		window.addEventListener("message", o), n = window.setInterval(() => {
-			s.closed && (a(), t(new DOMException("The SoFinder picker was closed.", "AbortError")));
+		window.addEventListener("message", s), n = window.setInterval(() => {
+			c.closed && (o(), t(new DOMException("The SoFinder picker was closed.", "AbortError")));
 		}, 300);
 	}) : Promise.reject(/* @__PURE__ */ Error("SoFinder picker was blocked by the browser."));
-}, r = async (e, t) => {
-	let r = await n({
+}, i = (e) => {
+	if (!e || typeof e != "object") return !1;
+	let t = e;
+	return typeof t.resource == "string" && t.resource !== "" && typeof t.path == "string" && typeof t.name == "string" && t.directory === !1 && typeof t.size == "number" && typeof t.modifiedAt == "number" && typeof t.url == "string" && t.url !== "" && (t.mimeType === null || typeof t.mimeType == "string") && (t.width === null || typeof t.width == "number") && (t.height === null || typeof t.height == "number") && typeof t.capabilities == "object" && t.capabilities !== null;
+}, a = async (e, t) => {
+	let n = await r({
 		...t,
 		kind: "image"
 	});
-	return e.execute("insertImage", { source: r.url }), e.editing?.view?.focus?.(), r;
-}, i = (e, t) => {
+	return e.execute("insertImage", { source: n.url }), e.editing?.view?.focus?.(), n;
+}, o = (e, t) => {
 	e.PluginManager.add("sofinder", (e) => {
-		let r = async () => {
-			let r = await n({
+		let n = async () => {
+			let n = await r({
 				...t,
 				kind: "image"
 			});
-			e.insertContent(`<img src="${e.dom.encode(r.url)}" alt="${e.dom.encode(r.name)}">`);
+			e.insertContent(`<img src="${e.dom.encode(n.url)}" alt="${e.dom.encode(n.name)}">`);
 		};
 		return e.ui.registry.addButton("sofinder", {
 			text: "Files",
 			tooltip: "Choose from SoFinder",
-			onAction: r
+			onAction: n
 		}), e.ui.registry.addMenuItem("sofinder", {
 			text: "Choose from SoFinder",
-			onAction: r
+			onAction: n
 		}), { getMetadata: () => ({
 			name: "SoFinder",
 			url: "https://sofinder.sohophp.app/"
 		}) };
 	});
-}, a = async (e, t) => {
-	let r = await n({
+}, s = async (e, t) => {
+	let n = await r({
 		...t,
 		kind: "image"
 	});
 	return e.chain().focus().setImage({
-		src: r.url,
-		alt: r.name
-	}).run(), r;
-}, o = (e, t) => {
+		src: n.url,
+		alt: n.name
+	}).run(), n;
+}, c = (e, t) => {
 	e.getModule("toolbar").addHandler("image", () => {
-		n({
+		r({
 			...t,
 			kind: "image"
 		}).then((t) => {
@@ -61,9 +65,9 @@ var e = () => typeof crypto < "u" && typeof crypto.randomUUID == "function" ? cr
 			e.insertEmbed(n?.index ?? 0, "image", t.url, "user");
 		});
 	});
-}, s = async (e, t) => {
-	let r = await n(t);
-	return e.value = r.url, e.dispatchEvent(new Event("input", { bubbles: !0 })), e.dispatchEvent(new Event("change", { bubbles: !0 })), r;
+}, l = async (e, t) => {
+	let n = await r(t);
+	return e.value = n.url, e.dispatchEvent(new Event("input", { bubbles: !0 })), e.dispatchEvent(new Event("change", { bubbles: !0 })), n;
 };
 //#endregion
-export { n as openPicker, t as pickerUrl, o as registerQuill, i as registerTinyMce, r as selectForCkeditor5, s as selectForInput, a as selectForTiptap };
+export { e as PICKER_PROTOCOL_VERSION, r as openPicker, n as pickerUrl, c as registerQuill, o as registerTinyMce, a as selectForCkeditor5, l as selectForInput, s as selectForTiptap };

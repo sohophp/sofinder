@@ -1,12 +1,39 @@
 so_finder:
+  image_processing:
+    driver: auto
+    # Configure an absolute TTF/OTF/TTC path before using Unicode text watermarks.
+    watermark_font: null
+  signed_urls:
+    enabled: true
+    secret: '%kernel.secret%'
+    default_ttl_seconds: 300
+    max_ttl_seconds: 3600
+  malware_scanning:
+    enabled: '%env(bool:SOFINDER_CLAMAV_ENABLED)%'
+    endpoint: 'tcp://127.0.0.1:3310'
+    timeout_seconds: 5
+    status_roles: [ROLE_ADMIN]
   resources:
     Files:
       adapter: local
       root: '%kernel.project_dir%/var/storage'
       public_url: '/uploads'
       delivery_mode: public
-      allowed_extensions: [txt, jpg, jpeg, png, webp]
+      allowed_extensions: [txt, jpg, jpeg, png, webp, pdf, doc, docx, odt, xls, xlsx, ods, ppt, pptx, odp]
       roles: [ROLE_USER]
+    Private:
+      adapter: local
+      root: '%kernel.project_dir%/var/storage'
+      public_url: ''
+      delivery_mode: proxy
+      allowed_extensions: [txt, jpg, jpeg, png, webp, pdf]
+      roles: [ROLE_USER]
+  document_preview:
+    pdf: true
+    office: true
+    office_binary: '/usr/bin/libreoffice'
+    timeout_seconds: 60
+    max_bytes: 52428800
   ui:
     mode: auto
     header: true

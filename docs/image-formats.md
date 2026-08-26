@@ -37,6 +37,8 @@ so_finder:
     disk_bytes: 1073741824
     threads: 1
     timeout_seconds: 30
+    # Required for non-ASCII text watermarks; keep null for ASCII-only text.
+    watermark_font: /usr/share/fonts/truetype/noto/NotoSansCJK-Regular.ttc
 ```
 
 Imagick receives a fixed coder derived from the registry and never performs
@@ -44,6 +46,12 @@ automatic SVG, PDF, PostScript, URL or pseudo-protocol dispatch. Its memory,
 map, disk, thread and time limits are scoped to each operation and restored
 afterward. Encoder availability is verified with a bounded round trip before
 edit capability is advertised.
+
+## Compression, conversion and watermarks
+
+The **Optimize / watermark** image tool is disabled in each user's toolbar by default and can be enabled in Settings. It provides quality-controlled recompression, supported JPEG/PNG/WebP/AVIF conversion, text watermarks and image watermarks. A batch handles up to 100 selected images and returns an individual result for every item.
+
+Conversion always creates a copy. Same-format compression and watermarking can create a copy or overwrite. Animated and multi-page images are rejected to prevent silent frame loss, and watermark images pass through normal resource permissions. Unicode text requires an absolute readable `watermark_font`; otherwise the API returns `watermark_font_unavailable` instead of producing corrupted text.
 
 ## Ordinary non-web image files
 

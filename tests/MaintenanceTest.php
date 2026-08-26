@@ -52,11 +52,13 @@ final class MaintenanceTest extends TestCase
             public array $tasks = [];
             public function dispatch(MaintenanceTask $task): void { $this->tasks[] = $task; }
         };
-        $coordinator = new MaintenanceCoordinator($this->directory, 'messenger', 0, 5, $this->runner($this->chunks()), $dispatcher);
+        $runner = $this->runner($this->chunks());
+        $coordinator = new MaintenanceCoordinator($this->directory, 'messenger', 0, 5, $runner, $dispatcher);
 
         $coordinator->trigger(MaintenanceTask::Trash);
 
         self::assertSame([MaintenanceTask::Trash], $dispatcher->tasks);
+        self::assertSame('queued', $runner->status()['trash']['status']);
     }
 
     public function testDisabledModeDoesNotPerformOpportunityCleanup(): void
@@ -64,6 +66,26 @@ final class MaintenanceTest extends TestCase
         $chunks = $this->chunks();
         (new MaintenanceCoordinator($this->directory, 'disabled', 0, 5, $this->runner($chunks)))->trigger(MaintenanceTask::Uploads);
         self::assertSame([], $chunks->calls);
+    }
+
+    public function testRunnerPersistsSuccessfulAndFailedTaskStatus(): void
+    {
+        $runner = $this->runner($this->chunks());
+        $runner->run(MaintenanceTask::Uploads, 4);
+        self::assertSame('succeeded', $runner->status()['uploads']['status']);
+        self::assertSame(4, $runner->status()['uploads']['processed']);
+
+        $failing = new class implements ChunkUploadStoreInterface {
+            public function accept(string $id, int $index, int $total, mixed $stream, int $maximumFileBytes, array $context = []): array { return ['complete' => false]; }
+            public function status(string $id): array { throw new \LogicException(); }
+            public function discard(string $id): void {}
+            public function cleanupExpired(bool $allActors = false, ?int $limit = null): int { throw new \RuntimeException('queue offline'); }
+        };
+        $runner = $this->runner($failing);
+        try { $runner->run(MaintenanceTask::Uploads); self::fail('The task should fail.'); }
+        catch (\RuntimeException) {}
+        self::assertSame('failed', $runner->status()['uploads']['status']);
+        self::assertSame('maintenance_failed', $runner->status()['uploads']['error']['code']);
     }
 
     private function runner(ChunkUploadStoreInterface $chunks): MaintenanceRunner

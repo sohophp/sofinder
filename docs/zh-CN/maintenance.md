@@ -24,6 +24,13 @@ so_finder:
 bin/console sofinder:uploads:cleanup
 bin/console sofinder:trash:cleanup
 bin/console sofinder:usage:recalculate
+bin/console sofinder:usage:recalculate --dry-run --json
+bin/console sofinder:maintenance:status --json
+bin/console sofinder:metadata:repair --dry-run --json
+bin/console sofinder:cache:cleanup --dry-run --json
 ```
 
 Command 与 Message Handler 共用相同的 Non-blocking Lock。启动第二个相同 Task 时会安全报告 Skip，不会重复执行。除非 Quota Decision 需要恢复 Dirty Persisted Usage State，Web Request 刻意不执行 Full Usage Recalculation。
+
+任务状态记录 queued/running/succeeded/failed、尝试次数、时间及处理数量；失败时
+`maintenance:status` 返回非零退出码。Usage dry-run 只扫描 Storage，不修改持久计数。

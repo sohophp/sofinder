@@ -21,6 +21,10 @@ supported local adapter. Cursor-only adapters return `total: null` and an opaque
 from the offset. Existing beta.2 query parameters and response fields are not
 renamed.
 
+Every response also carries `X-SoFinder-API-Version: 1.0`. The bundled UI accepts the `1.x` range and stops with `incompatible_api_version` before mutations when another major is reported. Deprecated request fields return `Deprecation`, `Sunset`, `Link` and `X-SoFinder-Deprecated-Fields` headers.
+
+Use the [OpenAPI 3.1 document](/openapi.json), reusable [JSON Schemas](/schema/picker-entry.schema.json), and the exhaustive [machine error directory](/error-codes.json) as contract sources.
+
 Mutation requests require the `X-CSRF-TOKEN` header and an authenticated actor.
 Unknown operations are denied. Entry and directory capability fields are only
 UI hints; the server repeats authorization for every operation.

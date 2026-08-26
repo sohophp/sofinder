@@ -86,3 +86,21 @@ No blocking software/file-management conflict was identified by this engineering
 - The `@sohophp/sofinder-ui` npm registry endpoint still returned HTTP 404.
 
 No new package-identity conflict was identified in this release delta check, so beta.14 retains the name. The limitations and non-legal nature of the beta.13 engineering recheck remain unchanged.
+
+## 2026-08-26 beta.16 engineering recheck
+
+- Exact-name indexed searches scoped to the WIPO, USPTO, EUIPO and CNIPA
+  public surfaces did not expose a class 9, 35, 38 or 42 file-management or
+  software mark that changes the previous assessment.
+- USPTO serials 97045626 and 97046433 remain the known unrelated household
+  machinery and appliance records. `sofinder.me` remains a social-profile link
+  service, and the automotive “Sofinder” feature remains outside file management
+  and developer tooling.
+- GitHub continues to identify this repository as `sohophp/sofinder`. The
+  `@sohophp/sofinder-ui` npm endpoint returned HTTP 404 immediately before this
+  release. Packagist's live API was temporarily unavailable during the check;
+  its indexed vendor listing did not expose a conflicting package identity.
+
+No blocking software/file-management conflict was identified by this engineering
+recheck, so beta.16 retains the name. Dynamic registry interfaces and ordinary
+indexing are incomplete; this is not a legal clearance opinion.

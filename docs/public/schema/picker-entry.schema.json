@@ -1,0 +1,21 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://sofinder.sohophp.app/schema/picker-entry.schema.json",
+  "title": "SoFinder picker entry",
+  "type": "object",
+  "additionalProperties": true,
+  "required": ["resource", "path", "name", "directory", "size", "modifiedAt", "mimeType", "url", "width", "height", "capabilities"],
+  "properties": {
+    "resource": {"type": "string", "minLength": 1},
+    "path": {"type": "string"},
+    "name": {"type": "string", "minLength": 1},
+    "directory": {"const": false},
+    "size": {"type": "integer", "minimum": 0},
+    "modifiedAt": {"type": "integer", "minimum": 0},
+    "mimeType": {"type": ["string", "null"]},
+    "url": {"type": "string", "minLength": 1},
+    "width": {"type": ["integer", "null"], "minimum": 1},
+    "height": {"type": ["integer", "null"], "minimum": 1},
+    "capabilities": {"type": "object", "additionalProperties": {"type": "boolean"}}
+  }
+}

@@ -89,6 +89,31 @@ final readonly class ImageController
                 (int) ($data['height'] ?? 0),
             );
 
+        $request->attributes->set('_sofinder_deprecated_fields', 'operation,rotation,width,height,x,y');
+
         return new JsonResponse(OperationResult::success(['entry' => $entry]));
+    }
+
+    public function batch(Request $request): JsonResponse
+    {
+        $this->csrf->assertMutation($request);
+        try {
+            $data = json_decode($request->getContent(), true, 512, JSON_THROW_ON_ERROR);
+        } catch (\JsonException) {
+            throw new SoFinderException('The JSON request body is invalid.', 'invalid_json', 400);
+        }
+        if (!is_array($data) || !is_array($data['paths'] ?? null) || !is_array($data['actions'] ?? null) || !is_array($data['save'] ?? [])) {
+            throw new SoFinderException('Batch image paths, actions and save settings are invalid.', 'invalid_image_batch', 400);
+        }
+        if (array_filter($data['actions'], static fn (mixed $action): bool => !is_array($action)) !== []) {
+            throw new SoFinderException('Image actions must be an array of objects.', 'invalid_image_actions', 400);
+        }
+
+        return new JsonResponse(OperationResult::success($this->images->applyBatch(
+            (string) ($data['resource'] ?? 'Images'),
+            array_values($data['paths']),
+            array_values($data['actions']),
+            $data['save'],
+        )));
     }
 }

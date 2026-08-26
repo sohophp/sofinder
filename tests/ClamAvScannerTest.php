@@ -12,6 +12,17 @@ use SohoPHP\SoFinder\Value\ResourceType;
 
 final class ClamAvScannerTest extends TestCase
 {
+    public function testDisabledScannerIsANoOpAndReportsReady(): void
+    {
+        $scanner = new ClamAvScanner(connector: static function (): never {
+            throw new \RuntimeException('A disabled scanner must not connect.');
+        }, enabled: false);
+
+        $scanner->scan(__FILE__, 'test.php', new ResourceType('Files', '/tmp', '/files'), new InspectedFile(1, 'text/plain'));
+        self::assertSame('ready', $scanner->check()->status);
+        self::assertStringContainsString('disabled', strtolower($scanner->check()->message));
+    }
+
     private string $file;
 
     protected function setUp(): void

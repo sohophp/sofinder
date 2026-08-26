@@ -29,9 +29,17 @@ so_finder:
     disk_bytes: 1073741824
     threads: 1
     timeout_seconds: 30
+    # 非 ASCII 文字水印必须配置；仅使用 ASCII 时可保持 null。
+    watermark_font: /usr/share/fonts/truetype/noto/NotoSansCJK-Regular.ttc
 ```
 
 Imagick 只会接收由 Registry 产生的固定 Coder，永远不执行自动 SVG、PDF、PostScript、URL 或 Pseudo-protocol Dispatch。Memory、Map、Disk、Thread 与 Time Limit 仅套用于各次操作，完成后恢复。公开 Edit Capability 前，会通过有界 Round Trip 验证 Encoder Availability。
+
+## 压缩、转换与水印
+
+“压缩 / 水印”图片工具在用户工具栏中默认关闭，可在“设置”中启用。它提供质量可调的重新压缩、运行时支持的 JPEG/PNG/WebP/AVIF 转换、文字水印和图片水印。单批最多处理 100 张选中图片，并为每项返回独立结果。
+
+格式转换始终另存副本；同格式压缩和水印可以另存或覆盖。动画和多页图片会被拒绝以免静默丢帧，水印图片仍经过正常资源权限检查。Unicode 文字必须配置可读的绝对路径 `watermark_font`；否则 API 返回 `watermark_font_unavailable`，不会生成乱码。
 
 ## 一般非 Web 图片文件
 

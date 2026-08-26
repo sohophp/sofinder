@@ -1647,10 +1647,19 @@ select:focus-visible,
   flex: 1;
   align-content: start;
 }
+.sf-grid-size-small { --sf-grid-item-min: 96px; --sf-grid-preview-height: 64px; }
+.sf-grid-size-medium { --sf-grid-item-min: 130px; --sf-grid-preview-height: 90px; }
+.sf-grid-size-large { --sf-grid-item-min: 176px; --sf-grid-preview-height: 132px; }
+.sf-entries.grid {
+  grid-template-columns: repeat(auto-fill, minmax(var(--sf-grid-item-min), 1fr));
+}
+.sf-entries.grid .sf-entry {
+  grid-template-rows: var(--sf-grid-preview-height) auto;
+}
 .sf-entries.grid .sf-entry-icon {
   position: relative;
   width: 100%;
-  height: 90px;
+  height: var(--sf-grid-preview-height);
   min-width: 0;
   min-height: 0;
   overflow: hidden;
@@ -1668,14 +1677,18 @@ select:focus-visible,
   object-fit: contain;
 }
 .sf-entries.list .sf-entry {
-  height: 48px;
-  min-height: 48px;
+  height: var(--sf-list-row-height, 48px);
+  min-height: var(--sf-list-row-height, 48px);
+  padding-left: calc(var(--sf-list-icon-size, 32px) + 18px);
   overflow: hidden;
 }
+.sf-list-size-small { --sf-list-row-height: 40px; --sf-list-icon-size: 25px; }
+.sf-list-size-medium { --sf-list-row-height: 48px; --sf-list-icon-size: 32px; }
+.sf-list-size-large { --sf-list-row-height: 60px; --sf-list-icon-size: 42px; }
 .sf-entries.list .sf-entry-icon {
   top: 50%;
-  width: 32px;
-  height: 32px;
+  width: var(--sf-list-icon-size, 32px);
+  height: var(--sf-list-icon-size, 32px);
   overflow: hidden;
   transform: translateY(-50%);
 }
@@ -1789,7 +1802,25 @@ select:focus-visible,
     padding-inline: 9px;
   }
   .sf-context-actions {
-    display: contents;
+    position: fixed;
+    z-index: 30;
+    right: 0;
+    bottom: 0;
+    left: 0;
+    display: flex;
+    gap: 7px;
+    overflow-x: auto;
+    padding: 8px max(10px, env(safe-area-inset-right)) calc(8px + env(safe-area-inset-bottom)) max(10px, env(safe-area-inset-left));
+    border-top: 1px solid var(--sf-line);
+    background: color-mix(in srgb, var(--sf-panel) 96%, transparent);
+    box-shadow: 0 -8px 24px rgb(23 34 51 / 14%);
+    backdrop-filter: blur(12px);
+  }
+  .sf-context-actions .sf-separator {
+    display: none;
+  }
+  .sf-has-selection-actions .sf-content {
+    padding-bottom: calc(58px + env(safe-area-inset-bottom));
   }
   .sf-layout,
   .sf-no-details .sf-layout,
@@ -1811,3 +1842,45 @@ select:focus-visible,
 .sf-rename-preview table { width: 100%; border-collapse: collapse; text-align: left; }
 .sf-rename-preview th, .sf-rename-preview td { padding: 8px 10px; border-bottom: 1px solid var(--sf-border); overflow-wrap: anywhere; }
 .sf-rename-preview th { position: sticky; top: 0; background: var(--sf-panel); }
+.sf-security-modal { width: min(760px, calc(100vw - 24px)); }
+.sf-security-summary { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; align-items: center; gap: 14px; margin: 16px; padding: 16px; border: 1px solid var(--sf-line); border-radius: var(--sf-radius); background: var(--sf-panel); }
+.sf-security-summary > div { display: grid; gap: 4px; }
+.sf-security-summary small { color: var(--sf-muted); }
+.sf-security-summary dl { display: grid; grid-template-columns: auto auto; gap: 4px 12px; margin: 0; font-size: 12px; }
+.sf-security-summary dt { color: var(--sf-muted); }
+.sf-security-summary dd { margin: 0; text-align: right; }
+.sf-security-indicator { width: 12px; height: 12px; border-radius: 50%; background: var(--sf-danger); box-shadow: 0 0 0 4px rgb(193 58 67 / 15%); }
+.sf-security-ready .sf-security-indicator { background: #248a55; box-shadow: 0 0 0 4px rgb(36 138 85 / 15%); }
+.sf-security-disabled .sf-security-indicator { background: var(--sf-muted); box-shadow: 0 0 0 4px rgb(102 114 130 / 15%); }
+.sf-security-counts { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin: 0 16px 18px; }
+.sf-security-counts span { display: grid; gap: 3px; padding: 10px; border: 1px solid var(--sf-line); border-radius: 8px; color: var(--sf-muted); font-size: 12px; }
+.sf-security-counts b { color: var(--sf-text); font-size: 20px; }
+.sf-security-modal > h3 { margin: 0 16px 8px; }
+.sf-security-history { max-height: 320px; margin: 0 16px 16px; overflow: auto; border: 1px solid var(--sf-line); border-radius: 8px; }
+.sf-security-history article { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; align-items: center; gap: 10px; padding: 10px 12px; border-bottom: 1px solid var(--sf-line); }
+.sf-security-history article:last-child { border-bottom: 0; }
+.sf-security-history article div { display: grid; min-width: 0; gap: 2px; }
+.sf-security-history strong, .sf-security-history small { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.sf-security-history small { color: var(--sf-muted); }
+.sf-scan-status { min-width: 76px; border-radius: 999px; padding: 4px 7px; background: var(--sf-bg); text-align: center; font-size: 11px; }
+.sf-scan-passed { color: #176b3d; background: #e8f7ef; }
+.sf-scan-quarantined, .sf-scan-failed { color: var(--sf-danger); background: #fff0f1; }
+.sf-document-preview { width: 100%; min-height: min(68vh, 760px); border: 0; background: #fff; }
+.sf-plugin-detail-actions { display: grid; gap: 7px; margin-top: 10px; }
+.sf-plugin-detail-actions button { width: 100%; }
+.sf-image-process-modal { width: min(680px, calc(100vw - 24px)); }
+.sf-image-process-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; padding: 16px; }
+.sf-image-process-grid label { display: grid; align-content: start; gap: 6px; color: var(--sf-muted); font-size: 12px; }
+.sf-image-process-grid input:not([type="range"]), .sf-image-process-grid select { width: 100%; min-height: 38px; }
+.sf-image-process-grid input[type="range"] { width: 100%; }
+.sf-process-wide { grid-column: 1 / -1; }
+.sf-image-process-modal > .sf-warning, .sf-image-process-modal > .sf-configured-limits { margin: 0 16px 16px; }
+@media (max-width: 620px) {
+  .sf-security-summary { grid-template-columns: auto minmax(0, 1fr); }
+  .sf-security-summary dl { grid-column: 1 / -1; }
+  .sf-security-counts { grid-template-columns: repeat(2, 1fr); }
+  .sf-security-history article { grid-template-columns: auto minmax(0, 1fr); }
+  .sf-security-history code { grid-column: 2; }
+  .sf-image-process-grid { grid-template-columns: 1fr; }
+  .sf-process-wide { grid-column: auto; }
+}

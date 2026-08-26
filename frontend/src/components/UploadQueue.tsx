@@ -1,14 +1,15 @@
 export type UploadStatus = "queued" | "uploading" | "done" | "error" | "cancelled";
 export interface UploadTask { id: string; name: string; progress: number; status: UploadStatus; message?: string }
 
-export function UploadQueue({ tasks, collapsed, labels, onToggle, onCancel, onCancelAll, onClearFinished, onRemove }: {
+export function UploadQueue({ tasks, collapsed, labels, onToggle, onCancel, onCancelAll, onClearFinished, onRetry, onRemove }: {
   tasks: UploadTask[];
   collapsed: boolean;
-  labels: { title: string; expand: string; collapse: string; cancel: string; cancelAll: string; clearFinished: string; remove: string; status: (status: UploadStatus) => string };
+  labels: { title: string; expand: string; collapse: string; cancel: string; cancelAll: string; clearFinished: string; retry: string; remove: string; status: (status: UploadStatus) => string };
   onToggle: () => void;
   onCancel: (id: string) => void;
   onCancelAll: () => void;
   onClearFinished: () => void;
+  onRetry: (id: string) => void;
   onRemove: (id: string) => void;
 }) {
   if (tasks.length === 0) return null;
@@ -20,6 +21,7 @@ export function UploadQueue({ tasks, collapsed, labels, onToggle, onCancel, onCa
     {!collapsed && <div className="sf-upload-list">{tasks.map(task => <div className={`sf-upload-task ${task.status}`} key={task.id}>
       <span className="sf-upload-name" title={task.name}>{task.name}</span><progress max="100" value={task.progress} aria-label={`${task.name}: ${task.progress}%`}/><span>{task.status === "uploading" ? `${task.progress}%` : labels.status(task.status)}</span>
       {(task.status === "queued" || task.status === "uploading") && <button onClick={() => onCancel(task.id)}>{labels.cancel}</button>}
+      {(task.status === "error" || task.status === "cancelled") && <button onClick={() => onRetry(task.id)}>{labels.retry}</button>}
       <button className="sf-upload-remove" onClick={() => onRemove(task.id)} title={labels.remove} aria-label={`${labels.remove}: ${task.name}`}><UiIcon name="close"/></button>
       {task.message && <small title={task.message}>{task.message}</small>}
     </div>)}</div>}

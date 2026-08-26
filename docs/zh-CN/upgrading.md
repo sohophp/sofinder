@@ -5,6 +5,12 @@ description: 各 SoFinder 预发布版本的兼容性、配置与 adapter 升级
 
 # 升级 SoFinder
 
+## 从 0.1.0-beta.15 升级至 0.1.0-beta.16
+
+请同时部署 `sofinder.js`、`sofinder-picker.js` 与 `sofinder.css`。存储文件和 metadata 无需迁移。浏览器工具偏好改用 `sofinder.tools.v3`；批量重命名和压缩／水印会保持关闭，直到各用户在“设置”中启用。网格与列表大小分别保存在 `sofinder.viewSizes.v1`。
+
+PDF 预览不依赖 LibreOffice。Office 预览需要设置 `document_preview.office: true` 并提供可运行的 LibreOffice Binary；部署后请检查 `/health`。私有资源可使用签名网址或配置 `entry_url` 宿主路由。启用第三方插件 UI 资源前，请核对新增安全响应头与宿主 CSP。
+
 ## 从 0.1.0-beta.14 升级至 0.1.0-beta.15
 
 请同时部署重新构建的 `sofinder.js`、`sofinder-picker.js` 与 `sofinder.css`。既有路由及文件数据无需迁移。多节点宿主可通过覆盖 metadata、usage 与 request-gate alias 选用新的 PDO 或 Redis 状态 Store；单节点仍默认使用文件 Store。请通过监控角色或网络策略保护 `/health` 与 `/metrics`，并以 `sofinder:security:audit --json` 作为部署门禁。

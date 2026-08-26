@@ -5,13 +5,15 @@ declare(strict_types=1);
 namespace SohoPHP\SoFinder\Image;
 
 use SohoPHP\SoFinder\Contract\ImageProcessorInterface;
+use SohoPHP\SoFinder\Contract\ImageEffectsProcessorInterface;
 use SohoPHP\SoFinder\Exception\SoFinderException;
 
-final readonly class GdImageProcessor implements ImageProcessorInterface
+final readonly class GdImageProcessor implements ImageProcessorInterface, ImageEffectsProcessorInterface
 {
     public function __construct(
         private int $maximumPixels = 50_000_000,
         private ImageFormatRegistry $formats = new ImageFormatRegistry(),
+        private ?string $watermarkFont = null,
     )
     {
     }
@@ -145,6 +147,105 @@ final readonly class GdImageProcessor implements ImageProcessorInterface
         }
     }
 
+    public function optimize(string $source, string $destination, string $mimeType, int $quality): void
+    {
+        [$image] = $this->load($source);
+        try {
+            if (!$this->supports($mimeType)) {
+                throw new SoFinderException('The requested output image format is unavailable.', 'unsupported_image_output_format', 415);
+            }
+            $this->save($image, $mimeType, $destination, $quality);
+        } finally {
+            unset($image);
+        }
+    }
+
+    public function textWatermark(string $source, string $destination, string $text, string $position, int $opacity, int $scale, string $color, int $quality): void
+    {
+        $text = trim($text);
+        if ($text === '' || mb_strlen($text) > 200) {
+            throw new SoFinderException('Watermark text must contain between 1 and 200 characters.', 'invalid_watermark_text', 422);
+        }
+        [$image, $mimeType] = $this->load($source);
+        try {
+            [$opacity, $scale] = $this->watermarkSettings($position, $opacity, $scale);
+            if (preg_match('/^#[0-9a-fA-F]{6}$/D', $color) !== 1) {
+                throw new SoFinderException('Watermark color must be a six-digit hexadecimal color.', 'invalid_watermark_color', 422);
+            }
+            $alpha = max(0, min(127, 127 - (int) round($opacity * 127 / 100)));
+            $red = max(0, min(255, (int) hexdec(substr($color, 1, 2))));
+            $green = max(0, min(255, (int) hexdec(substr($color, 3, 2))));
+            $blue = max(0, min(255, (int) hexdec(substr($color, 5, 2))));
+            $ink = imagecolorallocatealpha($image, $red, $green, $blue, $alpha);
+            if ($ink === false) {
+                throw new SoFinderException('Unable to draw the text watermark.', 'image_processing_failed', 500);
+            }
+            if ($this->watermarkFont !== null && is_readable($this->watermarkFont) && function_exists('imagettfbbox') && function_exists('imagettftext')) {
+                $fontSize = max(10, (int) round(min(imagesx($image), imagesy($image)) * $scale / 500));
+                $box = imagettfbbox($fontSize, 0, $this->watermarkFont, $text);
+                if (!is_array($box)) {
+                    throw new SoFinderException('Unable to measure the text watermark.', 'image_processing_failed', 500);
+                }
+                $textWidth = abs($box[4] - $box[0]);
+                $textHeight = abs($box[5] - $box[1]);
+                [$x, $top] = $this->watermarkCoordinates(imagesx($image), imagesy($image), $textWidth, $textHeight, $position);
+                if (imagettftext($image, $fontSize, 0, $x, $top + $textHeight, $ink, $this->watermarkFont, $text) === false) {
+                    throw new SoFinderException('Unable to draw the text watermark.', 'image_processing_failed', 500);
+                }
+            } else {
+                if (preg_match('/[^\x20-\x7E]/', $text) === 1) {
+                    throw new SoFinderException('A configured TrueType font is required for Unicode watermark text.', 'watermark_font_unavailable', 503);
+                }
+                $font = max(1, min(5, (int) round($scale / 20)));
+                $textWidth = imagefontwidth($font) * strlen($text);
+                $textHeight = imagefontheight($font);
+                [$x, $y] = $this->watermarkCoordinates(imagesx($image), imagesy($image), $textWidth, $textHeight, $position);
+                if (!imagestring($image, $font, $x, $y, $text, $ink)) {
+                    throw new SoFinderException('Unable to draw the text watermark.', 'image_processing_failed', 500);
+                }
+            }
+            $this->save($image, $mimeType, $destination, $quality);
+        } finally {
+            unset($image);
+        }
+    }
+
+    public function imageWatermark(string $source, string $watermark, string $destination, string $position, int $opacity, int $scale, int $quality): void
+    {
+        [$image, $mimeType] = $this->load($source);
+        [$mark] = $this->load($watermark);
+        try {
+            [$opacity, $scale] = $this->watermarkSettings($position, $opacity, $scale);
+            $targetWidth = max(1, (int) round(imagesx($image) * $scale / 100));
+            $targetHeight = max(1, (int) round(imagesy($mark) * $targetWidth / imagesx($mark)));
+            if ($targetHeight > imagesy($image)) {
+                $targetHeight = imagesy($image);
+                $targetWidth = max(1, (int) round(imagesx($mark) * $targetHeight / imagesy($mark)));
+            }
+            $resized = imagecreatetruecolor($targetWidth, $targetHeight);
+            if (!$resized instanceof \GdImage) {
+                throw new SoFinderException('Unable to allocate the watermark image.', 'image_processing_failed', 500);
+            }
+            imagealphablending($resized, false);
+            imagesavealpha($resized, true);
+            $transparent = imagecolorallocatealpha($resized, 0, 0, 0, 127);
+            if ($transparent === false) {
+                throw new SoFinderException('Unable to allocate the watermark background.', 'image_processing_failed', 500);
+            }
+            imagefill($resized, 0, 0, $transparent);
+            imagecopyresampled($resized, $mark, 0, 0, 0, 0, $targetWidth, $targetHeight, imagesx($mark), imagesy($mark));
+            imagefilter($resized, IMG_FILTER_COLORIZE, 0, 0, 0, 127 - (int) round($opacity * 127 / 100));
+            [$x, $y] = $this->watermarkCoordinates(imagesx($image), imagesy($image), $targetWidth, $targetHeight, $position);
+            imagealphablending($image, true);
+            if (!imagecopy($image, $resized, $x, $y, 0, 0, $targetWidth, $targetHeight)) {
+                throw new SoFinderException('Unable to composite the image watermark.', 'image_processing_failed', 500);
+            }
+            $this->save($image, $mimeType, $destination, $quality);
+        } finally {
+            unset($resized, $mark, $image);
+        }
+    }
+
     /** @return array{\GdImage, string} */
     private function load(string $source): array
     {
@@ -230,20 +331,66 @@ final readonly class GdImageProcessor implements ImageProcessorInterface
                 imagefill($target, 0, 0, $transparent);
             }
             imagecopyresampled($target, $source, 0, 0, 0, 0, $targetWidth, $targetHeight, $sourceWidth, $sourceHeight);
-            $saved = match ($mimeType) {
-                'image/jpeg' => imagejpeg($target, $destination, $quality),
-                'image/png' => imagepng($target, $destination, (int) round((100 - $quality) * 9 / 99)),
-                'image/gif' => imagegif($target, $destination),
-                'image/webp' => imagewebp($target, $destination, $quality),
-                'image/avif' => imageavif($target, $destination, $quality),
-                'image/bmp' => imagebmp($target, $destination),
-                default => false,
-            };
-            if (!$saved) {
-                throw new SoFinderException('Unable to save the processed image.', 'image_processing_failed', 500);
-            }
+            $this->save($target, $mimeType, $destination, $quality);
         } finally {
             unset($target);
         }
+    }
+
+    private function save(\GdImage $image, string $mimeType, string $destination, int $quality): void
+    {
+        if ($quality < 1 || $quality > 100) {
+            throw new SoFinderException('Image quality must be between 1 and 100.', 'invalid_image_quality', 422);
+        }
+        if ($mimeType === 'image/jpeg') {
+            $background = imagecreatetruecolor(imagesx($image), imagesy($image));
+            if (!$background instanceof \GdImage) {
+                throw new SoFinderException('Unable to allocate the image background.', 'image_processing_failed', 500);
+            }
+            $white = imagecolorallocate($background, 255, 255, 255);
+            if ($white === false) {
+                throw new SoFinderException('Unable to allocate the image background color.', 'image_processing_failed', 500);
+            }
+            imagefill($background, 0, 0, $white);
+            imagecopy($background, $image, 0, 0, 0, 0, imagesx($image), imagesy($image));
+            $image = $background;
+        }
+        $saved = match ($mimeType) {
+            'image/jpeg' => imagejpeg($image, $destination, $quality),
+            'image/png' => imagepng($image, $destination, (int) round((100 - $quality) * 9 / 99)),
+            'image/gif' => imagegif($image, $destination),
+            'image/webp' => imagewebp($image, $destination, $quality),
+            'image/avif' => imageavif($image, $destination, $quality),
+            'image/bmp' => imagebmp($image, $destination),
+            default => false,
+        };
+        if (!$saved) {
+            throw new SoFinderException('Unable to save the processed image.', 'image_processing_failed', 500);
+        }
+    }
+
+    /** @return array{int,int} */
+    private function watermarkSettings(string $position, int $opacity, int $scale): array
+    {
+        if (!in_array($position, ['top-left', 'top-right', 'center', 'bottom-left', 'bottom-right'], true)) {
+            throw new SoFinderException('The watermark position is invalid.', 'invalid_watermark_position', 422);
+        }
+        if ($opacity < 1 || $opacity > 100 || $scale < 5 || $scale > 80) {
+            throw new SoFinderException('Watermark opacity or scale is outside the allowed range.', 'invalid_watermark_settings', 422);
+        }
+        return [$opacity, $scale];
+    }
+
+    /** @return array{int,int} */
+    private function watermarkCoordinates(int $width, int $height, int $markWidth, int $markHeight, string $position): array
+    {
+        $margin = max(4, (int) round(min($width, $height) * 0.02));
+        return match ($position) {
+            'top-left' => [$margin, $margin],
+            'top-right' => [max(0, $width - $markWidth - $margin), $margin],
+            'bottom-left' => [$margin, max(0, $height - $markHeight - $margin)],
+            'bottom-right' => [max(0, $width - $markWidth - $margin), max(0, $height - $markHeight - $margin)],
+            default => [max(0, intdiv($width - $markWidth, 2)), max(0, intdiv($height - $markHeight, 2))],
+        };
     }
 }

@@ -46,9 +46,39 @@ bin/console sofinder:uploads:cleanup
 
 ```bash
 bin/console sofinder:usage:recalculate
+bin/console sofinder:usage:recalculate --dry-run --json
 ```
 
 從儲存空間重建持久化的資源使用量計數器。在 SoFinder 外部匯入、還原或變更檔案後執行。
+Dry-run 只回報掃描值，不修改持久計數。
+
+## 維護狀態
+
+```bash
+bin/console sofinder:maintenance:status
+bin/console sofinder:maintenance:status --json
+```
+
+顯示 queued、running、succeeded 與 failed 任務；存在失敗記錄時回傳非零退出碼。
+
+## Metadata 修復
+
+```bash
+bin/console sofinder:metadata:repair --dry-run --json
+bin/console sofinder:metadata:repair
+```
+
+正規化本機 JSON Metadata，並移除不存在的資源或項目參照。Dry-run 使用同一把鎖但絕不寫入；
+共享 Metadata Service 應使用 Provider 自己的修復工具。
+
+## 快取清理
+
+```bash
+bin/console sofinder:cache:cleanup --older-than=86400 --dry-run --json
+bin/console sofinder:cache:cleanup --older-than=86400
+```
+
+只比對產生的縮圖 PNG 與文件預覽 PDF，不處理指標、掃描歷史、維護狀態、上傳 Session 或來源檔案。
 
 在任何命令後加上 `--help` 可查看目前的參數與選項：
 

@@ -62,6 +62,14 @@ final readonly class ImageFormatRegistry
         return self::FORMATS[$format]['mimes'][0] ?? null;
     }
 
+    /** @return list<string> */
+    public function extensionsForMime(string $mime): array
+    {
+        $format = $this->formatForMime($mime);
+
+        return $format === null ? [] : self::FORMATS[$format]['extensions'];
+    }
+
     public function coder(string $format): ?string
     {
         return self::FORMATS[$format]['coder'] ?? null;

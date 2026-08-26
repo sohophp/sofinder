@@ -1,4 +1,7 @@
+export const PICKER_PROTOCOL_VERSION = "1.0" as const;
+
 export interface PickerEntry {
+  resource: string;
   path: string;
   name: string;
   directory: boolean;
@@ -6,6 +9,8 @@ export interface PickerEntry {
   modifiedAt: number;
   mimeType: string | null;
   url: string;
+  width: number | null;
+  height: number | null;
   capabilities: Record<string, boolean>;
 }
 
@@ -23,7 +28,7 @@ export interface PickerOptions {
 
 export interface PickerMessage {
   type: "sofinder:select";
-  version: "1.0";
+  version: typeof PICKER_PROTOCOL_VERSION;
   requestId: string;
   entry: PickerEntry;
 }
@@ -63,7 +68,7 @@ export const openPicker = (options: PickerOptions): Promise<PickerEntry> => {
     };
     const receive = (event: MessageEvent<unknown>) => {
       const message = event.data as Partial<PickerMessage> | null;
-      if (event.source !== popup || event.origin !== url.origin || message?.type !== "sofinder:select" || message.version !== "1.0" || message.requestId !== id || !message.entry) return;
+      if (event.source !== popup || event.origin !== url.origin || message?.type !== "sofinder:select" || message.version !== PICKER_PROTOCOL_VERSION || message.requestId !== id || !validEntry(message.entry)) return;
       cleanup();
       resolve(message.entry);
     };
@@ -74,6 +79,19 @@ export const openPicker = (options: PickerOptions): Promise<PickerEntry> => {
       reject(new DOMException("The SoFinder picker was closed.", "AbortError"));
     }, 300);
   });
+};
+
+const validEntry = (value: unknown): value is PickerEntry => {
+  if (!value || typeof value !== "object") return false;
+  const entry = value as Partial<PickerEntry>;
+  return typeof entry.resource === "string" && entry.resource !== ""
+    && typeof entry.path === "string" && typeof entry.name === "string"
+    && entry.directory === false && typeof entry.size === "number"
+    && typeof entry.modifiedAt === "number" && typeof entry.url === "string" && entry.url !== ""
+    && (entry.mimeType === null || typeof entry.mimeType === "string")
+    && (entry.width === null || typeof entry.width === "number")
+    && (entry.height === null || typeof entry.height === "number")
+    && typeof entry.capabilities === "object" && entry.capabilities !== null;
 };
 
 type EditorPickerOptions = Omit<PickerOptions, "kind">;

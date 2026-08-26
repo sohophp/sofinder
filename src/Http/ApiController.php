@@ -32,6 +32,9 @@ final readonly class ApiController
         /** @var array{mode?:string,header?:bool,logo?:bool,search?:bool,language_switcher?:bool,view_switcher?:bool,folder_tree?:bool,scale?:string} */
         private array $ui = [],
         private ?FeaturePolicy $features = null,
+        private bool $signedUrlsEnabled = false,
+        private int $signedUrlDefaultTtl = 300,
+        private int $signedUrlMaxTtl = 3600,
     ) {
     }
 
@@ -56,6 +59,11 @@ final readonly class ApiController
                 'viewSwitcher' => (bool) ($this->ui['view_switcher'] ?? true),
             ],
             'featureAvailability' => $this->featurePolicy()->browserAvailability(),
+            'signedUrls' => [
+                'enabled' => $this->signedUrlsEnabled,
+                'defaultTtlSeconds' => $this->signedUrlDefaultTtl,
+                'maxTtlSeconds' => $this->signedUrlMaxTtl,
+            ],
         ]);
     }
 

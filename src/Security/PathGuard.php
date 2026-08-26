@@ -52,7 +52,7 @@ final class PathGuard
             || str_contains($name, '/')
             || str_contains($name, '\\')
             || str_contains($name, "\0")
-            || preg_match('/[<>:"|?*\x00-\x1F\x7F\x{202A}-\x{202E}\x{2066}-\x{2069}]/u', $name) === 1
+            || preg_match('/[<>:"|?*\x00-\x1F\x7F\x{200B}\x{2044}\x{202A}-\x{202E}\x{2066}-\x{2069}\x{2215}\x{29F8}\x{FEFF}\x{FF0F}\x{FF3C}\x{FDD0}-\x{FDEF}\x{FFFE}\x{FFFF}]/u', $name) === 1
             || preg_match($reserved, $name) === 1
         ) {
             throw new InvalidPathException('The file or folder name contains an unsafe or unsupported character or reserved name.');

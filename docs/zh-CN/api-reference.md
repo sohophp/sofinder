@@ -68,6 +68,10 @@ HTTP Status 是最终依据；`429` 包含 `Retry-After: 2`。批量请求可能
 
 返回 `apiVersion`、当前用户可见的 `resources`、Plugin Descriptor、图片预设、有效图片 Capability 和 UI Default。当前 API Version 为 `1.0`。
 
+### `GET /api/security/status`
+
+返回病毒扫描就绪状态、待扫描／通过／隔离／失败计数和有界最近记录；访问角色由 `malware_scanning.status_roles` 限制。
+
 ### `GET /api/entries`
 
 | 参数 | 默认 | 含义 |
@@ -159,7 +163,9 @@ Session 24 小时后过期。客户端可以补传缺失 Index，但不能超过
 
 - `GET /api/download?resource=Files&path=manual.pdf`：鉴权后以 Attachment 下载，文件夹返回 `invalid_type`。
 - `GET /api/content?resource=Images&path=photo.jpg&disposition=inline`：返回私有内容，支持 ETag、Last-Modified、条件请求和单段 Byte Range。只有安全 Raster MIME 能 Inline，其余强制 Attachment。无效 Range 返回 416。
+- `GET /api/signed-url?resource=Private&path=manual.pdf&ttl=300`：先重新授权当前用户，再返回 `{url,expiresAt}`。临时地址指向 `/signed/{token}`；只有宿主 Firewall 明确允许该路由匿名访问时才不需要 Session。Token 使用 HMAC、只适用于 `delivery_mode: proxy`，并绑定文件大小和修改时间；过期或文件已替换返回 410，篡改返回 403。
 - `GET /api/preview/text?resource=Files&path=readme.txt`：返回已授权 UTF-8 文本、JSON、XML 或 YAML 文件的前 256 KiB，格式为 `{content,truncated,mimeType,size}`；内置 UI 始终按纯文本渲染。
+- `GET /api/preview/document?resource=Files&path=manual.pdf`：返回已授权 Inline PDF；可选 Office 文件由受限 LibreOffice Process 转换。参见 [PDF 与 Office 预览](/zh-CN/document-preview)。
 - `GET /api/checksum?resource=Files&path=manual.pdf`：为不超过 512 MiB 的已授权文件返回 `{algorithm:"sha256",checksum,size}`，不会暴露 Adapter 路径。
 
 ## 回收站
@@ -175,6 +181,7 @@ Trash ID 是按 Actor 隔离的 32 位十六进制字符串。覆盖恢复需要
 - `GET /api/images/thumbnail?resource=Images&path=photo.jpg&width=240&height=180` 返回私有缓存缩略图和 ETag。
 - `GET /api/images/info?resource=Images&path=photo.jpg` 返回解码后的 `width`、`height`。
 - `PATCH /api/images/edit` 执行 1–10 个有序 Action。
+- `PATCH /api/images/batch` 对 1–100 个路径执行同一组 Action，并返回逐项成功／错误。
 
 ```json
 {
@@ -189,7 +196,7 @@ Trash ID 是按 Actor 隔离的 32 位十六进制字符串。覆盖恢复需要
 }
 ```
 
-Action 为 `crop`、`resize`、`rotate`、`preset`。Rotation 为 0／90／180／270；Preset 使用 `name`。`save.mode` 为 `copy` 或 `overwrite`。Response 包含 `entry`、`original`／`result` 的尺寸和字节。旧的单次 Transform／Crop Body 仍兼容，新客户端应使用 Actions。
+Action 为 `crop`、`resize`、`rotate`、`preset`、`optimize`、`watermarkText`、`watermarkImage`，完整边界见 [image-actions.schema.json](/schema/image-actions.schema.json)。格式转换必须另存；旧 Transform／Crop Body 在公布的 `Sunset` 前兼容并返回废弃 Header。
 
 ## ZIP 与 Metadata
 
@@ -220,6 +227,8 @@ Action 为 `crop`、`resize`、`rotate`、`preset`。Rotation 为 0／90／180�
 `POST /compat/ckeditor4/upload` 使用 Multipart `upload` 字段；Query 包括 `type`、`selection`、`currentFolder`、`_token`、`CKEditorFuncNum`，可选 `responseType=json`。除非显式开启 `ckeditor4.overwrite_on_upload`，否则同名文件会自动改名。回调和 JSON 格式参见 [CKEditor 指南](/zh-CN/ckeditor4)。
 
 ## 常见状态和错误
+
+完整 Code／Status／Category 目录是 [error-codes.json](/error-codes.json)，CI 会自动与服务器 Literal Exception 对照。
 
 | Status | 代表 Code | 客户端处理 |
 | --- | --- | --- |
