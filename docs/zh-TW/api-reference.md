@@ -68,6 +68,11 @@ HTTP Status 是最終依據；`429` 包含 `Retry-After: 2`。批次請求可能
 
 返回 `apiVersion`、目前使用者可見的 `resources`、Plugin Descriptor、圖片預設、有效圖片 Capability 和 UI Default。目前 API Version 為 `1.0`。
 
+### `GET /api/capabilities`
+
+回傳版本化且機器可讀的 Entry Operation、Storage Capability、Host 可控選用功能、
+Plugin Slot／Selection 和 Picker Kind。
+
 ### `GET /api/security/status`
 
 回傳病毒掃描就緒狀態、待掃描／通過／隔離／失敗計數與有界最近記錄；存取角色由 `malware_scanning.status_roles` 限制。

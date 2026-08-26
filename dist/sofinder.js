@@ -11926,7 +11926,7 @@ function Ce({ resource: e, tools: t, features: n, columns: r, viewSizes: i, avai
 				}), /* @__PURE__ */ (0, A.jsx)("span", { children: m(t === "small" ? "sizeSmall" : t === "medium" ? "sizeMedium" : "sizeLarge") })] }, t))
 			})] }, e)),
 			/* @__PURE__ */ (0, A.jsx)("h3", { children: m("optionalTools") }),
-			/* @__PURE__ */ (0, A.jsxs)("label", {
+			a.batchRename !== !1 && /* @__PURE__ */ (0, A.jsxs)("label", {
 				className: "sf-setting",
 				children: [/* @__PURE__ */ (0, A.jsx)("input", {
 					type: "checkbox",
@@ -11934,14 +11934,14 @@ function Ce({ resource: e, tools: t, features: n, columns: r, viewSizes: i, avai
 					onChange: (e) => c("batchRename", e.target.checked)
 				}), /* @__PURE__ */ (0, A.jsx)("span", { children: m("batchRename") })]
 			}),
-			/* @__PURE__ */ (0, A.jsx)("h3", { children: m("imageTools") }),
+			(a.imageEditing !== !1 || a.imageProcessing !== !1) && /* @__PURE__ */ (0, A.jsx)("h3", { children: m("imageTools") }),
 			[
 				"resize",
 				"crop",
 				"rotate",
 				"presets",
 				"process"
-			].map((e) => /* @__PURE__ */ (0, A.jsxs)("label", {
+			].filter((e) => e === "process" ? a.imageProcessing !== !1 : a.imageEditing !== !1).map((e) => /* @__PURE__ */ (0, A.jsxs)("label", {
 				className: "sf-setting",
 				children: [/* @__PURE__ */ (0, A.jsx)("input", {
 					type: "checkbox",
@@ -12424,7 +12424,15 @@ var ke = {
 	tags: !0,
 	archive: !0,
 	trash: !0,
-	folderTree: !0
+	folderTree: !0,
+	batchRename: !0,
+	imageEditing: !0,
+	imageProcessing: !0,
+	documentPreview: !0,
+	securityStatus: !0,
+	folderUpload: !0,
+	textPreview: !0,
+	checksum: !0
 }, Ne = (e, t) => {
 	try {
 		let n = JSON.parse(localStorage.getItem(e) || "{}");
@@ -12720,7 +12728,7 @@ function He({ config: e }) {
 		W?.mimeType,
 		V
 	]), (0, _.useEffect)(() => {
-		if (Ht(null), Wt(null), !B || !Ue(B.mimeType)) return;
+		if (Ht(null), Wt(null), r.textPreview === !1 || !B || !Ue(B.mimeType)) return;
 		let e = !0;
 		return n.textPreview(u, B.path).then((t) => {
 			e && Ht({
@@ -12735,6 +12743,7 @@ function He({ config: e }) {
 		};
 	}, [
 		n,
+		r.textPreview,
 		B?.path,
 		B?.mimeType,
 		V,
@@ -13460,12 +13469,11 @@ function He({ config: e }) {
 							e.target.files && Un(e.target.files), e.target.value = "";
 						}
 					}),
-					/* @__PURE__ */ (0, A.jsx)("button", {
+					r.folderUpload !== !1 && /* @__PURE__ */ (0, A.jsxs)(A.Fragment, { children: [/* @__PURE__ */ (0, A.jsx)("button", {
 						onClick: () => ln.current?.click(),
 						disabled: H?.readOnly || tn.upload === !1,
 						children: Fr("add-folder", o("uploadFolder"))
-					}),
-					/* @__PURE__ */ (0, A.jsx)("input", {
+					}), /* @__PURE__ */ (0, A.jsx)("input", {
 						ref: (e) => {
 							ln.current = e, e?.setAttribute("webkitdirectory", "");
 						},
@@ -13475,7 +13483,7 @@ function He({ config: e }) {
 						onChange: (e) => {
 							e.target.files && Gn(e.target.files), e.target.value = "";
 						}
-					}),
+					})] }),
 					(Or === "manager" || kr) && U.length > 0 && /* @__PURE__ */ (0, A.jsxs)(A.Fragment, { children: [/* @__PURE__ */ (0, A.jsx)("span", { className: "sf-separator" }), /* @__PURE__ */ (0, A.jsxs)("div", {
 						className: "sf-context-actions",
 						children: [
@@ -13489,7 +13497,7 @@ function He({ config: e }) {
 								disabled: U.length !== 1 || !jn("rename") || H?.readOnly,
 								children: Fr("rename", o("rename"))
 							}),
-							ot.batchRename && /* @__PURE__ */ (0, A.jsx)("button", {
+							r.batchRename !== !1 && ot.batchRename && /* @__PURE__ */ (0, A.jsx)("button", {
 								onClick: () => Tt(!0),
 								disabled: U.length < 2 || !jn("rename") || H?.readOnly,
 								children: Fr("rename", o("batchRename"))
@@ -13524,7 +13532,7 @@ function He({ config: e }) {
 								disabled: !jn("delete") || H?.readOnly,
 								children: Fr("delete", `${o("remove")}${U.length > 1 ? ` (${U.length})` : ""}`)
 							}),
-							ot.rotate && /* @__PURE__ */ (0, A.jsxs)(A.Fragment, { children: [/* @__PURE__ */ (0, A.jsx)("button", {
+							r.imageEditing !== !1 && ot.rotate && /* @__PURE__ */ (0, A.jsxs)(A.Fragment, { children: [/* @__PURE__ */ (0, A.jsx)("button", {
 								onClick: () => void ir(270),
 								disabled: !Dn(W) || H?.readOnly,
 								children: Fr("rotate-left", o("rotateLeft"))
@@ -13533,22 +13541,22 @@ function He({ config: e }) {
 								disabled: !Dn(W) || H?.readOnly,
 								children: Fr("rotate-right", o("rotateRight"))
 							})] }),
-							ot.resize && /* @__PURE__ */ (0, A.jsx)("button", {
+							r.imageEditing !== !1 && ot.resize && /* @__PURE__ */ (0, A.jsx)("button", {
 								onClick: ar,
 								disabled: !Dn(W) || H?.readOnly,
 								children: Fr("resize", o("resize"))
 							}),
-							ot.crop && /* @__PURE__ */ (0, A.jsx)("button", {
+							r.imageEditing !== !1 && ot.crop && /* @__PURE__ */ (0, A.jsx)("button", {
 								onClick: or,
 								disabled: !Dn(W) || !it || H?.readOnly,
 								children: Fr("crop", o("crop"))
 							}),
-							ot.process && /* @__PURE__ */ (0, A.jsx)("button", {
+							r.imageProcessing !== !1 && ot.process && /* @__PURE__ */ (0, A.jsx)("button", {
 								onClick: () => kt(!0),
 								disabled: On.length === 0 || On.length !== U.length || H?.readOnly,
 								children: Fr("resize", o("imageProcess"))
 							}),
-							ot.presets && /* @__PURE__ */ (0, A.jsxs)("label", {
+							r.imageEditing !== !1 && ot.presets && /* @__PURE__ */ (0, A.jsxs)("label", {
 								className: "sf-sort",
 								children: [o("preset"), /* @__PURE__ */ (0, A.jsxs)("select", {
 									value: "",
@@ -13980,7 +13988,7 @@ function He({ config: e }) {
 				onConfirm: (e, t) => void er(e, t),
 				onClose: () => Ct(null)
 			}),
-			wt && ot.batchRename && H && /* @__PURE__ */ (0, A.jsx)(Ee, {
+			wt && r.batchRename !== !1 && ot.batchRename && H && /* @__PURE__ */ (0, A.jsx)(Ee, {
 				entries: U,
 				maximum: H.maxFileNameLength,
 				labels: {
@@ -14092,7 +14100,7 @@ function He({ config: e }) {
 						children: En(B) ? /* @__PURE__ */ (0, A.jsx)(ye, {
 							src: n.thumbnailUrl(u, B, 512, 512),
 							alt: B.name
-						}) : Vt?.path === B.path ? /* @__PURE__ */ (0, A.jsxs)(A.Fragment, { children: [/* @__PURE__ */ (0, A.jsx)("pre", {
+						}) : r.textPreview !== !1 && Vt?.path === B.path ? /* @__PURE__ */ (0, A.jsxs)(A.Fragment, { children: [/* @__PURE__ */ (0, A.jsx)("pre", {
 							className: "sf-text-preview",
 							children: Vt.content
 						}), Vt.truncated && /* @__PURE__ */ (0, A.jsx)("p", {
@@ -14120,8 +14128,7 @@ function He({ config: e }) {
 							}) }),
 							/* @__PURE__ */ (0, A.jsx)("dt", { children: o("location") }),
 							/* @__PURE__ */ (0, A.jsx)("dd", { children: B.path }),
-							/* @__PURE__ */ (0, A.jsx)("dt", { children: "SHA-256" }),
-							/* @__PURE__ */ (0, A.jsx)("dd", { children: Ut?.path === B.path ? /* @__PURE__ */ (0, A.jsx)("code", {
+							r.checksum !== !1 && /* @__PURE__ */ (0, A.jsxs)(A.Fragment, { children: [/* @__PURE__ */ (0, A.jsx)("dt", { children: "SHA-256" }), /* @__PURE__ */ (0, A.jsx)("dd", { children: Ut?.path === B.path ? /* @__PURE__ */ (0, A.jsx)("code", {
 								className: "sf-checksum",
 								children: Ut.value
 							}) : /* @__PURE__ */ (0, A.jsx)("button", {
@@ -14130,7 +14137,7 @@ function He({ config: e }) {
 									value: e.checksum
 								})).catch(V),
 								children: o("calculateChecksum")
-							}) })
+							}) })] })
 						]
 					})]
 				})
@@ -14150,7 +14157,7 @@ function He({ config: e }) {
 				},
 				onClose: () => Kt(null)
 			}),
-			Ot && On.length > 0 && /* @__PURE__ */ (0, A.jsx)(Oe, {
+			Ot && r.imageProcessing !== !1 && On.length > 0 && /* @__PURE__ */ (0, A.jsx)(Oe, {
 				entries: On,
 				resource: u,
 				formats: Yt.formats.filter((e) => e.edit && [

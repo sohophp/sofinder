@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { openPicker, pickerUrl, registerTinyMce, selectForCkeditor5, selectForInput } from "../src/picker";
+import { openPicker, pickerUrl, registerTinyMce, selectForCkeditor5, selectForInput, selectForMarkdown } from "../src/picker";
 
 afterEach(() => vi.restoreAllMocks());
 
@@ -13,6 +13,21 @@ describe("picker SDK", () => {
     expect(url.searchParams.get("type")).toBe("Images");
     expect(url.searchParams.get("path")).toBe("campaign/hero");
     expect(url.searchParams.get("pickerRequestId")).toBe("12345678-abcd-4321-abcd-123456789012");
+    expect(url.searchParams.get("pickerOrigin")).toBe(window.location.origin);
+  });
+
+  it("inserts a selected entry through the Markdown adapter", async () => {
+    const popup = { closed: false } as Window;
+    vi.spyOn(window, "open").mockReturnValue(popup);
+    const textarea = document.createElement("textarea");
+    textarea.value = "Before after";
+    textarea.setSelectionRange(7, 7);
+    const promise = selectForMarkdown(textarea, { baseUrl: "/sofinder/browser", kind: "image" });
+    const opened = new URL(String(vi.mocked(window.open).mock.calls.at(-1)?.[0]), window.location.href);
+    const entry = { resource: "Images", path: "photo.png", name: "photo.png", directory: false, size: 12, modifiedAt: 1, mimeType: "image/png", url: "/files/photo.png", width: 320, height: 180, capabilities: {} };
+    window.dispatchEvent(new MessageEvent("message", { source: popup, origin: window.location.origin, data: { type: "sofinder:select", version: "1.0", requestId: opened.searchParams.get("pickerRequestId"), entry } }));
+    await promise;
+    expect(textarea.value).toBe("Before ![photo.png](</files/photo.png>)after");
   });
 
   it("accepts only a matching source, origin, version and request", async () => {

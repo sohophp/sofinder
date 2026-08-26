@@ -24,8 +24,9 @@ const entry = await openPicker({
 
 The picker opens as a popup. Results are accepted only when the popup window,
 origin, protocol version and random request ID all match. SoFinder does not use
-a wildcard `postMessage` target. The host route and popup must be same-origin;
-authentication, resource ACLs and selection validation still run on the server.
+a wildcard `postMessage` target. Same-origin works without configuration. A
+cross-origin host must be listed exactly in `picker.allowed_origins`; login,
+resource ACLs and selection validation still run on the picker server.
 
 ## CKEditor 5
 
@@ -99,6 +100,12 @@ registerQuill(quill, {
 `selectForInput(input, options)` writes the selected URL and emits bubbling
 `input` and `change` events. Use `kind: 'file'` for documents or `kind: 'image'`
 for browser-embeddable images.
+
+## Markdown editors
+
+`selectForMarkdown(textarea, options)` inserts at the current selection. Image
+selections use `![name](<url>)`; other files use `[name](<url>)`. It emits normal
+`input` and `change` events and does not depend on one Markdown editor.
 
 ## Local integration matrix
 

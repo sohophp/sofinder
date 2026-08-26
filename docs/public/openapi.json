@@ -9,6 +9,7 @@
   "security": [{"sessionCookie": []}],
   "paths": {
     "/api/config": {"get": {"operationId": "getConfig", "responses": {"200": {"description": "Versioned discovery data", "content": {"application/json": {"schema": {"type": "object", "required": ["success", "data"], "properties": {"success": {"const": true}, "data": {"$ref": "./schema/config-data.schema.json"}}}}}}}}},
+    "/api/capabilities": {"get": {"operationId": "getCapabilities", "responses": {"200": {"description": "Versioned machine-readable capability catalog", "content": {"application/json": {"schema": {"type": "object", "required": ["success", "data"], "properties": {"success": {"const": true}, "data": {"$ref": "./schema/capability-catalog.schema.json"}}}}}}}}},
     "/health": {"get": {"operationId": "getHealth", "responses": {"200": {"$ref": "#/components/responses/Success"}, "503": {"$ref": "#/components/responses/Error"}}}},
     "/metrics": {"get": {"operationId": "getMetrics", "responses": {"200": {"description": "Prometheus text exposition", "content": {"text/plain": {"schema": {"type": "string"}}}}}}},
     "/api/security/status": {"get": {"operationId": "getSecurityStatus", "responses": {"200": {"$ref": "#/components/responses/Success"}}}},

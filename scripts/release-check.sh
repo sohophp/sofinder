@@ -2,7 +2,7 @@
 set -euo pipefail
 
 project_dir=$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)
-php_bin=${PHP_BIN:-php}
+php_bin=${PHP_BIN:-"$project_dir/scripts/php-bin.sh"}
 composer_bin=${COMPOSER_BIN:-$(command -v composer)}
 
 cd "$project_dir"

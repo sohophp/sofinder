@@ -17,6 +17,12 @@ sofinder_api_config:
   methods: [GET]
   defaults: { _sofinder: true }
 
+sofinder_api_capabilities:
+  path: /api/capabilities
+  controller: SohoPHP\SoFinder\Http\CapabilityController
+  methods: [GET]
+  defaults: { _sofinder: true }
+
 sofinder_health:
   path: /health
   controller: SohoPHP\SoFinder\Http\HealthController

@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace SohoPHP\SoFinder\Http;
 
 use SohoPHP\SoFinder\Exception\SoFinderException;
+use SohoPHP\SoFinder\Feature\FeaturePolicy;
 use SohoPHP\SoFinder\Image\ImageManager;
 use SohoPHP\SoFinder\Symfony\CsrfGuard;
 use SohoPHP\SoFinder\Value\OperationResult;
@@ -17,6 +18,7 @@ final readonly class ImageController
     public function __construct(
         private ImageManager $images,
         private CsrfGuard $csrf,
+        private ?FeaturePolicy $features = null,
     ) {
     }
 
@@ -61,6 +63,7 @@ final readonly class ImageController
         $resource = (string) ($data['resource'] ?? 'Images');
         $path = (string) ($data['path'] ?? '');
         if (isset($data['actions'])) {
+            ($this->features ?? new FeaturePolicy())->assertEnabled('image_processing');
             if (!is_array($data['actions']) || array_filter($data['actions'], static fn (mixed $action): bool => !is_array($action)) !== []) {
                 throw new SoFinderException('Image actions must be an array of objects.', 'invalid_image_actions', 400);
             }
@@ -72,6 +75,7 @@ final readonly class ImageController
 
             return new JsonResponse(OperationResult::success($result));
         }
+        ($this->features ?? new FeaturePolicy())->assertEnabled('image_editing');
         $entry = ($data['operation'] ?? 'transform') === 'crop'
             ? $this->images->crop(
                 $resource,
@@ -96,6 +100,7 @@ final readonly class ImageController
 
     public function batch(Request $request): JsonResponse
     {
+        ($this->features ?? new FeaturePolicy())->assertEnabled('image_processing');
         $this->csrf->assertMutation($request);
         try {
             $data = json_decode($request->getContent(), true, 512, JSON_THROW_ON_ERROR);

@@ -35,6 +35,15 @@ selection, resolves it again through `FileManager` (therefore repeating
 authorization), and renders only escaped metadata. The same plugin implements
 `HealthCheckInterface`, so it also appears in `/sofinder/health`.
 
+PDF and Office previews are enabled in the example. `/sofinder/health` must
+report `document-preview: ready`; Office files are converted to private cached
+PDFs by `/usr/bin/libreoffice`. ClamAV is deliberately disabled until a local
+clamd listens on `tcp://127.0.0.1:3310`. Then set
+`SOFINDER_CLAMAV_ENABLED=1`, restart the example and verify both
+`/sofinder/health` and `/sofinder/api/security/status`. A normal upload must
+increase `passed`; an official EICAR test upload must be rejected and increase
+`quarantined`.
+
 The `public/uploads` link exposes the example's `var/storage` directory at the
 configured `/uploads` URL. On WSL, bind the development server to all WSL IPv4
 interfaces so a Windows browser can use the distro hostname:

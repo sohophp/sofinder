@@ -1,0 +1,17 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://sofinder.sohophp.app/schema/capability-catalog.schema.json",
+  "title": "SoFinder capability catalog",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["apiVersion", "entryOperations", "storageCapabilities", "optionalFeatures", "pluginSlots", "pluginSelections", "pickerKinds"],
+  "properties": {
+    "apiVersion": {"const": "1.0"},
+    "entryOperations": {"type": "array", "uniqueItems": true, "items": {"type": "string"}},
+    "storageCapabilities": {"type": "array", "uniqueItems": true, "items": {"type": "string"}},
+    "optionalFeatures": {"type": "array", "uniqueItems": true, "items": {"type": "string"}},
+    "pluginSlots": {"type": "array", "uniqueItems": true, "items": {"enum": ["utility", "toolbar", "context", "details"]}},
+    "pluginSelections": {"type": "array", "uniqueItems": true, "items": {"enum": ["none", "any", "file", "image"]}},
+    "pickerKinds": {"type": "array", "uniqueItems": true, "items": {"enum": ["any", "file", "image"]}}
+  }
+}

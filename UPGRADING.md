@@ -1,5 +1,19 @@
 # Upgrading SoFinder
 
+## From 0.1.0-beta.16 to 0.1.0-beta.17
+
+Deploy all rebuilt browser assets together. Existing files and metadata need no
+migration. New host feature gates default to enabled for compatibility; disable
+`batch_rename`, `image_editing`, `image_processing`, `document_preview` or
+`security_status` explicitly when required.
+
+Cross-origin picker callers must be exact entries in `picker.allowed_origins`.
+When `cluster.state_service` is configured, SoFinder now shares metrics,
+maintenance state and chunk-session coordination automatically. Every node must
+mount `chunk_dir` at the same private shared path, or provide a custom
+`cluster.chunk_upload_store_service`. Run `/health`, scrape `/metrics`, and
+complete one resumable upload before switching traffic.
+
 ## From 0.1.0-beta.15 to 0.1.0-beta.16
 
 Deploy `sofinder.js`, `sofinder-picker.js` and `sofinder.css` together. Stored

@@ -10,6 +10,7 @@ use SohoPHP\SoFinder\State\RedisAtomicStateStore;
 use SohoPHP\SoFinder\State\SharedMetadataStore;
 use SohoPHP\SoFinder\State\SharedRequestGateStore;
 use SohoPHP\SoFinder\State\SharedUsageTracker;
+use SohoPHP\SoFinder\Observability\SharedMetricsStore;
 use SohoPHP\SoFinder\Storage\LocalStorageAdapter;
 use SohoPHP\SoFinder\Value\ResourceStorage;
 use SohoPHP\SoFinder\Value\ResourceType;
@@ -68,6 +69,16 @@ final class SharedStateTest extends TestCase
         self::assertSame('done', $usage->mutate($resource, static fn (int $current): array => ['value' => 'done', 'delta' => 6]));
         self::assertSame(10, $usage->usage($resource));
         self::assertSame(4, $usage->recalculate($resource));
+    }
+
+    public function testSharedMetricsAggregateAcrossStoreInstances(): void
+    {
+        $database = $this->directory . '/metrics.sqlite';
+        (new SharedMetricsStore(new PdoAtomicStateStore(new \PDO('sqlite:' . $database))))->increment('sofinder_upload_failures_total', ['code' => 'invalid_upload']);
+        $metrics = new SharedMetricsStore(new PdoAtomicStateStore(new \PDO('sqlite:' . $database)));
+        $metrics->increment('sofinder_upload_failures_total', ['code' => 'invalid_upload']);
+
+        self::assertSame(2, $metrics->snapshot()[0]['value']);
     }
 
     public function testRedisStorePersistsLockedMutationsWhenAvailable(): void

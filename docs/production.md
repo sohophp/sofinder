@@ -20,6 +20,8 @@ with:
 - `SharedMetadataStore` for favorites, tags and recent files;
 - `SharedRequestGateStore` for cross-node request/concurrency limits;
 - `SharedUsageTracker` for atomic quota accounting.
+- `SharedMetricsStore` for cluster-wide Prometheus counters;
+- shared maintenance leases, status and chunk-session coordination.
 
 Create the PDO store once with the host-owned connection; it creates the portable
 `sofinder_state` table automatically, or call `install()` during deployment.
@@ -46,11 +48,13 @@ so_finder:
     chunk_upload_store_service: 'app.sofinder_shared_chunks' # optional
 ```
 
-`state_service` automatically replaces metadata, request-gate and usage stores.
+`state_service` automatically replaces metadata, request-gate, usage and metrics
+stores, and enables shared maintenance and chunk-session coordination.
 `/health` then performs an atomic shared-state read/write probe. The configured
 services implement `AtomicStateStoreInterface` and `ChunkUploadStoreInterface`.
 
-Chunk bytes still need a shared private filesystem or a host implementation of
+Chunk bytes still need `chunk_dir` mounted as the same shared private filesystem
+on every node, or a host implementation of
 `ChunkUploadStoreInterface`. Remote recycle behavior belongs to the storage
 provider (for example bucket versioning); state storage is not a substitute for
 file recovery.
@@ -79,9 +83,11 @@ exports scan count, scanned bytes and cumulative duration counters by result.
 
 ## Readiness and metrics
 
-- `GET /health` checks private runtime paths, built assets, every storage resource
-  and tagged plugin checks. `down` returns HTTP 503; `degraded` remains HTTP 200.
-- `GET /metrics` exposes bounded Prometheus counters and `sofinder_ready`.
+- `GET /health` checks private runtime paths, built assets, image codecs,
+  maintenance mode, every storage resource and tagged plugin checks. `down`
+  returns HTTP 503; `degraded` remains HTTP 200.
+- `GET /metrics` exposes bounded Prometheus counters, storage latency totals and
+  observations, upload failures, limiter rejections and `sofinder_ready`.
 - Every SoFinder response includes `X-Request-ID`. A safe incoming value is
   preserved; otherwise SoFinder creates one. Audit and failure logs include it.
 

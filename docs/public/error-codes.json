@@ -56,6 +56,7 @@
     "invalid_metadata_action": {"statuses": [400], "category": "metadata"},
     "invalid_mime_type": {"statuses": [415], "category": "upload"},
     "invalid_path": {"statuses": [400], "category": "storage"},
+    "invalid_picker_origin": {"statuses": [400], "category": "request"},
     "invalid_range": {"statuses": [416], "category": "delivery"},
     "invalid_save_mode": {"statuses": [422], "category": "image"},
     "invalid_storage_options": {"statuses": [500], "category": "storage"},

@@ -25,9 +25,20 @@ description: SoFinder 全局、UI、维护、图片、请求限制与资源配�
 ## 集群 Service
 
 `cluster.state_service` 可指定实现 `AtomicStateStoreInterface` 的宿主 Symfony Service，
-自动把 metadata、请求 Gate 和 Usage 切换为共享原子 Store。
-`cluster.chunk_upload_store_service` 可指定共享 `ChunkUploadStoreInterface`。默认均为
-`null`，保留单节点文件实现。详见[生产运行](/zh-CN/production)。
+自动把 metadata、请求 Gate、Usage、指标、维护协调和分块 Session Metadata 切换为
+共享原子 Store。分块内容仍写入 `chunk_dir`，多节点必须把它挂载为相同路径的私有共享目录。
+需要其他暂存后端时，可用 `cluster.chunk_upload_store_service` 替换内置协调器。
+详见[生产运行](/zh-CN/production)。
+
+## Picker Origin
+
+Picker 默认同源。跨域 CMS 必须逐个配置精确 Origin，不接受通配符或带路径 URL：
+
+```yaml
+so_finder:
+  picker:
+    allowed_origins: ['https://cms.example.com']
+```
 
 ## 临时签名 URL
 
@@ -120,6 +131,14 @@ so_finder:
     tags: true
     archive: true
     trash: true
+    batch_rename: true
+    image_editing: true
+    image_processing: true
+    document_preview: true
+    security_status: true
+    folder_upload: true
+    text_preview: true
+    checksum: true
 ```
 
 ## 主题

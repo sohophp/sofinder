@@ -5,6 +5,17 @@ description: 各 SoFinder 預發布版本的相容性、設定與 adapter 升級
 
 # 升級 SoFinder
 
+## 從 0.1.0-beta.16 升級至 0.1.0-beta.17
+
+請一併部署全部重建的 Browser Asset，檔案與 Metadata 無需遷移。新增 Host 功能開關
+預設啟用以維持相容；需要時可明確關閉 `batch_rename`、`image_editing`、
+`image_processing`、`document_preview` 或 `security_status`。
+
+跨域 Picker 呼叫端必須精確列入 `picker.allowed_origins`。設定
+`cluster.state_service` 後，指標、維護狀態與分塊 Session 會自動共享；所有節點必須把
+`chunk_dir` 掛載為相同的私有共享路徑，或提供 `cluster.chunk_upload_store_service`。
+切換流量前應檢查 `/health`、抓取 `/metrics` 並完成一次續傳。
+
 ## 從 0.1.0-beta.15 升級至 0.1.0-beta.16
 
 請同時部署 `sofinder.js`、`sofinder-picker.js` 與 `sofinder.css`。儲存檔案和 metadata 無需遷移。瀏覽器工具偏好改用 `sofinder.tools.v3`；批次重新命名和壓縮／浮水印會保持關閉，直到各使用者在「設定」中啟用。網格與清單大小分別儲存在 `sofinder.viewSizes.v1`。

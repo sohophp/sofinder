@@ -34,6 +34,14 @@ final class ConfigurationTest extends TestCase
             'tags' => true,
             'archive' => true,
             'trash' => true,
+            'batch_rename' => true,
+            'image_editing' => true,
+            'image_processing' => true,
+            'document_preview' => true,
+            'security_status' => true,
+            'folder_upload' => true,
+            'text_preview' => true,
+            'checksum' => true,
         ], $config['features']);
     }
 

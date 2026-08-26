@@ -31,7 +31,7 @@ const defaultTools: ToolPreferences = { resize: false, crop: false, rotate: fals
 const defaultViewSizes: ViewSizePreferences = { grid: "medium", list: "medium" };
 const defaultFeatures: FeaturePreferences = { recent: false, favorites: false, tags: false, archive: false, trash: true, folderTree: false, autoCollapseUploads: true };
 const defaultListColumns: ListColumnPreferences = { size: true, modified: true, type: false };
-const defaultFeatureAvailability = { recent: true, favorites: true, tags: true, archive: true, trash: true, folderTree: true } as const;
+const defaultFeatureAvailability = { recent: true, favorites: true, tags: true, archive: true, trash: true, folderTree: true, batchRename: true, imageEditing: true, imageProcessing: true, documentPreview: true, securityStatus: true, folderUpload: true, textPreview: true, checksum: true } as const;
 const loadPreferences = <T extends object>(key: string, defaults: T): T => {
   try {
     const saved = JSON.parse(localStorage.getItem(key) || "{}") as Record<string, unknown>;
@@ -417,13 +417,13 @@ export default function App({ config }: { config: SoFinderConfig }) {
   useEffect(() => {
     setTextPreview(null);
     setChecksum(null);
-    if (!previewEntry || !isTextPreviewMime(previewEntry.mimeType)) return;
+    if (featureAvailability.textPreview === false || !previewEntry || !isTextPreviewMime(previewEntry.mimeType)) return;
     let active = true;
     api.textPreview(resource, previewEntry.path).then(result => {
       if (active) setTextPreview({ path: previewEntry.path, content: result.content, truncated: result.truncated });
     }).catch(error => { if (active) report(error); });
     return () => { active = false; };
-  }, [api, previewEntry?.path, previewEntry?.mimeType, report, resource]);
+  }, [api, featureAvailability.textPreview, previewEntry?.path, previewEntry?.mimeType, report, resource]);
 
   const selectEntry = (entry: Entry, event: React.MouseEvent) => {
     if (uiMode === "picker") {
@@ -1013,23 +1013,23 @@ export default function App({ config }: { config: SoFinderConfig }) {
       <button onClick={createFolder} disabled={currentResource?.readOnly || directoryCapabilities.create_folder === false || (currentResource !== undefined && currentDepth >= currentResource.maxFolderDepth)} title={currentResource && currentDepth >= currentResource.maxFolderDepth ? t("folderDepthReached") : undefined}>{iconButton("add-folder", t("newFolder"))}</button>
       <button className={`primary sf-upload-trigger${uploadActive ? " is-active" : ""}`} aria-busy={uploadActive} onClick={() => uploadInput.current?.click()} disabled={currentResource?.readOnly || directoryCapabilities.upload === false}>{iconButton("upload", `${t("upload")}${uploadActive ? ` (${uploads.filter(task => task.status === "queued" || task.status === "uploading").length})` : ""}`)}</button>
       <input ref={uploadInput} type="file" multiple hidden onChange={event => { if (event.target.files) void upload(event.target.files); event.target.value = ""; }}/>
-      <button onClick={() => directoryUploadInput.current?.click()} disabled={currentResource?.readOnly || directoryCapabilities.upload === false}>{iconButton("add-folder", t("uploadFolder"))}</button>
-      <input ref={element => { directoryUploadInput.current = element; element?.setAttribute("webkitdirectory", ""); }} type="file" multiple hidden onChange={event => { if (event.target.files) void uploadDirectory(event.target.files); event.target.value = ""; }}/>
+      {featureAvailability.folderUpload !== false && <><button onClick={() => directoryUploadInput.current?.click()} disabled={currentResource?.readOnly || directoryCapabilities.upload === false}>{iconButton("add-folder", t("uploadFolder"))}</button>
+      <input ref={element => { directoryUploadInput.current = element; element?.setAttribute("webkitdirectory", ""); }} type="file" multiple hidden onChange={event => { if (event.target.files) void uploadDirectory(event.target.files); event.target.value = ""; }}/></>}
       {(uiMode === "manager" || fullTools) && selectedEntries.length > 0 && <><span className="sf-separator"/><div className="sf-context-actions">
       <button onClick={toggleSelectAll} disabled={entries.length === 0}>{iconButton("select", selectedPaths.size === entries.length && entries.length > 0 ? t("clearSelection") : t("selectAll"))}</button>
       <button onClick={rename} disabled={selectedEntries.length !== 1 || !canSelected("rename") || currentResource?.readOnly}>{iconButton("rename", t("rename"))}</button>
-      {tools.batchRename && <button onClick={() => setBulkRenameOpen(true)} disabled={selectedEntries.length < 2 || !canSelected("rename") || currentResource?.readOnly}>{iconButton("rename", t("batchRename"))}</button>}
+      {featureAvailability.batchRename !== false && tools.batchRename && <button onClick={() => setBulkRenameOpen(true)} disabled={selectedEntries.length < 2 || !canSelected("rename") || currentResource?.readOnly}>{iconButton("rename", t("batchRename"))}</button>}
       <button onClick={() => void browseDestination("copy", path)} disabled={!canSelected("copy") || currentResource?.readOnly}>{iconButton("copy", t("copy"))}</button>
       <button onClick={() => void browseDestination("move", path)} disabled={!canSelected("move") || currentResource?.readOnly}>{iconButton("move", t("move"))}</button>
       {features.archive && <button onClick={() => void downloadArchive()}>{iconButton("archive", t("downloadZip"))}</button>}
       {features.favorites && <button onClick={() => void toggleFavorite()} disabled={!selected}>{iconButton("favorite", t("favorite"))}</button>}
       {features.tags && <button onClick={() => void editTags()} disabled={!selected}>{iconButton("tags", t("tags"))}</button>}
       <button className="danger" onClick={remove} disabled={!canSelected("delete") || currentResource?.readOnly}>{iconButton("delete", `${t("remove")}${selectedEntries.length > 1 ? ` (${selectedEntries.length})` : ""}`)}</button>
-      {tools.rotate && <><button onClick={() => void editImage(270)} disabled={!canEditImage(selected) || currentResource?.readOnly}>{iconButton("rotate-left", t("rotateLeft"))}</button><button onClick={() => void editImage(90)} disabled={!canEditImage(selected) || currentResource?.readOnly}>{iconButton("rotate-right", t("rotateRight"))}</button></>}
-      {tools.resize && <button onClick={resizeImage} disabled={!canEditImage(selected) || currentResource?.readOnly}>{iconButton("resize", t("resize"))}</button>}
-      {tools.crop && <button onClick={openCropEditor} disabled={!canEditImage(selected) || !imageInfo || currentResource?.readOnly}>{iconButton("crop", t("crop"))}</button>}
-      {tools.process && <button onClick={() => setImageProcessOpen(true)} disabled={editableSelectedImages.length === 0 || editableSelectedImages.length !== selectedEntries.length || currentResource?.readOnly}>{iconButton("resize", t("imageProcess"))}</button>}
-      {tools.presets && <label className="sf-sort">{t("preset")}<select value="" disabled={!canEditImage(selected) || currentResource?.readOnly || Object.keys(imagePresets).length === 0} onChange={event => { const name = event.target.value; event.target.value = ""; if (name) void applyPreset(name); }}>
+      {featureAvailability.imageEditing !== false && tools.rotate && <><button onClick={() => void editImage(270)} disabled={!canEditImage(selected) || currentResource?.readOnly}>{iconButton("rotate-left", t("rotateLeft"))}</button><button onClick={() => void editImage(90)} disabled={!canEditImage(selected) || currentResource?.readOnly}>{iconButton("rotate-right", t("rotateRight"))}</button></>}
+      {featureAvailability.imageEditing !== false && tools.resize && <button onClick={resizeImage} disabled={!canEditImage(selected) || currentResource?.readOnly}>{iconButton("resize", t("resize"))}</button>}
+      {featureAvailability.imageEditing !== false && tools.crop && <button onClick={openCropEditor} disabled={!canEditImage(selected) || !imageInfo || currentResource?.readOnly}>{iconButton("crop", t("crop"))}</button>}
+      {featureAvailability.imageProcessing !== false && tools.process && <button onClick={() => setImageProcessOpen(true)} disabled={editableSelectedImages.length === 0 || editableSelectedImages.length !== selectedEntries.length || currentResource?.readOnly}>{iconButton("resize", t("imageProcess"))}</button>}
+      {featureAvailability.imageEditing !== false && tools.presets && <label className="sf-sort">{t("preset")}<select value="" disabled={!canEditImage(selected) || currentResource?.readOnly || Object.keys(imagePresets).length === 0} onChange={event => { const name = event.target.value; event.target.value = ""; if (name) void applyPreset(name); }}>
         <option value="">—</option>{Object.entries(imagePresets).map(([name, preset]) => <option key={name} value={name}>{name} ({preset.width}×{preset.height})</option>)}
       </select></label>}
       {selected && pluginActions.filter(action => action.slot === "toolbar" && pluginActionAvailable(action, selected)).map(action => <button key={`${action.plugin}:${action.id}`} onClick={() => openPluginAction(action, selected)}>{pluginLabel(action)}</button>)}
@@ -1092,7 +1092,7 @@ export default function App({ config }: { config: SoFinderConfig }) {
     {settingsOpen && <SettingsDialog resource={currentResource} tools={tools} features={features} columns={listColumns} viewSizes={viewSizes} availability={featureAvailability} scale={uiScale} translate={t} onToolChange={updateTool} onFeatureChange={updateFeature} onColumnChange={updateListColumn} onViewSizeChange={updateViewSize} onScaleChange={setUiScale} onClose={() => setSettingsOpen(false)}/>}
     {securityStatusOpen && <SecurityStatusDialog api={api} formatDate={timestamp => dateFormatter.format(timestamp * 1000)} labels={{ title: t("securityStatus"), close: t("close"), loading: t("loading"), enabled: t("malwareScanningEnabled"), disabled: t("malwareScanningDisabled"), provider: t("scanProvider"), service: t("serviceStatus"), scans: t("scanHistory"), passed: t("scanPassed"), quarantined: t("scanQuarantined"), failed: t("scanFailed"), pending: t("scanPending"), recent: t("recentScans"), none: t("noScans") }} onClose={() => setSecurityStatusOpen(false)}/>}
     {destinationDialog && <DestinationDialog state={destinationDialog} unsafe={destinationUnsafe} translate={t} onBrowse={(operation, destination) => void browseDestination(operation, destination)} onConfirm={(operation, destination) => void transfer(operation, destination)} onClose={() => setDestinationDialog(null)}/>}
-    {bulkRenameOpen && tools.batchRename && currentResource && <BulkRenameDialog entries={selectedEntries} maximum={currentResource.maxFileNameLength} labels={{ title: t("batchRename"), pattern: t("renamePattern"), hint: t("renamePatternHint"), oldName: t("oldName"), newName: t("newName"), invalid: t("invalidEntryName"), duplicate: t("duplicateRename"), cancel: t("cancel"), save: t("rename"), close: t("close") }} onClose={() => setBulkRenameOpen(false)} onSave={renames => void batchRename(renames)}/>}
+    {bulkRenameOpen && featureAvailability.batchRename !== false && tools.batchRename && currentResource && <BulkRenameDialog entries={selectedEntries} maximum={currentResource.maxFileNameLength} labels={{ title: t("batchRename"), pattern: t("renamePattern"), hint: t("renamePatternHint"), oldName: t("oldName"), newName: t("newName"), invalid: t("invalidEntryName"), duplicate: t("duplicateRename"), cancel: t("cancel"), save: t("rename"), close: t("close") }} onClose={() => setBulkRenameOpen(false)} onSave={renames => void batchRename(renames)}/>}
     {textDialog && <TextDialog title={textDialog.title} label={textDialog.label} initialValue={textDialog.initial} maximum={textDialog.maximum} extension={textDialog.extension} invalidNameLabel={t("invalidEntryName")} confirmLabel={t("confirm")} cancelLabel={t("cancel")} closeLabel={t("close")} onConfirm={value => void submitTextDialog(value)} onClose={() => setTextDialog(null)}/>}
     {confirmDialog && <ConfirmDialog {...confirmDialog} confirmLabel={t("confirm")} cancelLabel={t("cancel")} closeLabel={t("close")} onConfirm={() => answerConfirm(true)} onClose={() => answerConfirm(false)}/>}
     {trashOpen && <TrashDialog
@@ -1118,17 +1118,17 @@ export default function App({ config }: { config: SoFinderConfig }) {
         <div className="sf-file-preview-content">
           {canPreviewImage(previewEntry)
             ? <ThumbnailImage src={api.thumbnailUrl(resource, previewEntry, 512, 512)} alt={previewEntry.name}/>
-            : textPreview?.path === previewEntry.path
+            : featureAvailability.textPreview !== false && textPreview?.path === previewEntry.path
               ? <><pre className="sf-text-preview">{textPreview.content}</pre>{textPreview.truncated && <p className="sf-warning">{t("previewTruncated")}</p>}</>
             : previewerUrl(previewEntry)
               ? <iframe className="sf-document-preview" src={previewerUrl(previewEntry) || undefined} title={previewEntry.name}/>
               : <div className="sf-file-preview-fallback"><Icon kind="file"/><p>{t("previewUnavailable")}</p></div>}
         </div>
-        <dl className="sf-file-preview-meta"><dt>{t("type")}</dt><dd>{previewEntry.mimeType || t("file")}</dd><dt>{t("size")}</dt><dd>{formatSize(previewEntry.size)}</dd><dt>{t("modified")}</dt><dd><time dateTime={new Date(previewEntry.modifiedAt * 1000).toISOString()}>{dateFormatter.format(previewEntry.modifiedAt * 1000)}</time></dd><dt>{t("location")}</dt><dd>{previewEntry.path}</dd><dt>SHA-256</dt><dd>{checksum?.path === previewEntry.path ? <code className="sf-checksum">{checksum.value}</code> : <button onClick={() => void api.checksum(resource, previewEntry.path).then(result => setChecksum({ path: previewEntry.path, value: result.checksum })).catch(report)}>{t("calculateChecksum")}</button>}</dd></dl>
+        <dl className="sf-file-preview-meta"><dt>{t("type")}</dt><dd>{previewEntry.mimeType || t("file")}</dd><dt>{t("size")}</dt><dd>{formatSize(previewEntry.size)}</dd><dt>{t("modified")}</dt><dd><time dateTime={new Date(previewEntry.modifiedAt * 1000).toISOString()}>{dateFormatter.format(previewEntry.modifiedAt * 1000)}</time></dd><dt>{t("location")}</dt><dd>{previewEntry.path}</dd>{featureAvailability.checksum !== false && <><dt>SHA-256</dt><dd>{checksum?.path === previewEntry.path ? <code className="sf-checksum">{checksum.value}</code> : <button onClick={() => void api.checksum(resource, previewEntry.path).then(result => setChecksum({ path: previewEntry.path, value: result.checksum })).catch(report)}>{t("calculateChecksum")}</button>}</dd></>}</dl>
       </div>
     </Modal>}
     {urlDialog && <UrlDialog url={urlDialog.url} loginRequired={urlDialog.loginRequired} expiresAt={urlDialog.expiresAt} labels={{ title: urlDialog.expiresAt ? t("temporaryFileUrl") : t("fileUrl"), close: t("close"), copied: t("urlCopied"), failed: t("copyUrlFailed"), hint: t("clickUrlToCopy"), loginRequired: t("loginRequired"), expires: t("linkExpires") }} onClose={() => setUrlDialog(null)}/>}
-    {imageProcessOpen && editableSelectedImages.length > 0 && <ImageProcessDialog
+    {imageProcessOpen && featureAvailability.imageProcessing !== false && editableSelectedImages.length > 0 && <ImageProcessDialog
       entries={editableSelectedImages}
       resource={resource}
       formats={imageCapabilities.formats.filter(item => item.edit && ["jpeg", "png", "webp", "avif"].includes(item.format)).map(item => item.format)}

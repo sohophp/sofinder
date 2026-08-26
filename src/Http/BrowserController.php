@@ -6,6 +6,7 @@ namespace SohoPHP\SoFinder\Http;
 
 use SohoPHP\SoFinder\FileManager;
 use SohoPHP\SoFinder\Feature\FeaturePolicy;
+use SohoPHP\SoFinder\Exception\SoFinderException;
 use SohoPHP\SoFinder\Value\Theme;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
@@ -27,6 +28,7 @@ final readonly class BrowserController
         private ?FeaturePolicy $features = null,
         private ?AuthorizationCheckerInterface $authorization = null,
         /** @var list<string> */ private array $securityStatusRoles = [],
+        /** @var list<string> */ private array $pickerAllowedOrigins = [],
     ) {
     }
 
@@ -64,11 +66,12 @@ final readonly class BrowserController
             'selectionKind' => in_array((string) $request->query->get('selection', ''), ['file', 'image'], true) ? (string) $request->query->get('selection') : 'any',
             'ckeditorFunction' => (int) $request->query->get('CKEditorFuncNum', 0),
             'pickerRequestId' => $pickerRequestId,
-            'pickerOrigin' => $pickerRequestId === '' ? '' : $request->getSchemeAndHttpHost(),
+            'pickerOrigin' => $pickerRequestId === '' ? '' : $this->pickerOrigin($request),
             'theme' => $this->theme->values(),
             'featureDefaults' => ['folderTree' => (bool) ($this->ui['folder_tree'] ?? false)],
             'featureAvailability' => $this->features?->browserAvailability() ?? (new FeaturePolicy())->browserAvailability(),
-            'securityStatusAvailable' => $this->securityStatusRoles === [] || ($this->authorization !== null && (bool) array_filter($this->securityStatusRoles, $this->authorization->isGranted(...))),
+            'securityStatusAvailable' => ($this->features?->enabled('security_status') ?? true)
+                && ($this->securityStatusRoles === [] || ($this->authorization !== null && (bool) array_filter($this->securityStatusRoles, $this->authorization->isGranted(...)))),
             'uiDefaults' => ['scale' => (string) ($this->ui['scale'] ?? 'standard'), ...$ui],
         ];
         $encoded = htmlspecialchars(json_encode($config, JSON_THROW_ON_ERROR | JSON_UNESCAPED_SLASHES), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
@@ -133,5 +136,19 @@ HTML;
     private function pickerRequestId(string $value): string
     {
         return preg_match('/^[A-Za-z0-9-]{16,80}$/D', $value) === 1 ? $value : '';
+    }
+
+    private function pickerOrigin(Request $request): string
+    {
+        $sameOrigin = $request->getSchemeAndHttpHost();
+        $requested = rtrim($request->query->getString('pickerOrigin'), '/');
+        if ($requested === '' || $requested === $sameOrigin) {
+            return $sameOrigin;
+        }
+        if (in_array($requested, $this->pickerAllowedOrigins, true)) {
+            return $requested;
+        }
+
+        throw new SoFinderException('The requested picker origin is not allowed.', 'invalid_picker_origin', 400);
     }
 }

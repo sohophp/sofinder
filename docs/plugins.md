@@ -36,6 +36,9 @@ Descriptors contain browser-safe metadata only. Names are globally unique and
 all fields are validated while Symfony builds the service container. The
 public config endpoint lists active descriptors so host applications can
 diagnose their installation without exposing service configuration.
+Descriptors may declare `resourceTypes` (`any`, `file`, `image`, `directory`),
+`requiredOperations` and non-secret `configurationKeys`. They never publish
+configuration values or credentials.
 
 Plugin behaviour should be implemented by subscribing to `OperationEvent` or
 by replacing one of the public contracts such as `AuthorizationInterface`,
@@ -49,6 +52,12 @@ copy assets or implementation details from third-party file managers.
 accepts only same-origin absolute paths and opens them with `noopener`. The host
 route must repeat authorization. Descriptors cannot inject scripts, HTML, React
 components or remote URLs.
+
+This declaration-only boundary is the frozen 1.0 UI plugin contract. SoFinder
+does not load third-party JavaScript or CSS, including local files named by a
+descriptor. Rich interfaces belong in an authorized same-origin host route
+opened by an action or previewer. This keeps plugin installation compatible
+with the default CSP and avoids turning package discovery into code execution.
 
 `previewers` declare an ID, same-origin URL and bounded `mimeTypes` and/or
 `extensions`. SoFinder adds the authorized `resource` and logical `path` query

@@ -9,7 +9,11 @@ use SohoPHP\SoFinder\Exception\SoFinderException;
 /** Host-controlled upper bound for optional browser and HTTP capabilities. */
 final readonly class FeaturePolicy
 {
-    private const FEATURES = ['folder_tree', 'recent', 'favorites', 'tags', 'archive', 'trash'];
+    private const FEATURES = [
+        'folder_tree', 'recent', 'favorites', 'tags', 'archive', 'trash',
+        'batch_rename', 'image_editing', 'image_processing', 'document_preview', 'security_status',
+        'folder_upload', 'text_preview', 'checksum',
+    ];
 
     /** @param array<string,bool> $features */
     public function __construct(private array $features = [])
@@ -32,7 +36,7 @@ final readonly class FeaturePolicy
         }
     }
 
-    /** @return array{folderTree:bool,recent:bool,favorites:bool,tags:bool,archive:bool,trash:bool} */
+    /** @return array{folderTree:bool,recent:bool,favorites:bool,tags:bool,archive:bool,trash:bool,batchRename:bool,imageEditing:bool,imageProcessing:bool,documentPreview:bool,securityStatus:bool,folderUpload:bool,textPreview:bool,checksum:bool} */
     public function browserAvailability(): array
     {
         return [
@@ -42,6 +46,14 @@ final readonly class FeaturePolicy
             'tags' => $this->enabled('tags'),
             'archive' => $this->enabled('archive'),
             'trash' => $this->enabled('trash'),
+            'batchRename' => $this->enabled('batch_rename'),
+            'imageEditing' => $this->enabled('image_editing'),
+            'imageProcessing' => $this->enabled('image_processing'),
+            'documentPreview' => $this->enabled('document_preview'),
+            'securityStatus' => $this->enabled('security_status'),
+            'folderUpload' => $this->enabled('folder_upload'),
+            'textPreview' => $this->enabled('text_preview'),
+            'checksum' => $this->enabled('checksum'),
         ];
     }
 }

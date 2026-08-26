@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace SohoPHP\SoFinder\Maintenance;
 
 use SohoPHP\SoFinder\Contract\ChunkUploadStoreInterface;
+use SohoPHP\SoFinder\Contract\AtomicStateStoreInterface;
 use SohoPHP\SoFinder\Contract\RecycleBinInterface;
 use SohoPHP\SoFinder\Contract\UsageTrackerInterface;
 use SohoPHP\SoFinder\ResourceRegistry;
@@ -18,15 +19,14 @@ final readonly class MaintenanceRunner
         private RecycleBinInterface $trash,
         private UsageTrackerInterface $usage,
         private ResourceRegistry $resources,
+        private ?AtomicStateStoreInterface $state = null,
     ) {
     }
 
     public function run(MaintenanceTask $task, ?int $limit = null): MaintenanceResult
     {
-        $this->ensureDirectory();
-        $lock = @fopen($this->directory . '/' . $task->value . '.lock', 'c+b');
-        if ($lock === false || !flock($lock, LOCK_EX | LOCK_NB)) {
-            if (is_resource($lock)) fclose($lock);
+        $token = $this->claim($task);
+        if ($token === null) {
             $this->record($task, static fn (array $state): array => array_merge($state, ['status' => 'busy', 'updatedAt' => time()]), true);
             return new MaintenanceResult($task, false, 0);
         }
@@ -46,8 +46,7 @@ final readonly class MaintenanceRunner
             $this->record($task, static fn (array $state): array => array_merge($state, ['status' => 'failed', 'finishedAt' => time(), 'updatedAt' => time(), 'error' => ['code' => $code, 'message' => mb_substr($exception->getMessage(), 0, 300)]]));
             throw $exception;
         } finally {
-            flock($lock, LOCK_UN);
-            fclose($lock);
+            $this->release($task, $token);
         }
     }
 
@@ -59,6 +58,7 @@ final readonly class MaintenanceRunner
     /** @return array<string,array<string,mixed>> */
     public function status(): array
     {
+        if ($this->state !== null) return $this->state->get('maintenance-status', 'global');
         $this->ensureDirectory();
         $file = $this->directory . '/status.json';
         $handle = @fopen($file, 'c+b');
@@ -97,9 +97,58 @@ final readonly class MaintenanceRunner
         }
     }
 
+    /** @return resource|string|null */
+    private function claim(MaintenanceTask $task): mixed
+    {
+        if ($this->state !== null) {
+            $token = bin2hex(random_bytes(16));
+            $claimed = false;
+            $this->state->mutate('maintenance-lock', $task->value, static function (array $state) use ($token, &$claimed): array {
+                if ((int) ($state['expiresAt'] ?? 0) > time()) return $state;
+                $claimed = true;
+
+                return ['token' => $token, 'expiresAt' => time() + 3600];
+            });
+
+            return $claimed ? $token : null;
+        }
+        $this->ensureDirectory();
+        $lock = @fopen($this->directory . '/' . $task->value . '.lock', 'c+b');
+        if ($lock === false || !flock($lock, LOCK_EX | LOCK_NB)) {
+            if (is_resource($lock)) fclose($lock);
+            return null;
+        }
+        return $lock;
+    }
+
+    /** @param resource|string $token */
+    private function release(MaintenanceTask $task, mixed $token): void
+    {
+        if ($this->state !== null) {
+            if (!is_string($token)) return;
+            $this->state->mutate('maintenance-lock', $task->value, static fn (array $state): array => ($state['token'] ?? null) === $token ? [] : $state);
+            return;
+        }
+        if (is_resource($token)) {
+            flock($token, LOCK_UN);
+            fclose($token);
+        }
+    }
+
     /** @param callable(array<string,mixed>):array<string,mixed> $update */
     private function record(MaintenanceTask $task, callable $update, bool $incrementSkip = false): void
     {
+        if ($this->state !== null) {
+            $this->state->mutate('maintenance-status', 'global', static function (array $all) use ($task, $update, $incrementSkip): array {
+                $current = is_array($all[$task->value] ?? null) ? $all[$task->value] : [];
+                $next = $update($current);
+                if ($incrementSkip) $next['lockSkips'] = (int) ($current['lockSkips'] ?? 0) + 1;
+                $all[$task->value] = $next;
+
+                return $all;
+            });
+            return;
+        }
         $this->ensureDirectory();
         $file = $this->directory . '/status.json';
         $handle = @fopen($file, 'c+b');

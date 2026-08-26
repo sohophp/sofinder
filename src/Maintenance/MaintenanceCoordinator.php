@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace SohoPHP\SoFinder\Maintenance;
 
+use SohoPHP\SoFinder\Contract\AtomicStateStoreInterface;
 use SohoPHP\SoFinder\Contract\MaintenanceDispatcherInterface;
 
 final readonly class MaintenanceCoordinator
@@ -15,6 +16,7 @@ final readonly class MaintenanceCoordinator
         private int $maximumItems,
         private MaintenanceRunner $runner,
         private ?MaintenanceDispatcherInterface $dispatcher = null,
+        private ?AtomicStateStoreInterface $state = null,
     ) {
     }
 
@@ -32,6 +34,18 @@ final readonly class MaintenanceCoordinator
 
     private function claimInterval(MaintenanceTask $task): bool
     {
+        if ($this->state !== null) {
+            $claimed = false;
+            $this->state->mutate('maintenance-interval', $task->value, function (array $state) use (&$claimed): array {
+                $now = time();
+                if ((int) ($state['claimedAt'] ?? 0) > 0 && $now - (int) $state['claimedAt'] < $this->minimumInterval) return $state;
+                $claimed = true;
+
+                return ['claimedAt' => $now];
+            });
+
+            return $claimed;
+        }
         if (!is_dir($this->directory) && !@mkdir($this->directory, 0770, true) && !is_dir($this->directory)) return false;
         $file = $this->directory . '/' . $task->value . '.interval';
         $handle = @fopen($file, 'c+b');

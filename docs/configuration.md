@@ -25,10 +25,22 @@ These working directories must be writable by PHP and must not be directly web-a
 ## Cluster services
 
 `cluster.state_service` optionally names a host Symfony service implementing
-`AtomicStateStoreInterface`; it switches metadata, request gates and usage to
-shared atomic stores. `cluster.chunk_upload_store_service` optionally names a
-shared `ChunkUploadStoreInterface`. Both default to `null`, preserving the
-single-node file stores. See [production operation](/production).
+`AtomicStateStoreInterface`; it switches metadata, request gates, usage,
+metrics, maintenance coordination and chunk-session metadata to shared atomic
+stores. Chunk bytes remain in `chunk_dir`, which must be a private shared mount
+on every node. `cluster.chunk_upload_store_service` can replace the bundled
+coordinator when a host needs another staging backend. See [production operation](/production).
+
+## Picker origins
+
+Picker results are same-origin by default. Cross-origin CMS integration must
+allow each exact caller origin; wildcards and paths are rejected:
+
+```yaml
+so_finder:
+  picker:
+    allowed_origins: ['https://cms.example.com']
+```
 
 ## Temporary signed URLs
 
@@ -129,6 +141,14 @@ so_finder:
     tags: true
     archive: true
     trash: true
+    batch_rename: true
+    image_editing: true
+    image_processing: true
+    document_preview: true
+    security_status: true
+    folder_upload: true
+    text_preview: true
+    checksum: true
 ```
 
 ## Theme

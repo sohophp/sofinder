@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace SohoPHP\SoFinder\Http;
 
+use SohoPHP\SoFinder\Feature\FeaturePolicy;
 use SohoPHP\SoFinder\Security\ClamAvScanner;
 use SohoPHP\SoFinder\Security\MalwareScanStatusStore;
 use Symfony\Component\HttpFoundation\JsonResponse;
@@ -18,11 +19,13 @@ final readonly class SecurityStatusController
         private ?ClamAvScanner $scanner = null,
         private ?AuthorizationCheckerInterface $authorization = null,
         /** @var list<string> */ private array $roles = [],
+        private ?FeaturePolicy $features = null,
     ) {
     }
 
     public function __invoke(): JsonResponse
     {
+        ($this->features ?? new FeaturePolicy())->assertEnabled('security_status');
         if ($this->roles !== [] && ($this->authorization === null || !array_filter($this->roles, $this->authorization->isGranted(...)))) {
             throw new AccessDeniedHttpException('The security status requires an administrator role.');
         }

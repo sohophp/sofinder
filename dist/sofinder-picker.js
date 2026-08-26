@@ -1,7 +1,7 @@
 //#region src/picker.ts
 var e = "1.0", t = () => typeof crypto < "u" && typeof crypto.randomUUID == "function" ? crypto.randomUUID() : `sf-${Date.now().toString(36)}-${Math.random().toString(36).slice(2)}`, n = (e, n = t()) => {
 	let r = new URL(e.baseUrl, window.location.href);
-	return r.searchParams.set("select", "1"), r.searchParams.set("uiMode", "picker"), r.searchParams.set("selection", e.kind ?? "any"), r.searchParams.set("pickerRequestId", n), e.resource && r.searchParams.set("type", e.resource), e.path && r.searchParams.set("path", e.path), e.language && r.searchParams.set("lang", e.language), e.tools && r.searchParams.set("uiTools", e.tools), r;
+	return r.searchParams.set("select", "1"), r.searchParams.set("uiMode", "picker"), r.searchParams.set("selection", e.kind ?? "any"), r.searchParams.set("pickerRequestId", n), r.searchParams.set("pickerOrigin", window.location.origin), e.resource && r.searchParams.set("type", e.resource), e.path && r.searchParams.set("path", e.path), e.language && r.searchParams.set("lang", e.language), e.tools && r.searchParams.set("uiTools", e.tools), r;
 }, r = (e) => {
 	let r = t(), a = n(e, r), o = Math.max(640, e.width ?? 1100), s = Math.max(480, e.height ?? 760), c = window.open(a, e.windowName ?? "sofinder-picker", `popup=yes,width=${o},height=${s},resizable=yes,scrollbars=yes`);
 	return c ? new Promise((e, t) => {
@@ -68,6 +68,9 @@ var e = "1.0", t = () => typeof crypto < "u" && typeof crypto.randomUUID == "fun
 }, l = async (e, t) => {
 	let n = await r(t);
 	return e.value = n.url, e.dispatchEvent(new Event("input", { bubbles: !0 })), e.dispatchEvent(new Event("change", { bubbles: !0 })), n;
+}, u = async (e, t) => {
+	let n = await r(t), i = n.name.replace(/([\\\[\]])/g, "\\$1"), a = n.url.replace(/</g, "%3C").replace(/>/g, "%3E"), o = `${t.kind === "image" || n.mimeType?.startsWith("image/") === !0 ? "!" : ""}[${i}](<${a}>)`, s = e.selectionStart ?? e.value.length, c = e.selectionEnd ?? s;
+	return e.setRangeText(o, s, c, "end"), e.dispatchEvent(new Event("input", { bubbles: !0 })), e.dispatchEvent(new Event("change", { bubbles: !0 })), e.focus(), n;
 };
 //#endregion
-export { e as PICKER_PROTOCOL_VERSION, r as openPicker, n as pickerUrl, c as registerQuill, o as registerTinyMce, a as selectForCkeditor5, l as selectForInput, s as selectForTiptap };
+export { e as PICKER_PROTOCOL_VERSION, r as openPicker, n as pickerUrl, c as registerQuill, o as registerTinyMce, a as selectForCkeditor5, l as selectForInput, u as selectForMarkdown, s as selectForTiptap };

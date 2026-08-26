@@ -15,7 +15,11 @@ export function SettingsDialog({ resource, tools, features, columns, viewSizes, 
   features: FeaturePreferences;
   columns: ListColumnPreferences;
   viewSizes: ViewSizePreferences;
-  availability: Partial<Record<Exclude<keyof FeaturePreferences, "autoCollapseUploads">, boolean>>;
+  availability: Partial<Record<Exclude<keyof FeaturePreferences, "autoCollapseUploads">, boolean>> & {
+    batchRename?: boolean;
+    imageEditing?: boolean;
+    imageProcessing?: boolean;
+  };
   scale: UiScale;
   translate: (key: MessageKey) => string;
   onToolChange: (name: keyof ToolPreferences, enabled: boolean) => void;
@@ -40,9 +44,9 @@ export function SettingsDialog({ resource, tools, features, columns, viewSizes, 
       </div>
     </div>)}
     <h3>{t("optionalTools")}</h3>
-    <label className="sf-setting"><input type="checkbox" checked={tools.batchRename} onChange={event => onToolChange("batchRename", event.target.checked)}/><span>{t("batchRename")}</span></label>
-    <h3>{t("imageTools")}</h3>
-    {(["resize", "crop", "rotate", "presets", "process"] as const).map(tool => <label className="sf-setting" key={tool}><input type="checkbox" checked={tools[tool]} onChange={event => onToolChange(tool, event.target.checked)}/><span>{t(tool === "presets" ? "preset" : tool === "rotate" ? "rotationTools" : tool === "process" ? "imageProcess" : tool)}</span></label>)}
+    {availability.batchRename !== false && <label className="sf-setting"><input type="checkbox" checked={tools.batchRename} onChange={event => onToolChange("batchRename", event.target.checked)}/><span>{t("batchRename")}</span></label>}
+    {(availability.imageEditing !== false || availability.imageProcessing !== false) && <h3>{t("imageTools")}</h3>}
+    {(["resize", "crop", "rotate", "presets", "process"] as const).filter(tool => tool === "process" ? availability.imageProcessing !== false : availability.imageEditing !== false).map(tool => <label className="sf-setting" key={tool}><input type="checkbox" checked={tools[tool]} onChange={event => onToolChange(tool, event.target.checked)}/><span>{t(tool === "presets" ? "preset" : tool === "rotate" ? "rotationTools" : tool === "process" ? "imageProcess" : tool)}</span></label>)}
     <h3>{t("listColumns")}</h3>
     {(["size", "modified", "type"] as const).map(column => <label className="sf-setting" key={column}><input type="checkbox" checked={columns[column]} onChange={event => onColumnChange(column, event.target.checked)}/><span>{t(column === "size" ? "showSizeColumn" : column === "modified" ? "showModifiedColumn" : "showTypeColumn")}</span></label>)}
     <h3>{t("optionalFeatures")}</h3><p>{t("featureSettingsHint")}</p>

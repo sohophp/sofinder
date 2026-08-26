@@ -5,6 +5,16 @@ description: SoFinder 每個公開版本的重要變更。
 
 # 更新紀錄
 
+## 0.1.0-beta.17 - 2026-08-26
+
+- 新增 Host 強制開關，涵蓋批次重新命名、圖片編輯／處理、文件預覽及安全狀態的 UI 與 HTTP Endpoint。
+- 新增 Markdown Picker Adapter 與精確 Origin Allowlist 跨域握手，不使用萬用字元 `postMessage`。
+- 新增 Redis/PDO 共享指標、維護 Lease／狀態及官方多節點分塊 Session 協調。
+- 新增 Upload、Overwrite、Quota、Trash 與續傳領域並行測試，以及原子 Restore／永久刪除鎖。
+- 新增圖片與維護健康檢查、Storage 耗時、Upload／限流專用指標及版本化 Capability Endpoint。
+- 新增 Runtime Config Schema 與 API Snapshot；凍結 1.0 Plugin UI 為宣告式同源 Action/Previewer。
+- Composer 與 Release Command 會一致選擇 PHP 8.2+。
+
 ## 0.1.0-beta.16 - 2026-08-26
 
 - 新增需鑑權的 PDF 預覽及選用 LibreOffice Office 轉換預覽，使用私有版本快取、健康檢查與安全 inline 回應。

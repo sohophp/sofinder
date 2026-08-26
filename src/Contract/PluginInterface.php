@@ -18,6 +18,9 @@ interface PluginInterface
      *   name:string,
      *   version:string,
      *   capabilities:list<string>,
+     *   resourceTypes?:list<string>,
+     *   requiredOperations?:list<string>,
+     *   configurationKeys?:list<string>,
      *   uiActions?:list<array{id:string,label:array{en:string,zh-cn?:string,zh-tw?:string},slot:string,url:string,selection?:string,requires?:string}>,
      *   previewers?:list<array{id:string,mimeTypes?:list<string>,extensions?:list<string>,url:string}>
      * }

@@ -17,6 +17,8 @@ description: 配置共享状态、病毒扫描、健康检查、指标和请求�
 - `SharedMetadataStore`：收藏、标签和最近文件；
 - `SharedRequestGateStore`：跨节点请求与并发限制；
 - `SharedUsageTracker`：原子配额统计。
+- `SharedMetricsStore`：集群统一 Prometheus Counter；
+- 共享维护 Lease、任务状态及分块 Session 协调。
 
 ```php
 $state = new PdoAtomicStateStore($pdo);
@@ -38,9 +40,11 @@ so_finder:
     chunk_upload_store_service: 'app.sofinder_shared_chunks' # 可选
 ```
 
-`state_service` 自动替换 metadata、请求限流与配额 Store；`/health` 会执行原子读写探针。
+`state_service` 自动替换 metadata、请求限流、配额与指标 Store，同时启用共享维护和分块
+Session 协调；`/health` 会执行原子读写探针。
 两个 Service 分别实现 `AtomicStateStoreInterface` 与 `ChunkUploadStoreInterface`。
-分块文件仍须使用共享私有文件系统或自定义 `ChunkUploadStoreInterface`；共享状态
+每个节点仍须把 `chunk_dir` 挂载为相同路径的共享私有文件系统，或自定义
+`ChunkUploadStoreInterface`；共享状态
 不能代替对象存储的版本恢复能力。
 
 ## ClamAV
@@ -65,9 +69,9 @@ so_finder:
 
 ## 健康检查与指标
 
-- `GET /health` 检查私有运行目录、构建资源、全部 Storage 和插件检查；`down` 返回
+- `GET /health` 检查私有运行目录、构建资源、图片 Codec、维护模式、全部 Storage 和插件检查；`down` 返回
   HTTP 503，`degraded` 仍返回 200。
-- `GET /metrics` 输出有界的 Prometheus Counter 和 `sofinder_ready`。
+- `GET /metrics` 输出有界的 Prometheus Counter、存储耗时累计/观察数、上传失败、限流拒绝和 `sofinder_ready`。
 - 所有 SoFinder Response 带 `X-Request-ID`；安全的传入值会保留，否则自动生成，
   Audit 与失败日志会记录同一 ID。
 

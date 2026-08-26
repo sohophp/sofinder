@@ -68,6 +68,12 @@ HTTP Status 是最终依据；`429` 包含 `Retry-After: 2`。批量请求可能
 
 返回 `apiVersion`、当前用户可见的 `resources`、Plugin Descriptor、图片预设、有效图片 Capability 和 UI Default。当前 API Version 为 `1.0`。
 
+### `GET /api/capabilities`
+
+返回带版本的机器可读名称：Entry Operation、Storage Capability、宿主可控可选功能、
+Plugin Slot/Selection 和 Picker Kind。契约测试会以公开 JSON Schema 和经审核的 Key
+Snapshot 检查实际 Discovery Response。
+
 ### `GET /api/security/status`
 
 返回病毒扫描就绪状态、待扫描／通过／隔离／失败计数和有界最近记录；访问角色由 `malware_scanning.status_roles` 限制。

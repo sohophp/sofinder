@@ -32,8 +32,8 @@
         "phpunit/phpunit": "^11.5"
     },
     "scripts": {
-        "test": "@php vendor/bin/phpunit",
-        "phpstan": "@php vendor/bin/phpstan analyse --no-progress --memory-limit=512M"
+        "test": "./scripts/php-bin.sh vendor/bin/phpunit",
+        "phpstan": "./scripts/php-bin.sh vendor/bin/phpstan analyse --no-progress --memory-limit=512M"
     },
     "suggest": {
         "ext-gd": "Required for thumbnails and image editing",

@@ -255,6 +255,7 @@ final readonly class ApiController
 
     public function batchRename(Request $request): JsonResponse
     {
+        $this->featurePolicy()->assertEnabled('batch_rename');
         $this->csrf->assertMutation($request);
         $data = $this->json($request);
         $renames = $data['renames'] ?? null;

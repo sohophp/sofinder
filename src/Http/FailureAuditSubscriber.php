@@ -37,6 +37,14 @@ final readonly class FailureAuditSubscriber implements EventSubscriberInterface
             'route' => (string) $request->attributes->get('_route', 'unknown'),
             'code' => $exception instanceof SoFinderException ? $exception->errorCode : 'internal_error',
         ]);
+        $route = (string) $request->attributes->get('_route', 'unknown');
+        $code = $exception instanceof SoFinderException ? $exception->errorCode : 'internal_error';
+        if (str_contains($route, 'upload')) {
+            $this->metrics?->increment('sofinder_upload_failures_total', ['route' => $route, 'code' => $code]);
+        }
+        if (in_array($code, ['rate_limit_exceeded', 'concurrency_limit_exceeded'], true)) {
+            $this->metrics?->increment('sofinder_rate_limit_rejections_total', ['route' => $route, 'code' => $code]);
+        }
     }
 
     public static function getSubscribedEvents(): array

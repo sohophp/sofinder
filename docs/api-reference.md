@@ -75,6 +75,13 @@ HTTP status is authoritative. `429` responses include `Retry-After: 2`. A batch 
 
 Returns `apiVersion`, visible `resources`, plugin descriptors, image presets, effective image capabilities and UI defaults. The current API version is `1.0`.
 
+### `GET /api/capabilities`
+
+Returns the versioned machine-readable names for entry operations, storage
+capabilities, host-controlled optional features, plugin slots/selections and
+picker kinds. Contract tests compare runtime discovery output with the published
+JSON Schemas and a reviewed key snapshot.
+
 ### `GET /api/security/status`
 
 Returns malware scanner readiness, pending/passed/quarantined/failed counts and bounded recent history. Access is restricted by `malware_scanning.status_roles`.

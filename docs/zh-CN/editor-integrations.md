@@ -22,8 +22,8 @@ const entry = await openPicker({
 ```
 
 SDK 使用弹窗返回结果，并同时校验弹窗对象、Origin、协议版本和随机 Request ID；
-不会使用通配符 `postMessage`。Host 与 Picker 必须同源，服务端仍会执行登录、ACL
-和图片格式验证。
+不会使用通配符 `postMessage`。同源无需配置；跨域 Host 必须精确列入
+`picker.allowed_origins`，Picker 服务端仍会执行登录、ACL 和图片格式验证。
 
 ## CKEditor 5
 
@@ -80,6 +80,9 @@ registerQuill(quill, { baseUrl: '/sofinder/browser', resource: 'Images' })
 
 普通输入框使用 `selectForInput(input, options)`；它会写入 URL 并触发可冒泡的
 `input` 和 `change` 事件。文档使用 `kind: 'file'`，网页图片使用 `kind: 'image'`。
+
+Markdown 编辑器使用 `selectForMarkdown(textarea, options)`，会在当前选择位置插入图片
+`![name](<url>)` 或文件链接 `[name](<url>)`，并触发标准 `input`、`change` 事件。
 
 ## 项目内本地演示
 

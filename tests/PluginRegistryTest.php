@@ -106,6 +106,25 @@ final class PluginRegistryTest extends TestCase
         new PluginRegistry([$plugin]);
     }
 
+    public function testNormalizesPluginRequirementsWithoutPublishingConfigurationValues(): void
+    {
+        $plugin = new class implements PluginInterface {
+            public function descriptor(): array
+            {
+                return [
+                    'name' => 'safe-requirements', 'version' => '1.0.0', 'capabilities' => ['inspect'],
+                    'resourceTypes' => ['file', 'image', 'file'],
+                    'requiredOperations' => ['read'],
+                    'configurationKeys' => ['scanner.endpoint'],
+                ];
+            }
+        };
+        $descriptor = (new PluginRegistry([$plugin]))->descriptors()[0];
+        self::assertSame(['file', 'image'], $descriptor['resourceTypes']);
+        self::assertSame(['read'], $descriptor['requiredOperations']);
+        self::assertSame(['scanner.endpoint'], $descriptor['configurationKeys']);
+    }
+
     /** @param list<string> $capabilities */
     private function plugin(string $name, string $version, array $capabilities): PluginInterface
     {

@@ -63,6 +63,15 @@ final readonly class PluginRegistry
         }
 
         $result = ['name' => $name, 'version' => $version, 'capabilities' => array_keys($normalized)];
+        if (array_key_exists('resourceTypes', $descriptor)) {
+            $result['resourceTypes'] = $this->descriptorList($name, 'resourceTypes', $descriptor['resourceTypes'], '/^(?:any|file|image|directory)$/D');
+        }
+        if (array_key_exists('requiredOperations', $descriptor)) {
+            $result['requiredOperations'] = $this->descriptorList($name, 'requiredOperations', $descriptor['requiredOperations'], '/^[a-z][a-z0-9_-]{0,31}$/D');
+        }
+        if (array_key_exists('configurationKeys', $descriptor)) {
+            $result['configurationKeys'] = $this->descriptorList($name, 'configurationKeys', $descriptor['configurationKeys'], '/^[a-z][a-z0-9_.-]{0,63}$/D');
+        }
         if (array_key_exists('uiActions', $descriptor)) {
             $result['uiActions'] = $this->normalizeUiActions($name, $descriptor['uiActions']);
         }
@@ -155,5 +164,19 @@ final readonly class PluginRegistry
         }
 
         return array_keys($result);
+    }
+
+    /** @return list<string> */
+    private function descriptorList(string $plugin, string $field, mixed $values, string $pattern): array
+    {
+        if (!is_array($values) || count($values) > 64) {
+            throw new \InvalidArgumentException(sprintf('SoFinder plugin "%s" %s must be an array of at most 64 values.', $plugin, $field));
+        }
+        $result = $this->safeStringList($values, $pattern, 64);
+        if ($values !== [] && $result === []) {
+            throw new \InvalidArgumentException(sprintf('SoFinder plugin "%s" has an invalid %s declaration.', $plugin, $field));
+        }
+
+        return $result;
     }
 }

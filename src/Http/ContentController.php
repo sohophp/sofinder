@@ -6,6 +6,7 @@ namespace SohoPHP\SoFinder\Http;
 
 use SohoPHP\SoFinder\Exception\SoFinderException;
 use SohoPHP\SoFinder\FileManager;
+use SohoPHP\SoFinder\Feature\FeaturePolicy;
 use SohoPHP\SoFinder\Image\ImageFormatRegistry;
 use SohoPHP\SoFinder\Value\Entry;
 use Symfony\Component\HttpFoundation\Request;
@@ -23,6 +24,7 @@ final readonly class ContentController
     public function __construct(
         private FileManager $files,
         private ImageFormatRegistry $imageFormats = new ImageFormatRegistry(),
+        private ?FeaturePolicy $features = null,
     ) {
     }
 
@@ -137,6 +139,7 @@ final readonly class ContentController
 
     public function checksum(Request $request): JsonResponse
     {
+        ($this->features ?? new FeaturePolicy())->assertEnabled('checksum');
         $resource = $this->resource($request);
         $path = (string) $request->query->get('path', '');
         $entry = $this->files->entry($resource, $path);
@@ -156,6 +159,7 @@ final readonly class ContentController
 
     public function textPreview(Request $request): JsonResponse
     {
+        ($this->features ?? new FeaturePolicy())->assertEnabled('text_preview');
         $resource = $this->resource($request);
         $path = (string) $request->query->get('path', '');
         $entry = $this->files->entry($resource, $path);

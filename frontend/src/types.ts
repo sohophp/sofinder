@@ -26,6 +26,14 @@ export interface SoFinderConfig {
     tags: boolean;
     archive: boolean;
     trash: boolean;
+    batchRename: boolean;
+    imageEditing: boolean;
+    imageProcessing: boolean;
+    documentPreview: boolean;
+    securityStatus: boolean;
+    folderUpload: boolean;
+    textPreview: boolean;
+    checksum: boolean;
   };
   securityStatusAvailable?: boolean;
   uiDefaults: {

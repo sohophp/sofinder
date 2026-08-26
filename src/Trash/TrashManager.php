@@ -165,6 +165,11 @@ final readonly class TrashManager implements RecycleBinInterface
 
     public function restore(ResourceStorage $resource, string $id, string $conflict = 'cancel'): Entry
     {
+        return $this->locked(fn (): Entry => $this->restoreLocked($resource, $id, $conflict));
+    }
+
+    private function restoreLocked(ResourceStorage $resource, string $id, string $conflict): Entry
+    {
         if (!in_array($conflict, ['cancel', 'overwrite', 'rename'], true)) {
             throw new SoFinderException('The restore conflict strategy is invalid.', 'invalid_conflict_strategy', 400);
         }
@@ -222,8 +227,10 @@ final readonly class TrashManager implements RecycleBinInterface
 
     public function permanentlyDelete(string $id): void
     {
-        $this->readItem($id);
-        $this->removeTree($this->itemDirectory($id));
+        $this->locked(function () use ($id): void {
+            $this->readItem($id);
+            $this->removeTree($this->itemDirectory($id));
+        });
     }
 
     public function purgeExpired(?int $limit = null): int
@@ -308,6 +315,27 @@ final readonly class TrashManager implements RecycleBinInterface
         }
 
         return $directory;
+    }
+
+    /**
+     * @template T
+     * @param callable():T $operation
+     * @return T
+     */
+    private function locked(callable $operation): mixed
+    {
+        $root = $this->actorRoot();
+        $lock = @fopen($root . '/.trash.lock', 'c+b');
+        if ($lock === false || !flock($lock, LOCK_EX)) {
+            if (is_resource($lock)) fclose($lock);
+            throw new SoFinderException('Unable to lock the private trash directory.', 'trash_unavailable', 500);
+        }
+        try {
+            return $operation();
+        } finally {
+            flock($lock, LOCK_UN);
+            fclose($lock);
+        }
     }
 
     private function itemDirectory(string $id): string

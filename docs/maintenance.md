@@ -42,6 +42,9 @@ bin/console sofinder:cache:cleanup --dry-run --json
 
 The commands and message handler share the same non-blocking locks. Starting a
 second copy of the same task safely reports a skip instead of running twice.
+When `cluster.state_service` is configured, interval claims, task leases and
+status are stored in Redis/PDO and shared by every node; otherwise file locks
+remain the single-node default.
 Full usage recalculation is intentionally kept out of web requests unless a
 dirty persisted usage state must be recovered for a quota decision.
 Task state records queued/running/succeeded/failed status, attempts, timestamps

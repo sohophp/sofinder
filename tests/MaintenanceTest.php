@@ -16,6 +16,7 @@ use SohoPHP\SoFinder\ResourceRegistry;
 use SohoPHP\SoFinder\Value\Entry;
 use SohoPHP\SoFinder\Value\ResourceStorage;
 use SohoPHP\SoFinder\Value\TrashItem;
+use SohoPHP\SoFinder\State\PdoAtomicStateStore;
 
 final class MaintenanceTest extends TestCase
 {
@@ -29,7 +30,10 @@ final class MaintenanceTest extends TestCase
 
     protected function tearDown(): void
     {
-        foreach (glob($this->directory . '/*') ?: [] as $file) @unlink($file);
+        if (is_dir($this->directory)) {
+            $iterator = new \RecursiveIteratorIterator(new \RecursiveDirectoryIterator($this->directory, \FilesystemIterator::SKIP_DOTS), \RecursiveIteratorIterator::CHILD_FIRST);
+            foreach ($iterator as $file) $file->isDir() ? @rmdir($file->getPathname()) : @unlink($file->getPathname());
+        }
         @rmdir($this->directory);
     }
 
@@ -88,7 +92,23 @@ final class MaintenanceTest extends TestCase
         self::assertSame('maintenance_failed', $runner->status()['uploads']['error']['code']);
     }
 
-    private function runner(ChunkUploadStoreInterface $chunks): MaintenanceRunner
+    public function testSharedStateCoordinatesIntervalsAndPublishesStatusAcrossNodes(): void
+    {
+        if (!in_array('sqlite', \PDO::getAvailableDrivers(), true)) self::markTestSkipped('pdo_sqlite is required.');
+        $database = $this->directory . '/maintenance.sqlite';
+        $stateA = new PdoAtomicStateStore(new \PDO('sqlite:' . $database));
+        $stateB = new PdoAtomicStateStore(new \PDO('sqlite:' . $database));
+        $chunks = $this->chunks();
+        $runnerA = $this->runner($chunks, $stateA);
+        $runnerB = $this->runner($chunks, $stateB);
+        (new MaintenanceCoordinator($this->directory . '/a', 'inline', 300, 3, $runnerA, state: $stateA))->trigger(MaintenanceTask::Uploads);
+        (new MaintenanceCoordinator($this->directory . '/b', 'inline', 300, 3, $runnerB, state: $stateB))->trigger(MaintenanceTask::Uploads);
+
+        self::assertSame([[true, 3]], $chunks->calls);
+        self::assertSame('succeeded', $runnerB->status()['uploads']['status']);
+    }
+
+    private function runner(ChunkUploadStoreInterface $chunks, ?\SohoPHP\SoFinder\Contract\AtomicStateStoreInterface $state = null): MaintenanceRunner
     {
         $trash = new class implements RecycleBinInterface {
             public function put(ResourceStorage $resource, string $path): array { throw new \LogicException(); }
@@ -105,7 +125,7 @@ final class MaintenanceTest extends TestCase
             public function mutate(ResourceStorage $resource, callable $operation): mixed { return $operation(0)['value']; }
         };
 
-        return new MaintenanceRunner($this->directory, $chunks, $trash, $usage, new ResourceRegistry());
+        return new MaintenanceRunner($this->directory, $chunks, $trash, $usage, new ResourceRegistry(), $state);
     }
 
     private function chunks(): ChunkUploadStoreInterface

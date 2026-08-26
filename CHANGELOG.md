@@ -1,5 +1,22 @@
 # Changelog
 
+## 0.1.0-beta.17 - 2026-08-26
+
+- Add host-enforced gates for batch rename, image editing/processing, document
+  preview and security status, covering browser discovery and HTTP routes.
+- Add a Markdown picker adapter and exact allowlisted cross-origin popup
+  handshakes without wildcard `postMessage` targets.
+- Add shared Redis/PDO metrics, maintenance leases/status and official shared
+  chunk-session coordination for multi-node deployments with shared staging.
+- Add domain-level concurrent upload, overwrite, quota, trash and resumable
+  chunk tests, plus atomic trash restore/permanent-delete locking.
+- Add image and maintenance health checks, storage latency observations,
+  dedicated upload/limiter metrics and a versioned capability endpoint.
+- Add runtime config Schema checks and reviewed API snapshots; freeze the 1.0
+  plugin UI contract to declaration-only same-origin actions and previewers.
+- Make Composer and release commands select PHP 8.2+ consistently when the
+  machine's default `php` still points to an unsupported legacy version.
+
 ## 0.1.0-beta.16 - 2026-08-26
 
 - Add authenticated PDF previews and optional LibreOffice-backed Office previews

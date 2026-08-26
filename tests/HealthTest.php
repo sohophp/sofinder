@@ -9,6 +9,7 @@ use SohoPHP\SoFinder\Contract\HealthCheckInterface;
 use SohoPHP\SoFinder\Health\HealthManager;
 use SohoPHP\SoFinder\Http\HealthController;
 use SohoPHP\SoFinder\Value\HealthCheckResult;
+use SohoPHP\SoFinder\Health\MaintenanceQueueHealthCheck;
 
 final class HealthTest extends TestCase
 {
@@ -34,5 +35,12 @@ final class HealthTest extends TestCase
 
         self::assertSame(200, $response->getStatusCode());
         self::assertSame('degraded', json_decode((string) $response->getContent(), true, 512, JSON_THROW_ON_ERROR)['data']['status']);
+    }
+
+    public function testMessengerModeReportsAMissingDispatcher(): void
+    {
+        $result = (new MaintenanceQueueHealthCheck('messenger', false))->check();
+        self::assertSame('maintenance-queue', $result->name);
+        self::assertSame('down', $result->status);
     }
 }

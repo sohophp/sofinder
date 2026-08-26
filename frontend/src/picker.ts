@@ -44,6 +44,7 @@ export const pickerUrl = (options: PickerOptions, id = requestId()): URL => {
   url.searchParams.set("uiMode", "picker");
   url.searchParams.set("selection", options.kind ?? "any");
   url.searchParams.set("pickerRequestId", id);
+  url.searchParams.set("pickerOrigin", window.location.origin);
   if (options.resource) url.searchParams.set("type", options.resource);
   if (options.path) url.searchParams.set("path", options.path);
   if (options.language) url.searchParams.set("lang", options.language);
@@ -51,7 +52,7 @@ export const pickerUrl = (options: PickerOptions, id = requestId()): URL => {
   return url;
 };
 
-/** Open a same-origin SoFinder picker and resolve with the selected entry. */
+/** Open a SoFinder picker and resolve with the selected entry after strict source, origin and request validation. */
 export const openPicker = (options: PickerOptions): Promise<PickerEntry> => {
   const id = requestId();
   const url = pickerUrl(options, id);
@@ -140,5 +141,21 @@ export const selectForInput = async (input: HTMLInputElement, options: PickerOpt
   input.value = entry.url;
   input.dispatchEvent(new Event("input", { bubbles: true }));
   input.dispatchEvent(new Event("change", { bubbles: true }));
+  return entry;
+};
+
+/** Insert a Markdown image or link at the current textarea selection. */
+export const selectForMarkdown = async (input: HTMLTextAreaElement, options: PickerOptions): Promise<PickerEntry> => {
+  const entry = await openPicker(options);
+  const label = entry.name.replace(/([\\\[\]])/g, "\\$1");
+  const destination = entry.url.replace(/</g, "%3C").replace(/>/g, "%3E");
+  const image = options.kind === "image" || entry.mimeType?.startsWith("image/") === true;
+  const markdown = `${image ? "!" : ""}[${label}](<${destination}>)`;
+  const start = input.selectionStart ?? input.value.length;
+  const end = input.selectionEnd ?? start;
+  input.setRangeText(markdown, start, end, "end");
+  input.dispatchEvent(new Event("input", { bubbles: true }));
+  input.dispatchEvent(new Event("change", { bubbles: true }));
+  input.focus();
   return entry;
 };

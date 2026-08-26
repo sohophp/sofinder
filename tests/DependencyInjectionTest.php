@@ -11,11 +11,14 @@ use SohoPHP\SoFinder\Contract\ChunkUploadStoreInterface;
 use SohoPHP\SoFinder\Contract\MetadataStoreInterface;
 use SohoPHP\SoFinder\Contract\RequestGateStoreInterface;
 use SohoPHP\SoFinder\Contract\UsageTrackerInterface;
+use SohoPHP\SoFinder\Contract\MetricsStoreInterface;
 use SohoPHP\SoFinder\Health\SharedStateHealthCheck;
 use SohoPHP\SoFinder\Security\ClamAvScanner;
 use SohoPHP\SoFinder\State\SharedMetadataStore;
 use SohoPHP\SoFinder\State\SharedRequestGateStore;
 use SohoPHP\SoFinder\State\SharedUsageTracker;
+use SohoPHP\SoFinder\Observability\SharedMetricsStore;
+use SohoPHP\SoFinder\Upload\SharedChunkUploadStore;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
 
 final class DependencyInjectionTest extends TestCase
@@ -67,8 +70,20 @@ final class DependencyInjectionTest extends TestCase
         self::assertSame(SharedMetadataStore::class, (string) $container->getAlias(MetadataStoreInterface::class));
         self::assertSame(SharedRequestGateStore::class, (string) $container->getAlias(RequestGateStoreInterface::class));
         self::assertSame(SharedUsageTracker::class, (string) $container->getAlias(UsageTrackerInterface::class));
+        self::assertSame(SharedMetricsStore::class, (string) $container->getAlias(MetricsStoreInterface::class));
         self::assertSame('app.sofinder_chunks', (string) $container->getAlias(ChunkUploadStoreInterface::class));
         self::assertTrue($container->hasDefinition(SharedStateHealthCheck::class));
         self::assertSame(85, $container->getDefinition(SharedStateHealthCheck::class)->getTag('sofinder.health_check')[0]['priority']);
+    }
+
+    public function testClusterStateProvidesOfficialSharedChunkCoordinationByDefault(): void
+    {
+        $container = new ContainerBuilder();
+        (new SoFinderExtension())->load([[
+            'cluster' => ['state_service' => 'app.sofinder_state'],
+            'resources' => ['Files' => ['root' => sys_get_temp_dir() . '/sofinder-di-files']],
+        ]], $container);
+
+        self::assertSame(SharedChunkUploadStore::class, (string) $container->getAlias(ChunkUploadStoreInterface::class));
     }
 }

@@ -58,6 +58,16 @@ final class BrowserControllerTest extends TestCase
         self::assertSame('http://localhost', $config['pickerOrigin']);
     }
 
+    public function testCrossOriginPickerRequiresAnExactHostAllowlistMatch(): void
+    {
+        $request = Request::create('/browser?select=1&pickerRequestId=12345678-abcd-4321-abcd-123456789012&pickerOrigin=https%3A%2F%2Fcms.example.test');
+        $config = $this->config($request, allowedOrigins: ['https://cms.example.test']);
+        self::assertSame('https://cms.example.test', $config['pickerOrigin']);
+
+        $this->expectException(\SohoPHP\SoFinder\Exception\SoFinderException::class);
+        $this->config($request, allowedOrigins: ['https://other.example.test']);
+    }
+
     public function testRejectsUnsafeDeepLinkAndPickerRequestId(): void
     {
         $config = $this->config(Request::create("/browser?path=bad%00path&pickerRequestId=javascript:alert(1)"));
@@ -86,8 +96,8 @@ final class BrowserControllerTest extends TestCase
         self::assertTrue($config['featureAvailability']['recent']);
     }
 
-    /** @return array<string,mixed> */
-    private function config(Request $request, ?FeaturePolicy $features = null): array
+    /** @param list<string> $allowedOrigins @return array<string,mixed> */
+    private function config(Request $request, ?FeaturePolicy $features = null, array $allowedOrigins = []): array
     {
         $resource = new ResourceType('Files', $this->directory, '/files');
         $authorization = new class implements AuthorizationInterface {
@@ -103,7 +113,7 @@ final class BrowserControllerTest extends TestCase
         $controller = new BrowserController($files, $router, $csrf, 'test', $theme, [
             'mode' => 'auto', 'header' => false, 'logo' => false, 'search' => true,
             'language_switcher' => true, 'view_switcher' => true, 'folder_tree' => false, 'scale' => 'standard',
-        ], $features);
+        ], $features, null, [], $allowedOrigins);
         $html = (string) $controller($request)->getContent();
         self::assertMatchesRegularExpression('/data-config="([^"]+)"/', $html);
         preg_match('/data-config="([^"]+)"/', $html, $matches);
