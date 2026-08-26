@@ -31,6 +31,9 @@ final class ExceptionSubscriber implements EventSubscriberInterface
         if ($exception->httpStatus === 429) {
             $response->headers->set('Retry-After', '2');
         }
+        if ($exception->httpStatus === 202 && $exception->errorCode === 'document_preview_pending') {
+            $response->headers->set('Retry-After', '1');
+        }
         $event->setResponse($response);
     }
 }

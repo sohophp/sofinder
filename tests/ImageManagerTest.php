@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace SohoPHP\SoFinder\Tests;
 
 use PHPUnit\Framework\TestCase;
+use PHPUnit\Framework\Attributes\Group;
 use SohoPHP\SoFinder\Contract\AuthorizationInterface;
 use SohoPHP\SoFinder\Exception\SoFinderException;
 use SohoPHP\SoFinder\FileManager;
@@ -76,6 +77,26 @@ final class ImageManagerTest extends TestCase
 
         self::assertSame(02775, fileperms($this->directory . '/cache/thumbnails') & 07777);
         self::assertSame(0664, fileperms($thumbnail['path']) & 07777);
+    }
+
+    #[Group('performance')]
+    public function testConcurrentThumbnailRequestsProduceOneValidCacheObject(): void
+    {
+        if (!function_exists('pcntl_fork') || !function_exists('pcntl_waitpid')) self::markTestSkipped('pcntl is required.');
+        $children = [];
+        for ($worker = 0; $worker < 8; ++$worker) {
+            $pid = pcntl_fork();
+            self::assertNotSame(-1, $pid);
+            if ($pid === 0) {
+                try { $this->manager()->thumbnail('Images', 'source.png', 160, 120); exit(0); }
+                catch (\Throwable) { exit(1); }
+            }
+            $children[] = $pid;
+        }
+        foreach ($children as $pid) { pcntl_waitpid($pid, $status); self::assertTrue(pcntl_wifexited($status) && pcntl_wexitstatus($status) === 0); }
+        $files = glob($this->directory . '/cache/thumbnails/*.png') ?: [];
+        self::assertCount(1, $files);
+        self::assertSame('image/png', mime_content_type($files[0]));
     }
 
     public function testRepeatedImplicitCopyUsesConflictSafeName(): void

@@ -20,6 +20,9 @@ final readonly class AssetController
             'sofinder-picker.js' => 'text/javascript; charset=UTF-8',
             'sofinder.css' => 'text/css; charset=UTF-8',
         ];
+        foreach ($this->manifestAssets() as $asset) {
+            $allowed[$asset] = str_ends_with($asset, '.css') ? 'text/css; charset=UTF-8' : 'text/javascript; charset=UTF-8';
+        }
         if (!isset($allowed[$file])) {
             return new Response('Not found', 404);
         }
@@ -32,5 +35,24 @@ final readonly class AssetController
         $response->setPublic()->setMaxAge(31536000)->setImmutable();
 
         return $response;
+    }
+
+    /** @return list<string> */
+    private function manifestAssets(): array
+    {
+        $manifest = $this->packageDir . '/dist/manifest.json';
+        if (!is_file($manifest) || !is_readable($manifest)) return [];
+        try { $decoded = json_decode((string) file_get_contents($manifest), true, 512, JSON_THROW_ON_ERROR); } catch (\JsonException) { return []; }
+        if (!is_array($decoded)) return [];
+        $assets = [];
+        foreach ($decoded as $entry) {
+            if (!is_array($entry)) continue;
+            $candidates = [$entry['file'] ?? null, ...(is_array($entry['css'] ?? null) ? $entry['css'] : [])];
+            foreach ($candidates as $candidate) {
+                if (!is_string($candidate) || basename($candidate) !== $candidate || preg_match('/^[A-Za-z0-9._-]+\.(?:js|css)$/D', $candidate) !== 1) continue;
+                $assets[$candidate] = true;
+            }
+        }
+        return array_keys($assets);
     }
 }

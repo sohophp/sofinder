@@ -7,6 +7,7 @@ namespace SohoPHP\SoFinder\Tests;
 use PHPUnit\Framework\TestCase;
 use SohoPHP\SoFinder\Contract\PluginInterface;
 use SohoPHP\SoFinder\Plugin\PluginRegistry;
+use SohoPHP\SoFinder\Plugin\PluginContractValidator;
 
 final class PluginRegistryTest extends TestCase
 {
@@ -123,6 +124,19 @@ final class PluginRegistryTest extends TestCase
         self::assertSame(['file', 'image'], $descriptor['resourceTypes']);
         self::assertSame(['read'], $descriptor['requiredOperations']);
         self::assertSame(['scanner.endpoint'], $descriptor['configurationKeys']);
+    }
+
+    public function testPublishedContractValidatorUsesTheRuntimeRules(): void
+    {
+        $plugin = new class implements PluginInterface {
+            public function descriptor(): array { return [
+                'name' => 'third-party-preview', 'version' => '1.0.0', 'capabilities' => ['preview.pdf'],
+                'previewers' => [['id' => 'pdf', 'mimeTypes' => ['application/pdf'], 'url' => '/plugin/preview']],
+            ]; }
+        };
+        $descriptor = (new PluginContractValidator())->validate($plugin);
+        self::assertSame('third-party-preview', $descriptor['name']);
+        self::assertSame('/plugin/preview', $descriptor['previewers'][0]['url']);
     }
 
     /** @param list<string> $capabilities */

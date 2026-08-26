@@ -6,6 +6,7 @@ namespace SohoPHP\SoFinder\Preview;
 
 use SohoPHP\SoFinder\Exception\SoFinderException;
 use SohoPHP\SoFinder\FileManager;
+use SohoPHP\SoFinder\Contract\MetricsStoreInterface;
 
 final readonly class DocumentPreviewManager
 {
@@ -19,30 +20,15 @@ final readonly class DocumentPreviewManager
         private string $officeBinary = '/usr/bin/libreoffice',
         private int $timeoutSeconds = 30,
         private int $maximumBytes = 52_428_800,
+        private ?MetricsStoreInterface $metrics = null,
     ) {
     }
 
     /** @return array{file:string,name:string,source:string} */
     public function preview(string $resource, string $path): array
     {
-        $entry = $this->files->entry($resource, $path);
-        if ($entry->directory) throw new SoFinderException('Folders cannot be previewed as documents.', 'document_preview_unsupported', 415);
-        if ($entry->size > $this->maximumBytes) throw new SoFinderException('The document is too large for interactive preview.', 'document_preview_too_large', 413);
-        $extension = strtolower(pathinfo($entry->name, PATHINFO_EXTENSION));
-        $isPdf = $extension === 'pdf' && strtolower($entry->mimeType ?? '') === 'application/pdf';
-        $isOffice = in_array($extension, self::OFFICE_EXTENSIONS, true);
-        if (($isPdf && !$this->pdfEnabled) || ($isOffice && !$this->officeEnabled) || (!$isPdf && !$isOffice)) {
-            throw new SoFinderException('This document type does not have an enabled previewer.', 'document_preview_unsupported', 415);
-        }
-        if ($isOffice && (!is_file($this->officeBinary) || !is_executable($this->officeBinary) || !function_exists('proc_open'))) {
-            throw new SoFinderException('The Office preview converter is unavailable.', 'office_preview_unavailable', 503);
-        }
-        $directory = rtrim($this->cacheDirectory, '/') . '/document-previews';
-        if (!is_dir($directory) && !@mkdir($directory, 0770, true) && !is_dir($directory)) {
-            throw new SoFinderException('Unable to create the document preview cache.', 'document_preview_failed', 500);
-        }
-        $key = hash('sha256', implode("\0", [$resource, $entry->path, (string) $entry->size, (string) $entry->modifiedAt]));
-        $target = $directory . '/' . $key . '.pdf';
+        $description = $this->describe($resource, $path);
+        $target = $description['file'];
         $lock = @fopen($target . '.lock', 'c+b');
         if ($lock === false || !flock($lock, LOCK_EX)) {
             if (is_resource($lock)) fclose($lock);
@@ -50,12 +36,11 @@ final readonly class DocumentPreviewManager
         }
         try {
             if (!is_file($target) || filesize($target) === 0) {
-                $workspace = $directory . '/work-' . bin2hex(random_bytes(12));
-                if (!@mkdir($workspace, 0700)) throw new SoFinderException('Unable to create the document preview workspace.', 'document_preview_failed', 500);
+                $workspace = $this->workspace();
                 try {
-                    $source = $workspace . '/source.' . $extension;
-                    $this->copySource($resource, $entry->path, $source);
-                    if ($isPdf) {
+                    $source = $workspace . '/source.' . $description['extension'];
+                    $this->copySource($resource, $path, $source);
+                    if ($description['source'] === 'pdf') {
                         if (!@rename($source, $target)) throw new SoFinderException('Unable to cache the PDF preview.', 'document_preview_failed', 500);
                     } else {
                         $converted = $this->convertOffice($source, $workspace);
@@ -71,7 +56,85 @@ final readonly class DocumentPreviewManager
             fclose($lock);
         }
 
-        return ['file' => $target, 'name' => pathinfo($entry->name, PATHINFO_FILENAME) . '.pdf', 'source' => $isPdf ? 'pdf' : 'office'];
+        $this->metrics?->increment('sofinder_document_preview_cache_total', ['result' => $description['cached'] ? 'hit' : 'miss', 'source' => $description['source']]);
+        return ['file' => $target, 'name' => $description['name'], 'source' => $description['source']];
+    }
+
+    /** @return array{key:string,file:string,name:string,extension:string,source:string,cached:bool,size:int,modifiedAt:int} */
+    public function describe(string $resource, string $path): array
+    {
+        $entry = $this->files->entry($resource, $path);
+        if ($entry->directory) throw new SoFinderException('Folders cannot be previewed as documents.', 'document_preview_unsupported', 415);
+        if ($entry->size > $this->maximumBytes) throw new SoFinderException('The document is too large for interactive preview.', 'document_preview_too_large', 413);
+        $extension = strtolower(pathinfo($entry->name, PATHINFO_EXTENSION));
+        $isPdf = $extension === 'pdf' && strtolower($entry->mimeType ?? '') === 'application/pdf';
+        $isOffice = in_array($extension, self::OFFICE_EXTENSIONS, true);
+        if (($isPdf && !$this->pdfEnabled) || ($isOffice && !$this->officeEnabled) || (!$isPdf && !$isOffice)) throw new SoFinderException('This document type does not have an enabled previewer.', 'document_preview_unsupported', 415);
+        if ($isOffice && (!is_file($this->officeBinary) || !is_executable($this->officeBinary) || !function_exists('proc_open'))) throw new SoFinderException('The Office preview converter is unavailable.', 'office_preview_unavailable', 503);
+        $directory = $this->directory();
+        $key = hash('sha256', implode("\0", [$resource, $entry->path, (string) $entry->size, (string) $entry->modifiedAt]));
+        $target = $directory . '/' . $key . '.pdf';
+        return ['key' => $key, 'file' => $target, 'name' => pathinfo($entry->name, PATHINFO_FILENAME) . '.pdf', 'extension' => $extension, 'source' => $isPdf ? 'pdf' : 'office', 'cached' => is_file($target) && filesize($target) > 0, 'size' => $entry->size, 'modifiedAt' => $entry->modifiedAt];
+    }
+
+    /** @return array{source:string,target:string} */
+    public function stageOffice(string $resource, string $path, string $jobId): array
+    {
+        $description = $this->describe($resource, $path);
+        if ($description['source'] !== 'office') throw new SoFinderException('Only Office documents require asynchronous conversion.', 'document_preview_unsupported', 415);
+        $workspace = $this->directory() . '/jobs/' . $jobId;
+        if (!is_dir($workspace) && !@mkdir($workspace, 0700, true) && !is_dir($workspace)) throw new SoFinderException('Unable to create the document preview workspace.', 'document_preview_failed', 500);
+        $source = $workspace . '/source.' . $description['extension'];
+        if (!is_file($source)) $this->copySource($resource, $path, $source);
+        return ['source' => $source, 'target' => $description['file']];
+    }
+
+    public function convertStaged(string $source, string $target): void
+    {
+        $directory = $this->directory();
+        $sourceReal = realpath($source);
+        if ($sourceReal === false || !str_starts_with(str_replace('\\', '/', $sourceReal), str_replace('\\', '/', $directory) . '/jobs/')) throw new SoFinderException('The document preview job source is invalid.', 'document_preview_failed', 500);
+        $targetPath = str_replace('\\', '/', $target);
+        if (!str_starts_with($targetPath, str_replace('\\', '/', $directory) . '/') || preg_match('/\/[a-f0-9]{64}\.pdf$/D', $targetPath) !== 1) throw new SoFinderException('The document preview job target is invalid.', 'document_preview_failed', 500);
+        $lock = @fopen($target . '.lock', 'c+b');
+        if ($lock === false || !flock($lock, LOCK_EX)) throw new SoFinderException('Unable to lock the document preview.', 'document_preview_failed', 500);
+        $started = hrtime(true);
+        try {
+            if (!is_file($target) || filesize($target) === 0) {
+                $converted = $this->convertOffice($sourceReal, dirname($sourceReal));
+                if (!@rename($converted, $target)) throw new SoFinderException('Unable to cache the Office preview.', 'document_preview_failed', 500);
+                @chmod($target, 0660);
+            }
+            $this->metrics?->increment('sofinder_document_preview_conversion_milliseconds_total', ['result' => 'ready'], max(0, (int) round((hrtime(true) - $started) / 1_000_000)));
+            $this->metrics?->increment('sofinder_document_preview_conversions_total', ['result' => 'ready']);
+        } catch (\Throwable $exception) {
+            $this->metrics?->increment('sofinder_document_preview_conversions_total', ['result' => 'failed']);
+            throw $exception;
+        } finally {
+            flock($lock, LOCK_UN); fclose($lock); $this->removeDirectory(dirname($sourceReal));
+        }
+    }
+
+    public function cleanupExpired(int $olderThan): int
+    {
+        $removed = 0;
+        foreach (glob($this->directory() . '/*.pdf') ?: [] as $file) if (is_file($file) && filemtime($file) < $olderThan && @unlink($file)) ++$removed;
+        foreach (glob($this->directory() . '/jobs/*') ?: [] as $directory) if (is_dir($directory) && filemtime($directory) < $olderThan) { $this->removeDirectory($directory); ++$removed; }
+        return $removed;
+    }
+
+    private function directory(): string
+    {
+        $directory = rtrim($this->cacheDirectory, '/') . '/document-previews';
+        if (!is_dir($directory) && !@mkdir($directory, 0770, true) && !is_dir($directory)) throw new SoFinderException('Unable to create the document preview cache.', 'document_preview_failed', 500);
+        return realpath($directory) ?: $directory;
+    }
+
+    private function workspace(): string
+    {
+        $workspace = $this->directory() . '/work-' . bin2hex(random_bytes(12));
+        if (!@mkdir($workspace, 0700)) throw new SoFinderException('Unable to create the document preview workspace.', 'document_preview_failed', 500);
+        return $workspace;
     }
 
     private function copySource(string $resource, string $path, string $destination): void

@@ -41,7 +41,7 @@
         "ext-pdo": "Enables the optional multi-node shared database state store",
         "ext-redis": "Enables the optional multi-node shared Redis state store",
         "ext-zip": "Required for ZIP archive downloads",
-        "symfony/messenger": "Required only when maintenance.mode is messenger"
+        "symfony/messenger": "Enables asynchronous maintenance and document preview jobs"
     },
     "autoload": {
         "psr-4": {

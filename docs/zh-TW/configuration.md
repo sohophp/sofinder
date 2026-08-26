@@ -27,7 +27,9 @@ description: SoFinder 全域、UI、維護、圖片、請求限制與資源設�
 `cluster.state_service` 可指定實作 `AtomicStateStoreInterface` 的宿主 Symfony Service，
 自動將 metadata、請求 Gate 與 Usage 切換為共享原子 Store。
 `cluster.chunk_upload_store_service` 可指定共享 `ChunkUploadStoreInterface`。預設皆為
-`null`，保留單節點檔案實作。詳見[正式環境運作](/zh-TW/production)。
+`null`，保留單節點檔案實作。多節點非同步 Office 預覽還必須共享掛載
+`cache_dir/document-previews`，完成後設定 `cluster.shared_preview_cache: true`；
+`sofinder:security:audit` 會檢查此確認項。詳見[正式環境運作](/zh-TW/production)。
 
 ## 臨時簽章 URL
 

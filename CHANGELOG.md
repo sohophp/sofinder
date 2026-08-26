@@ -1,6 +1,20 @@
 # Changelog
 
-## 0.1.0-beta.17 - 2026-08-26
+## 0.1.0-beta.17 - 2026-08-27
+
+- Isolate the example `Private` resource in a new empty proxy-only root and make
+  the security audit reject public/proxy resources sharing a physical root.
+- Add automatic inline/Messenger Office preview jobs with idempotent queueing,
+  explicit lifecycle states, retries, expiry, shared state, cache cleanup and a
+  progress UI that creates the PDF frame only after conversion is ready.
+- Share malware scan status across cluster nodes, recover abandoned pending
+  scans, add `/live`, pluggable storage/queue probes and Office, queue and
+  ClamAV timeout metrics.
+- Split optional browser panels into manifest-allowlisted lazy chunks and enforce
+  a 100 KiB gzip initial-entry budget while retaining the lightweight Picker.
+- Complete typed Office job/OpenAPI/plugin descriptor contracts, pin CI actions
+  and service images, enforce coverage, and produce SBOM, SHA-256 and provenance
+  evidence for tag-triggered prereleases.
 
 - Add host-enforced gates for batch rename, image editing/processing, document
   preview and security status, covering browser discovery and HTTP routes.

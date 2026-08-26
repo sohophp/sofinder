@@ -95,7 +95,21 @@ export interface SecurityStatus {
     message: string;
     counts: { pending: number; passed: number; quarantined: number; failed: number };
     recent: MalwareScanEvent[];
+    mode?: "local" | "shared";
+    lastSuccessfulAt?: number | null;
   };
+}
+
+export interface DocumentPreviewJob {
+  id: string;
+  status: "queued" | "running" | "ready" | "failed" | "expired";
+  retryAfter: number;
+  error: { code: string; message: string } | null;
+  source: "pdf" | "office";
+  key: string;
+  resource: string;
+  path: string;
+  previewUrl: string | null;
 }
 
 export interface ImageFormatCapability {

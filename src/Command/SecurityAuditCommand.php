@@ -33,6 +33,10 @@ final class SecurityAuditCommand extends Command
         private readonly ?ImageFormatRegistry $imageFormats = null,
         private readonly bool $malwareScanningEnabled = false,
         private readonly ?HealthCheckInterface $malwareScanner = null,
+        private readonly bool $clusterStateConfigured = false,
+        private readonly bool $sharedPreviewCache = false,
+        private readonly string $documentPreviewMode = 'inline',
+        private readonly bool $officePreviewEnabled = false,
     ) {
         parent::__construct();
     }
@@ -46,6 +50,8 @@ final class SecurityAuditCommand extends Command
     {
         $io = new SymfonyStyle($input, $output);
         $findings = [];
+        /** @var array<string,list<array{name:string,delivery:string}>> $localRoots */
+        $localRoots = [];
         $publicRoot = realpath($this->projectDirectory . '/public') ?: rtrim($this->projectDirectory, '/') . '/public';
         foreach ($this->resources->all() as $item) {
             $resource = $item->resource;
@@ -71,6 +77,7 @@ final class SecurityAuditCommand extends Command
                 if ($this->contains($publicRoot, $root) && $resource->deliveryMode === 'proxy') {
                     $findings[] = ['critical', $resource->name, 'Proxy storage is physically located under the public document root.'];
                 }
+                $localRoots[$this->normalizeAbsolute($root)][] = ['name' => $resource->name, 'delivery' => $resource->deliveryMode];
                 $this->scan($root, $resource->name, $findings);
             } elseif ($item->storage instanceof StorageAuditProviderInterface) {
                 foreach ($item->storage->auditStorage() as $finding) {
@@ -86,6 +93,11 @@ final class SecurityAuditCommand extends Command
                     }
                 }
             }
+        }
+        foreach ($localRoots as $items) {
+            $deliveryModes = array_values(array_unique(array_column($items, 'delivery')));
+            if (count($items) < 2 || !in_array('public', $deliveryModes, true) || !in_array('proxy', $deliveryModes, true)) continue;
+            $findings[] = ['critical', implode(', ', array_column($items, 'name')), 'Public and proxy resources share the same physical storage root. Separate them to prevent private files from being publicly reachable.'];
         }
         foreach (['quarantine' => $this->quarantineDirectory, 'chunks' => $this->chunkDirectory, 'trash' => $this->trashDirectory] as $name => $privateDirectory) {
             $resolved = realpath($privateDirectory) ?: $this->normalizeAbsolute($privateDirectory);
@@ -116,6 +128,9 @@ final class SecurityAuditCommand extends Command
             } catch (\Throwable) {
                 $findings[] = ['critical', 'malware-scanning', 'The configured malware scanner health check failed.'];
             }
+        }
+        if ($this->clusterStateConfigured && $this->officePreviewEnabled && $this->documentPreviewMode !== 'inline' && !$this->sharedPreviewCache) {
+            $findings[] = ['critical', 'document-preview', 'Multi-node asynchronous Office preview requires a shared document preview cache directory; set cluster.shared_preview_cache only after mounting it on every node.'];
         }
 
         $critical = count(array_filter($findings, static fn (array $finding): bool => $finding[0] === 'critical'));

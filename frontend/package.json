@@ -5,6 +5,7 @@
   "type": "module",
   "scripts": {
     "build": "tsc --noEmit && vite build",
+    "check:size": "node scripts/check-bundle-size.mjs",
     "dev": "vite",
     "typecheck": "tsc --noEmit",
     "test:unit": "vitest run",

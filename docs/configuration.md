@@ -30,6 +30,9 @@ metrics, maintenance coordination and chunk-session metadata to shared atomic
 stores. Chunk bytes remain in `chunk_dir`, which must be a private shared mount
 on every node. `cluster.chunk_upload_store_service` can replace the bundled
 coordinator when a host needs another staging backend. See [production operation](/production).
+For multi-node asynchronous Office preview, mount `cache_dir/document-previews`
+on every node and then set `cluster.shared_preview_cache: true`; this explicit
+acknowledgement is checked by `sofinder:security:audit`.
 
 ## Picker origins
 

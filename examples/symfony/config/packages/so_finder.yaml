@@ -23,7 +23,7 @@ so_finder:
       roles: [ROLE_USER]
     Private:
       adapter: local
-      root: '%kernel.project_dir%/var/storage'
+      root: '%kernel.project_dir%/var/private-storage'
       public_url: ''
       delivery_mode: proxy
       allowed_extensions: [txt, jpg, jpeg, png, webp, pdf]

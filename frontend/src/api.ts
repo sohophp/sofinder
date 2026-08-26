@@ -1,4 +1,4 @@
-import type { ApiResponse, BatchResult, Entry, ImageAction, ImageBatchResult, ImageCapabilities, ImageEditResult, ImagePreset, ImageInfo, MetadataState, PluginDescriptor, ResourceType, SecurityStatus, SoFinderConfig, TrashPage, UiScale } from "./types";
+import type { ApiResponse, BatchResult, DocumentPreviewJob, Entry, ImageAction, ImageBatchResult, ImageCapabilities, ImageEditResult, ImagePreset, ImageInfo, MetadataState, PluginDescriptor, ResourceType, SecurityStatus, SoFinderConfig, TrashPage, UiScale } from "./types";
 
 export const isApiVersionSupported = (version: string): boolean => /^1(?:\.|$)/.test(version);
 
@@ -45,6 +45,14 @@ export class Api {
   }
 
   securityStatus() { return this.request<SecurityStatus>("/security/status"); }
+
+  prepareDocumentPreview(resource: string, path: string, retry = false) {
+    return this.request<DocumentPreviewJob>("/preview/document/jobs", { method: "POST", body: JSON.stringify({ resource, path, retry }) });
+  }
+
+  documentPreviewJob(id: string) {
+    return this.request<DocumentPreviewJob>(`/preview/document/jobs/${encodeURIComponent(id)}`);
+  }
 
   signedUrl(resource: string, path: string, ttl?: number, disposition: "inline" | "attachment" = "attachment") {
     const query = new URLSearchParams({ resource, path, disposition });

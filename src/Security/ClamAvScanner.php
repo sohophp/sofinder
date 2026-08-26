@@ -7,6 +7,7 @@ namespace SohoPHP\SoFinder\Security;
 use Psr\Log\LoggerInterface;
 use SohoPHP\SoFinder\Contract\HealthCheckInterface;
 use SohoPHP\SoFinder\Contract\MetricsStoreInterface;
+use SohoPHP\SoFinder\Contract\MalwareScanStatusStoreInterface;
 use SohoPHP\SoFinder\Contract\UploadScannerInterface;
 use SohoPHP\SoFinder\Exception\SoFinderException;
 use SohoPHP\SoFinder\Value\HealthCheckResult;
@@ -22,7 +23,7 @@ final readonly class ClamAvScanner implements UploadScannerInterface, HealthChec
         private float $timeoutSeconds = 5.0,
         private ?\Closure $connector = null,
         private ?MetricsStoreInterface $metrics = null,
-        private ?MalwareScanStatusStore $statusStore = null,
+        private ?MalwareScanStatusStoreInterface $statusStore = null,
         private ?LoggerInterface $logger = null,
         private bool $enabled = true,
     ) {
@@ -120,12 +121,16 @@ final readonly class ClamAvScanner implements UploadScannerInterface, HealthChec
         $response = '';
         while (!feof($stream) && strlen($response) < 1024) {
             $chunk = fread($stream, 256);
-            if ($chunk === false) throw new SoFinderException('The malware scanner connection failed.', 'malware_scanner_unavailable', 503);
+            if ($chunk === false) {
+                $meta = stream_get_meta_data($stream);
+                if ($meta['timed_out'] === true) throw new SoFinderException('The malware scanner timed out.', 'malware_scanner_timeout', 503);
+                throw new SoFinderException('The malware scanner connection failed.', 'malware_scanner_unavailable', 503);
+            }
             $response .= $chunk;
             if (str_contains($response, "\0") || str_contains($response, "\n")) break;
         }
         $meta = stream_get_meta_data($stream);
-        if ($meta['timed_out'] === true) throw new SoFinderException('The malware scanner timed out.', 'malware_scanner_unavailable', 503);
+        if ($meta['timed_out'] === true) throw new SoFinderException('The malware scanner timed out.', 'malware_scanner_timeout', 503);
         return trim($response, "\0\r\n ");
     }
 
@@ -140,6 +145,7 @@ final readonly class ClamAvScanner implements UploadScannerInterface, HealthChec
             $this->metrics?->increment('sofinder_malware_scans_total', ['provider' => 'clamav', 'result' => $status]);
             $this->metrics?->increment('sofinder_malware_scan_bytes_total', ['provider' => 'clamav', 'result' => $status], max(0, $bytes));
             $this->metrics?->increment('sofinder_malware_scan_duration_milliseconds_total', ['provider' => 'clamav', 'result' => $status], $duration);
+            if ($code === 'malware_scanner_timeout') $this->metrics?->increment('sofinder_malware_scan_timeouts_total', ['provider' => 'clamav']);
         } catch (\Throwable) {
         }
         $context = ['provider' => 'clamav', 'result' => $status, 'code' => $code, 'resource' => $resource->name, 'file_name' => $fileName, 'bytes' => $bytes, 'duration_ms' => $duration];

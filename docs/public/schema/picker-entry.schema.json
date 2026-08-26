@@ -3,7 +3,7 @@
   "$id": "https://sofinder.sohophp.app/schema/picker-entry.schema.json",
   "title": "SoFinder picker entry",
   "type": "object",
-  "additionalProperties": true,
+  "additionalProperties": false,
   "required": ["resource", "path", "name", "directory", "size", "modifiedAt", "mimeType", "url", "width", "height", "capabilities"],
   "properties": {
     "resource": {"type": "string", "minLength": 1},

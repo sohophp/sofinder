@@ -5,8 +5,8 @@ declare(strict_types=1);
 namespace SohoPHP\SoFinder\Http;
 
 use SohoPHP\SoFinder\Feature\FeaturePolicy;
+use SohoPHP\SoFinder\Contract\MalwareScanStatusStoreInterface;
 use SohoPHP\SoFinder\Security\ClamAvScanner;
-use SohoPHP\SoFinder\Security\MalwareScanStatusStore;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException;
 use Symfony\Component\Security\Core\Authorization\AuthorizationCheckerInterface;
@@ -15,7 +15,7 @@ final readonly class SecurityStatusController
 {
     public function __construct(
         private bool $enabled,
-        private MalwareScanStatusStore $scans,
+        private MalwareScanStatusStoreInterface $scans,
         private ?ClamAvScanner $scanner = null,
         private ?AuthorizationCheckerInterface $authorization = null,
         /** @var list<string> */ private array $roles = [],
@@ -40,6 +40,8 @@ final readonly class SecurityStatusController
                 'message' => !$this->enabled ? 'Malware scanning is not enabled.' : ($health === null ? 'ClamAV is unavailable.' : $health->message),
                 'counts' => $report['counts'],
                 'recent' => $report['recent'],
+                'mode' => $report['mode'],
+                'lastSuccessfulAt' => $report['lastSuccessfulAt'],
             ],
         ]]);
     }

@@ -4,9 +4,9 @@ declare(strict_types=1);
 
 namespace SohoPHP\SoFinder\Observability;
 
-use SohoPHP\SoFinder\Contract\MetricsStoreInterface;
+use SohoPHP\SoFinder\Contract\GaugeMetricsStoreInterface;
 
-final readonly class LocalMetricsStore implements MetricsStoreInterface
+final readonly class LocalMetricsStore implements GaugeMetricsStoreInterface
 {
     public function __construct(private string $file) {}
 
@@ -27,6 +27,17 @@ final readonly class LocalMetricsStore implements MetricsStoreInterface
         $values = array_values(array_filter($state, static fn (mixed $item): bool => is_array($item) && is_string($item['name'] ?? null) && is_array($item['labels'] ?? null) && is_int($item['value'] ?? null)));
         usort($values, static fn (array $left, array $right): int => [$left['name'], json_encode($left['labels'])] <=> [$right['name'], json_encode($right['labels'])]);
         return $values;
+    }
+
+    public function set(string $name, int $value, array $labels = []): void
+    {
+        $this->validate($name, $labels);
+        $this->locked(static function (array $state) use ($name, $value, $labels): array {
+            ksort($labels);
+            $key = hash('sha256', json_encode([$name, $labels], JSON_THROW_ON_ERROR));
+            $state[$key] = ['name' => $name, 'labels' => $labels, 'value' => max(0, $value)];
+            return $state;
+        });
     }
 
     /**

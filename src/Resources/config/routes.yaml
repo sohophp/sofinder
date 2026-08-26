@@ -8,7 +8,7 @@ sofinder_asset:
   path: /assets/{file}
   controller: SohoPHP\SoFinder\Http\AssetController
   methods: [GET]
-  requirements: { file: 'sofinder(?:-picker)?\.js|sofinder\.css' }
+  requirements: { file: '[A-Za-z0-9._-]+\.(?:js|css)' }
   defaults: { _sofinder: true }
 
 sofinder_api_config:
@@ -26,6 +26,12 @@ sofinder_api_capabilities:
 sofinder_health:
   path: /health
   controller: SohoPHP\SoFinder\Http\HealthController
+  methods: [GET]
+  defaults: { _sofinder: true }
+
+sofinder_liveness:
+  path: /live
+  controller: SohoPHP\SoFinder\Http\LivenessController
   methods: [GET]
   defaults: { _sofinder: true }
 
@@ -156,6 +162,19 @@ sofinder_document_preview:
   path: /api/preview/document
   controller: SohoPHP\SoFinder\Http\DocumentPreviewController
   methods: [GET]
+  defaults: { _sofinder: true }
+
+sofinder_document_preview_job_create:
+  path: /api/preview/document/jobs
+  controller: SohoPHP\SoFinder\Http\DocumentPreviewJobController::create
+  methods: [POST]
+  defaults: { _sofinder: true }
+
+sofinder_document_preview_job_status:
+  path: /api/preview/document/jobs/{id}
+  controller: SohoPHP\SoFinder\Http\DocumentPreviewJobController::status
+  methods: [GET]
+  requirements: { id: '[a-f0-9]{48}' }
   defaults: { _sofinder: true }
 
 sofinder_api_trash:

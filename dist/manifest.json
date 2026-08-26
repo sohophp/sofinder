@@ -1,0 +1,155 @@
+{
+  "_EntryVisuals-CZ0BEx0U.js": {
+    "file": "EntryVisuals-CZ0BEx0U.js",
+    "name": "EntryVisuals",
+    "imports": [
+      "_jsx-runtime-BuvfPIin.js"
+    ]
+  },
+  "_Modal-C1uNxIi2.js": {
+    "file": "Modal-C1uNxIi2.js",
+    "name": "Modal",
+    "imports": [
+      "_jsx-runtime-BuvfPIin.js"
+    ]
+  },
+  "_format-GD3_dnvn.js": {
+    "file": "format-GD3_dnvn.js",
+    "name": "format"
+  },
+  "_jsx-runtime-BuvfPIin.js": {
+    "file": "jsx-runtime-BuvfPIin.js",
+    "name": "jsx-runtime"
+  },
+  "_nameValidation-DURyMFRU.js": {
+    "file": "nameValidation-DURyMFRU.js",
+    "name": "nameValidation"
+  },
+  "src/components/BulkRenameDialog.tsx": {
+    "file": "BulkRenameDialog-De2F7_GP.js",
+    "name": "BulkRenameDialog",
+    "src": "src/components/BulkRenameDialog.tsx",
+    "isDynamicEntry": true,
+    "imports": [
+      "_jsx-runtime-BuvfPIin.js",
+      "_Modal-C1uNxIi2.js",
+      "_nameValidation-DURyMFRU.js"
+    ]
+  },
+  "src/components/DestinationDialog.tsx": {
+    "file": "DestinationDialog-DPemnj2C.js",
+    "name": "DestinationDialog",
+    "src": "src/components/DestinationDialog.tsx",
+    "isDynamicEntry": true,
+    "imports": [
+      "_jsx-runtime-BuvfPIin.js",
+      "_Modal-C1uNxIi2.js",
+      "_EntryVisuals-CZ0BEx0U.js"
+    ]
+  },
+  "src/components/DocumentPreviewPane.tsx": {
+    "file": "DocumentPreviewPane-DU8zWCno.js",
+    "name": "DocumentPreviewPane",
+    "src": "src/components/DocumentPreviewPane.tsx",
+    "isDynamicEntry": true,
+    "imports": [
+      "_jsx-runtime-BuvfPIin.js"
+    ]
+  },
+  "src/components/ImageEditor.tsx": {
+    "file": "ImageEditor-CacYGDQE.js",
+    "name": "ImageEditor",
+    "src": "src/components/ImageEditor.tsx",
+    "isDynamicEntry": true,
+    "imports": [
+      "_jsx-runtime-BuvfPIin.js",
+      "_Modal-C1uNxIi2.js",
+      "_nameValidation-DURyMFRU.js"
+    ]
+  },
+  "src/components/ImageProcessDialog.tsx": {
+    "file": "ImageProcessDialog-DjWE4_D0.js",
+    "name": "ImageProcessDialog",
+    "src": "src/components/ImageProcessDialog.tsx",
+    "isDynamicEntry": true,
+    "imports": [
+      "_jsx-runtime-BuvfPIin.js",
+      "_Modal-C1uNxIi2.js"
+    ]
+  },
+  "src/components/SecurityStatusDialog.tsx": {
+    "file": "SecurityStatusDialog-n-WcU-OL.js",
+    "name": "SecurityStatusDialog",
+    "src": "src/components/SecurityStatusDialog.tsx",
+    "isDynamicEntry": true,
+    "imports": [
+      "_jsx-runtime-BuvfPIin.js",
+      "_Modal-C1uNxIi2.js",
+      "_format-GD3_dnvn.js"
+    ]
+  },
+  "src/components/SettingsDialog.tsx": {
+    "file": "SettingsDialog-Bf-Qbk6C.js",
+    "name": "SettingsDialog",
+    "src": "src/components/SettingsDialog.tsx",
+    "isDynamicEntry": true,
+    "imports": [
+      "_jsx-runtime-BuvfPIin.js",
+      "_Modal-C1uNxIi2.js"
+    ]
+  },
+  "src/components/TagsDialog.tsx": {
+    "file": "TagsDialog-ObFqAP7F.js",
+    "name": "TagsDialog",
+    "src": "src/components/TagsDialog.tsx",
+    "isDynamicEntry": true,
+    "imports": [
+      "_jsx-runtime-BuvfPIin.js",
+      "_Modal-C1uNxIi2.js"
+    ]
+  },
+  "src/components/TrashDialog.tsx": {
+    "file": "TrashDialog-C9NRSLSA.js",
+    "name": "TrashDialog",
+    "src": "src/components/TrashDialog.tsx",
+    "isDynamicEntry": true,
+    "imports": [
+      "_jsx-runtime-BuvfPIin.js",
+      "_Modal-C1uNxIi2.js"
+    ]
+  },
+  "src/main.tsx": {
+    "file": "sofinder.js",
+    "name": "sofinder",
+    "src": "src/main.tsx",
+    "isEntry": true,
+    "imports": [
+      "_jsx-runtime-BuvfPIin.js",
+      "_Modal-C1uNxIi2.js",
+      "_nameValidation-DURyMFRU.js",
+      "_EntryVisuals-CZ0BEx0U.js",
+      "_format-GD3_dnvn.js"
+    ],
+    "dynamicImports": [
+      "src/components/ImageEditor.tsx",
+      "src/components/ImageProcessDialog.tsx",
+      "src/components/SecurityStatusDialog.tsx",
+      "src/components/DocumentPreviewPane.tsx",
+      "src/components/SettingsDialog.tsx",
+      "src/components/DestinationDialog.tsx",
+      "src/components/BulkRenameDialog.tsx",
+      "src/components/TrashDialog.tsx",
+      "src/components/TagsDialog.tsx"
+    ]
+  },
+  "src/picker.ts": {
+    "file": "sofinder-picker.js",
+    "name": "sofinder-picker",
+    "src": "src/picker.ts",
+    "isEntry": true
+  },
+  "style.css": {
+    "file": "sofinder.css",
+    "src": "style.css"
+  }
+}

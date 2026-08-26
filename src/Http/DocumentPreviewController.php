@@ -6,18 +6,24 @@ namespace SohoPHP\SoFinder\Http;
 
 use SohoPHP\SoFinder\Feature\FeaturePolicy;
 use SohoPHP\SoFinder\Preview\DocumentPreviewManager;
+use SohoPHP\SoFinder\Preview\DocumentPreviewJobManager;
+use SohoPHP\SoFinder\Exception\SoFinderException;
 use Symfony\Component\HttpFoundation\BinaryFileResponse;
 use Symfony\Component\HttpFoundation\Request;
+use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpFoundation\ResponseHeaderBag;
 
 final readonly class DocumentPreviewController
 {
-    public function __construct(private DocumentPreviewManager $previews, private ?FeaturePolicy $features = null) {}
+    public function __construct(private DocumentPreviewManager $previews, private ?FeaturePolicy $features = null, private ?DocumentPreviewJobManager $jobs = null) {}
 
-    public function __invoke(Request $request): BinaryFileResponse
+    public function __invoke(Request $request): Response
     {
         ($this->features ?? new FeaturePolicy())->assertEnabled('document_preview');
-        $preview = $this->previews->preview($request->query->getString('resource', 'Files'), $request->query->getString('path'));
+        $resource = $request->query->getString('resource', 'Files'); $path = $request->query->getString('path');
+        $description = $this->previews->describe($resource, $path);
+        if ($description['source'] === 'office' && !$description['cached'] && $this->jobs?->asynchronous()) throw new SoFinderException('The Office preview is still being prepared.', 'document_preview_pending', 202);
+        $preview = $this->previews->preview($resource, $path);
         $response = new BinaryFileResponse($preview['file']);
         $response->headers->set('Content-Type', 'application/pdf');
         $response->headers->set('Content-Disposition', ContentDisposition::make(ResponseHeaderBag::DISPOSITION_INLINE, $preview['name']));

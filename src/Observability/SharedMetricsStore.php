@@ -5,10 +5,10 @@ declare(strict_types=1);
 namespace SohoPHP\SoFinder\Observability;
 
 use SohoPHP\SoFinder\Contract\AtomicStateStoreInterface;
-use SohoPHP\SoFinder\Contract\MetricsStoreInterface;
+use SohoPHP\SoFinder\Contract\GaugeMetricsStoreInterface;
 
 /** Cluster-wide counters backed by the configured Redis or PDO atomic state store. */
-final readonly class SharedMetricsStore implements MetricsStoreInterface
+final readonly class SharedMetricsStore implements GaugeMetricsStoreInterface
 {
     public function __construct(private AtomicStateStoreInterface $state) {}
 
@@ -30,6 +30,17 @@ final readonly class SharedMetricsStore implements MetricsStoreInterface
         usort($values, static fn (array $left, array $right): int => [$left['name'], json_encode($left['labels'])] <=> [$right['name'], json_encode($right['labels'])]);
 
         return $values;
+    }
+
+    public function set(string $name, int $value, array $labels = []): void
+    {
+        $this->validate($name, $labels);
+        ksort($labels);
+        $key = hash('sha256', json_encode([$name, $labels], JSON_THROW_ON_ERROR));
+        $this->state->mutate('metrics', 'global', static function (array $state) use ($key, $name, $labels, $value): array {
+            $state[$key] = ['name' => $name, 'labels' => $labels, 'value' => max(0, $value)];
+            return $state;
+        });
     }
 
     /** @param array<string,string> $labels */

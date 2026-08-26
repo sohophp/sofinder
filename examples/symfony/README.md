@@ -123,6 +123,12 @@ SOFINDER_PROVIDER_PUBLIC_URL=https://cdn.example.com/component-images
 and set the matching YAML resource to `delivery_mode: public`. Keep the YAML
 value as `proxy` when the URL is empty or the bucket is private.
 
+The local `Files` and `Private` examples deliberately use different physical
+directories. Never point a public and a proxy resource at the same root: the
+public web-server mapping would bypass the private resource's controller and
+authorization checks. The `Private` example starts empty and does not copy data
+from `Files`.
+
 Additional resources may use any environment variable names referenced by
 their YAML blocks, for example `ARCHIVE_PUBLIC_URL` or `CUSTOMER_CDN_URL`.
 

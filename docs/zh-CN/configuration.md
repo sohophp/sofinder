@@ -28,6 +28,8 @@ description: SoFinder 全局、UI、维护、图片、请求限制与资源配�
 自动把 metadata、请求 Gate、Usage、指标、维护协调和分块 Session Metadata 切换为
 共享原子 Store。分块内容仍写入 `chunk_dir`，多节点必须把它挂载为相同路径的私有共享目录。
 需要其他暂存后端时，可用 `cluster.chunk_upload_store_service` 替换内置协调器。
+多节点异步 Office 预览还必须共享挂载 `cache_dir/document-previews`，完成后设置
+`cluster.shared_preview_cache: true`；`sofinder:security:audit` 会检查该确认项。
 详见[生产运行](/zh-CN/production)。
 
 ## Picker Origin

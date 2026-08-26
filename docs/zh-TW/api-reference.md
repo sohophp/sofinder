@@ -170,7 +170,9 @@ Session 24 小時後過期。客戶端可以補傳缺失 Index，但不能超過
 - `GET /api/content?resource=Images&path=photo.jpg&disposition=inline`：返回私有內容，支援 ETag、Last-Modified、條件請求和單段 Byte Range。只有安全 Raster MIME 能 Inline，其餘強制 Attachment。無效 Range 返回 416。
 - `GET /api/signed-url?resource=Private&path=manual.pdf&ttl=300`：先重新授權目前使用者，再回傳 `{url,expiresAt}`。臨時網址指向 `/signed/{token}`；只有宿主 Firewall 明確允許該路由匿名存取時才不需要 Session。Token 使用 HMAC、僅適用於 `delivery_mode: proxy`，並綁定檔案大小與修改時間；過期或檔案已替換回傳 410，竄改回傳 403。
 - `GET /api/preview/text?resource=Files&path=readme.txt`：回傳已授權 UTF-8 文字、JSON、XML 或 YAML 檔案的前 256 KiB，格式為 `{content,truncated,mimeType,size}`；內建 UI 一律按純文字顯示。
-- `GET /api/preview/document?resource=Files&path=manual.pdf`：回傳已授權 Inline PDF；可選 Office 檔案由受限 LibreOffice Process 轉換。請參考 [PDF 與 Office 預覽](/zh-TW/document-preview)。
+- `GET /api/preview/document?resource=Files&path=manual.pdf`：直接回傳已授權 PDF 或已快取的 Office 轉換結果；非同步模式下未快取的 Office 檔案回傳 HTTP 202、`document_preview_pending` 與 `Retry-After`。
+- `POST /api/preview/document/jobs`：Body 為 `{"resource":"Files","path":"manual.docx","retry":false}`，依使用者與檔案版本建立或重用轉換工作。
+- `GET /api/preview/document/jobs/{id}`：回傳 `queued`、`running`、`ready`、`failed` 或 `expired`；就緒時包含預覽 URL，等待時包含 `retryAfter`。部署需求請參考 [PDF 與 Office 預覽](/zh-TW/document-preview)。
 - `GET /api/checksum?resource=Files&path=manual.pdf`：為不超過 512 MiB 的已授權檔案回傳 `{algorithm:"sha256",checksum,size}`，不會暴露 Adapter 路徑。
 
 ## 回收站

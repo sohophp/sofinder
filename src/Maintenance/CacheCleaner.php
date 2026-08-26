@@ -4,9 +4,11 @@ declare(strict_types=1);
 
 namespace SohoPHP\SoFinder\Maintenance;
 
+use SohoPHP\SoFinder\Preview\DocumentPreviewJobManager;
+
 final readonly class CacheCleaner
 {
-    public function __construct(private string $cacheDirectory)
+    public function __construct(private string $cacheDirectory, private ?DocumentPreviewJobManager $documentPreviews = null)
     {
     }
 
@@ -32,6 +34,7 @@ final readonly class CacheCleaner
                 }
             }
         }
+        if (!$dryRun && $this->documentPreviews !== null) $removed += $this->documentPreviews->cleanup();
 
         return compact('dryRun', 'olderThanSeconds', 'matched', 'removed', 'bytes', 'errors');
     }

@@ -56,6 +56,17 @@ final class HttpContractTest extends TestCase
         self::assertStringContainsString("frame-src 'self'", (string) $response->headers->get('Content-Security-Policy'));
     }
 
+    public function testPendingDocumentPreviewProvidesARetryHint(): void
+    {
+        $request = Request::create('/sofinder/api/preview/document');
+        $request->attributes->set('_sofinder', true);
+        $event = new ExceptionEvent($this->createMock(HttpKernelInterface::class), $request, HttpKernelInterface::MAIN_REQUEST, new SoFinderException('Pending.', 'document_preview_pending', 202));
+        (new ExceptionSubscriber())->onException($event);
+
+        self::assertSame(202, $event->getResponse()?->getStatusCode());
+        self::assertSame('1', $event->getResponse()?->headers->get('Retry-After'));
+    }
+
     public function testLegacyFieldsReceiveMachineReadableDeprecationHeaders(): void
     {
         $request = Request::create('/sofinder/api/images/edit');

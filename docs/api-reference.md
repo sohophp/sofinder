@@ -231,7 +231,12 @@ Returns at most the first 256 KiB of an authorized UTF-8 text, JSON, XML or YAML
 
 ### `GET /api/preview/document?resource=Files&path=manual.pdf`
 
-Returns an authorized inline PDF. Optional Office files are converted by the configured bounded LibreOffice process. See [PDF and Office preview](/document-preview).
+Returns an authorized inline PDF. A cached Office conversion is returned directly; an uncached Office file in asynchronous mode returns HTTP 202 with `document_preview_pending` and `Retry-After`.
+
+- `POST /api/preview/document/jobs` with `{"resource":"Files","path":"manual.docx","retry":false}` creates or reuses the actor-scoped, file-version-scoped conversion job.
+- `GET /api/preview/document/jobs/{id}` returns `queued`, `running`, `ready`, `failed` or `expired`, plus `retryAfter` and the preview URL when ready.
+
+See [PDF and Office preview](/document-preview) for worker and shared-cache requirements.
 
 ### `GET /api/checksum?resource=Files&path=manual.pdf`
 

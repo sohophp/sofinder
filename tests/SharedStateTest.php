@@ -11,6 +11,7 @@ use SohoPHP\SoFinder\State\SharedMetadataStore;
 use SohoPHP\SoFinder\State\SharedRequestGateStore;
 use SohoPHP\SoFinder\State\SharedUsageTracker;
 use SohoPHP\SoFinder\Observability\SharedMetricsStore;
+use SohoPHP\SoFinder\Security\SharedMalwareScanStatusStore;
 use SohoPHP\SoFinder\Storage\LocalStorageAdapter;
 use SohoPHP\SoFinder\Value\ResourceStorage;
 use SohoPHP\SoFinder\Value\ResourceType;
@@ -79,6 +80,30 @@ final class SharedStateTest extends TestCase
         $metrics->increment('sofinder_upload_failures_total', ['code' => 'invalid_upload']);
 
         self::assertSame(2, $metrics->snapshot()[0]['value']);
+    }
+
+    public function testMalwareScanStatusIsConsistentAcrossNodesAndRecoversStalePendingScans(): void
+    {
+        $database = $this->directory . '/malware.sqlite';
+        $firstState = new PdoAtomicStateStore(new \PDO('sqlite:' . $database));
+        $secondState = new PdoAtomicStateStore(new \PDO('sqlite:' . $database));
+        $first = new SharedMalwareScanStatusStore($firstState, pendingTimeoutSeconds: 1);
+        $second = new SharedMalwareScanStatusStore($secondState, pendingTimeoutSeconds: 1);
+        $passed = $first->start('safe.txt', 'Files', 4);
+        $second->finish($passed, 'passed', null, 2);
+        $stale = $second->start('abandoned.txt', 'Private', 7);
+        $firstState->mutate('malware-scans', 'global', static function (array $state) use ($stale): array {
+            foreach ($state['events'] as &$event) if (($event['id'] ?? null) === $stale) $event['startedAt'] = time() - 5;
+            unset($event);
+            return $state;
+        });
+
+        $report = $first->report();
+        self::assertSame('shared', $report['mode']);
+        self::assertSame(1, $report['counts']['passed']);
+        self::assertSame(1, $report['counts']['failed']);
+        self::assertSame('malware_scan_abandoned', $report['recent'][0]['code']);
+        self::assertIsInt($report['lastSuccessfulAt']);
     }
 
     public function testRedisStorePersistsLockedMutationsWhenAvailable(): void

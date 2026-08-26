@@ -1,6 +1,7 @@
 import AxeBuilder from "@axe-core/playwright";
 import { expect, test } from "@playwright/test";
 import { resolve } from "node:path";
+import { existsSync, readFileSync } from "node:fs";
 
 const config = {
   apiBase: "/sofinder/api/config",
@@ -21,6 +22,11 @@ const config = {
 test.beforeEach(async ({ page }) => {
   await page.route("http://sofinder.test/**", async route => {
     const url = new URL(route.request().url());
+    const asset = resolve(import.meta.dirname, "../../dist", url.pathname.slice(1));
+    if (/^\/[A-Za-z0-9._-]+\.js$/.test(url.pathname) && existsSync(asset)) {
+      await route.fulfill({ contentType: "text/javascript; charset=UTF-8", body: readFileSync(asset) });
+      return;
+    }
     if (url.pathname === "/sofinder/api/config") {
       await route.fulfill({ json: { success: true, data: { apiVersion: "1.0", resources: [{ name: "Files", publicUrl: "/uploads/editor/files", allowedExtensions: ["txt", "png", "heic", "pdf"], maxSize: 1000000, readOnly: false, quotaBytes: 0, usedBytes: 80, maxFileNameLength: 120, maxFolderNameLength: 50, maxFolderDepth: 5, deliveryMode: "public", storageCapabilities: { search: true, sort: true, cursorPagination: false, atomicMove: true, nativeCopy: true, recoverableDelete: true, publicUrl: true } }], plugins: [{ name: "document-preview", version: "1.0.0", capabilities: ["preview.pdf"], previewers: [{ id: "pdf", mimeTypes: ["application/pdf"], extensions: ["pdf"], url: "/sofinder/api/preview/document" }] }], imagePresets: {}, imageCapabilities: { driver: "auto", formats: [{ format: "png", extensions: ["png"], mimes: ["image/png"], processor: "gd", read: true, edit: true, thumbnail: true, webEmbeddable: true }] } } } });
       return;
@@ -52,6 +58,11 @@ test.beforeEach(async ({ page }) => {
     }
     if (url.pathname === "/sofinder/api/preview/document") {
       await route.fulfill({ contentType: "application/pdf", body: Buffer.from("%PDF-1.4\n% SoFinder preview\n") });
+      return;
+    }
+    if (url.pathname === "/sofinder/api/preview/document/jobs" && route.request().method() === "POST") {
+      const body = route.request().postDataJSON() as { resource: string; path: string };
+      await route.fulfill({ json: { success: true, data: { id: "", status: "ready", retryAfter: 0, error: null, source: "pdf", key: "a".repeat(64), resource: body.resource, path: body.path, previewUrl: `/sofinder/api/preview/document?resource=${encodeURIComponent(body.resource)}&path=${encodeURIComponent(body.path)}` } } });
       return;
     }
     if (url.pathname === "/sofinder/api/checksum") {
@@ -362,6 +373,24 @@ test("keeps previous and next pagination controls on one line", async ({ page })
     expect(item.height).toBeLessThanOrEqual(40);
     expect(item.scrollWidth).toBeLessThanOrEqual(item.clientWidth);
   }
+});
+
+test("visual baseline covers dark Chinese grid, compact list, long names and mobile", async ({ page, browserName }) => {
+  test.skip(browserName !== "chromium", "Pixel baselines are recorded once; functional coverage still runs in all three engines.");
+  await page.setViewportSize({ width: 1280, height: 760 });
+  await page.evaluate(() => {
+    localStorage.setItem("sofinder.viewSizes.v1", JSON.stringify({ grid: "large", list: "small" }));
+    document.documentElement.style.setProperty("--sf-bg", "#111827");
+    document.documentElement.style.setProperty("--sf-panel", "#1f2937");
+    document.documentElement.style.setProperty("--sf-text", "#f3f4f6");
+    document.documentElement.style.setProperty("--sf-muted", "#9ca3af");
+  });
+  await page.locator(".sf-entry-name").first().evaluate(element => { element.textContent = "这是一个用于验证省略显示和中文布局的非常非常长的文件名称-2026-最终版本.txt"; });
+  await expect(page.locator(".sf-app")).toHaveScreenshot("dark-grid-chinese.png", { animations: "disabled" });
+  await page.getByRole("button", { name: "列表" }).click();
+  await expect(page.locator(".sf-app")).toHaveScreenshot("dark-list-compact.png", { animations: "disabled" });
+  await page.setViewportSize({ width: 403, height: 740 });
+  await expect(page.locator(".sf-app")).toHaveScreenshot("mobile-chinese.png", { animations: "disabled" });
 });
 
 test("shows recent files immediately when enabled and keeps them accessible on mobile", async ({ page }) => {

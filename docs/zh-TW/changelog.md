@@ -5,7 +5,13 @@ description: SoFinder 每個公開版本的重要變更。
 
 # 更新紀錄
 
-## 0.1.0-beta.17 - 2026-08-26
+## 0.1.0-beta.17 - 2026-08-27
+
+- 將展示用 `Private` Resource 隔離到新的空白 Proxy 目錄，並由安全稽核阻止公開與 Proxy Resource 共用實體根目錄。
+- 新增自動 Inline／Messenger Office 預覽工作，包含冪等排隊、完整狀態、重試、逾期、共享狀態、快取清理及僅在轉換就緒後建立 PDF Frame 的進度 UI。
+- 新增跨節點病毒掃描狀態、陳舊 Pending 復原、`/live`、可插拔 Storage／Queue Probe，以及 Office、Queue 與 ClamAV 逾時指標。
+- 將選用前端面板拆為 Manifest Allowlist Lazy Chunk，並強制初始入口 gzip 不超過 100 KiB，同時保留輕量 Picker。
+- 完善 Office Job、OpenAPI 與 Plugin Descriptor 契約，固定 CI Action 與服務 Image，並為 Tag 觸發的預發佈產生 SBOM、SHA-256 與 Provenance。
 
 - 新增 Host 強制開關，涵蓋批次重新命名、圖片編輯／處理、文件預覽及安全狀態的 UI 與 HTTP Endpoint。
 - 新增 Markdown Picker Adapter 與精確 Origin Allowlist 跨域握手，不使用萬用字元 `postMessage`。

@@ -7,6 +7,7 @@ namespace SohoPHP\SoFinder\Storage;
 use SohoPHP\SoFinder\Contract\StorageAdapterInterface;
 use SohoPHP\SoFinder\Contract\LocalPathProviderInterface;
 use SohoPHP\SoFinder\Contract\StorageUsageProviderInterface;
+use SohoPHP\SoFinder\Contract\StorageHealthProbeInterface;
 use SohoPHP\SoFinder\Exception\ConflictException;
 use SohoPHP\SoFinder\Exception\InvalidPathException;
 use SohoPHP\SoFinder\Exception\NotFoundException;
@@ -17,7 +18,7 @@ use SohoPHP\SoFinder\Value\ListQuery;
 use SohoPHP\SoFinder\Value\ListingPage;
 use SohoPHP\SoFinder\Value\StorageCapabilities;
 
-final class LocalStorageAdapter implements StorageAdapterInterface, LocalPathProviderInterface, StorageUsageProviderInterface
+final class LocalStorageAdapter implements StorageAdapterInterface, LocalPathProviderInterface, StorageUsageProviderInterface, StorageHealthProbeInterface
 {
     private readonly string $root;
 
@@ -257,6 +258,11 @@ final class LocalStorageAdapter implements StorageAdapterInterface, LocalPathPro
     public function usage(): int
     {
         return $this->sizeAbsolute($this->root);
+    }
+
+    public function checkStorage(): void
+    {
+        if (!is_dir($this->root) || !is_readable($this->root)) throw new \RuntimeException('The local storage root is unavailable.');
     }
 
     public function size(string $path): int

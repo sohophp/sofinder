@@ -6,6 +6,7 @@ namespace SohoPHP\SoFinder\Health;
 
 use SohoPHP\SoFinder\Contract\HealthCheckInterface;
 use SohoPHP\SoFinder\Contract\LocalPathProviderInterface;
+use SohoPHP\SoFinder\Contract\StorageHealthProbeInterface;
 use SohoPHP\SoFinder\Contract\MetricsStoreInterface;
 use SohoPHP\SoFinder\ResourceRegistry;
 use SohoPHP\SoFinder\Value\HealthCheckResult;
@@ -24,7 +25,8 @@ final readonly class StorageHealthCheck implements HealthCheckInterface
             ++$count;
             $started = hrtime(true);
             try {
-                $resource->storage->list(new ListQuery(limit: 1));
+                if ($resource->storage instanceof StorageHealthProbeInterface) $resource->storage->checkStorage();
+                else $resource->storage->list(new ListQuery(limit: 1));
                 if (!$resource->resource->readOnly && $resource->storage instanceof LocalPathProviderInterface) {
                     $root = $resource->storage->absolutePath('');
                     if (!is_dir($root) || !is_writable($root)) {

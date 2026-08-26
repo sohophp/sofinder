@@ -39,6 +39,13 @@ describe("UploadQueue", () => {
     fireEvent.click(screen.getByRole("button", { name: "Retry" }));
     expect(retry).toHaveBeenCalledWith("failed");
   });
+
+  it("keeps one hundred upload tasks independently observable", () => {
+    const tasks = Array.from({ length: 100 }, (_, index) => ({ id: String(index), name: `upload-${index}.bin`, progress: index, status: index % 3 === 0 ? "uploading" as const : "queued" as const }));
+    render(<UploadQueue tasks={tasks} collapsed={false} labels={{ title: "Uploads", expand: "Expand", collapse: "Collapse", cancel: "Cancel", cancelAll: "Cancel all", clearFinished: "Clear", retry: "Retry", remove: "Remove", status: status => status }} onToggle={vi.fn()} onCancel={vi.fn()} onCancelAll={vi.fn()} onClearFinished={vi.fn()} onRetry={vi.fn()} onRemove={vi.fn()}/>);
+    expect(screen.getAllByRole("progressbar")).toHaveLength(100);
+    expect(screen.getByText("upload-99.bin")).toBeInTheDocument();
+  });
 });
 
 describe("format helpers", () => {

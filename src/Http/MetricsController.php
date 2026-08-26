@@ -16,7 +16,7 @@ final readonly class MetricsController
         $lines = ['# TYPE sofinder_ready gauge', 'sofinder_ready ' . ($this->health->report()['status'] === 'down' ? '0' : '1')];
         $types = [];
         foreach ($this->metrics->snapshot() as $metric) {
-            if (!isset($types[$metric['name']])) { $lines[] = '# TYPE ' . $metric['name'] . ' counter'; $types[$metric['name']] = true; }
+            if (!isset($types[$metric['name']])) { $lines[] = '# TYPE ' . $metric['name'] . (in_array($metric['name'], ['sofinder_queue_backlog', 'sofinder_queue_failed'], true) ? ' gauge' : ' counter'); $types[$metric['name']] = true; }
             $labels = [];
             foreach ($metric['labels'] as $name => $value) $labels[] = $name . '="' . addcslashes($value, "\\\n\r\"") . '"';
             $lines[] = $metric['name'] . ($labels === [] ? '' : '{' . implode(',', $labels) . '}') . ' ' . $metric['value'];

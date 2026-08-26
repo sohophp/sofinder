@@ -13,6 +13,7 @@ export default defineConfig({
   build: {
     outDir: resolve(currentDirectory, "../dist"),
     emptyOutDir: true,
+    manifest: "manifest.json",
     target: "es2020",
     lib: {
       entry: {

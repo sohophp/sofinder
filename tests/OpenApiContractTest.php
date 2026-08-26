@@ -16,7 +16,7 @@ final class OpenApiContractTest extends TestCase
         $yaml = (string) file_get_contents($root . '/src/Resources/config/routes.yaml');
         preg_match_all('/\n[^\s][^\n]*:\n\s+path: ([^\n]+)\n\s+controller:[^\n]+\n\s+methods: \[([A-Z]+)\]/', $yaml, $matches, PREG_SET_ORDER);
         foreach ($matches as $route) {
-            if (!str_starts_with($route[1], '/api/') && !str_starts_with($route[1], '/compat/') && !in_array($route[1], ['/health', '/metrics'], true)) continue;
+            if (!str_starts_with($route[1], '/api/') && !str_starts_with($route[1], '/compat/') && !in_array($route[1], ['/health', '/live', '/metrics'], true)) continue;
             self::assertArrayHasKey($route[1], $spec['paths'], $route[2] . ' ' . $route[1] . ' is missing from OpenAPI.');
             self::assertArrayHasKey(strtolower($route[2]), $spec['paths'][$route[1]], $route[2] . ' ' . $route[1] . ' is missing from OpenAPI.');
         }
@@ -32,7 +32,7 @@ final class OpenApiContractTest extends TestCase
             $schemas[basename($file)] = $schema;
         }
         self::assertSame([
-            'capability-catalog.schema.json', 'config-data.schema.json', 'error-envelope.schema.json', 'image-actions.schema.json', 'picker-entry.schema.json', 'picker-message.schema.json',
+            'capability-catalog.schema.json', 'config-data.schema.json', 'error-envelope.schema.json', 'image-actions.schema.json', 'picker-entry.schema.json', 'picker-message.schema.json', 'plugin-descriptor.schema.json',
         ], array_keys($schemas));
         self::assertSame(
             ['resource', 'path', 'name', 'directory', 'size', 'modifiedAt', 'mimeType', 'url', 'width', 'height', 'capabilities'],
@@ -40,6 +40,15 @@ final class OpenApiContractTest extends TestCase
         );
         self::assertSame('1.0', $schemas['picker-message.schema.json']['properties']['version']['const']);
         self::assertCount(7, $schemas['image-actions.schema.json']['items']['oneOf']);
+    }
+
+    public function testOpenApiDoesNotPublishUnconstrainedGenericObjects(): void
+    {
+        $document = (string) file_get_contents(dirname(__DIR__) . '/docs/public/openapi.json');
+        self::assertStringNotContainsString('"type": "object"}', $document);
+        self::assertStringNotContainsString('"additionalProperties": true', $document);
+        self::assertStringContainsString('DocumentPreviewJobData', $document);
+        self::assertStringContainsString('MutationRequest', $document);
     }
 
     public function testMachineErrorCatalogCoversEveryLiteralPublicExceptionCodeAndStatus(): void

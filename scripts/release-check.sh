@@ -17,6 +17,7 @@ pnpm install --frozen-lockfile
 pnpm typecheck
 pnpm test:unit
 pnpm build
+pnpm check:size
 git -C "$project_dir" diff --exit-code -- dist
 pnpm audit --audit-level=high --registry=https://registry.npmjs.org
 pnpm test:e2e

@@ -46,6 +46,7 @@ so_finder:
   cluster:
     state_service: 'app.sofinder_shared_state'
     chunk_upload_store_service: 'app.sofinder_shared_chunks' # optional
+    shared_preview_cache: true # only after mounting cache_dir/document-previews
 ```
 
 `state_service` automatically replaces metadata, request-gate, usage and metrics
@@ -86,8 +87,11 @@ exports scan count, scanned bytes and cumulative duration counters by result.
 - `GET /health` checks private runtime paths, built assets, image codecs,
   maintenance mode, every storage resource and tagged plugin checks. `down`
   returns HTTP 503; `degraded` remains HTTP 200.
+- `GET /live` only proves that PHP and the bundle initialized; it does not probe
+  storage, queues or external services.
 - `GET /metrics` exposes bounded Prometheus counters, storage latency totals and
-  observations, upload failures, limiter rejections and `sofinder_ready`.
+  observations, Office queue/conversion/cache activity, ClamAV timeouts, queue
+  backlog/failed gauges, upload failures, limiter rejections and `sofinder_ready`.
 - Every SoFinder response includes `X-Request-ID`. A safe incoming value is
   preserved; otherwise SoFinder creates one. Audit and failure logs include it.
 

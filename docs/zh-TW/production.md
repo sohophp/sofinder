@@ -36,6 +36,7 @@ so_finder:
   cluster:
     state_service: 'app.sofinder_shared_state'
     chunk_upload_store_service: 'app.sofinder_shared_chunks' # 選用
+    shared_preview_cache: true # 僅在共享掛載 cache_dir/document-previews 後設定
 ```
 
 `state_service` 自動替換 metadata、請求限流與配額 Store；`/health` 會執行原子讀寫探針。
@@ -67,7 +68,9 @@ so_finder:
 
 - `GET /health` 檢查私有執行目錄、建置資源、全部 Storage 及 Plugin Check；`down`
   回傳 HTTP 503，`degraded` 仍回傳 200。
-- `GET /metrics` 輸出有界的 Prometheus Counter 及 `sofinder_ready`。
+- `GET /live` 只確認 PHP Process 與 Bundle 已初始化，不探測 Storage、Queue 或外部服務。
+- `GET /metrics` 輸出有界的 Prometheus Counter、Office 排隊/轉換/快取、ClamAV Timeout、
+  Queue 積壓/失敗 Gauge 及 `sofinder_ready`。
 - 所有 SoFinder Response 帶有 `X-Request-ID`；安全的傳入值會保留，否則自動產生，
   Audit 與失敗 Log 會記錄相同 ID。
 
