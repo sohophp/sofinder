@@ -43,6 +43,7 @@ so_finder:
     view_switcher: true
     folder_tree: false # Initial UI preference; each browser can enable it in Settings.
     scale: standard    # compact, standard, large or xlarge; browser preference wins.
+    upload_conflict_strategy: ask # ask, rename, overwrite or skip; browser preference wins.
   maintenance:
     mode: inline       # inline, messenger, external or disabled
     min_interval_seconds: 300

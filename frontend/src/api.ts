@@ -1,4 +1,4 @@
-import type { ApiResponse, BatchResult, DocumentPreviewJob, Entry, ImageAction, ImageBatchResult, ImageCapabilities, ImageEditResult, ImagePreset, ImageInfo, MetadataState, PluginDescriptor, ResourceType, SecurityStatus, SoFinderConfig, TrashPage, UiScale } from "./types";
+import type { ApiResponse, BatchResult, DocumentPreviewJob, Entry, ImageAction, ImageBatchResult, ImageCapabilities, ImageEditResult, ImagePreset, ImageInfo, MetadataState, PluginDescriptor, ResourceType, SecurityStatus, SoFinderConfig, TrashPage } from "./types";
 
 export const isApiVersionSupported = (version: string): boolean => /^1(?:\.|$)/.test(version);
 
@@ -11,6 +11,7 @@ export class ApiError extends Error {
 
 interface UploadOptions {
   overwrite?: boolean;
+  autoRename?: boolean;
   signal?: AbortSignal;
   onProgress?: (percentage: number) => void;
 }
@@ -25,6 +26,7 @@ export interface PendingUploadSession {
   lastModified: number;
   total: number;
   overwrite: boolean;
+  autoRename: boolean;
   updatedAt: number;
 }
 
@@ -37,7 +39,7 @@ export class Api {
   }
 
   async configData() {
-    const data = await this.request<{ apiVersion: string; resources: ResourceType[]; plugins: PluginDescriptor[]; imagePresets: Record<string, ImagePreset>; imageCapabilities?: ImageCapabilities; featureAvailability?: SoFinderConfig["featureAvailability"]; uiDefaults?: { scale: UiScale }; signedUrls?: { enabled: boolean; defaultTtlSeconds: number; maxTtlSeconds: number } }>("/config");
+    const data = await this.request<{ apiVersion: string; resources: ResourceType[]; plugins: PluginDescriptor[]; imagePresets: Record<string, ImagePreset>; imageCapabilities?: ImageCapabilities; featureAvailability?: SoFinderConfig["featureAvailability"]; uiDefaults?: SoFinderConfig["uiDefaults"]; signedUrls?: { enabled: boolean; defaultTtlSeconds: number; maxTtlSeconds: number } }>("/config");
     if (!isApiVersionSupported(data.apiVersion)) {
       throw new ApiError(`SoFinder UI requires API 1.x; server reported ${data.apiVersion || "an unknown version"}.`, "incompatible_api_version", 426);
     }
@@ -106,6 +108,7 @@ export class Api {
     form.set("path", path);
     form.set("upload", file);
     if (options.overwrite) form.set("overwrite", "1");
+    if (options.autoRename) form.set("autoRename", "1");
 
     return new Promise<{ entry: Entry }>((resolve, reject) => {
       const request = new XMLHttpRequest();
@@ -154,9 +157,9 @@ export class Api {
   private async chunkUpload(resource: string, path: string, file: File, options: UploadOptions): Promise<{ entry: Entry }> {
     const chunkSize = 4_000_000;
     const total = Math.ceil(file.size / chunkSize);
-    const existing = this.findPendingUpload(resource, path, file, Boolean(options.overwrite), total);
+    const existing = this.findPendingUpload(resource, path, file, Boolean(options.overwrite), Boolean(options.autoRename), total);
     const uploadId = existing?.id || crypto.randomUUID();
-    const session: PendingUploadSession = existing || { id: uploadId, scope: this.base, resource, path, name: file.name, size: file.size, lastModified: file.lastModified, total, overwrite: Boolean(options.overwrite), updatedAt: Date.now() };
+    const session: PendingUploadSession = existing || { id: uploadId, scope: this.base, resource, path, name: file.name, size: file.size, lastModified: file.lastModified, total, overwrite: Boolean(options.overwrite), autoRename: Boolean(options.autoRename), updatedAt: Date.now() };
     this.savePendingUpload({ ...session, updatedAt: Date.now() });
     const cancel = () => { void fetch(`${this.base}/uploads/chunks/${encodeURIComponent(uploadId)}`, { method: "DELETE", headers: { "X-CSRF-TOKEN": this.config.csrfToken }, credentials: "same-origin", keepalive: true }); };
     options.signal?.addEventListener("abort", cancel, { once: true });
@@ -183,6 +186,7 @@ export class Api {
         form.set("resource", resource); form.set("path", path); form.set("name", file.name);
         form.set("uploadId", uploadId); form.set("index", String(index)); form.set("total", String(total));
         if (options.overwrite) form.set("overwrite", "1");
+        if (options.autoRename) form.set("autoRename", "1");
         form.set("chunk", file.slice(index * chunkSize, Math.min(file.size, (index + 1) * chunkSize)), `${file.name}.part`);
         const response = await fetch(this.base + "/uploads/chunks", { method: "POST", headers: { "Accept": "application/json", "X-CSRF-TOKEN": this.config.csrfToken }, body: form, credentials: "same-origin", signal: options.signal });
         const payload = await response.json() as ApiResponse<{ complete: boolean; entry?: Entry }>;
@@ -209,12 +213,12 @@ export class Api {
   pendingUploads(): PendingUploadSession[] {
     try {
       const parsed = JSON.parse(localStorage.getItem(this.uploadStorageKey) || "[]") as PendingUploadSession[];
-      return Array.isArray(parsed) ? parsed.filter(item => item.scope === this.base && Date.now() - item.updatedAt < 86_400_000) : [];
+      return Array.isArray(parsed) ? parsed.filter(item => item.scope === this.base && Date.now() - item.updatedAt < 86_400_000).map(item => ({ ...item, autoRename: item.autoRename === true })) : [];
     } catch { return []; }
   }
 
-  findPendingUpload(resource: string, path: string, file: File, overwrite: boolean, total?: number): PendingUploadSession | undefined {
-    return this.pendingUploads().find(item => item.resource === resource && item.path === path && item.name === file.name && item.size === file.size && item.lastModified === file.lastModified && item.overwrite === overwrite && (total === undefined || item.total === total));
+  findPendingUpload(resource: string, path: string, file: File, overwrite: boolean, autoRename = false, total?: number): PendingUploadSession | undefined {
+    return this.pendingUploads().find(item => item.resource === resource && item.path === path && item.name === file.name && item.size === file.size && item.lastModified === file.lastModified && item.overwrite === overwrite && item.autoRename === autoRename && (total === undefined || item.total === total));
   }
 
   private savePendingUpload(session: PendingUploadSession) {

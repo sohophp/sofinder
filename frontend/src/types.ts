@@ -45,10 +45,12 @@ export interface SoFinderConfig {
     languageSwitcher?: boolean;
     viewSwitcher?: boolean;
     fullTools?: boolean;
+    uploadConflictStrategy?: UploadConflictStrategy;
   };
 }
 
 export type UiScale = "compact" | "standard" | "large" | "xlarge";
+export type UploadConflictStrategy = "ask" | "rename" | "overwrite" | "skip";
 
 export interface PluginDescriptor {
   name: string;

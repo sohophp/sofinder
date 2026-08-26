@@ -41,3 +41,4 @@ so_finder:
     search: true
     language_switcher: true
     view_switcher: true
+    upload_conflict_strategy: ask # ask, rename, overwrite or skip

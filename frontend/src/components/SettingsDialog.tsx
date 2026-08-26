@@ -1,6 +1,6 @@
 import type { MessageKey } from "../i18n";
 import type { ResourceType } from "../types";
-import type { UiScale } from "../types";
+import type { UiScale, UploadConflictStrategy } from "../types";
 import { Modal } from "./Modal";
 
 export interface ToolPreferences { resize: boolean; crop: boolean; rotate: boolean; presets: boolean; process: boolean; batchRename: boolean }
@@ -9,7 +9,7 @@ export interface ListColumnPreferences { size: boolean; modified: boolean; type:
 export type EntrySize = "small" | "medium" | "large";
 export interface ViewSizePreferences { grid: EntrySize; list: EntrySize }
 
-export function SettingsDialog({ resource, tools, features, columns, viewSizes, availability, scale, translate, onToolChange, onFeatureChange, onColumnChange, onViewSizeChange, onScaleChange, onClose }: {
+export function SettingsDialog({ resource, tools, features, columns, viewSizes, availability, scale, uploadConflictStrategy, translate, onToolChange, onFeatureChange, onColumnChange, onViewSizeChange, onScaleChange, onUploadConflictStrategyChange, onClose }: {
   resource?: ResourceType;
   tools: ToolPreferences;
   features: FeaturePreferences;
@@ -21,12 +21,14 @@ export function SettingsDialog({ resource, tools, features, columns, viewSizes, 
     imageProcessing?: boolean;
   };
   scale: UiScale;
+  uploadConflictStrategy: UploadConflictStrategy;
   translate: (key: MessageKey) => string;
   onToolChange: (name: keyof ToolPreferences, enabled: boolean) => void;
   onFeatureChange: (name: keyof FeaturePreferences, enabled: boolean) => void;
   onColumnChange: (name: keyof ListColumnPreferences, enabled: boolean) => void;
   onViewSizeChange: (view: keyof ViewSizePreferences, size: EntrySize) => void;
   onScaleChange: (scale: UiScale) => void;
+  onUploadConflictStrategyChange: (strategy: UploadConflictStrategy) => void;
   onClose: () => void;
 }) {
   const t = translate;
@@ -36,6 +38,10 @@ export function SettingsDialog({ resource, tools, features, columns, viewSizes, 
     <h3>{t("interfaceScale")}</h3>
     <div className="sf-scale-options" role="radiogroup" aria-label={t("interfaceScale")}>
       {(["compact", "standard", "large", "xlarge"] as const).map(value => <label key={value}><input type="radio" name="sofinder-scale" value={value} checked={scale === value} onChange={() => onScaleChange(value)}/><span>{t(value === "compact" ? "scaleCompact" : value === "standard" ? "scaleStandard" : value === "large" ? "scaleLarge" : "scaleExtraLarge")}</span></label>)}
+    </div>
+    <h3>{t("uploadConflictSetting")}</h3>
+    <div className="sf-scale-options" role="radiogroup" aria-label={t("uploadConflictSetting")}>
+      {(["ask", "rename", "overwrite", "skip"] as const).map(strategy => <label key={strategy}><input type="radio" name="sofinder-upload-conflict" value={strategy} checked={uploadConflictStrategy === strategy} onChange={() => onUploadConflictStrategyChange(strategy)}/><span>{t(strategy === "ask" ? "uploadConflictAsk" : strategy === "rename" ? "uploadConflictRename" : strategy === "overwrite" ? "uploadConflictOverwrite" : "uploadConflictSkip")}</span></label>)}
     </div>
     {(["grid", "list"] as const).map(view => <div key={view}>
       <h3>{t(view === "grid" ? "gridItemSize" : "listRowSize")}</h3>

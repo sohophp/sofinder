@@ -195,11 +195,11 @@ Send `multipart/form-data` fields `resource`, `path`, `upload` and optional `ove
 
 Use `POST /api/uploads/chunks` with multipart fields:
 
-- `resource`, `path`, `name` and optional `overwrite=1`;
+- `resource`, `path`, `name` and optional `overwrite=1` or `autoRename=1`;
 - `uploadId`, a 16–80 character URL-safe identifier;
 - zero-based `index`, fixed `total`, and file field `chunk`.
 
-An incomplete response is `{"complete":false}`. The final chunk returns `{"complete":true,"entry":{...}}` with HTTP 201. Session metadata is immutable; retries must use the same resource, path, name, overwrite and total.
+An incomplete response is `{"complete":false}`. The final chunk returns `{"complete":true,"entry":{...}}` with HTTP 201. Session metadata is immutable; retries must use the same resource, path, name, overwrite, auto-rename and total.
 
 - `GET /api/uploads/chunks/{id}` returns `id`, `total`, received indexes, `complete`, `resource`, `path`, `name`, `overwrite` and `updatedAt` for the current actor.
 - `DELETE /api/uploads/chunks/{id}` cancels and discards the session; it requires CSRF.

@@ -31,6 +31,6 @@ UI hints; the server repeats authorization for every operation.
 
 Chunk uploads expose `GET /api/uploads/chunks/{id}` for the current actor. It
 returns received chunk indexes and immutable session metadata. A resumed upload
-must use the original resource, path, name, overwrite mode and chunk count.
+must use the original resource, path, name, overwrite/auto-rename mode and chunk count.
 Sessions expire after 24 hours and can be cleaned with
 `sofinder:uploads:cleanup`.

@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Modal } from "./Modal";
 import { entryNameIssue } from "../nameValidation";
+import type { UploadConflictStrategy } from "../types";
 
 export function TextDialog({ title, label, initialValue = "", maximum, extension = "", invalidNameLabel, confirmLabel, cancelLabel, closeLabel, onConfirm, onClose }: {
   title: string; label: string; initialValue?: string; maximum: number; extension?: string;
@@ -21,5 +22,19 @@ export function ConfirmDialog({ title, message, detail, confirmLabel, cancelLabe
 }) {
   return <Modal title={title} closeLabel={closeLabel} onClose={onClose} className="sf-confirm-modal" footer={<><span/><button onClick={onClose}>{cancelLabel}</button><button className={danger ? "danger" : "primary"} onClick={onConfirm}>{confirmLabel}</button></>}>
     <div className="sf-form-body"><p>{message}</p>{detail && <small>{detail}</small>}</div>
+  </Modal>;
+}
+
+export function UploadConflictDialog({ fileName, title, renameLabel, overwriteLabel, skipLabel, closeLabel, onChoose }: {
+  fileName: string;
+  title: string;
+  renameLabel: string;
+  overwriteLabel: string;
+  skipLabel: string;
+  closeLabel: string;
+  onChoose: (strategy: Exclude<UploadConflictStrategy, "ask">) => void;
+}) {
+  return <Modal title={title} closeLabel={closeLabel} onClose={() => onChoose("skip")} className="sf-confirm-modal" footer={<><button onClick={() => onChoose("skip")}>{skipLabel}</button><button className="primary" onClick={() => onChoose("rename")}>{renameLabel}</button><button className="danger" onClick={() => onChoose("overwrite")}>{overwriteLabel}</button></>}>
+    <div className="sf-form-body"><p>{fileName}</p></div>
   </Modal>;
 }

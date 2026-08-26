@@ -159,6 +159,7 @@ final readonly class ChunkUploadManager implements ChunkUploadStoreInterface
             'path' => (string) ($context['path'] ?? ''),
             'name' => (string) ($context['name'] ?? ''),
             'overwrite' => (bool) ($context['overwrite'] ?? false),
+            'autoRename' => (bool) ($context['autoRename'] ?? false),
         ];
         $file = $directory . '/session.json';
         if (is_file($file)) {
@@ -176,7 +177,7 @@ final readonly class ChunkUploadManager implements ChunkUploadStoreInterface
         @chmod($file, 0660);
     }
 
-    /** @return array{id:string,total:int,resource:string,path:string,name:string,overwrite:bool} */
+    /** @return array{id:string,total:int,resource:string,path:string,name:string,overwrite:bool,autoRename:bool} */
     private function readManifest(string $directory): array
     {
         $contents = @file_get_contents($directory . '/session.json');
@@ -192,6 +193,7 @@ final readonly class ChunkUploadManager implements ChunkUploadStoreInterface
             'path' => (string) $data['path'],
             'name' => (string) $data['name'],
             'overwrite' => (bool) $data['overwrite'],
+            'autoRename' => (bool) ($data['autoRename'] ?? false),
         ];
     }
 

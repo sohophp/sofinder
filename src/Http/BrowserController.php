@@ -23,7 +23,7 @@ final readonly class BrowserController
         private CsrfTokenManagerInterface $csrf,
         private string $assetVersion,
         private Theme $theme,
-        /** @var array{mode:string,header:bool,logo:bool,search:bool,language_switcher:bool,view_switcher:bool,folder_tree:bool,scale:string} */
+        /** @var array{mode:string,header:bool,logo:bool,search:bool,language_switcher:bool,view_switcher:bool,folder_tree:bool,scale:string,upload_conflict_strategy?:string} */
         private array $ui,
         private ?FeaturePolicy $features = null,
         private ?AuthorizationCheckerInterface $authorization = null,
@@ -72,7 +72,11 @@ final readonly class BrowserController
             'featureAvailability' => $this->features?->browserAvailability() ?? (new FeaturePolicy())->browserAvailability(),
             'securityStatusAvailable' => ($this->features?->enabled('security_status') ?? true)
                 && ($this->securityStatusRoles === [] || ($this->authorization !== null && (bool) array_filter($this->securityStatusRoles, $this->authorization->isGranted(...)))),
-            'uiDefaults' => ['scale' => (string) ($this->ui['scale'] ?? 'standard'), ...$ui],
+            'uiDefaults' => [
+                'scale' => (string) ($this->ui['scale'] ?? 'standard'),
+                'uploadConflictStrategy' => (string) ($this->ui['upload_conflict_strategy'] ?? 'ask'),
+                ...$ui,
+            ],
         ];
         $encoded = htmlspecialchars(json_encode($config, JSON_THROW_ON_ERROR | JSON_UNESCAPED_SLASHES), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
         $version = rawurlencode($this->assetVersion);

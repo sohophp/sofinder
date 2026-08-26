@@ -1,4 +1,4 @@
-export type UploadStatus = "queued" | "uploading" | "done" | "error" | "cancelled";
+export type UploadStatus = "queued" | "uploading" | "done" | "skipped" | "error" | "cancelled";
 export interface UploadTask { id: string; name: string; progress: number; status: UploadStatus; message?: string }
 
 export function UploadQueue({ tasks, collapsed, labels, onToggle, onCancel, onCancelAll, onClearFinished, onRetry, onRemove }: {

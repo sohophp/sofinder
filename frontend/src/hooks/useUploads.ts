@@ -3,19 +3,21 @@ import { Api, ApiError } from "../api";
 import type { UploadTask } from "../components/UploadQueue";
 import type { MessageKey } from "../i18n";
 import { entryNameIssue } from "../nameValidation";
-import type { ResourceType } from "../types";
+import type { ResourceType, UploadConflictStrategy } from "../types";
 
 interface Confirmation { title: string; message: string; detail?: string; danger?: boolean }
 
-export function useUploads({ api, resource, path, currentResource, currentDepth, autoCollapse, t, ask, reload, setNotice, report }: {
+export function useUploads({ api, resource, path, currentResource, currentDepth, autoCollapse, conflictStrategy, t, ask, chooseConflict, reload, setNotice, report }: {
   api: Api;
   resource: string;
   path: string;
   currentResource?: ResourceType;
   currentDepth: number;
   autoCollapse: boolean;
+  conflictStrategy: UploadConflictStrategy;
   t: (key: MessageKey) => string;
   ask: (confirmation: Confirmation) => Promise<boolean>;
+  chooseConflict: (fileName: string) => Promise<Exclude<UploadConflictStrategy, "ask">>;
   reload: () => Promise<void>;
   setNotice: (notice: string) => void;
   report: (error: unknown) => void;
@@ -27,6 +29,14 @@ export function useUploads({ api, resource, path, currentResource, currentDepth,
   const controllers = useRef(new Map<string, AbortController>());
   const retryData = useRef(new Map<string, { file: File; targetPath: string }>());
   const sequence = useRef(0);
+  const conflictQueue = useRef<Promise<void>>(Promise.resolve());
+
+  const resolveConflict = (fileName: string): Promise<Exclude<UploadConflictStrategy, "ask">> => {
+    if (conflictStrategy !== "ask") return Promise.resolve(conflictStrategy);
+    const choice = conflictQueue.current.then(() => chooseConflict(fileName));
+    conflictQueue.current = choice.then(() => undefined, () => undefined);
+    return choice;
+  };
 
   useEffect(() => {
     const interrupted = api.pendingUploads().map(session => ({ id: `pending-${session.id}`, name: session.name, progress: 0, status: "error" as const, message: t("uploadReselectToResume") }));
@@ -72,16 +82,23 @@ export function useUploads({ api, resource, path, currentResource, currentDepth,
         const job = jobs[cursor++];
         if (job.controller.signal.aborted) { controllers.current.delete(job.id); continue; }
         update(job.id, { status: "uploading", progress: 0, message: undefined });
-        let overwrite = false;
+        let overwrite = conflictStrategy === "overwrite";
+        let autoRename = conflictStrategy === "rename";
         try {
           for (;;) {
             try {
-              await api.upload(resource, targetPath, job.file, { overwrite, signal: job.controller.signal, onProgress: progress => update(job.id, { progress }) });
+              await api.upload(resource, targetPath, job.file, { overwrite, autoRename, signal: job.controller.signal, onProgress: progress => update(job.id, { progress }) });
               update(job.id, { status: "done", progress: 100 });
               break;
             } catch (error) {
-              if (error instanceof ApiError && error.code === "conflict" && !overwrite && await ask({ title: t("replaceFile"), message: job.file.name, detail: t("confirmImageOverwrite") })) {
-                overwrite = true;
+              if (error instanceof ApiError && error.code === "conflict" && !overwrite && !autoRename) {
+                const strategy = await resolveConflict(job.file.name);
+                if (strategy === "skip") {
+                  update(job.id, { status: "skipped", progress: 0, message: t("uploadConflictSkip") });
+                  break;
+                }
+                overwrite = strategy === "overwrite";
+                autoRename = strategy === "rename";
                 update(job.id, { progress: 0 });
                 continue;
               }

@@ -39,6 +39,7 @@ so_finder:
     view_switcher: true
     folder_tree: false # 初始偏好；每个浏览器可在配置中自行开启。
     scale: standard    # compact、standard、large、xlarge；浏览器偏好优先。
+    upload_conflict_strategy: ask # ask、rename、overwrite、skip；浏览器偏好优先。
   maintenance:
     mode: inline       # inline、messenger、external、disabled
     min_interval_seconds: 300

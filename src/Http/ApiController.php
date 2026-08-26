@@ -29,7 +29,7 @@ final readonly class ApiController
         private array $imagePresets = [],
         private ?MetadataManager $metadata = null,
         private ?ImageCapabilityProviderInterface $imageCapabilities = null,
-        /** @var array{mode?:string,header?:bool,logo?:bool,search?:bool,language_switcher?:bool,view_switcher?:bool,folder_tree?:bool,scale?:string} */
+        /** @var array{mode?:string,header?:bool,logo?:bool,search?:bool,language_switcher?:bool,view_switcher?:bool,folder_tree?:bool,scale?:string,upload_conflict_strategy?:string} */
         private array $ui = [],
         private ?FeaturePolicy $features = null,
         private bool $signedUrlsEnabled = false,
@@ -57,6 +57,7 @@ final readonly class ApiController
                 'search' => (bool) ($this->ui['search'] ?? true),
                 'languageSwitcher' => (bool) ($this->ui['language_switcher'] ?? true),
                 'viewSwitcher' => (bool) ($this->ui['view_switcher'] ?? true),
+                'uploadConflictStrategy' => (string) ($this->ui['upload_conflict_strategy'] ?? 'ask'),
             ],
             'featureAvailability' => $this->featurePolicy()->browserAvailability(),
             'signedUrls' => [

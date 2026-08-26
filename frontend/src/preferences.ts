@@ -1,4 +1,4 @@
-import type { UiScale } from "./types";
+import type { UiScale, UploadConflictStrategy } from "./types";
 import type { EntrySize, FeaturePreferences, ListColumnPreferences, ToolPreferences, ViewSizePreferences } from "./components/SettingsDialog";
 
 export const defaultTools: ToolPreferences = { resize: false, crop: false, rotate: false, presets: false, process: false, batchRename: false };
@@ -27,6 +27,11 @@ export const loadViewSizes = (): ViewSizePreferences => {
 export const loadScale = (fallback: UiScale): UiScale => {
   const saved = localStorage.getItem("sofinder.uiScale.v1");
   return saved === "compact" || saved === "standard" || saved === "large" || saved === "xlarge" ? saved : fallback;
+};
+
+export const loadUploadConflictStrategy = (fallback: UploadConflictStrategy): UploadConflictStrategy => {
+  const saved = localStorage.getItem("sofinder.uploadConflictStrategy.v1");
+  return saved === "ask" || saved === "rename" || saved === "overwrite" || saved === "skip" ? saved : fallback;
 };
 
 export const columnLimits = { left: { initial: 220, min: 110, max: 330 }, right: { initial: 270, min: 135, max: 405 } } as const;

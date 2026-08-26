@@ -167,6 +167,7 @@ final class Configuration implements ConfigurationInterface
                         ->booleanNode('view_switcher')->defaultTrue()->end()
                         ->booleanNode('folder_tree')->defaultFalse()->end()
                         ->enumNode('scale')->values(['compact', 'standard', 'large', 'xlarge'])->defaultValue('standard')->end()
+                        ->enumNode('upload_conflict_strategy')->values(['ask', 'rename', 'overwrite', 'skip'])->defaultValue('ask')->end()
                     ->end()
                 ->end()
                 ->arrayNode('features')

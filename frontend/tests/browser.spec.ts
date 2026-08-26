@@ -780,6 +780,66 @@ test("exposes separate file and folder upload controls", async ({ page }) => {
   await expect(page.locator('input[type="file"][webkitdirectory]')).toHaveCount(1);
 });
 
+test("asks the user to rename, overwrite or skip a same-name upload", async ({ page }) => {
+  let attempts = 0;
+  await page.route("**/sofinder/api/uploads", async route => {
+    attempts++;
+    if (attempts === 1) {
+      await route.fulfill({ status: 409, json: { success: false, error: { code: "conflict", message: "Conflict" } } });
+      return;
+    }
+    expect(route.request().postData()).toContain('name="autoRename"');
+    await route.fulfill({ status: 201, json: { success: true, data: { entry: { path: "guide(1).txt", name: "guide(1).txt", directory: false, size: 3, modifiedAt: 5, mimeType: "text/plain", url: "/uploads/editor/files/guide(1).txt", capabilities: {} } } } });
+  });
+
+  await page.locator('input[type="file"]:not([webkitdirectory])').setInputFiles({ name: "guide.txt", mimeType: "text/plain", buffer: Buffer.from("new") });
+  const conflict = page.getByRole("dialog", { name: "已存在同名文件" });
+  await expect(conflict.getByRole("button", { name: "自动改名" })).toBeVisible();
+  await expect(conflict.getByRole("button", { name: "覆盖" })).toBeVisible();
+  await expect(conflict.getByRole("button", { name: "跳过" })).toBeVisible();
+  await conflict.getByRole("button", { name: "自动改名" }).click();
+  await expect(page.getByText("已完成", { exact: true })).toBeVisible();
+  expect(attempts).toBe(2);
+});
+
+test("lets each user configure the default same-name upload strategy", async ({ page }) => {
+  await page.getByRole("button", { name: "更多操作" }).click();
+  await page.getByRole("menuitem", { name: "设置" }).click();
+  const settings = page.getByRole("dialog", { name: "设置" });
+  await expect(settings.getByRole("radio", { name: "每次由我选择" })).toBeChecked();
+  await settings.getByRole("radio", { name: "跳过" }).check();
+  await expect.poll(() => page.evaluate(() => localStorage.getItem("sofinder.uploadConflictStrategy.v1"))).toBe("skip");
+});
+
+test("marks a same-name upload as skipped without retrying it", async ({ page }) => {
+  let attempts = 0;
+  await page.route("**/sofinder/api/uploads", async route => {
+    attempts++;
+    await route.fulfill({ status: 409, json: { success: false, error: { code: "conflict", message: "Conflict" } } });
+  });
+  await page.locator('input[type="file"]:not([webkitdirectory])').setInputFiles({ name: "guide.txt", mimeType: "text/plain", buffer: Buffer.from("new") });
+  await page.getByRole("dialog", { name: "已存在同名文件" }).getByRole("button", { name: "跳过" }).click();
+  await expect(page.getByText("已跳过", { exact: true }).first()).toBeVisible();
+  expect(attempts).toBe(1);
+});
+
+test("uses a configured overwrite strategy on the first request", async ({ page }) => {
+  await page.getByRole("button", { name: "更多操作" }).click();
+  await page.getByRole("menuitem", { name: "设置" }).click();
+  const settings = page.getByRole("dialog", { name: "设置" });
+  await settings.getByRole("radio", { name: "覆盖" }).check();
+  await settings.getByRole("button", { name: "完成" }).click();
+  let attempts = 0;
+  await page.route("**/sofinder/api/uploads", async route => {
+    attempts++;
+    expect(route.request().postData()).toContain('name="overwrite"');
+    await route.fulfill({ status: 201, json: { success: true, data: { entry: { path: "guide.txt", name: "guide.txt", directory: false, size: 3, modifiedAt: 5, mimeType: "text/plain", url: "/uploads/editor/files/guide.txt", capabilities: {} } } } });
+  });
+  await page.locator('input[type="file"]:not([webkitdirectory])').setInputFiles({ name: "guide.txt", mimeType: "text/plain", buffer: Buffer.from("new") });
+  await expect(page.getByText("已完成", { exact: true })).toBeVisible();
+  expect(attempts).toBe(1);
+});
+
 test("previews a folder upload before creating directories", async ({ page }) => {
   await page.locator('input[type="file"][webkitdirectory]').evaluate((input: HTMLInputElement) => {
     const file = new File(["preview"], "guide.txt", { type: "text/plain" });

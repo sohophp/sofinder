@@ -1,8 +1,8 @@
 import { lazy, Suspense, useCallback, useEffect, useId, useMemo, useRef, useState } from "react";
 import { Api, ApiError } from "./api";
 import { translator, type Language } from "./i18n";
-import type { Entry, ImageCapabilities, ImageInfo, ImagePreset, MetadataState, PluginDescriptor, PluginUiAction, ResourceType, SoFinderConfig, UiScale } from "./types";
-import { ConfirmDialog, TextDialog } from "./components/Dialogs";
+import type { Entry, ImageCapabilities, ImageInfo, ImagePreset, MetadataState, PluginDescriptor, PluginUiAction, ResourceType, SoFinderConfig, UiScale, UploadConflictStrategy } from "./types";
+import { ConfirmDialog, TextDialog, UploadConflictDialog } from "./components/Dialogs";
 import { ContextMenu } from "./components/ContextMenu";
 import { FolderTree } from "./components/FolderTree";
 import { Modal } from "./components/Modal";
@@ -14,7 +14,7 @@ import { DetailsPanel } from "./components/DetailsPanel";
 import type { EntrySize, FeaturePreferences, ListColumnPreferences, ToolPreferences, ViewSizePreferences } from "./components/SettingsDialog";
 import { UiIcon, type UiIconName } from "./components/UiIcon";
 import { entryNameIssue } from "./nameValidation";
-import { clampPageSize, columnLimits, defaultFeatures, defaultFeatureAvailability, defaultListColumns, loadColumnWidth, loadPreferences, loadScale, loadToolPreferences, loadViewSizes, pageSizeLimits } from "./preferences";
+import { clampPageSize, columnLimits, defaultFeatures, defaultFeatureAvailability, defaultListColumns, loadColumnWidth, loadPreferences, loadScale, loadToolPreferences, loadUploadConflictStrategy, loadViewSizes, pageSizeLimits } from "./preferences";
 import { useEntrySelection } from "./hooks/useEntrySelection";
 import { useBrowserState, type SortMode, type ViewMode } from "./hooks/useBrowserState";
 import { useBatchState } from "./hooks/useBatchState";
@@ -68,11 +68,13 @@ export default function App({ config }: { config: SoFinderConfig }) {
   const [securityStatusOpen, setSecurityStatusOpen] = useState(false);
   const [utilityOpen, setUtilityOpen] = useState(false);
   const [uiScale, setUiScale] = useState<UiScale>(() => loadScale(config.uiDefaults?.scale ?? "standard"));
+  const [uploadConflictStrategy, setUploadConflictStrategy] = useState<UploadConflictStrategy>(() => loadUploadConflictStrategy(config.uiDefaults.uploadConflictStrategy ?? "ask"));
   const { destinationDialog, setDestinationDialog, bulkRenameOpen, setBulkRenameOpen } = useBatchState();
   const [cropOpen, setCropOpen] = useState(false);
   const [imageProcessOpen, setImageProcessOpen] = useState(false);
   const [textDialog, setTextDialog] = useState<TextDialogState | null>(null);
   const [confirmDialog, setConfirmDialog] = useState<ConfirmState | null>(null);
+  const [uploadConflictFile, setUploadConflictFile] = useState<string | null>(null);
   const [trashOpen, setTrashOpen] = useState(false);
   const [tagsOpen, setTagsOpen] = useState(false);
   const [contextMenu, setContextMenu] = useState<{ x: number; y: number; entry: Entry } | null>(null);
@@ -87,6 +89,7 @@ export default function App({ config }: { config: SoFinderConfig }) {
   const [leftWidth, setLeftWidth] = useState(() => loadColumnWidth("left"));
   const [rightWidth, setRightWidth] = useState(() => loadColumnWidth("right"));
   const confirmResolver = useRef<((answer: boolean) => void) | null>(null);
+  const uploadConflictResolver = useRef<((strategy: Exclude<UploadConflictStrategy, "ask">) => void) | null>(null);
   const longPress = useRef<number | null>(null);
   const columnDrag = useRef<{ side: "left" | "right"; startX: number; startWidth: number; currentWidth: number; element: HTMLDivElement } | null>(null);
 
@@ -113,6 +116,10 @@ export default function App({ config }: { config: SoFinderConfig }) {
   }, [uiScale]);
 
   useEffect(() => {
+    localStorage.setItem("sofinder.uploadConflictStrategy.v1", uploadConflictStrategy);
+  }, [uploadConflictStrategy]);
+
+  useEffect(() => {
     localStorage.setItem("sofinder.language", language);
     document.documentElement.lang = language === "zh-cn" ? "zh-CN" : language === "zh-tw" ? "zh-TW" : "en";
   }, [language]);
@@ -128,6 +135,17 @@ export default function App({ config }: { config: SoFinderConfig }) {
     confirmResolver.current = null;
     setConfirmDialog(null);
     resolve?.(answer);
+  };
+  const chooseUploadConflict = useCallback((fileName: string) => new Promise<Exclude<UploadConflictStrategy, "ask">>(resolve => {
+    uploadConflictResolver.current?.("skip");
+    uploadConflictResolver.current = resolve;
+    setUploadConflictFile(fileName);
+  }), []);
+  const answerUploadConflict = (strategy: Exclude<UploadConflictStrategy, "ask">) => {
+    const resolve = uploadConflictResolver.current;
+    uploadConflictResolver.current = null;
+    setUploadConflictFile(null);
+    resolve?.(strategy);
   };
   const load = useCallback(async (nextResource = resource, nextPath = path, term = search, nextOffset = offset, nextSort = sort, nextDirection = direction, nextSearchMode = searchMode, cursor: string | null = pageCursor) => {
     if (!nextResource) return;
@@ -188,7 +206,7 @@ export default function App({ config }: { config: SoFinderConfig }) {
   const currentResource = resources.find(item => item.name === resource);
   const currentDepth = path === "" ? 0 : path.split("/").length;
   const { uploads, uploadsCollapsed, setUploadsCollapsed, uploadInput, directoryUploadInput, upload, uploadTo, uploadDirectory, cancelUpload, cancelAllUploads, removeUploadTask, retryUpload, clearFinishedUploads } = useUploads({
-    api, resource, path, currentResource, currentDepth, autoCollapse: features.autoCollapseUploads, t, ask, reload: async () => { await load(); }, setNotice, report,
+    api, resource, path, currentResource, currentDepth, autoCollapse: features.autoCollapseUploads, conflictStrategy: uploadConflictStrategy, t, ask, chooseConflict: chooseUploadConflict, reload: async () => { await load(); }, setNotice, report,
   });
 
   useEffect(() => {
@@ -829,12 +847,21 @@ export default function App({ config }: { config: SoFinderConfig }) {
       {showDetails && <><div className="sf-column-resizer right" role="separator" tabIndex={0} aria-label={t("resizeRightPanel")} aria-orientation="vertical" aria-valuemin={columnLimits.right.min} aria-valuemax={columnLimits.right.max} aria-valuenow={rightWidth} onPointerDown={event => beginColumnResize("right", event)} onPointerMove={moveColumnResize} onPointerUp={endColumnResize} onPointerCancel={endColumnResize} onKeyDown={event => resizeColumnWithKeyboard("right", event)} onDoubleClick={() => setColumnWidth("right", columnLimits.right.initial, true)}/><DetailsPanel api={api} resource={resource} selectedEntries={selectedEntries} selected={selected} imageInfo={imageInfo} metadata={metadata} showTags={features.tags} previewImage={canPreviewImage(selected)} selectMode={false} selectAllowed={canChooseEntry(selected)} labels={{ details: t("details"), selected: t("selectedCount"), type: t("type"), folder: t("folder"), file: t("file"), size: t("size"), dimensions: t("dimensions"), modified: t("modified"), location: t("location"), select: t("select"), download: t("download"), copyUrl: t("copyUrl"), unsupportedWebImage: t("webImageUnsupported") }} formatDate={timestamp => dateFormatter.format(timestamp * 1000)} onChoose={choose} onOpenUrl={openUrlDialog} pluginActions={selected && pluginActions.filter(action => action.slot === "details" && pluginActionAvailable(action, selected)).map(action => <button key={`${action.plugin}:${action.id}`} onClick={() => openPluginAction(action, selected)}>{pluginLabel(action, language)}</button>)}/></>}
     </div>
     {uiMode === "picker" && selected && !selected.directory && <div className="sf-picker-bar"><div><strong>{selected.name}</strong><small>{formatSize(selected.size)}</small></div>{!canChooseEntry(selected) && <span role="status">{t("webImageUnsupported")}</span>}<button className="primary" disabled={!canChooseEntry(selected)} onClick={() => void choose()}>{t("select")}</button></div>}
-    {settingsOpen && <Suspense fallback={<div className="sf-state">{t("loading")}</div>}><SettingsDialog resource={currentResource} tools={tools} features={features} columns={listColumns} viewSizes={viewSizes} availability={featureAvailability} scale={uiScale} translate={t} onToolChange={updateTool} onFeatureChange={updateFeature} onColumnChange={updateListColumn} onViewSizeChange={updateViewSize} onScaleChange={setUiScale} onClose={() => setSettingsOpen(false)}/></Suspense>}
+    {settingsOpen && <Suspense fallback={<div className="sf-state">{t("loading")}</div>}><SettingsDialog resource={currentResource} tools={tools} features={features} columns={listColumns} viewSizes={viewSizes} availability={featureAvailability} scale={uiScale} uploadConflictStrategy={uploadConflictStrategy} translate={t} onToolChange={updateTool} onFeatureChange={updateFeature} onColumnChange={updateListColumn} onViewSizeChange={updateViewSize} onScaleChange={setUiScale} onUploadConflictStrategyChange={setUploadConflictStrategy} onClose={() => setSettingsOpen(false)}/></Suspense>}
     {securityStatusOpen && <Suspense fallback={<div className="sf-state">{t("loading")}</div>}><SecurityStatusDialog api={api} formatDate={timestamp => dateFormatter.format(timestamp * 1000)} labels={{ title: t("securityStatus"), close: t("close"), loading: t("loading"), enabled: t("malwareScanningEnabled"), disabled: t("malwareScanningDisabled"), provider: t("scanProvider"), service: t("serviceStatus"), scans: t("scanHistory"), passed: t("scanPassed"), quarantined: t("scanQuarantined"), failed: t("scanFailed"), pending: t("scanPending"), recent: t("recentScans"), none: t("noScans") }} onClose={() => setSecurityStatusOpen(false)}/></Suspense>}
     {destinationDialog && <Suspense fallback={<div className="sf-state">{t("loading")}</div>}><DestinationDialog state={destinationDialog} unsafe={destinationUnsafe} translate={t} onBrowse={(operation, destination) => void browseDestination(operation, destination)} onConfirm={(operation, destination) => void transfer(operation, destination)} onClose={() => setDestinationDialog(null)}/></Suspense>}
     {bulkRenameOpen && featureAvailability.batchRename !== false && tools.batchRename && currentResource && <Suspense fallback={<div className="sf-state">{t("loading")}</div>}><BulkRenameDialog entries={selectedEntries} maximum={currentResource.maxFileNameLength} labels={{ title: t("batchRename"), pattern: t("renamePattern"), hint: t("renamePatternHint"), oldName: t("oldName"), newName: t("newName"), invalid: t("invalidEntryName"), duplicate: t("duplicateRename"), cancel: t("cancel"), save: t("rename"), close: t("close") }} onClose={() => setBulkRenameOpen(false)} onSave={renames => void batchRename(renames)}/></Suspense>}
     {textDialog && <TextDialog title={textDialog.title} label={textDialog.label} initialValue={textDialog.initial} maximum={textDialog.maximum} extension={textDialog.extension} invalidNameLabel={t("invalidEntryName")} confirmLabel={t("confirm")} cancelLabel={t("cancel")} closeLabel={t("close")} onConfirm={value => void submitTextDialog(value)} onClose={() => setTextDialog(null)}/>}
     {confirmDialog && <ConfirmDialog {...confirmDialog} confirmLabel={t("confirm")} cancelLabel={t("cancel")} closeLabel={t("close")} onConfirm={() => answerConfirm(true)} onClose={() => answerConfirm(false)}/>}
+    {uploadConflictFile && <UploadConflictDialog
+      fileName={uploadConflictFile}
+      title={t("replaceFile")}
+      renameLabel={t("uploadConflictRename")}
+      overwriteLabel={t("uploadConflictOverwrite")}
+      skipLabel={t("uploadConflictSkip")}
+      closeLabel={t("close")}
+      onChoose={answerUploadConflict}
+    />}
     {trashOpen && <Suspense fallback={<div className="sf-state">{t("loading")}</div>}><TrashDialog
       api={api} resource={resource} locale={language}
       labels={{ title: t("trash"), close: t("close"), cancel: t("cancel"), empty: t("trashEmpty"), restore: t("restore"), permanentDelete: t("permanentDelete"), expires: t("expires"), conflict: t("restoreConflict"), overwrite: t("restoreOverwrite"), autoRename: t("restoreAutoRename"), usage: t("trashUsage"), items: t("items"), previous: t("previous"), next: t("next"), search: t("searchTrash") }}

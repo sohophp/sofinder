@@ -47,18 +47,33 @@ final readonly class ChunkUploadController
                 $request->request->getInt('total'),
                 $stream,
                 $limit,
-                ['resource' => $resource, 'path' => $path, 'name' => $name, 'overwrite' => $request->request->getBoolean('overwrite')],
+                [
+                    'resource' => $resource,
+                    'path' => $path,
+                    'name' => $name,
+                    'overwrite' => $request->request->getBoolean('overwrite'),
+                    'autoRename' => $request->request->getBoolean('autoRename'),
+                ],
             );
         } finally { fclose($stream); }
         if (!$state['complete']) return new JsonResponse(OperationResult::success(['complete' => false]));
         if (!isset($state['path'], $state['size'])) {
             throw new SoFinderException('The completed upload session is missing its assembled file.', 'chunk_assembly_failed', 500);
         }
+        $session = $this->chunks->status($id);
 
         $assembled = @fopen((string) $state['path'], 'rb');
         if ($assembled === false) throw new SoFinderException('Unable to read the assembled upload.', 'chunk_assembly_failed', 500);
         try {
-            $entry = $this->files->upload($resource, $path, $name, (int) $state['size'], $assembled, $request->request->getBoolean('overwrite'));
+            $entry = $this->files->upload(
+                $session['resource'],
+                $session['path'],
+                $session['name'],
+                (int) $state['size'],
+                $assembled,
+                $session['overwrite'],
+                $session['autoRename'],
+            );
         } finally {
             fclose($assembled);
             $this->chunks->discard($id);

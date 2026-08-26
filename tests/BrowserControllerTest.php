@@ -47,6 +47,7 @@ final class BrowserControllerTest extends TestCase
         self::assertFalse($config['uiDefaults']['languageSwitcher']);
         self::assertFalse($config['uiDefaults']['viewSwitcher']);
         self::assertTrue($config['uiDefaults']['fullTools']);
+        self::assertSame('ask', $config['uiDefaults']['uploadConflictStrategy']);
     }
 
     public function testAcceptsSafeDeepLinkAndPickerHandshake(): void
@@ -112,7 +113,7 @@ final class BrowserControllerTest extends TestCase
         $theme = new Theme(['accent' => '#276ef1', 'background' => '#f4f6f9', 'panel' => '#fff', 'text' => '#1c2735', 'muted' => '#667282', 'danger' => '#c13a43', 'radius' => '10px']);
         $controller = new BrowserController($files, $router, $csrf, 'test', $theme, [
             'mode' => 'auto', 'header' => false, 'logo' => false, 'search' => true,
-            'language_switcher' => true, 'view_switcher' => true, 'folder_tree' => false, 'scale' => 'standard',
+            'language_switcher' => true, 'view_switcher' => true, 'folder_tree' => false, 'scale' => 'standard', 'upload_conflict_strategy' => 'ask',
         ], $features, null, [], $allowedOrigins);
         $html = (string) $controller($request)->getContent();
         self::assertMatchesRegularExpression('/data-config="([^"]+)"/', $html);

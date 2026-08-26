@@ -153,11 +153,11 @@ Response Data 包含 `entries`、`total`、`path`、`offset`、`limit`、`sort`�
 
 `POST /api/uploads/chunks` 使用 Multipart：
 
-- `resource`、`path`、`name`，可選 `overwrite=1`；
+- `resource`、`path`、`name`，可選 `overwrite=1` 或 `autoRename=1`；
 - 16–80 字元 URL-safe `uploadId`；
 - 從 0 開始的 `index`、固定 `total`、檔案欄位 `chunk`。
 
-未完成返回 `{"complete":false}`；最後一塊返回 `{"complete":true,"entry":{...}}` 和 HTTP 201。Session Metadata 不可變化，重試必須沿用 Resource、Path、Name、Overwrite、Total。
+未完成返回 `{"complete":false}`；最後一塊返回 `{"complete":true,"entry":{...}}` 和 HTTP 201。Session Metadata 不可變化，重試必須沿用 Resource、Path、Name、Overwrite、Auto-Rename、Total。
 
 - `GET /api/uploads/chunks/{id}` 返回目前 Actor 的 Session、已接收 Index 和 Metadata。
 - `DELETE /api/uploads/chunks/{id}` 取消並丟棄 Session，需要 CSRF。

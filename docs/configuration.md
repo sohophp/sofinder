@@ -127,9 +127,10 @@ so_finder:
     view_switcher: true
     folder_tree: false
     scale: standard
+    upload_conflict_strategy: ask
 ```
 
-`mode` accepts `auto`, `manager` or `picker`. With `logo: true`, the logo and optional SoFinder brand name are shown at the left, search is centered, and the breadcrumb sits above the file list or grid. With `logo: false`, the breadcrumb uses the former logo slot and search shifts right on wide screens. Set `header: false` to hide only the brand name when the logo is enabled. `scale` accepts `compact`, `standard`, `large` or `xlarge`. Browser preferences and `uiTools=common|full` can change presentation, but never grant server capabilities.
+`mode` accepts `auto`, `manager` or `picker`. With `logo: true`, the logo and optional SoFinder brand name are shown at the left, search is centered, and the breadcrumb sits above the file list or grid. With `logo: false`, the breadcrumb uses the former logo slot and search shifts right on wide screens. Set `header: false` to hide only the brand name when the logo is enabled. `scale` accepts `compact`, `standard`, `large` or `xlarge`. `upload_conflict_strategy` accepts `ask`, `rename`, `overwrite` or `skip`; `ask` is the default and shows all three concrete choices when a same-name file is found. Each browser may override this default in Settings. Browser preferences and `uiTools=common|full` can change presentation, but never grant server capabilities.
 
 Optional capabilities have a host-controlled upper bound. Disabled features are
 removed from browser settings and their dedicated HTTP endpoints return a stable

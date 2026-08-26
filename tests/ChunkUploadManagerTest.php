@@ -29,6 +29,7 @@ final class ChunkUploadManagerTest extends TestCase
         $first = fopen('php://temp', 'w+b'); fwrite($first, 'abc'); rewind($first);
         self::assertFalse($manager->accept('abcdefghijklmnop', 0, 2, $first, 10, ['resource' => 'Files', 'path' => 'docs', 'name' => 'file.txt'])['complete']); fclose($first);
         self::assertSame([0], $manager->status('abcdefghijklmnop')['received']);
+        self::assertFalse($manager->status('abcdefghijklmnop')['autoRename']);
         $second = fopen('php://temp', 'w+b'); fwrite($second, 'def'); rewind($second);
         $complete = $manager->accept('abcdefghijklmnop', 1, 2, $second, 10, ['resource' => 'Files', 'path' => 'docs', 'name' => 'file.txt']); fclose($second);
 
@@ -37,6 +38,23 @@ final class ChunkUploadManagerTest extends TestCase
         self::assertTrue($manager->status('abcdefghijklmnop')['complete']);
         $manager->discard('abcdefghijklmnop');
         self::assertDirectoryDoesNotExist(dirname((string) $complete['path']));
+    }
+
+    public function testAutoRenameIsImmutableSessionMetadata(): void
+    {
+        $manager = new ChunkUploadManager($this->directory, $this->actor(), 10, 3);
+        $stream = fopen('php://temp', 'w+b'); fwrite($stream, 'a'); rewind($stream);
+        $manager->accept('abcdefghijklmnop', 0, 2, $stream, 10, ['resource' => 'Files', 'name' => 'one.txt', 'autoRename' => true]);
+        self::assertTrue($manager->status('abcdefghijklmnop')['autoRename']);
+        rewind($stream);
+        try {
+            $manager->accept('abcdefghijklmnop', 1, 2, $stream, 10, ['resource' => 'Files', 'name' => 'one.txt', 'autoRename' => false]);
+            self::fail('A resumed upload must preserve its conflict strategy.');
+        } catch (SoFinderException $exception) {
+            self::assertSame('upload_session_mismatch', $exception->errorCode);
+        } finally {
+            fclose($stream);
+        }
     }
 
     public function testRejectsChangingUploadSessionMetadata(): void

@@ -20,4 +20,4 @@ description: SoFinder 公开的稳定 Browser、API 与内容 Delivery 路由。
 
 变更请求需要 `X-CSRF-TOKEN` Header 及已验证的 Actor。未知操作会被拒绝。Entry 与 Directory 的 Capability Field 只供 UI 提示；服务器会对每个操作重新授权。
 
-分块上传为当前 Actor 提供 `GET /api/uploads/chunks/{id}`。它会返回已接收的 Chunk Index 及不可变 Session Metadata。续传必须沿用原本的 Resource、Path、Name、Overwrite Mode 及 Chunk Count。Session 会在 24 小时后过期，可使用 `sofinder:uploads:cleanup` 清理。
+分块上传为当前 Actor 提供 `GET /api/uploads/chunks/{id}`。它会返回已接收的 Chunk Index 及不可变 Session Metadata。续传必须沿用原本的 Resource、Path、Name、Overwrite／Auto-Rename Mode 及 Chunk Count。Session 会在 24 小时后过期，可使用 `sofinder:uploads:cleanup` 清理。
