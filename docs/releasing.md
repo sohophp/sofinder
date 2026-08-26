@@ -5,11 +5,12 @@ description: Maintainer checklist for testing, tagging and publishing SoFinder p
 
 # Release procedure
 
-Run the complete local gate from the repository root (set `PHP_BIN` when the
-default PHP is older than 8.2):
+Run the complete local gate from the repository root. `.php-version` selects
+the development interpreter through `scripts/php-bin.sh`; use `PHP_BIN` only
+for an intentional compatibility run:
 
 ```bash
-PHP_BIN=/opt/remi/php85/root/usr/bin/php ./scripts/release-check.sh
+./scripts/release-check.sh
 ```
 
 1. Confirm `composer validate --strict`, PHPUnit, frontend type checking/build,

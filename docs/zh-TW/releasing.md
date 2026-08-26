@@ -5,10 +5,12 @@ description: SoFinder 維護者測試、建立標籤與發布套件的檢查清�
 
 # 發布流程
 
-在 Repository 根目錄執行完整本機門禁（預設 PHP 低於 8.2 時設定 `PHP_BIN`）：
+在 Repository 根目錄執行完整本機門禁。`.php-version` 會透過
+`scripts/php-bin.sh` 選擇開發解譯器；只有刻意執行相容性測試時才使用
+`PHP_BIN`：
 
 ```bash
-PHP_BIN=/opt/remi/php85/root/usr/bin/php ./scripts/release-check.sh
+./scripts/release-check.sh
 ```
 
 1. 確認 `composer validate --strict`、PHPUnit、前端型別檢查與建置、瀏覽器測試、無障礙檢查和原創性掃描全部通過。

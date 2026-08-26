@@ -2,14 +2,14 @@
 set -euo pipefail
 
 project_dir=$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)
-php_bin=${PHP_BIN:-"$project_dir/scripts/php-bin.sh"}
-composer_bin=${COMPOSER_BIN:-$(command -v composer)}
+php_bin="$project_dir/scripts/php-bin.sh"
+composer_bin="$project_dir/scripts/composer.sh"
 
 cd "$project_dir"
-"$php_bin" "$composer_bin" validate --strict
+"$composer_bin" validate --strict
 "$php_bin" vendor/bin/phpunit
 "$php_bin" vendor/bin/phpstan analyse --no-progress --memory-limit=512M
-"$php_bin" "$composer_bin" audit
+"$composer_bin" audit
 
 cd "$project_dir/frontend"
 corepack enable
