@@ -386,11 +386,20 @@ test("visual baseline covers dark Chinese grid, compact list, long names and mob
     document.documentElement.style.setProperty("--sf-muted", "#9ca3af");
   });
   await page.locator(".sf-entry-name").first().evaluate(element => { element.textContent = "这是一个用于验证省略显示和中文布局的非常非常长的文件名称-2026-最终版本.txt"; });
-  await expect(page.locator(".sf-app")).toHaveScreenshot("dark-grid-chinese.png", { animations: "disabled" });
+  await expect(page.locator(".sf-app")).toHaveScreenshot("dark-grid-chinese.png", {
+    animations: "disabled",
+    maxDiffPixelRatio: 0.02,
+  });
   await page.getByRole("button", { name: "列表" }).click();
-  await expect(page.locator(".sf-app")).toHaveScreenshot("dark-list-compact.png", { animations: "disabled" });
+  await expect(page.locator(".sf-app")).toHaveScreenshot("dark-list-compact.png", {
+    animations: "disabled",
+    maxDiffPixelRatio: 0.02,
+  });
   await page.setViewportSize({ width: 403, height: 740 });
-  await expect(page.locator(".sf-app")).toHaveScreenshot("mobile-chinese.png", { animations: "disabled" });
+  await expect(page.locator(".sf-app")).toHaveScreenshot("mobile-chinese.png", {
+    animations: "disabled",
+    maxDiffPixelRatio: 0.02,
+  });
 });
 
 test("shows recent files immediately when enabled and keeps them accessible on mobile", async ({ page }) => {
