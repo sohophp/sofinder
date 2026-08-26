@@ -15,7 +15,11 @@ final readonly class AssetController
 
     public function __invoke(string $file): Response
     {
-        $allowed = ['sofinder.js' => 'text/javascript; charset=UTF-8', 'sofinder.css' => 'text/css; charset=UTF-8'];
+        $allowed = [
+            'sofinder.js' => 'text/javascript; charset=UTF-8',
+            'sofinder-picker.js' => 'text/javascript; charset=UTF-8',
+            'sofinder.css' => 'text/css; charset=UTF-8',
+        ];
         if (!isset($allowed[$file])) {
             return new Response('Not found', 404);
         }

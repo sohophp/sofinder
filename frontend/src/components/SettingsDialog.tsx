@@ -6,10 +6,11 @@ import { Modal } from "./Modal";
 export interface ToolPreferences { resize: boolean; crop: boolean; rotate: boolean; presets: boolean }
 export interface FeaturePreferences { recent: boolean; favorites: boolean; tags: boolean; archive: boolean; trash: boolean; folderTree: boolean; autoCollapseUploads: boolean }
 
-export function SettingsDialog({ resource, tools, features, scale, translate, onToolChange, onFeatureChange, onScaleChange, onClose }: {
+export function SettingsDialog({ resource, tools, features, availability, scale, translate, onToolChange, onFeatureChange, onScaleChange, onClose }: {
   resource?: ResourceType;
   tools: ToolPreferences;
   features: FeaturePreferences;
+  availability: Partial<Record<Exclude<keyof FeaturePreferences, "autoCollapseUploads">, boolean>>;
   scale: UiScale;
   translate: (key: MessageKey) => string;
   onToolChange: (name: keyof ToolPreferences, enabled: boolean) => void;
@@ -28,6 +29,6 @@ export function SettingsDialog({ resource, tools, features, scale, translate, on
     <h3>{t("imageTools")}</h3>
     {(["resize", "crop", "rotate", "presets"] as const).map(tool => <label className="sf-setting" key={tool}><input type="checkbox" checked={tools[tool]} onChange={event => onToolChange(tool, event.target.checked)}/><span>{t(tool === "presets" ? "preset" : tool === "rotate" ? "rotationTools" : tool)}</span></label>)}
     <h3>{t("optionalFeatures")}</h3><p>{t("featureSettingsHint")}</p>
-    {(["autoCollapseUploads", "folderTree", "recent", "favorites", "tags", "archive", "trash"] as const).map(feature => <label className="sf-setting" key={feature}><input type="checkbox" checked={features[feature]} disabled={feature === "trash" && resource?.storageCapabilities?.recoverableDelete === false} onChange={event => onFeatureChange(feature, event.target.checked)}/><span>{t(feature === "folderTree" ? "folderTreeFeature" : feature === "favorites" ? "favoriteFeature" : feature === "archive" ? "archiveFeature" : feature === "trash" ? "trashFeature" : feature === "tags" ? "tagsFeature" : feature === "recent" ? "recentFeature" : "autoCollapseUploads")}</span></label>)}
+    {(["autoCollapseUploads", "folderTree", "recent", "favorites", "tags", "archive", "trash"] as const).filter(feature => feature === "autoCollapseUploads" || availability[feature] !== false).map(feature => <label className="sf-setting" key={feature}><input type="checkbox" checked={features[feature]} disabled={feature === "trash" && resource?.storageCapabilities?.recoverableDelete === false} onChange={event => onFeatureChange(feature, event.target.checked)}/><span>{t(feature === "folderTree" ? "folderTreeFeature" : feature === "favorites" ? "favoriteFeature" : feature === "archive" ? "archiveFeature" : feature === "trash" ? "trashFeature" : feature === "tags" ? "tagsFeature" : feature === "recent" ? "recentFeature" : "autoCollapseUploads")}</span></label>)}
   </Modal>;
 }

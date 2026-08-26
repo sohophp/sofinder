@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace SohoPHP\SoFinder\Http;
 
 use SohoPHP\SoFinder\FileManager;
+use SohoPHP\SoFinder\Feature\FeaturePolicy;
 use SohoPHP\SoFinder\Value\Theme;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
@@ -22,12 +23,15 @@ final readonly class BrowserController
         private Theme $theme,
         /** @var array{mode:string,header:bool,logo:bool,search:bool,language_switcher:bool,view_switcher:bool,folder_tree:bool,scale:string} */
         private array $ui,
+        private ?FeaturePolicy $features = null,
     ) {
     }
 
     public function __invoke(Request $request): Response
     {
         $this->files->resources();
+        $initialPath = $this->safePath($request->query->getString('path'));
+        $pickerRequestId = $this->pickerRequestId($request->query->getString('pickerRequestId'));
         $language = strtolower((string) $request->query->get('lang', ''));
         if (!in_array($language, ['en', 'zh-cn', 'zh-tw'], true)) {
             $preferred = str_replace('_', '-', strtolower($request->getPreferredLanguage() ?? ''));
@@ -52,11 +56,15 @@ final readonly class BrowserController
             'csrfToken' => $this->csrf->getToken('sofinder')->getValue(),
             'language' => $language,
             'resource' => (string) $request->query->get('type', ''),
+            'initialPath' => $initialPath,
             'selectMode' => $selectMode,
             'selectionKind' => in_array((string) $request->query->get('selection', ''), ['file', 'image'], true) ? (string) $request->query->get('selection') : 'any',
             'ckeditorFunction' => (int) $request->query->get('CKEditorFuncNum', 0),
+            'pickerRequestId' => $pickerRequestId,
+            'pickerOrigin' => $pickerRequestId === '' ? '' : $request->getSchemeAndHttpHost(),
             'theme' => $this->theme->values(),
             'featureDefaults' => ['folderTree' => (bool) ($this->ui['folder_tree'] ?? false)],
+            'featureAvailability' => $this->features?->browserAvailability() ?? (new FeaturePolicy())->browserAvailability(),
             'uiDefaults' => ['scale' => (string) ($this->ui['scale'] ?? 'standard'), ...$ui],
         ];
         $encoded = htmlspecialchars(json_encode($config, JSON_THROW_ON_ERROR | JSON_UNESCAPED_SLASHES), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
@@ -107,5 +115,19 @@ HTML;
         }
 
         return $fallback;
+    }
+
+    private function safePath(string $path): string
+    {
+        if ($path === '' || strlen($path) > 2048 || preg_match('//u', $path) !== 1 || preg_match('/[\x00-\x1F\x7F]/u', $path) === 1) {
+            return '';
+        }
+
+        return str_replace('\\', '/', trim($path, '/'));
+    }
+
+    private function pickerRequestId(string $value): string
+    {
+        return preg_match('/^[A-Za-z0-9-]{16,80}$/D', $value) === 1 ? $value : '';
     }
 }

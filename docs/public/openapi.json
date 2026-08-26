@@ -1,0 +1,66 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "SoFinder HTTP API",
+    "version": "1.0",
+    "description": "Stable same-origin authenticated API. Mutations also require X-CSRF-TOKEN."
+  },
+  "servers": [{"url": "/sofinder"}],
+  "security": [{"sessionCookie": []}],
+  "paths": {
+    "/api/config": {"get": {"operationId": "getConfig", "responses": {"200": {"$ref": "#/components/responses/Success"}}}},
+    "/health": {"get": {"operationId": "getHealth", "responses": {"200": {"$ref": "#/components/responses/Success"}, "503": {"$ref": "#/components/responses/Error"}}}},
+    "/metrics": {"get": {"operationId": "getMetrics", "responses": {"200": {"description": "Prometheus text exposition", "content": {"text/plain": {"schema": {"type": "string"}}}}}}},
+    "/api/entries": {
+      "get": {"operationId": "listEntries", "parameters": [{"$ref": "#/components/parameters/resource"}, {"$ref": "#/components/parameters/path"}], "responses": {"200": {"$ref": "#/components/responses/Success"}}},
+      "delete": {"operationId": "deleteEntry", "parameters": [{"$ref": "#/components/parameters/csrf"}], "requestBody": {"$ref": "#/components/requestBodies/JsonMutation"}, "responses": {"200": {"$ref": "#/components/responses/Success"}, "409": {"$ref": "#/components/responses/Error"}}}
+    },
+    "/api/folders": {"post": {"operationId": "createFolder", "parameters": [{"$ref": "#/components/parameters/csrf"}], "requestBody": {"$ref": "#/components/requestBodies/JsonMutation"}, "responses": {"201": {"$ref": "#/components/responses/Success"}}}},
+    "/api/uploads": {"post": {"operationId": "uploadFile", "parameters": [{"$ref": "#/components/parameters/csrf"}], "requestBody": {"description": "Multipart upload field plus resource/path policy fields", "content": {"multipart/form-data": {"schema": {"type": "object"}}}}, "responses": {"201": {"$ref": "#/components/responses/Success"}, "413": {"$ref": "#/components/responses/Error"}, "415": {"$ref": "#/components/responses/Error"}}}},
+    "/api/uploads/chunks": {"post": {"operationId": "uploadChunk", "parameters": [{"$ref": "#/components/parameters/csrf"}], "requestBody": {"description": "Multipart resumable chunk", "content": {"multipart/form-data": {"schema": {"type": "object"}}}}, "responses": {"200": {"$ref": "#/components/responses/Success"}, "201": {"$ref": "#/components/responses/Success"}}}},
+    "/api/uploads/chunks/{id}": {
+      "parameters": [{"$ref": "#/components/parameters/id"}],
+      "get": {"operationId": "getChunkStatus", "responses": {"200": {"$ref": "#/components/responses/Success"}}},
+      "delete": {"operationId": "cancelChunkUpload", "parameters": [{"$ref": "#/components/parameters/csrf"}], "responses": {"200": {"$ref": "#/components/responses/Success"}}}
+    },
+    "/api/entries/rename": {"patch": {"operationId": "renameEntry", "parameters": [{"$ref": "#/components/parameters/csrf"}], "requestBody": {"$ref": "#/components/requestBodies/JsonMutation"}, "responses": {"200": {"$ref": "#/components/responses/Success"}}}},
+    "/api/entries/copy": {"post": {"operationId": "copyEntry", "parameters": [{"$ref": "#/components/parameters/csrf"}], "requestBody": {"$ref": "#/components/requestBodies/JsonMutation"}, "responses": {"200": {"$ref": "#/components/responses/Success"}}}},
+    "/api/entries/move": {"post": {"operationId": "moveEntry", "parameters": [{"$ref": "#/components/parameters/csrf"}], "requestBody": {"$ref": "#/components/requestBodies/JsonMutation"}, "responses": {"200": {"$ref": "#/components/responses/Success"}}}},
+    "/api/entries/batch": {"post": {"operationId": "batchEntries", "parameters": [{"$ref": "#/components/parameters/csrf"}], "requestBody": {"$ref": "#/components/requestBodies/JsonMutation"}, "responses": {"200": {"$ref": "#/components/responses/Success"}}}},
+    "/api/entries/batch-rename": {"post": {"operationId": "batchRenameEntries", "parameters": [{"$ref": "#/components/parameters/csrf"}], "requestBody": {"$ref": "#/components/requestBodies/JsonMutation"}, "responses": {"200": {"$ref": "#/components/responses/Success"}}}},
+    "/api/download": {"get": {"operationId": "downloadEntry", "parameters": [{"$ref": "#/components/parameters/resource"}, {"$ref": "#/components/parameters/path"}], "responses": {"200": {"description": "File attachment", "content": {"application/octet-stream": {"schema": {"type": "string", "contentEncoding": "binary"}}}}}}},
+    "/api/content": {"get": {"operationId": "streamContent", "parameters": [{"$ref": "#/components/parameters/resource"}, {"$ref": "#/components/parameters/path"}], "responses": {"200": {"description": "Authorized content"}, "206": {"description": "Single byte range"}, "416": {"$ref": "#/components/responses/Error"}}}},
+    "/api/checksum": {"get": {"operationId": "getChecksum", "parameters": [{"$ref": "#/components/parameters/resource"}, {"$ref": "#/components/parameters/path"}], "responses": {"200": {"$ref": "#/components/responses/Success"}}}},
+    "/api/preview/text": {"get": {"operationId": "getTextPreview", "parameters": [{"$ref": "#/components/parameters/resource"}, {"$ref": "#/components/parameters/path"}], "responses": {"200": {"$ref": "#/components/responses/Success"}, "415": {"$ref": "#/components/responses/Error"}}}},
+    "/api/trash": {"get": {"operationId": "listTrash", "parameters": [{"$ref": "#/components/parameters/resource"}], "responses": {"200": {"$ref": "#/components/responses/Success"}}}},
+    "/api/trash/{id}/restore": {"post": {"operationId": "restoreTrash", "parameters": [{"$ref": "#/components/parameters/id"}, {"$ref": "#/components/parameters/csrf"}], "requestBody": {"$ref": "#/components/requestBodies/JsonMutation"}, "responses": {"200": {"$ref": "#/components/responses/Success"}}}},
+    "/api/trash/{id}": {"delete": {"operationId": "deleteTrash", "parameters": [{"$ref": "#/components/parameters/id"}, {"$ref": "#/components/parameters/csrf"}], "requestBody": {"$ref": "#/components/requestBodies/JsonMutation"}, "responses": {"200": {"$ref": "#/components/responses/Success"}}}},
+    "/api/images/thumbnail": {"get": {"operationId": "getThumbnail", "parameters": [{"$ref": "#/components/parameters/resource"}, {"$ref": "#/components/parameters/path"}], "responses": {"200": {"description": "Browser-safe thumbnail"}}}},
+    "/api/images/info": {"get": {"operationId": "getImageInfo", "parameters": [{"$ref": "#/components/parameters/resource"}, {"$ref": "#/components/parameters/path"}], "responses": {"200": {"$ref": "#/components/responses/Success"}}}},
+    "/api/images/edit": {"patch": {"operationId": "editImage", "parameters": [{"$ref": "#/components/parameters/csrf"}], "requestBody": {"$ref": "#/components/requestBodies/JsonMutation"}, "responses": {"200": {"$ref": "#/components/responses/Success"}}}},
+    "/api/archive": {"post": {"operationId": "downloadArchive", "parameters": [{"$ref": "#/components/parameters/csrf"}], "requestBody": {"$ref": "#/components/requestBodies/JsonMutation"}, "responses": {"200": {"description": "Bounded ZIP archive"}}}},
+    "/api/metadata": {
+      "get": {"operationId": "getMetadata", "parameters": [{"$ref": "#/components/parameters/resource"}], "responses": {"200": {"$ref": "#/components/responses/Success"}}},
+      "patch": {"operationId": "updateMetadata", "parameters": [{"$ref": "#/components/parameters/csrf"}], "requestBody": {"$ref": "#/components/requestBodies/JsonMutation"}, "responses": {"200": {"$ref": "#/components/responses/Success"}}}
+    },
+    "/compat/ckeditor4/upload": {"post": {"operationId": "ckeditor4Upload", "requestBody": {"description": "CKEditor multipart upload", "content": {"multipart/form-data": {"schema": {"type": "object"}}}}, "responses": {"200": {"description": "CKEditor callback or JSON response"}}}}
+  },
+  "components": {
+    "securitySchemes": {"sessionCookie": {"type": "apiKey", "in": "cookie", "name": "PHPSESSID"}},
+    "parameters": {
+      "resource": {"name": "resource", "in": "query", "schema": {"type": "string", "default": "Files"}},
+      "path": {"name": "path", "in": "query", "schema": {"type": "string"}},
+      "id": {"name": "id", "in": "path", "required": true, "schema": {"type": "string"}},
+      "csrf": {"name": "X-CSRF-TOKEN", "in": "header", "required": true, "schema": {"type": "string"}}
+    },
+    "requestBodies": {"JsonMutation": {"required": true, "content": {"application/json": {"schema": {"type": "object"}}}}},
+    "schemas": {
+      "SuccessEnvelope": {"type": "object", "required": ["success", "data"], "properties": {"success": {"const": true}, "data": {"type": "object"}}},
+      "ErrorEnvelope": {"type": "object", "required": ["success", "error"], "properties": {"success": {"const": false}, "error": {"type": "object", "required": ["code", "message"], "properties": {"code": {"type": "string"}, "message": {"type": "string"}}}}}
+    },
+    "responses": {
+      "Success": {"description": "Successful SoFinder envelope", "content": {"application/json": {"schema": {"$ref": "#/components/schemas/SuccessEnvelope"}}}},
+      "Error": {"description": "Stable machine-readable error envelope", "content": {"application/json": {"schema": {"$ref": "#/components/schemas/ErrorEnvelope"}}}}
+    }
+  }
+}

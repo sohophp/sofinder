@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useId, useMemo, useRef, useState } from "react";
 import { Api, ApiError } from "./api";
 import { translator, type Language } from "./i18n";
-import type { Entry, ImageCapabilities, ImageInfo, ImagePreset, MetadataState, ResourceType, SoFinderConfig, UiScale } from "./types";
+import type { Entry, ImageCapabilities, ImageInfo, ImagePreset, MetadataState, PluginDescriptor, PluginUiAction, ResourceType, SoFinderConfig, UiScale } from "./types";
 import { ConfirmDialog, TextDialog } from "./components/Dialogs";
 import { ContextMenu } from "./components/ContextMenu";
 import { FolderTree } from "./components/FolderTree";
@@ -16,6 +16,7 @@ import { UploadQueue, type UploadTask } from "./components/UploadQueue";
 import { DetailsPanel } from "./components/DetailsPanel";
 import { SettingsDialog, type FeaturePreferences, type ToolPreferences } from "./components/SettingsDialog";
 import { DestinationDialog, type DestinationState } from "./components/DestinationDialog";
+import { BulkRenameDialog } from "./components/BulkRenameDialog";
 import { UiIcon, type UiIconName } from "./components/UiIcon";
 import { entryNameIssue } from "./nameValidation";
 
@@ -26,6 +27,7 @@ interface ConfirmState { title: string; message: string; detail?: string; danger
 
 const defaultTools: ToolPreferences = { resize: false, crop: false, rotate: false, presets: false };
 const defaultFeatures: FeaturePreferences = { recent: false, favorites: false, tags: false, archive: false, trash: true, folderTree: false, autoCollapseUploads: true };
+const defaultFeatureAvailability = { recent: true, favorites: true, tags: true, archive: true, trash: true, folderTree: true } as const;
 const loadPreferences = <T extends object>(key: string, defaults: T): T => {
   try {
     const saved = JSON.parse(localStorage.getItem(key) || "{}") as Record<string, unknown>;
@@ -58,6 +60,7 @@ const loadColumnWidth = (side: "left" | "right") => {
 export default function App({ config }: { config: SoFinderConfig }) {
   const pageSizeOptionsId = useId();
   const api = useMemo(() => new Api(config), [config]);
+  const featureAvailability = config.featureAvailability ?? defaultFeatureAvailability;
   const [language, setLanguage] = useState<Language>(() => {
     const saved = localStorage.getItem("sofinder.language");
     return saved === "en" || saved === "zh-cn" || saved === "zh-tw" ? saved : config.language;
@@ -66,7 +69,8 @@ export default function App({ config }: { config: SoFinderConfig }) {
   const dateFormatter = useMemo(() => new Intl.DateTimeFormat(language, { dateStyle: "medium", timeStyle: "short" }), [language]);
   const [resources, setResources] = useState<ResourceType[]>([]);
   const [resource, setResource] = useState(config.resource);
-  const [path, setPath] = useState("");
+  const [path, setPath] = useState(config.initialPath || "");
+  const [resolvedPath, setResolvedPath] = useState("");
   const [entries, setEntries] = useState<Entry[]>([]);
   const [selectedPaths, setSelectedPaths] = useState<Set<string>>(() => new Set());
   const [selectionAnchor, setSelectionAnchor] = useState<string | null>(null);
@@ -91,11 +95,23 @@ export default function App({ config }: { config: SoFinderConfig }) {
   const [metadata, setMetadata] = useState<MetadataState>({ favorites: [], tags: {}, recent: [] });
   const [imageInfo, setImageInfo] = useState<ImageInfo | null>(null);
   const [tools, setTools] = useState<ToolPreferences>(() => config.uiDefaults.fullTools ? { resize: true, crop: true, rotate: true, presets: true } : loadToolPreferences());
-  const [features, setFeatures] = useState<FeaturePreferences>(() => loadPreferences("sofinder.features.v2", { ...defaultFeatures, folderTree: config.featureDefaults?.folderTree ?? false }));
+  const [features, setFeatures] = useState<FeaturePreferences>(() => {
+    const loaded = loadPreferences("sofinder.features.v2", { ...defaultFeatures, folderTree: config.featureDefaults?.folderTree ?? false });
+    return {
+      ...loaded,
+      folderTree: featureAvailability.folderTree !== false && loaded.folderTree,
+      recent: featureAvailability.recent !== false && loaded.recent,
+      favorites: featureAvailability.favorites !== false && loaded.favorites,
+      tags: featureAvailability.tags !== false && loaded.tags,
+      archive: featureAvailability.archive !== false && loaded.archive,
+      trash: featureAvailability.trash !== false && loaded.trash,
+    };
+  });
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [utilityOpen, setUtilityOpen] = useState(false);
   const [uiScale, setUiScale] = useState<UiScale>(() => loadScale(config.uiDefaults?.scale ?? "standard"));
   const [destinationDialog, setDestinationDialog] = useState<DestinationState | null>(null);
+  const [bulkRenameOpen, setBulkRenameOpen] = useState(false);
   const [cropOpen, setCropOpen] = useState(false);
   const [textDialog, setTextDialog] = useState<TextDialogState | null>(null);
   const [confirmDialog, setConfirmDialog] = useState<ConfirmState | null>(null);
@@ -103,13 +119,17 @@ export default function App({ config }: { config: SoFinderConfig }) {
   const [tagsOpen, setTagsOpen] = useState(false);
   const [contextMenu, setContextMenu] = useState<{ x: number; y: number; entry: Entry } | null>(null);
   const [previewEntry, setPreviewEntry] = useState<Entry | null>(null);
+  const [textPreview, setTextPreview] = useState<{ path: string; content: string; truncated: boolean } | null>(null);
+  const [checksum, setChecksum] = useState<{ path: string; value: string } | null>(null);
   const [urlDialog, setUrlDialog] = useState<{ url: string; loginRequired: boolean } | null>(null);
   const [imagePresets, setImagePresets] = useState<Record<string, ImagePreset>>({});
   const [imageCapabilities, setImageCapabilities] = useState<ImageCapabilities>({ driver: "", formats: [] });
+  const [plugins, setPlugins] = useState<PluginDescriptor[]>([]);
   const [directoryCapabilities, setDirectoryCapabilities] = useState<Record<string, boolean>>({});
   const [leftWidth, setLeftWidth] = useState(() => loadColumnWidth("left"));
   const [rightWidth, setRightWidth] = useState(() => loadColumnWidth("right"));
   const uploadInput = useRef<HTMLInputElement>(null);
+  const directoryUploadInput = useRef<HTMLInputElement>(null);
   const uploadControllers = useRef(new Map<string, AbortController>());
   const uploadSequence = useRef(0);
   const loadSequence = useRef(0);
@@ -167,6 +187,7 @@ export default function App({ config }: { config: SoFinderConfig }) {
       if (sequence !== loadSequence.current) return;
       setEntries(result.entries);
       setPath(result.path);
+      setResolvedPath(result.path);
       setOffset(result.offset);
       setTotal(result.total);
       setPageCursor(cursor);
@@ -176,6 +197,27 @@ export default function App({ config }: { config: SoFinderConfig }) {
       setSelectionAnchor(null);
     } catch (error) {
       if (sequence !== loadSequence.current) return;
+      if (error instanceof ApiError && error.code === "not_found" && nextPath !== "") {
+        try {
+          const fallback = await api.list(nextResource, "", "", nextSort, nextDirection, 0, pageSizeRef.current, "name", null);
+          if (sequence !== loadSequence.current) return;
+          setEntries(fallback.entries);
+          setPath(fallback.path);
+          setResolvedPath(fallback.path);
+          setOffset(fallback.offset);
+          setTotal(fallback.total);
+          setPageCursor(null);
+          setNextCursor(fallback.nextCursor ?? null);
+          setDirectoryCapabilities(fallback.capabilities || {});
+          setSelectedPaths(new Set());
+          setSelectionAnchor(null);
+          setCursorHistory([]);
+          setNotice(t("missingPathFallback"));
+          return;
+        } catch (fallbackError) {
+          error = fallbackError;
+        }
+      }
       setEntries([]);
       setPath(nextPath);
       setOffset(nextOffset);
@@ -189,18 +231,27 @@ export default function App({ config }: { config: SoFinderConfig }) {
     } finally {
       if (sequence === loadSequence.current) setLoading(false);
     }
-  }, [api, direction, offset, pageCursor, path, report, resource, search, searchMode, sort]);
+  }, [api, direction, offset, pageCursor, path, report, resource, search, searchMode, sort, t]);
 
   useEffect(() => {
-    api.configData().then(({ resources: available, imagePresets: presets, imageCapabilities: capabilities }) => {
+    api.configData().then(({ resources: available, plugins: activePlugins, imagePresets: presets, imageCapabilities: capabilities }) => {
       setResources(available);
+      setPlugins(activePlugins || []);
       setImagePresets(presets || {});
       setImageCapabilities(capabilities || { driver: "", formats: [] });
       const initial = available.some(item => item.name === config.resource) ? config.resource : available[0]?.name || "";
       setResource(initial);
-      if (initial) { setCursorHistory([]); void load(initial, "", "", 0, sort, direction, "name", null); }
+      if (initial) { setCursorHistory([]); void load(initial, config.initialPath || "", "", 0, sort, direction, "name", null); }
     }).catch(report);
-  }, [api, config.resource]);
+  }, [api, config.initialPath, config.resource]);
+
+  useEffect(() => {
+    if (!resource || loading) return;
+    const url = new URL(window.location.href);
+    if (resource) url.searchParams.set("type", resource);
+    if (path) url.searchParams.set("path", path); else url.searchParams.delete("path");
+    window.history.replaceState(window.history.state, "", url);
+  }, [loading, path, resource]);
 
   useEffect(() => {
     const interrupted = api.pendingUploads().map(session => ({ id: `pending-${session.id}`, name: session.name, progress: 0, status: "error" as const, message: t("uploadReselectToResume") }));
@@ -263,6 +314,23 @@ export default function App({ config }: { config: SoFinderConfig }) {
     });
   };
   const canSelected = (operation: string) => selectedEntries.length > 0 && selectedEntries.every(entry => entry.capabilities?.[operation] !== false);
+  const pluginActions = useMemo(() => plugins.flatMap(plugin => (plugin.uiActions || []).map(action => ({ ...action, plugin: plugin.name }))), [plugins]);
+  const pluginLabel = (action: PluginUiAction) => action.label[language] || action.label.en;
+  const pluginActionAvailable = (action: PluginUiAction, entry: Entry | null) => {
+    if (action.selection === "none") return entry === null;
+    if (!entry) return false;
+    if (action.selection === "file" && entry.directory) return false;
+    if (action.selection === "image" && (entry.directory || !entry.mimeType?.startsWith("image/"))) return false;
+    return entry.capabilities?.[action.requires] !== false;
+  };
+  const openPluginAction = (action: PluginUiAction, entry: Entry | null) => {
+    if (!pluginActionAvailable(action, entry)) return;
+    const url = new URL(action.url, document.baseURI);
+    url.searchParams.set("resource", resource);
+    url.searchParams.set("directory", path);
+    if (entry) url.searchParams.set("path", entry.path);
+    window.open(url, "_blank", "noopener");
+  };
 
   useEffect(() => {
     setImageInfo(null);
@@ -271,6 +339,17 @@ export default function App({ config }: { config: SoFinderConfig }) {
     api.imageInfo(resource, selected.path).then(info => { if (active) setImageInfo(info); }).catch(error => { if (active) report(error); });
     return () => { active = false; };
   }, [api, resource, selected?.path, selected?.mimeType, report]);
+
+  useEffect(() => {
+    setTextPreview(null);
+    setChecksum(null);
+    if (!previewEntry || !isTextPreviewMime(previewEntry.mimeType)) return;
+    let active = true;
+    api.textPreview(resource, previewEntry.path).then(result => {
+      if (active) setTextPreview({ path: previewEntry.path, content: result.content, truncated: result.truncated });
+    }).catch(error => { if (active) report(error); });
+    return () => { active = false; };
+  }, [api, previewEntry?.path, previewEntry?.mimeType, report, resource]);
 
   const selectEntry = (entry: Entry, event: React.MouseEvent) => {
     if (uiMode === "picker") {
@@ -297,7 +376,7 @@ export default function App({ config }: { config: SoFinderConfig }) {
       setSelectedPaths(new Set([entry.path]));
     }
     setSelectionAnchor(entry.path);
-    if (features.recent) void api.updateMetadata(resource, entry.path, "touch").then(setMetadata).catch(() => undefined);
+    if (features.recent) void api.updateMetadata(resource, entry.path, "touch").then(setMetadata).catch(report);
   };
 
   const openEntry = (entry: Entry) => {
@@ -378,6 +457,41 @@ export default function App({ config }: { config: SoFinderConfig }) {
   };
   const uploadTo = (targetPath: string, files: FileList | File[]) => upload(files, targetPath);
 
+  const uploadDirectory = async (files: FileList) => {
+    if (!currentResource) return;
+    const candidates = Array.from(files);
+    if (candidates.length > 500) { setNotice(t("folderUploadTooMany")); return; }
+    const directories = new Set<string>();
+    const groups = new Map<string, File[]>();
+    for (const file of candidates) {
+      const relative = file.webkitRelativePath.replace(/\\/g, "/").split("/").filter(Boolean);
+      if (relative.length < 2 || relative.some(segment => entryNameIssue(segment, segment === relative.at(-1) ? currentResource.maxFileNameLength : currentResource.maxFolderNameLength) !== null)) {
+        setNotice(t("invalidEntryName")); return;
+      }
+      const folderSegments = relative.slice(0, -1);
+      if (currentDepth + folderSegments.length > currentResource.maxFolderDepth) { setNotice(t("folderDepthReached")); return; }
+      folderSegments.forEach((_segment, index) => directories.add(folderSegments.slice(0, index + 1).join("/")));
+      const target = [path, ...folderSegments].filter(Boolean).join("/");
+      groups.set(target, [...(groups.get(target) || []), file]);
+    }
+    const roots = Array.from(directories).filter(directory => !directory.includes("/")).slice(0, 5);
+    if (!await ask({
+      title: t("uploadFolder"),
+      message: `${candidates.length} ${t("files")} · ${directories.size} ${t("folder")}`,
+      detail: `${t("folderUploadPreview")}: ${roots.join(", ")}${Array.from(directories).filter(directory => !directory.includes("/")).length > roots.length ? "…" : ""}`,
+    })) return;
+    try {
+      for (const relative of Array.from(directories).sort((left, right) => left.split("/").length - right.split("/").length || left.localeCompare(right))) {
+        const segments = relative.split("/");
+        const name = segments.pop() || "";
+        const parent = [path, ...segments].filter(Boolean).join("/");
+        try { await api.createFolder(resource, parent, name); }
+        catch (error) { if (!(error instanceof ApiError) || error.code !== "conflict") throw error; }
+      }
+      for (const [target, group] of groups) await upload(group, target);
+    } catch (error) { report(error); }
+  };
+
   const cancelUpload = (id: string) => {
     uploadControllers.current.get(id)?.abort();
     updateUpload(id, { status: "cancelled", message: t("cancelled") });
@@ -408,8 +522,17 @@ export default function App({ config }: { config: SoFinderConfig }) {
     try {
       const result = await api.batch("delete", resource, selectedEntries.map(entry => entry.path));
       const summary = result.failed === 0 ? `${result.succeeded} ${t("completed")}` : `${result.succeeded} ${t("completed")}, ${result.failed} ${t("failed")}`;
-      setNotice(result.purgedItems > 0 ? `${summary} · ${t("trashAutoPurged")} ${result.purgedItems} ${t("items")} (${formatSize(result.purgedBytes)})` : summary);
       await load();
+      setNotice(result.purgedItems > 0 ? `${summary} · ${t("trashAutoPurged")} ${result.purgedItems} ${t("items")} (${formatSize(result.purgedBytes)})` : summary);
+    } catch (error) { report(error); }
+  };
+
+  const batchRename = async (renames: Array<{ path: string; name: string }>) => {
+    setBulkRenameOpen(false);
+    try {
+      const result = await api.batchRename(resource, renames);
+      await load();
+      setNotice(result.failed === 0 ? `${result.succeeded} ${t("completed")}` : `${result.succeeded} ${t("completed")}, ${result.failed} ${t("failed")}`);
     } catch (error) { report(error); }
   };
 
@@ -417,8 +540,8 @@ export default function App({ config }: { config: SoFinderConfig }) {
     try {
       const result = await api.batch(operation, resource, selectedEntries.map(entry => entry.path), destination);
       setDestinationDialog(null);
-      setNotice(result.failed === 0 ? `${result.succeeded} ${t("completed")}` : `${result.succeeded} ${t("completed")}, ${result.failed} ${t("failed")}`);
       await load();
+      setNotice(result.failed === 0 ? `${result.succeeded} ${t("completed")}` : `${result.succeeded} ${t("completed")}, ${result.failed} ${t("failed")}`);
     } catch (error) { report(error); }
   };
 
@@ -428,7 +551,17 @@ export default function App({ config }: { config: SoFinderConfig }) {
       const result = await api.list(resource, destination, "", "name", "asc", 0, 500);
       setDestinationDialog({ operation, path: result.path, folders: result.entries.filter(entry => entry.directory), loading: false });
     } catch (error) {
-      setDestinationDialog(null);
+      if (error instanceof ApiError && error.code === "not_found" && destination !== "") {
+        try {
+          const fallback = await api.list(resource, "", "", "name", "asc", 0, 500);
+          setDestinationDialog({ operation, path: fallback.path, folders: fallback.entries.filter(entry => entry.directory), loading: false });
+          setNotice(t("missingDestinationFallback"));
+          return;
+        } catch (fallbackError) {
+          error = fallbackError;
+        }
+      }
+      setDestinationDialog(current => current ? { ...current, loading: false } : null);
       report(error);
     }
   };
@@ -444,6 +577,12 @@ export default function App({ config }: { config: SoFinderConfig }) {
       const ckeditor = (target as Window & { CKEDITOR?: { tools?: { callFunction?: (id: number, url: string) => void } } }).CKEDITOR;
       ckeditor?.tools?.callFunction?.(config.ckeditorFunction, entry.url);
       window.close();
+      return;
+    }
+    if (config.pickerRequestId && config.pickerOrigin) {
+      const target = window.opener || (window.parent !== window ? window.parent : null);
+      target?.postMessage({ type: "sofinder:select", version: "1.0", requestId: config.pickerRequestId, entry }, config.pickerOrigin);
+      if (window.opener) window.close();
       return;
     }
     window.dispatchEvent(new CustomEvent("sofinder:select", { detail: entry }));
@@ -489,6 +628,7 @@ export default function App({ config }: { config: SoFinderConfig }) {
   };
 
   const updateFeature = (name: keyof FeaturePreferences, enabled: boolean) => {
+    if (name !== "autoCollapseUploads" && featureAvailability[name] === false) return;
     setFeatures(current => {
       const next = { ...current, [name]: enabled };
       localStorage.setItem("sofinder.features.v2", JSON.stringify(next));
@@ -541,8 +681,25 @@ export default function App({ config }: { config: SoFinderConfig }) {
 
   const openRecent = async (recentPath: string) => {
     const directory = recentPath.includes("/") ? recentPath.slice(0, recentPath.lastIndexOf("/")) : "";
-    await load(resource, directory, "", 0);
-    setSelectedPaths(new Set([recentPath]));
+    const name = recentPath.split("/").pop() || recentPath;
+    try {
+      const result = await api.list(resource, directory, name, "name", "asc", 0, 500);
+      if (!result.entries.some(entry => entry.path === recentPath)) {
+        setMetadata(await api.updateMetadata(resource, recentPath, "forget"));
+        setNotice(t("recentMissing"));
+        return;
+      }
+      await load(resource, directory, "", 0);
+      setSelectedPaths(new Set([recentPath]));
+    } catch (error) {
+      if (error instanceof ApiError && error.code === "not_found") {
+        try { setMetadata(await api.updateMetadata(resource, recentPath, "forget")); }
+        catch (metadataError) { report(metadataError); return; }
+        setNotice(t("recentMissing"));
+        return;
+      }
+      report(error);
+    }
   };
 
   const setViewMode = (mode: ViewMode) => { setView(mode); localStorage.setItem("sofinder.view", mode); };
@@ -550,6 +707,11 @@ export default function App({ config }: { config: SoFinderConfig }) {
   const runContextCommand = (command: string) => {
     const target = contextMenu?.entry ?? null;
     setContextMenu(null);
+    if (command.startsWith("plugin:")) {
+      const action = pluginActions.find(item => `plugin:${item.plugin}:${item.id}` === command);
+      if (action) openPluginAction(action, target);
+      return;
+    }
     if (command === "open" && target?.directory) openEntry(target);
     else if (command === "preview" && target && !target.directory) setPreviewEntry(target);
     else if (command === "select" && target) choose(target);
@@ -669,6 +831,12 @@ export default function App({ config }: { config: SoFinderConfig }) {
   const hasLogo = config.uiDefaults.logo !== false;
   const recoverableDelete = currentResource?.storageCapabilities?.recoverableDelete !== false;
   const showSidebar = resources.length > 1 || features.folderTree || features.recent || Boolean(currentResource?.readOnly || currentResource?.quotaBytes);
+  const recentPanel = (variant: "sidebar" | "mobile") => features.recent ? <div className={`sf-recent sf-recent-${variant}`}>
+    <header><strong>{t("recent")}</strong><span>{metadata.recent.length}</span></header>
+    {metadata.recent.length === 0
+      ? <p className="sf-recent-empty">{t("recentEmpty")}</p>
+      : metadata.recent.slice(0, 8).map(item => <button key={item.path} title={item.path} onClick={() => void openRecent(item.path)}><span className="sf-recent-icon"><UiIcon name="history"/></span><span><b>{item.path.split("/").pop()}</b><small>{item.path.includes("/") ? item.path.slice(0, item.path.lastIndexOf("/")) : t("home")}</small></span></button>)}
+  </div> : null;
   const showDetails = (uiMode === "manager" || fullTools) && selectedEntries.length > 0;
   const iconButton = (name: UiIconName, label: string) => <><UiIcon name={name}/><span>{label}</span></>;
   const resetAndLoad = (nextResource: string, nextPath: string, term = search) => {
@@ -724,6 +892,7 @@ export default function App({ config }: { config: SoFinderConfig }) {
           <button role="menuitem" onClick={() => { setUtilityOpen(false); void load(); }}>{iconButton("refresh", t("refresh"))}</button>
           <button role="menuitem" onClick={() => { setUtilityOpen(false); setSettingsOpen(true); }}>{iconButton("settings", t("settings"))}</button>
           {(uiMode === "manager" || fullTools) && features.trash && recoverableDelete && <button role="menuitem" onClick={() => { setUtilityOpen(false); setTrashOpen(true); }}>{iconButton("trash", t("trash"))}</button>}
+          {(uiMode === "manager" || fullTools) && pluginActions.filter(action => action.slot === "utility" && pluginActionAvailable(action, null)).map(action => <button role="menuitem" key={`${action.plugin}:${action.id}`} onClick={() => { setUtilityOpen(false); openPluginAction(action, null); }}>{pluginLabel(action)}</button>)}
         </div>}
       </div>
       </div>
@@ -732,9 +901,12 @@ export default function App({ config }: { config: SoFinderConfig }) {
       <button onClick={createFolder} disabled={currentResource?.readOnly || directoryCapabilities.create_folder === false || (currentResource !== undefined && currentDepth >= currentResource.maxFolderDepth)} title={currentResource && currentDepth >= currentResource.maxFolderDepth ? t("folderDepthReached") : undefined}>{iconButton("add-folder", t("newFolder"))}</button>
       <button className={`primary sf-upload-trigger${uploadActive ? " is-active" : ""}`} aria-busy={uploadActive} onClick={() => uploadInput.current?.click()} disabled={currentResource?.readOnly || directoryCapabilities.upload === false}>{iconButton("upload", `${t("upload")}${uploadActive ? ` (${uploads.filter(task => task.status === "queued" || task.status === "uploading").length})` : ""}`)}</button>
       <input ref={uploadInput} type="file" multiple hidden onChange={event => { if (event.target.files) void upload(event.target.files); event.target.value = ""; }}/>
+      <button onClick={() => directoryUploadInput.current?.click()} disabled={currentResource?.readOnly || directoryCapabilities.upload === false}>{iconButton("add-folder", t("uploadFolder"))}</button>
+      <input ref={element => { directoryUploadInput.current = element; element?.setAttribute("webkitdirectory", ""); }} type="file" multiple hidden onChange={event => { if (event.target.files) void uploadDirectory(event.target.files); event.target.value = ""; }}/>
       {(uiMode === "manager" || fullTools) && selectedEntries.length > 0 && <><span className="sf-separator"/><div className="sf-context-actions">
       <button onClick={toggleSelectAll} disabled={entries.length === 0}>{iconButton("select", selectedPaths.size === entries.length && entries.length > 0 ? t("clearSelection") : t("selectAll"))}</button>
       <button onClick={rename} disabled={selectedEntries.length !== 1 || !canSelected("rename") || currentResource?.readOnly}>{iconButton("rename", t("rename"))}</button>
+      <button onClick={() => setBulkRenameOpen(true)} disabled={selectedEntries.length < 2 || !canSelected("rename") || currentResource?.readOnly}>{iconButton("rename", t("batchRename"))}</button>
       <button onClick={() => void browseDestination("copy", path)} disabled={!canSelected("copy") || currentResource?.readOnly}>{iconButton("copy", t("copy"))}</button>
       <button onClick={() => void browseDestination("move", path)} disabled={!canSelected("move") || currentResource?.readOnly}>{iconButton("move", t("move"))}</button>
       {features.archive && <button onClick={() => void downloadArchive()}>{iconButton("archive", t("downloadZip"))}</button>}
@@ -747,6 +919,7 @@ export default function App({ config }: { config: SoFinderConfig }) {
       {tools.presets && <label className="sf-sort">{t("preset")}<select value="" disabled={!canEditImage(selected) || currentResource?.readOnly || Object.keys(imagePresets).length === 0} onChange={event => { const name = event.target.value; event.target.value = ""; if (name) void applyPreset(name); }}>
         <option value="">—</option>{Object.entries(imagePresets).map(([name, preset]) => <option key={name} value={name}>{name} ({preset.width}×{preset.height})</option>)}
       </select></label>}
+      {selected && pluginActions.filter(action => action.slot === "toolbar" && pluginActionAvailable(action, selected)).map(action => <button key={`${action.plugin}:${action.id}`} onClick={() => openPluginAction(action, selected)}>{pluginLabel(action)}</button>)}
       </div></>}
     </div>
     {notice && <div className="sf-notice" role="alert">{notice}<button onClick={() => setNotice("")} aria-label={t("close")}><UiIcon name="close"/></button></div>}
@@ -758,16 +931,17 @@ export default function App({ config }: { config: SoFinderConfig }) {
           {item.name.toLowerCase().includes("image") ? t("images") : item.name.toLowerCase() === "files" ? t("files") : item.name}
         </button>)}
         {features.folderTree && resource && (
-          <FolderTree api={api} resource={resource} currentPath={path} rootLabel={t("home")} onNavigate={next => resetAndLoad(resource, next, "")}/>
+          <FolderTree api={api} resource={resource} currentPath={resolvedPath} rootLabel={t("home")} onNavigate={next => resetAndLoad(resource, next, "")}/>
         )}
         {currentResource && <div className="sf-resource-status">
           {currentResource.readOnly && <strong>{t("readOnly")}</strong>}
           {currentResource.quotaBytes > 0 && <><span>{t("storageUsage")}: {formatSize(currentResource.usedBytes)} / {formatSize(currentResource.quotaBytes)}</span><progress max={currentResource.quotaBytes} value={Math.min(currentResource.usedBytes, currentResource.quotaBytes)}/></>}
         </div>}
-        {features.recent && metadata.recent.length > 0 && <div className="sf-recent"><header><strong>{t("recent")}</strong><span>{metadata.recent.length}</span></header>{metadata.recent.slice(0, 8).map(item => <button key={item.path} title={item.path} onClick={() => void openRecent(item.path)}><span className="sf-recent-icon"><UiIcon name="history"/></span><span><b>{item.path.split("/").pop()}</b><small>{item.path.includes("/") ? item.path.slice(0, item.path.lastIndexOf("/")) : t("home")}</small></span></button>)}</div>}
+        {recentPanel("sidebar")}
       </aside>}
       {showSidebar && <div className="sf-column-resizer left" role="separator" tabIndex={0} aria-label={t("resizeLeftPanel")} aria-orientation="vertical" aria-valuemin={columnLimits.left.min} aria-valuemax={columnLimits.left.max} aria-valuenow={leftWidth} onPointerDown={event => beginColumnResize("left", event)} onPointerMove={moveColumnResize} onPointerUp={endColumnResize} onPointerCancel={endColumnResize} onKeyDown={event => resizeColumnWithKeyboard("left", event)} onDoubleClick={() => setColumnWidth("left", columnLimits.left.initial, true)}/>}
       <section className="sf-content">
+        {recentPanel("mobile")}
         {hasLogo && <nav className="sf-breadcrumb" aria-label="Breadcrumb">
           <button onClick={() => resetAndLoad(resource, "")}>{t("home")}</button>
           {crumbs.map((crumb, index) => <span key={`${crumb}-${index}`}>› <button onClick={() => resetAndLoad(resource, crumbs.slice(0, index + 1).join("/"))}>{crumb}</button></span>)}
@@ -801,8 +975,9 @@ export default function App({ config }: { config: SoFinderConfig }) {
       {showDetails && <><div className="sf-column-resizer right" role="separator" tabIndex={0} aria-label={t("resizeRightPanel")} aria-orientation="vertical" aria-valuemin={columnLimits.right.min} aria-valuemax={columnLimits.right.max} aria-valuenow={rightWidth} onPointerDown={event => beginColumnResize("right", event)} onPointerMove={moveColumnResize} onPointerUp={endColumnResize} onPointerCancel={endColumnResize} onKeyDown={event => resizeColumnWithKeyboard("right", event)} onDoubleClick={() => setColumnWidth("right", columnLimits.right.initial, true)}/><DetailsPanel api={api} resource={resource} selectedEntries={selectedEntries} selected={selected} imageInfo={imageInfo} metadata={metadata} showTags={features.tags} previewImage={canPreviewImage(selected)} selectMode={false} selectAllowed={canChooseEntry(selected)} labels={{ details: t("details"), selected: t("selectedCount"), type: t("type"), folder: t("folder"), file: t("file"), size: t("size"), dimensions: t("dimensions"), modified: t("modified"), location: t("location"), select: t("select"), download: t("download"), copyUrl: t("copyUrl"), unsupportedWebImage: t("webImageUnsupported") }} formatDate={timestamp => dateFormatter.format(timestamp * 1000)} onChoose={choose} onOpenUrl={openUrlDialog}/></>}
     </div>
     {uiMode === "picker" && selected && !selected.directory && <div className="sf-picker-bar"><div><strong>{selected.name}</strong><small>{formatSize(selected.size)}</small></div>{!canChooseEntry(selected) && <span role="status">{t("webImageUnsupported")}</span>}<button className="primary" disabled={!canChooseEntry(selected)} onClick={() => choose()}>{t("select")}</button></div>}
-    {settingsOpen && <SettingsDialog resource={currentResource} tools={tools} features={features} scale={uiScale} translate={t} onToolChange={updateTool} onFeatureChange={updateFeature} onScaleChange={setUiScale} onClose={() => setSettingsOpen(false)}/>}
+    {settingsOpen && <SettingsDialog resource={currentResource} tools={tools} features={features} availability={featureAvailability} scale={uiScale} translate={t} onToolChange={updateTool} onFeatureChange={updateFeature} onScaleChange={setUiScale} onClose={() => setSettingsOpen(false)}/>}
     {destinationDialog && <DestinationDialog state={destinationDialog} unsafe={destinationUnsafe} translate={t} onBrowse={(operation, destination) => void browseDestination(operation, destination)} onConfirm={(operation, destination) => void transfer(operation, destination)} onClose={() => setDestinationDialog(null)}/>}
+    {bulkRenameOpen && currentResource && <BulkRenameDialog entries={selectedEntries} maximum={currentResource.maxFileNameLength} labels={{ title: t("batchRename"), pattern: t("renamePattern"), hint: t("renamePatternHint"), oldName: t("oldName"), newName: t("newName"), invalid: t("invalidEntryName"), duplicate: t("duplicateRename"), cancel: t("cancel"), save: t("rename"), close: t("close") }} onClose={() => setBulkRenameOpen(false)} onSave={renames => void batchRename(renames)}/>}
     {textDialog && <TextDialog title={textDialog.title} label={textDialog.label} initialValue={textDialog.initial} maximum={textDialog.maximum} extension={textDialog.extension} invalidNameLabel={t("invalidEntryName")} confirmLabel={t("confirm")} cancelLabel={t("cancel")} closeLabel={t("close")} onConfirm={value => void submitTextDialog(value)} onClose={() => setTextDialog(null)}/>}
     {confirmDialog && <ConfirmDialog {...confirmDialog} confirmLabel={t("confirm")} cancelLabel={t("cancel")} closeLabel={t("close")} onConfirm={() => answerConfirm(true)} onClose={() => answerConfirm(false)}/>}
     {trashOpen && <TrashDialog
@@ -828,9 +1003,11 @@ export default function App({ config }: { config: SoFinderConfig }) {
         <div className="sf-file-preview-content">
           {canPreviewImage(previewEntry)
             ? <ThumbnailImage src={api.thumbnailUrl(resource, previewEntry, 512, 512)} alt={previewEntry.name}/>
+            : textPreview?.path === previewEntry.path
+              ? <><pre className="sf-text-preview">{textPreview.content}</pre>{textPreview.truncated && <p className="sf-warning">{t("previewTruncated")}</p>}</>
             : <div className="sf-file-preview-fallback"><Icon kind="file"/><p>{t("previewUnavailable")}</p></div>}
         </div>
-        <dl className="sf-file-preview-meta"><dt>{t("type")}</dt><dd>{previewEntry.mimeType || t("file")}</dd><dt>{t("size")}</dt><dd>{formatSize(previewEntry.size)}</dd><dt>{t("modified")}</dt><dd><time dateTime={new Date(previewEntry.modifiedAt * 1000).toISOString()}>{dateFormatter.format(previewEntry.modifiedAt * 1000)}</time></dd><dt>{t("location")}</dt><dd>{previewEntry.path}</dd></dl>
+        <dl className="sf-file-preview-meta"><dt>{t("type")}</dt><dd>{previewEntry.mimeType || t("file")}</dd><dt>{t("size")}</dt><dd>{formatSize(previewEntry.size)}</dd><dt>{t("modified")}</dt><dd><time dateTime={new Date(previewEntry.modifiedAt * 1000).toISOString()}>{dateFormatter.format(previewEntry.modifiedAt * 1000)}</time></dd><dt>{t("location")}</dt><dd>{previewEntry.path}</dd><dt>SHA-256</dt><dd>{checksum?.path === previewEntry.path ? <code className="sf-checksum">{checksum.value}</code> : <button onClick={() => void api.checksum(resource, previewEntry.path).then(result => setChecksum({ path: previewEntry.path, value: result.checksum })).catch(report)}>{t("calculateChecksum")}</button>}</dd></dl>
       </div>
     </Modal>}
     {urlDialog && <UrlDialog url={urlDialog.url} loginRequired={urlDialog.loginRequired} labels={{ title: t("fileUrl"), close: t("close"), copied: t("urlCopied"), failed: t("copyUrlFailed"), hint: t("clickUrlToCopy"), loginRequired: t("loginRequired") }} onClose={() => setUrlDialog(null)}/>}
@@ -857,8 +1034,11 @@ export default function App({ config }: { config: SoFinderConfig }) {
         { id: "copy", label: t("copy"), disabled: contextMenu.entry.capabilities?.copy === false },
         { id: "move", label: t("move"), disabled: contextMenu.entry.capabilities?.move === false },
         { id: "delete", label: t("remove"), disabled: contextMenu.entry.capabilities?.delete === false, danger: true },
+        ...pluginActions.filter(action => action.slot === "context").map(action => ({ id: `plugin:${action.plugin}:${action.id}`, label: pluginLabel(action), disabled: !pluginActionAvailable(action, contextMenu.entry) })),
       ] : []),
     ]}/>}
     <div className="sf-sr-only" aria-live="polite">{selectedEntries.length > 0 ? `${selectedEntries.length} ${t("selectedCount")}` : notice}</div>
   </main>;
 }
+
+const isTextPreviewMime = (mime: string | null) => Boolean(mime && (mime.startsWith("text/") || ["application/json", "application/ld+json", "application/xml", "application/x-yaml", "application/yaml"].includes(mime) || mime.endsWith("+json") || mime.endsWith("+xml")));

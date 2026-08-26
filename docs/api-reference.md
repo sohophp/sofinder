@@ -5,6 +5,8 @@ description: Complete SoFinder HTTP endpoint, request, response, upload, image a
 
 # HTTP API reference
 
+The machine-readable [OpenAPI 3.1 document](/openapi.json) is checked against every published API route during the PHP test suite.
+
 All paths below are relative to the prefix used when importing SoFinder routes, for example `/sofinder`. The API is intended for same-origin, authenticated application clients. It is not an anonymous object-storage API.
 
 ## Protocol conventions
@@ -164,6 +166,14 @@ Returns `trash`, which is null for permanent-delete adapters or an object contai
 }
 ```
 
+### `POST /api/entries/batch-rename`
+
+```json
+{"resource":"Files","renames":[{"path":"draft-a.pdf","name":"report-1.pdf"},{"path":"draft-b.pdf","name":"report-2.pdf"}]}
+```
+
+Paths and destination names must be unique. Extensions remain immutable and every item is authorized and validated independently. The response uses the same per-item result shape as other batch operations.
+
 ## Uploads
 
 ### `POST /api/uploads`
@@ -194,6 +204,14 @@ Authorizes `read` and returns an attachment. Folders return `invalid_type`.
 ### `GET /api/content?resource=Images&path=photo.jpg&disposition=inline`
 
 Returns private authenticated content with ETag, Last-Modified, conditional request and a single byte `Range`. Only safe browser raster MIME types can be inline; every other type is forced to attachment. Invalid or unsatisfiable ranges return 416.
+
+### `GET /api/preview/text?resource=Files&path=readme.txt`
+
+Returns at most the first 256 KiB of an authorized UTF-8 text, JSON, XML or YAML file as JSON `{content,truncated,mimeType,size}`. Content is rendered as text by the bundled UI and is never treated as HTML.
+
+### `GET /api/checksum?resource=Files&path=manual.pdf`
+
+Returns `{algorithm:"sha256",checksum,size}` for authorized files up to 512 MiB. The checksum is calculated from stored bytes and does not expose the adapter path.
 
 ## Recycle bin
 
@@ -241,6 +259,12 @@ Returns `application/zip` named `sofinder-download.zip`; it is limited by resour
 {"resource":"Files","path":"manual.pdf","action":"tags","tags":["docs","approved"]}
 {"resource":"Files","path":"manual.pdf","action":"touch"}
 ```
+
+Clients may send `action: "forget"` after an authorized lookup confirms that a
+recent path disappeared outside SoFinder; this removes that path from favorites,
+tags and recent state. When the host disables a feature, its dedicated operation
+returns `feature_disabled` with HTTP 404 and the config response marks it false
+under `featureAvailability`.
 
 An entry accepts at most 10 unique tags of 1–30 visible characters.
 

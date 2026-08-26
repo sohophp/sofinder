@@ -7,9 +7,12 @@ const config = {
   csrfToken: "test-token",
   language: "zh-cn",
   resource: "Files",
+  initialPath: "",
   selectMode: false,
   selectionKind: "any",
   ckeditorFunction: 0,
+  pickerRequestId: "",
+  pickerOrigin: "",
   theme: { accent: "#276ef1", background: "#f4f6f9", panel: "#ffffff", text: "#1c2735", muted: "#667282", danger: "#c13a43", radius: "10px" },
   featureDefaults: { folderTree: false },
   uiDefaults: { scale: "standard" as const, mode: "manager" as const, header: true, logo: true, search: true, languageSwitcher: true, viewSwitcher: true },
@@ -36,6 +39,18 @@ test.beforeEach(async ({ page }) => {
     }
     if (url.pathname === "/sofinder/api/images/info") {
       await route.fulfill({ json: { success: true, data: { width: 1200, height: 400, format: "png", mimeType: "image/png", editable: true } } });
+      return;
+    }
+    if (url.pathname === "/sofinder/api/preview/text") {
+      await route.fulfill({ json: { success: true, data: { content: "SoFinder local preview", truncated: false, mimeType: "text/plain", size: 22 } } });
+      return;
+    }
+    if (url.pathname === "/sofinder/api/checksum") {
+      await route.fulfill({ json: { success: true, data: { algorithm: "sha256", checksum: "a".repeat(64), size: 12 } } });
+      return;
+    }
+    if (url.pathname === "/sofinder/api/entries/batch-rename" && route.request().method() === "POST") {
+      await route.fulfill({ json: { success: true, data: { operation: "rename", total: 2, succeeded: 2, failed: 0, purgedItems: 0, purgedBytes: 0, results: [] } } });
       return;
     }
     if (url.pathname === "/sofinder/api/images/edit" && route.request().method() === "PATCH") {
@@ -111,7 +126,7 @@ test("uses a minimal shell and reveals manager actions contextually", async ({ p
   await expect(page.getByRole("button", { name: "重命名" })).toHaveCount(0);
   await page.waitForTimeout(350);
   await page.locator(".sf-entry", { hasText: "guide.txt" }).click();
-  await expect(page.getByRole("button", { name: "重命名" })).toBeVisible();
+  await expect(page.getByRole("button", { name: "重命名", exact: true })).toBeVisible();
   await expect(page.locator(".sf-details")).toHaveCSS("width", "270px");
   await page.getByRole("button", { name: "更多操作" }).click();
   await expect(page.getByLabel("语言")).toBeVisible();
@@ -198,6 +213,95 @@ test("keeps the compact manager layout inside a narrow viewport", async ({ page 
   expect(metrics.commandRight).toBeLessThanOrEqual(560);
 });
 
+test("keeps previous and next pagination controls on one line", async ({ page }) => {
+  await page.setViewportSize({ width: 403, height: 740 });
+  const previous = page.getByRole("button", { name: "上一页", exact: true });
+  const next = page.getByRole("button", { name: "下一页", exact: true });
+  await expect(previous).toBeVisible();
+  await expect(next).toBeVisible();
+  const metrics = await Promise.all([previous, next].map(button => button.evaluate(element => ({
+    display: getComputedStyle(element).display,
+    whiteSpace: getComputedStyle(element).whiteSpace,
+    height: element.getBoundingClientRect().height,
+    scrollWidth: element.scrollWidth,
+    clientWidth: element.clientWidth,
+  }))));
+  for (const item of metrics) {
+    expect(item.display).toBe("flex");
+    expect(item.whiteSpace).toBe("nowrap");
+    expect(item.height).toBeLessThanOrEqual(40);
+    expect(item.scrollWidth).toBeLessThanOrEqual(item.clientWidth);
+  }
+});
+
+test("shows recent files immediately when enabled and keeps them accessible on mobile", async ({ page }) => {
+  let recent: Array<{ path: string; touchedAt: number }> = [];
+  await page.route("**/sofinder/api/metadata**", async route => {
+    if (route.request().method() === "PATCH") {
+      const body = route.request().postDataJSON() as { path: string };
+      recent = [{ path: body.path, touchedAt: 1 }];
+    }
+    await route.fulfill({ json: { success: true, data: { favorites: [], tags: {}, recent } } });
+  });
+  await page.evaluate(() => localStorage.setItem("sofinder.features.v2", JSON.stringify({ recent: true })));
+  await page.setContent(`<!doctype html><html lang="zh-CN"><head><title>SoFinder</title></head><body><main id="sofinder-root" data-config='${JSON.stringify(config)}'></main></body></html>`);
+  await page.addStyleTag({ path: resolve(import.meta.dirname, "../../dist/sofinder.css") });
+  await page.addScriptTag({ path: resolve(import.meta.dirname, "../../dist/sofinder.js"), type: "module" });
+
+  const desktopRecent = page.locator(".sf-recent-sidebar");
+  await expect(desktopRecent.getByText("暂无最近使用；选择或打开文件后会显示在这里。")).toBeVisible();
+  await page.locator(".sf-entry", { hasText: "guide.txt" }).click();
+  await expect(desktopRecent.getByRole("button", { name: /guide\.txt/ })).toBeVisible();
+
+  await page.setViewportSize({ width: 403, height: 740 });
+  await expect(desktopRecent).toBeHidden();
+  await expect(page.locator(".sf-recent-mobile").getByRole("button", { name: /guide\.txt/ })).toBeVisible();
+});
+
+test("removes a recent entry that disappeared outside SoFinder", async ({ page }) => {
+  let recent = [{ path: "missing/file.txt", touchedAt: 1 }];
+  let forgotten = false;
+  await page.route("**/sofinder/api/metadata**", async route => {
+    if (route.request().method() === "PATCH") {
+      const body = route.request().postDataJSON() as { action: string };
+      if (body.action === "forget") { recent = []; forgotten = true; }
+    }
+    await route.fulfill({ json: { success: true, data: { favorites: [], tags: {}, recent } } });
+  });
+  await page.route("**/sofinder/api/entries?*", async route => {
+    const url = new URL(route.request().url());
+    if (url.searchParams.get("path") === "missing") {
+      await route.fulfill({ status: 404, json: { success: false, error: { code: "not_found", message: "Missing" } } });
+      return;
+    }
+    await route.fallback();
+  });
+  await page.evaluate(() => localStorage.setItem("sofinder.features.v2", JSON.stringify({ recent: true })));
+  await page.setContent(`<!doctype html><html lang="zh-CN"><body><main id="sofinder-root" data-config='${JSON.stringify(config)}'></main></body></html>`);
+  await page.addStyleTag({ path: resolve(import.meta.dirname, "../../dist/sofinder.css") });
+  await page.addScriptTag({ path: resolve(import.meta.dirname, "../../dist/sofinder.js"), type: "module" });
+
+  await page.locator(".sf-recent-sidebar").getByRole("button", { name: /file\.txt/ }).click();
+  await expect(page.getByRole("alert")).toContainText("该最近使用文件已不存在，已从列表移除。");
+  await expect(page.locator(".sf-recent-sidebar").getByText("暂无最近使用；选择或打开文件后会显示在这里。")).toBeVisible();
+  expect(forgotten).toBe(true);
+});
+
+test("does not let browser preferences re-enable host-disabled features", async ({ page }) => {
+  await page.evaluate(() => localStorage.setItem("sofinder.features.v2", JSON.stringify({ recent: true, tags: true, archive: true })));
+  const restricted = { ...config, featureAvailability: { folderTree: true, recent: false, favorites: true, tags: false, archive: false, trash: true } };
+  await page.setContent(`<!doctype html><html lang="zh-CN"><head><title>SoFinder</title></head><body><main id="sofinder-root" data-config='${JSON.stringify(restricted)}'></main></body></html>`);
+  await page.addStyleTag({ path: resolve(import.meta.dirname, "../../dist/sofinder.css") });
+  await page.addScriptTag({ path: resolve(import.meta.dirname, "../../dist/sofinder.js"), type: "module" });
+  await expect(page.getByText("guide.txt").first()).toBeVisible();
+  await page.getByRole("button", { name: "更多操作" }).click();
+  await page.getByRole("menuitem", { name: "设置" }).click();
+  const settings = page.getByRole("dialog", { name: "设置" });
+  await expect(settings.getByText("最近使用", { exact: true })).toHaveCount(0);
+  await expect(settings.getByText("标签", { exact: true })).toHaveCount(0);
+  await expect(settings.getByText("打包下载", { exact: true })).toHaveCount(0);
+});
+
 test("supports keyboard selection and keeps the picker confirmation bar compact", async ({ page }) => {
   await page.setViewportSize({ width: 560, height: 740 });
   await page.setContent(`<!doctype html><html lang="zh-CN"><head><title>SoFinder picker</title></head><body><main id="sofinder-root" data-config='${JSON.stringify({ ...config, selectMode: true, selectionKind: "any", uiDefaults: { ...config.uiDefaults, mode: "picker" } })}'></main></body></html>`);
@@ -211,7 +315,7 @@ test("supports keyboard selection and keeps the picker confirmation bar compact"
   await expect(selected).toHaveCount(1);
   await expect(page.locator(".sf-picker-bar")).toBeVisible();
   await expect(page.getByRole("button", { name: "新建文件夹" })).toBeVisible();
-  await expect(page.getByRole("button", { name: "上传" })).toBeVisible();
+  await expect(page.getByRole("button", { name: "上传", exact: true })).toBeVisible();
   await expect(page.getByRole("button", { name: "重命名" })).toHaveCount(0);
   const bounds = await page.locator(".sf-picker-bar").boundingBox();
   expect(bounds).not.toBeNull();
@@ -228,7 +332,7 @@ test("keeps picker selection while exposing full ACL-controlled tools", async ({
   await page.locator(".sf-entry", { hasText: "photo.png" }).click();
 
   await expect(page.locator(".sf-picker-bar")).toBeVisible();
-  await expect(page.getByRole("button", { name: "重命名" })).toBeVisible();
+  await expect(page.getByRole("button", { name: "重命名", exact: true })).toBeVisible();
   await expect(page.getByRole("button", { name: "复制", exact: true })).toBeVisible();
   await expect(page.getByRole("button", { name: "移动" })).toBeVisible();
   await expect(page.getByRole("button", { name: "删除" })).toBeVisible();
@@ -444,6 +548,96 @@ test("right-click preview opens a preview without selecting the file", async ({ 
   await expect.poll(() => page.evaluate(() => (window as Window & { selectionEvents?: number }).selectionEvents)).toBe(0);
 });
 
+test("previews bounded text and calculates a checksum", async ({ page }) => {
+  await page.locator(".sf-entry", { hasText: "guide.txt" }).click({ button: "right" });
+  await page.getByRole("menuitem", { name: "预览" }).click();
+  const dialog = page.getByRole("dialog", { name: "guide.txt" });
+  await expect(dialog.getByText("SoFinder local preview")).toBeVisible();
+  await dialog.getByRole("button", { name: "计算校验值" }).click();
+  await expect(dialog.locator(".sf-checksum")).toHaveText("a".repeat(64));
+});
+
+test("previews and submits a deterministic batch rename", async ({ page }) => {
+  await page.locator(".sf-entry", { hasText: "guide.txt" }).click();
+  await page.locator(".sf-entry", { hasText: "photo.png" }).click({ modifiers: ["Control"] });
+  await page.getByRole("button", { name: "批量重命名" }).click();
+  const dialog = page.getByRole("dialog", { name: "批量重命名" });
+  await expect(dialog.getByRole("cell", { name: "guide-1.txt" })).toBeVisible();
+  await expect(dialog.getByRole("cell", { name: "photo-2.png" })).toBeVisible();
+  await dialog.getByRole("button", { name: "重命名", exact: true }).click();
+  await expect(page.getByRole("alert")).toContainText("2 项完成");
+});
+
+test("exposes separate file and folder upload controls", async ({ page }) => {
+  await expect(page.getByRole("button", { name: "上传", exact: true })).toBeVisible();
+  await expect(page.getByRole("button", { name: "上传文件夹", exact: true })).toBeVisible();
+  await expect(page.locator('input[type="file"][webkitdirectory]')).toHaveCount(1);
+});
+
+test("previews a folder upload before creating directories", async ({ page }) => {
+  await page.locator('input[type="file"][webkitdirectory]').evaluate((input: HTMLInputElement) => {
+    const file = new File(["preview"], "guide.txt", { type: "text/plain" });
+    Object.defineProperty(file, "webkitRelativePath", { value: "sample/nested/guide.txt" });
+    const transfer = new DataTransfer();
+    transfer.items.add(file);
+    Object.defineProperty(input, "files", { configurable: true, value: transfer.files });
+    input.dispatchEvent(new Event("change", { bubbles: true }));
+  });
+
+  const dialog = page.getByRole("dialog", { name: "上传文件夹" });
+  await expect(dialog).toContainText("1 文件 · 2 文件夹");
+  await expect(dialog).toContainText("顶层文件夹: sample");
+  await dialog.getByRole("button", { name: "取消" }).click();
+});
+
+test("keeps destination selection open when a folder disappears concurrently", async ({ page }) => {
+  const rootEntries = [
+    { path: "guide.txt", name: "guide.txt", directory: false, size: 12, modifiedAt: 1, mimeType: "text/plain", url: "/uploads/editor/files/guide.txt", capabilities: { read: true, rename: true, copy: true, move: true, delete: true } },
+    { path: "gone", name: "gone", directory: true, size: 0, modifiedAt: 1, mimeType: null, url: null, capabilities: { read: true, copy: true, move: true, delete: true } },
+  ];
+  await page.route("**/sofinder/api/entries?*", async route => {
+    const url = new URL(route.request().url());
+    if (url.searchParams.get("path") === "gone") {
+      await route.fulfill({ status: 404, json: { success: false, error: { code: "not_found", message: "Missing" } } });
+      return;
+    }
+    await route.fulfill({ json: { success: true, data: { entries: rootEntries, total: 2, path: "", offset: 0, limit: 100, nextCursor: null, sort: "name", direction: "asc", capabilities: { upload: true, create_folder: true } } } });
+  });
+  await page.setContent(`<!doctype html><html lang="zh-CN"><body><main id="sofinder-root" data-config='${JSON.stringify(config)}'></main></body></html>`);
+  await page.addStyleTag({ path: resolve(import.meta.dirname, "../../dist/sofinder.css") });
+  await page.addScriptTag({ path: resolve(import.meta.dirname, "../../dist/sofinder.js"), type: "module" });
+  await page.locator(".sf-entry", { hasText: "guide.txt" }).click();
+  await page.getByRole("button", { name: "复制", exact: true }).click();
+  const dialog = page.getByRole("dialog", { name: "复制到文件夹" });
+  await dialog.getByRole("button", { name: "gone" }).click();
+
+  await expect(dialog).toBeVisible();
+  await expect(dialog).toContainText("已选文件夹: /");
+  await expect(page.getByRole("alert")).toContainText("目标文件夹已不存在，请从根目录重新选择。");
+});
+
+test("returns stale deep links to the root without making the folder tree repeat the missing request", async ({ page }) => {
+  let missingRequests = 0;
+  await page.route("**/sofinder/api/entries?*", async route => {
+    const url = new URL(route.request().url());
+    if (url.searchParams.get("path") !== "missing-folder") {
+      await route.fallback();
+      return;
+    }
+    missingRequests += 1;
+    await route.fulfill({ status: 404, json: { success: false, error: { code: "not_found", message: "The requested entry was not found." } } });
+  });
+  const staleConfig = { ...config, initialPath: "missing-folder", featureDefaults: { folderTree: true } };
+  await page.setContent(`<!doctype html><html lang="zh-CN"><head><title>SoFinder</title></head><body><main id="sofinder-root" data-config='${JSON.stringify(staleConfig)}'></main></body></html>`);
+  await page.addStyleTag({ path: resolve(import.meta.dirname, "../../dist/sofinder.css") });
+  await page.addScriptTag({ path: resolve(import.meta.dirname, "../../dist/sofinder.js"), type: "module" });
+
+  await expect(page.getByRole("alert")).toContainText("该文件夹已不存在，已返回根目录。");
+  await expect(page.getByText("guide.txt").first()).toBeVisible();
+  await expect.poll(() => missingRequests).toBe(1);
+  await expect.poll(() => new URL(page.url()).searchParams.get("path")).toBeNull();
+});
+
 test("switches language and remembers the choice", async ({ page }) => {
   await page.getByRole("button", { name: "更多操作" }).click();
   await page.getByLabel("语言").selectOption("zh-tw");
@@ -473,7 +667,7 @@ test("treats non-web image formats as ordinary files and blocks image selection"
   const heic = page.locator(".sf-entry", { hasText: "camera.heic" });
   await expect(heic).toBeVisible();
   await expect(page.getByRole("button", { name: "新建文件夹" })).toBeVisible();
-  await expect(page.getByRole("button", { name: "上传" })).toBeVisible();
+  await expect(page.getByRole("button", { name: "上传", exact: true })).toBeVisible();
   await expect(heic.locator("img")).toHaveCount(0);
   await heic.click();
   await expect(page.getByRole("button", { name: "选择" })).toBeDisabled();

@@ -19,6 +19,14 @@ final class VirusScanPlugin implements \SohoPHP\SoFinder\Contract\PluginInterfac
             'name' => 'acme-virus-scan',
             'version' => '1.0.0',
             'capabilities' => ['virus-scan'],
+            'uiActions' => [[
+                'id' => 'scan-report',
+                'label' => ['en' => 'Scan report', 'zh-cn' => '扫描报告', 'zh-tw' => '掃描報告'],
+                'slot' => 'context',
+                'url' => '/admin/security/scan-report',
+                'selection' => 'file',
+                'requires' => 'read',
+            ]],
         ];
     }
 }
@@ -35,3 +43,20 @@ by replacing one of the public contracts such as `AuthorizationInterface`,
 implement `StorageAdapterInterface` and should run the common storage contract
 test suite before release. Plugins must not depend on SoFinder internals or
 copy assets or implementation details from third-party file managers.
+
+`uiActions` are optional declaration-only extension slots. `slot` is `utility`,
+`toolbar` or `context`; selection is `none`, `any`, `file` or `image`. SoFinder
+accepts only same-origin absolute paths and opens them with `noopener`. The host
+route must repeat authorization. Descriptors cannot inject scripts, HTML, React
+components or remote URLs.
+
+The repository includes a runnable reference in
+`examples/symfony/src/Plugin/FileInspectorPlugin.php` with its matching
+`PluginInspectorController`. It demonstrates autoconfiguration, a context action,
+repeat authorization through `FileManager`, escaped output, restrictive response
+headers and a plugin health check. Use that pair as the starting point for a
+real extension rather than trusting the path supplied by the browser.
+
+Uploads can add fail-closed scanners through `UploadScannerInterface`; health
+providers implement `HealthCheckInterface`. Both are autoconfigured. The bundled
+`ClamAvScanner` is documented in [production operation](/production).

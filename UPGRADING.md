@@ -1,5 +1,17 @@
 # Upgrading SoFinder
 
+## From 0.1.0-beta.14 to 0.1.0-beta.15
+
+Deploy the rebuilt `sofinder.js`, `sofinder-picker.js` and `sofinder.css`
+assets together. Existing routes and file data need no migration. Multi-node
+hosts may opt into the new PDO or Redis state stores by overriding the metadata,
+usage and request-gate aliases; single-node file stores remain the default.
+Protect `/health` and `/metrics` with the host's monitoring role or network
+policy. Run `sofinder:security:audit --json` as a deployment gate.
+All optional `features` default to enabled for compatibility. Hosts may disable
+them explicitly; browser-local preferences can no longer re-enable a disabled
+host feature. No metadata migration is required.
+
 ## From 0.1.0-beta.13 to 0.1.0-beta.14
 
 Thumbnail cache files now receive the configured filesystem mode after atomic

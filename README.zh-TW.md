@@ -6,17 +6,19 @@ SoFinder 是原創、採 MIT 授權的網頁檔案管理器，支援 PHP 8.2 至
 
 本專案採獨立設計，不包含專有檔案管理器的程式碼、美術、翻譯、樣式或其他資產。Runtime 相依套件聲明記錄於 `THIRD_PARTY_NOTICES.md`。
 
-一般使用者可閱讀[檔案管理器指南](https://sofinder.sohophp.app/zh-TW/user-guide)、[圖片管理](https://sofinder.sohophp.app/zh-TW/image-guide)和 [CKEditor 4](https://sofinder.sohophp.app/zh-TW/ckeditor4)。開發者請使用[整合指南](https://sofinder.sohophp.app/zh-TW/developer-guide)及 [HTTP API 參考](https://sofinder.sohophp.app/zh-TW/api-reference)。
+一般使用者可閱讀[檔案管理器指南](https://sofinder.sohophp.app/zh-TW/user-guide)、[圖片管理](https://sofinder.sohophp.app/zh-TW/image-guide)和[編輯器整合](https://sofinder.sohophp.app/zh-TW/editor-integrations)。開發者請使用[整合指南](https://sofinder.sohophp.app/zh-TW/developer-guide)及 [HTTP API 參考](https://sofinder.sohophp.app/zh-TW/api-reference)。
 
 ## Symfony 安裝
 
 完整文件站位於 <https://sofinder.sohophp.app/zh-TW/>。註冊 `SohoPHP\SoFinder\SoFinderBundle`，匯入 `@SoFinderBundle/Resources/config/routes.yaml`，並在 `so_finder.resources` 設定一個或多個資源類型。完整範例請見[繁體中文 Symfony 整合](https://sofinder.sohophp.app/zh-TW/symfony)。
 
-已實作功能包含：登入後瀏覽、搜尋、上傳、下載、新增資料夾、重新命名、可復原刪除、自動衝突命名的複製／移動、伺服器限制的分頁、名稱／大小／日期排序、網格／清單檢視、多選、具數量上限及逐項結果的批次操作、資料夾樹、右鍵／長按選單、剪貼簿與指定目標拖放、一般／分塊上傳進度、取消、明確覆蓋、縮圖快取、EXIF 方向修正、等比例縮放、Canvas 裁剪、派生圖片預設、受限制的 ZIP 下載、響應式版面、英文／簡體中文／繁體中文，以及 CKEditor 4 瀏覽與上傳介面。
+已實作功能包含：登入後瀏覽、搜尋、上傳、資料夾上傳、下載、新增資料夾、重新命名、批次重新命名、可復原刪除、自動衝突命名的複製／移動、伺服器限制的分頁、名稱／大小／日期排序、網格／清單檢視、多選、具數量上限及逐項結果的批次操作、資料夾樹、右鍵／長按選單、文字預覽、SHA-256、一般／分塊上傳、圖片處理、ZIP 下載、響應式三語介面，以及 CKEditor 4 與適用於 CKEditor 5、TinyMCE、TipTap、Quill、一般表單的彈窗 SDK。
 
 資源可設定 byte 配額、必要 Symfony roles 及各操作專用 roles。成功異動會產生結構化 PSR-3 audit log。每位使用者的收藏、標籤及最近 50 筆記錄會透過可替換的 metadata store 原子保存。
 
 Symfony 整合亦提供經驗證的主題設定、tagged plugin descriptor registry、鍵盤檔案導覽、可見焦點及螢幕閱讀器選取提示。公開擴充契約請見 `docs/plugins.md`。
+
+正式環境可加入同源 plugin UI Action 與 tagged 上傳掃描器。選用 PDO／Redis 原子狀態、readiness、Prometheus、request ID 與 JSON 安全稽核支援多節點部署，詳見 `docs/production.md` 與 `docs/public/openapi.json`。
 
 圖片詳細資訊會顯示實際解碼尺寸。圖片編輯預設自動命名並另存副本；覆蓋必須明確選擇。裁剪支援縮放、平移、八方向控制點、比例、鍵盤／數值微調、復原／重做及前後比較。瀏覽器齒輪選單可控制選用圖片工具，旋轉和預設尺寸預設關閉。複製與移動可從完整授權資源選取資料夾，伺服器仍會執行路徑沙箱及 ACL。
 

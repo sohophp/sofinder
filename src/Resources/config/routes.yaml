@@ -8,12 +8,24 @@ sofinder_asset:
   path: /assets/{file}
   controller: SohoPHP\SoFinder\Http\AssetController
   methods: [GET]
-  requirements: { file: 'sofinder\.(?:js|css)' }
+  requirements: { file: 'sofinder(?:-picker)?\.js|sofinder\.css' }
   defaults: { _sofinder: true }
 
 sofinder_api_config:
   path: /api/config
   controller: SohoPHP\SoFinder\Http\ApiController::config
+  methods: [GET]
+  defaults: { _sofinder: true }
+
+sofinder_health:
+  path: /health
+  controller: SohoPHP\SoFinder\Http\HealthController
+  methods: [GET]
+  defaults: { _sofinder: true }
+
+sofinder_metrics:
+  path: /metrics
+  controller: SohoPHP\SoFinder\Http\MetricsController
   methods: [GET]
   defaults: { _sofinder: true }
 
@@ -85,6 +97,12 @@ sofinder_api_batch:
   methods: [POST]
   defaults: { _sofinder: true }
 
+sofinder_api_batch_rename:
+  path: /api/entries/batch-rename
+  controller: SohoPHP\SoFinder\Http\ApiController::batchRename
+  methods: [POST]
+  defaults: { _sofinder: true }
+
 sofinder_api_download:
   path: /api/download
   controller: SohoPHP\SoFinder\Http\ContentController::download
@@ -94,6 +112,18 @@ sofinder_api_download:
 sofinder_api_content:
   path: /api/content
   controller: SohoPHP\SoFinder\Http\ContentController::content
+  methods: [GET]
+  defaults: { _sofinder: true }
+
+sofinder_api_checksum:
+  path: /api/checksum
+  controller: SohoPHP\SoFinder\Http\ContentController::checksum
+  methods: [GET]
+  defaults: { _sofinder: true }
+
+sofinder_api_text_preview:
+  path: /api/preview/text
+  controller: SohoPHP\SoFinder\Http\ContentController::textPreview
   methods: [GET]
   defaults: { _sofinder: true }
 

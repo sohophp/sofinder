@@ -10,7 +10,7 @@ The project is independently designed and does not contain code, artwork,
 translations, styles, or other assets from proprietary file managers.
 Runtime dependency notices are recorded in `THIRD_PARTY_NOTICES.md`.
 
-Users can start with the [file manager guide](https://sofinder.sohophp.app/user-guide), [image guide](https://sofinder.sohophp.app/image-guide) and [CKEditor 4 guide](https://sofinder.sohophp.app/ckeditor4). Developers should use the [integration guide](https://sofinder.sohophp.app/developer-guide) and [HTTP API reference](https://sofinder.sohophp.app/api-reference).
+Users can start with the [file manager guide](https://sofinder.sohophp.app/user-guide), [image guide](https://sofinder.sohophp.app/image-guide) and [editor integration guide](https://sofinder.sohophp.app/editor-integrations). Developers should use the [integration guide](https://sofinder.sohophp.app/developer-guide) and [HTTP API reference](https://sofinder.sohophp.app/api-reference).
 
 ## Symfony installation
 
@@ -28,8 +28,10 @@ folder-tree navigation, context/long-press menus, clipboard and targeted drag
 and drop, per-file/chunked upload progress, cancellation, explicit conflict
 replacement, cached thumbnails, EXIF-aware image rotation and proportional
 resize, Canvas-based cropping, derived-image presets, bounded ZIP downloads,
-responsive layout, English, Simplified Chinese, Traditional Chinese, and
-CKEditor 4 browse/upload adapters.
+responsive layout, English, Simplified Chinese, Traditional Chinese, CKEditor 4
+browse/upload adapters, and a popup SDK for CKEditor 5, TinyMCE, TipTap, Quill
+and ordinary form fields. Folder upload, deterministic batch rename, bounded
+text preview and SHA-256 checksums are available in the standalone manager.
 
 Resources may define byte quotas, required Symfony roles and operation-specific
 role overrides. Completed mutations emit structured PSR-3 audit log entries.
@@ -39,6 +41,12 @@ The Symfony integration also includes a validated theme configuration, a
 tagged plugin descriptor registry, keyboard file navigation, visible focus,
 and screen-reader selection announcements. See `docs/plugins.md` for the
 public extension contract.
+
+Production integrations can add same-origin plugin UI actions and tagged upload
+scanners without weakening core authorization. Optional PDO/Redis atomic state,
+readiness and Prometheus endpoints, request IDs and JSON security audits support
+multi-node operation; see `docs/production.md` and the OpenAPI document at
+`docs/public/openapi.json`.
 
 Image details report decoded pixel dimensions. Image edits default to an
 automatically named copy; overwrite is explicit. Cropping supports zoom, pan,

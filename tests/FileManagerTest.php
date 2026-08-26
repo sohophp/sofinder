@@ -87,6 +87,39 @@ final class FileManagerTest extends TestCase
         self::assertSame('Docs', $result['entries'][0]->name);
     }
 
+    public function testBatchRenameReturnsExactPerItemResults(): void
+    {
+        file_put_contents($this->directory . '/alpha.txt', 'a');
+        file_put_contents($this->directory . '/beta.txt', 'b');
+
+        $result = $this->manager(true)->batchRename('Files', [
+            ['path' => 'alpha.txt', 'name' => 'report-1.txt'],
+            ['path' => 'beta.txt', 'name' => 'report-2.txt'],
+        ]);
+
+        self::assertSame(2, $result['succeeded']);
+        self::assertSame(0, $result['failed']);
+        self::assertFileExists($this->directory . '/report-1.txt');
+        self::assertFileExists($this->directory . '/report-2.txt');
+    }
+
+    public function testBatchRenameRejectsDuplicateDestinationsBeforeMutation(): void
+    {
+        file_put_contents($this->directory . '/alpha.txt', 'a');
+        file_put_contents($this->directory . '/beta.txt', 'b');
+        try {
+            $this->manager(true)->batchRename('Files', [
+                ['path' => 'alpha.txt', 'name' => 'same.txt'],
+                ['path' => 'beta.txt', 'name' => 'same.txt'],
+            ]);
+            self::fail('Duplicate destinations must be rejected before mutation.');
+        } catch (SoFinderException $exception) {
+            self::assertSame('duplicate_batch_destination', $exception->errorCode);
+        }
+        self::assertFileExists($this->directory . '/alpha.txt');
+        self::assertFileExists($this->directory . '/beta.txt');
+    }
+
     public function testCreateFolderEnforcesNameAndDepthLimits(): void
     {
         $manager = $this->manager(true, maxFolderNameLength: 4, maxFolderDepth: 1);

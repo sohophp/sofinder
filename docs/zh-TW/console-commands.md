@@ -11,9 +11,11 @@ description: SoFinder 提供的部署驗證與排程維護命令。
 
 ```bash
 bin/console sofinder:security:audit
+bin/console sofinder:security:audit --json
 ```
 
 稽核已設定的 Storage Root 與私有工作目錄。部署時，以及路徑、權限或儲存設定變更後都應執行。
+JSON 格式適合部署閘門與監控；兩種格式發現 Critical 問題時都會回傳非零結束碼。
 
 ## 圖片能力
 

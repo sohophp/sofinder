@@ -6,6 +6,7 @@ namespace SohoPHP\SoFinder\Http;
 
 use SohoPHP\SoFinder\Archive\ArchiveManager;
 use SohoPHP\SoFinder\Exception\SoFinderException;
+use SohoPHP\SoFinder\Feature\FeaturePolicy;
 use SohoPHP\SoFinder\Symfony\CsrfGuard;
 use Symfony\Component\HttpFoundation\BinaryFileResponse;
 use Symfony\Component\HttpFoundation\Request;
@@ -16,11 +17,13 @@ final readonly class ArchiveController
     public function __construct(
         private ArchiveManager $archives,
         private CsrfGuard $csrf,
+        private ?FeaturePolicy $features = null,
     ) {
     }
 
     public function __invoke(Request $request): BinaryFileResponse
     {
+        ($this->features ?? new FeaturePolicy())->assertEnabled('archive');
         $this->csrf->assertMutation($request);
         try {
             $data = json_decode($request->getContent(), true, 512, JSON_THROW_ON_ERROR);

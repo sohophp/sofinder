@@ -15,9 +15,12 @@ export default defineConfig({
     emptyOutDir: true,
     target: "es2020",
     lib: {
-      entry: resolve(currentDirectory, "src/main.tsx"),
+      entry: {
+        sofinder: resolve(currentDirectory, "src/main.tsx"),
+        "sofinder-picker": resolve(currentDirectory, "src/picker.ts"),
+      },
       formats: ["es"],
-      fileName: () => "sofinder.js",
+      fileName: (_format, entryName) => `${entryName}.js`,
     },
     rollupOptions: {
       output: {

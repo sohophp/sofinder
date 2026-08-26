@@ -5,6 +5,8 @@ description: 自定义客户端使用的 SoFinder HTTP Endpoint、请求、响�
 
 # HTTP API 参考
 
+机器可读的 [OpenAPI 3.1 文档](/openapi.json)会在 PHP 测试中逐项核对全部公开 API Route。
+
 以下路径都相对于 SoFinder 路由导入前缀，例如 `/sofinder`。API 面向同源、已登录的应用客户端，不是匿名对象存储 API。
 
 ## 协议约定
@@ -124,6 +126,14 @@ Response Data 包含 `entries`、`total`、`path`、`offset`、`limit`、`sort`�
 
 `operation` 为 `copy`、`move`、`delete`。Path 会去重，不能同时包含文件夹和其子项。返回 `operation`、`total`、`succeeded`、`failed`、`purgedItems`、`purgedBytes` 和逐项 `results`；每项包含 `path`、`success`，以及 `entry` 或 `error.code/message`。
 
+### `POST /api/entries/batch-rename`
+
+```json
+{"resource":"Files","renames":[{"path":"draft-a.pdf","name":"report-1.pdf"},{"path":"draft-b.pdf","name":"report-2.pdf"}]}
+```
+
+源路径和目标名称必须唯一，扩展名不可修改；服务端会分别验证并授权每个项目，响应使用与其他批次操作相同的逐项结果格式。
+
 ## 上传
 
 ### `POST /api/uploads`
@@ -149,6 +159,8 @@ Session 24 小时后过期。客户端可以补传缺失 Index，但不能超过
 
 - `GET /api/download?resource=Files&path=manual.pdf`：鉴权后以 Attachment 下载，文件夹返回 `invalid_type`。
 - `GET /api/content?resource=Images&path=photo.jpg&disposition=inline`：返回私有内容，支持 ETag、Last-Modified、条件请求和单段 Byte Range。只有安全 Raster MIME 能 Inline，其余强制 Attachment。无效 Range 返回 416。
+- `GET /api/preview/text?resource=Files&path=readme.txt`：返回已授权 UTF-8 文本、JSON、XML 或 YAML 文件的前 256 KiB，格式为 `{content,truncated,mimeType,size}`；内置 UI 始终按纯文本渲染。
+- `GET /api/checksum?resource=Files&path=manual.pdf`：为不超过 512 MiB 的已授权文件返回 `{algorithm:"sha256",checksum,size}`，不会暴露 Adapter 路径。
 
 ## 回收站
 
@@ -196,6 +208,10 @@ Action 为 `crop`、`resize`、`rotate`、`preset`。Rotation 为 0／90／180�
 {"resource":"Files","path":"manual.pdf","action":"tags","tags":["docs","approved"]}
 {"resource":"Files","path":"manual.pdf","action":"touch"}
 ```
+
+客户端确认最近路径已在 SoFinder 外部消失后，可发送 `action: "forget"`，从收藏、标签和
+最近状态中清理该路径。宿主关闭某项功能后，其专用操作返回 `feature_disabled` 及 HTTP
+404，Config Response 的 `featureAvailability` 也会标记为 `false`。
 
 每个项目最多 10 个不重复标签，每个 1–30 个可见字符。
 

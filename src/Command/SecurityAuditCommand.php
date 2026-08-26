@@ -12,6 +12,7 @@ use SohoPHP\SoFinder\ResourceRegistry;
 use Symfony\Component\Console\Attribute\AsCommand;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputInterface;
+use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Console\Style\SymfonyStyle;
 
@@ -31,6 +32,11 @@ final class SecurityAuditCommand extends Command
         private readonly ?ImageFormatRegistry $imageFormats = null,
     ) {
         parent::__construct();
+    }
+
+    protected function configure(): void
+    {
+        $this->addOption('json', null, InputOption::VALUE_NONE, 'Write a machine-readable result.');
     }
 
     protected function execute(InputInterface $input, OutputInterface $output): int
@@ -95,13 +101,23 @@ final class SecurityAuditCommand extends Command
             }
         }
 
+        $critical = count(array_filter($findings, static fn (array $finding): bool => $finding[0] === 'critical'));
+        if ($input->getOption('json') === true) {
+            $output->writeln(json_encode([
+                'status' => $critical > 0 ? 'critical' : ($findings === [] ? 'ready' : 'warning'),
+                'critical' => $critical,
+                'warnings' => count($findings) - $critical,
+                'findings' => array_map(static fn (array $finding): array => ['severity' => $finding[0], 'scope' => $finding[1], 'message' => $finding[2]], $findings),
+            ], JSON_THROW_ON_ERROR | JSON_UNESCAPED_SLASHES));
+            return $critical > 0 ? Command::FAILURE : Command::SUCCESS;
+        }
+
         if ($findings === []) {
             $io->success('No SoFinder storage security problems were detected.');
 
             return Command::SUCCESS;
         }
         $io->table(['Severity', 'Scope', 'Finding'], $findings);
-        $critical = count(array_filter($findings, static fn (array $finding): bool => $finding[0] === 'critical'));
         if ($critical > 0) {
             $io->error(sprintf('%d critical SoFinder security finding(s) require attention.', $critical));
 

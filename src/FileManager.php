@@ -413,6 +413,47 @@ final readonly class FileManager
         ];
     }
 
+    /**
+     * @param list<array{path:string,name:string}> $renames
+     * @return array{operation:string,total:int,succeeded:int,failed:int,results:list<array{path:string,success:bool,entry?:Entry,error?:array{code:string,message:string}}>}
+     */
+    public function batchRename(string $resourceName, array $renames): array
+    {
+        if ($renames === []) throw new SoFinderException('At least one entry must be selected.', 'empty_batch', 400);
+        $first = $renames[0];
+        $limitItem = $this->authorized($resourceName, 'rename', $first['path'], true);
+        if (count($renames) > $limitItem->resource->maxBatchItems) {
+            throw new SoFinderException(sprintf('A batch can contain at most %d entries.', $limitItem->resource->maxBatchItems), 'batch_limit_exceeded', 413);
+        }
+        $normalized = [];
+        $destinations = [];
+        foreach ($renames as $rename) {
+            $path = $this->pathGuard->normalize($rename['path']);
+            $name = trim($rename['name']);
+            if ($path === '') throw new InvalidPathException('The storage root cannot be renamed.');
+            $this->pathGuard->assertName($name);
+            $destination = (dirname($path) === '.' ? '' : dirname($path) . '/') . $name;
+            if (isset($normalized[$path]) || isset($destinations[$destination])) {
+                throw new SoFinderException('Batch rename paths and destinations must be unique.', 'duplicate_batch_destination', 422);
+            }
+            $normalized[$path] = ['path' => $path, 'name' => $name];
+            $destinations[$destination] = true;
+        }
+        $results = [];
+        $succeeded = 0;
+        foreach ($normalized as $rename) {
+            try {
+                $entry = $this->rename($resourceName, $rename['path'], $rename['name']);
+                $results[] = ['path' => $rename['path'], 'success' => true, 'entry' => $entry];
+                ++$succeeded;
+            } catch (SoFinderException $exception) {
+                $results[] = ['path' => $rename['path'], 'success' => false, 'error' => ['code' => $exception->errorCode, 'message' => $exception->getMessage()]];
+            }
+        }
+
+        return ['operation' => 'rename', 'total' => count($normalized), 'succeeded' => $succeeded, 'failed' => count($normalized) - $succeeded, 'results' => $results];
+    }
+
     /** @return array{item:TrashItem,purgedItems:int,purgedBytes:int}|null */
     public function delete(string $resourceName, string $path): ?array
     {

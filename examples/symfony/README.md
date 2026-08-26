@@ -19,6 +19,22 @@ Use `composer-6.4.json` for Symfony 6.4. Browse `/sofinder/browser` and sign in
 with `demo` / `demo`. These credentials and the plaintext hasher are for this
 local example only.
 
+Open `/integrations` for a live CKEditor 5, TinyMCE 8, TipTap, Quill 2 and plain
+form integration matrix. The editors load from their official/documented CDN
+endpoints, while `sofinder-picker.js` and SoFinder itself are served from this
+checkout. The page therefore tests the actual local PHP routes and compiled SDK;
+internet access is needed only for the third-party editor runtimes. The demo
+pins CKEditor 5 Classic, TinyMCE 8 GPL, TipTap and Quill CDN versions and needs
+no cloud API key; review each editor's license and self-host or update the pinned
+versions before using them in an application.
+
+The example also registers `App\Plugin\FileInspectorPlugin`, a complete
+first-party reference for third-party extensions. Right-click a file in
+SoFinder and choose **Inspect file**. Its same-origin host route receives the
+selection, resolves it again through `FileManager` (therefore repeating
+authorization), and renders only escaped metadata. The same plugin implements
+`HealthCheckInterface`, so it also appears in `/sofinder/health`.
+
 The `public/uploads` link exposes the example's `var/storage` directory at the
 configured `/uploads` URL. On WSL, bind the development server to all WSL IPv4
 interfaces so a Windows browser can use the distro hostname:

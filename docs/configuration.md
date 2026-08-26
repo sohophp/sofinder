@@ -75,6 +75,21 @@ so_finder:
 
 `mode` accepts `auto`, `manager` or `picker`. With `logo: true`, the logo and optional SoFinder brand name are shown at the left, search is centered, and the breadcrumb sits above the file list or grid. With `logo: false`, the breadcrumb uses the former logo slot and search shifts right on wide screens. Set `header: false` to hide only the brand name when the logo is enabled. `scale` accepts `compact`, `standard`, `large` or `xlarge`. Browser preferences and `uiTools=common|full` can change presentation, but never grant server capabilities.
 
+Optional capabilities have a host-controlled upper bound. Disabled features are
+removed from browser settings and their dedicated HTTP endpoints return a stable
+`feature_disabled` 404 response:
+
+```yaml
+so_finder:
+  features:
+    folder_tree: true
+    recent: true
+    favorites: true
+    tags: true
+    archive: true
+    trash: true
+```
+
 ## Theme
 
 ```yaml

@@ -5,6 +5,10 @@ description: 各 SoFinder 预发布版本的兼容性、配置与 adapter 升级
 
 # 升级 SoFinder
 
+## 从 0.1.0-beta.14 升级至 0.1.0-beta.15
+
+请同时部署重新构建的 `sofinder.js`、`sofinder-picker.js` 与 `sofinder.css`。既有路由及文件数据无需迁移。多节点宿主可通过覆盖 metadata、usage 与 request-gate alias 选用新的 PDO 或 Redis 状态 Store；单节点仍默认使用文件 Store。请通过监控角色或网络策略保护 `/health` 与 `/metrics`，并以 `sofinder:security:audit --json` 作为部署门禁。
+
 ## 从 0.1.0-beta.13 升级至 0.1.0-beta.14
 
 缩略图缓存现在会在原子发布后应用配置的权限。默认目录为 `0775`、文件为 `0664`。

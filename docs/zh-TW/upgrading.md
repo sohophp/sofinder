@@ -5,6 +5,10 @@ description: 各 SoFinder 預發布版本的相容性、設定與 adapter 升級
 
 # 升級 SoFinder
 
+## 從 0.1.0-beta.14 升級至 0.1.0-beta.15
+
+請同時部署重新建置的 `sofinder.js`、`sofinder-picker.js` 與 `sofinder.css`。既有路由及檔案資料無需遷移。多節點宿主可透過覆寫 metadata、usage 與 request-gate alias 選用新的 PDO 或 Redis 狀態 Store；單節點仍預設使用檔案 Store。請透過監控角色或網路政策保護 `/health` 與 `/metrics`，並以 `sofinder:security:audit --json` 作為部署閘門。
+
 ## 從 0.1.0-beta.13 升級至 0.1.0-beta.14
 
 縮圖快取現在會在原子發布後套用設定的權限。預設目錄為 `0775`、檔案為 `0664`。

@@ -38,6 +38,8 @@
     "suggest": {
         "ext-gd": "Required for thumbnails and image editing",
         "ext-imagick": "Adds ICO processing support when its ImageMagick coder is installed",
+        "ext-pdo": "Enables the optional multi-node shared database state store",
+        "ext-redis": "Enables the optional multi-node shared Redis state store",
         "ext-zip": "Required for ZIP archive downloads",
         "symfony/messenger": "Required only when maintenance.mode is messenger"
     },

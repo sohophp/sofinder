@@ -5,6 +5,13 @@ description: Maintainer checklist for testing, tagging and publishing SoFinder p
 
 # Release procedure
 
+Run the complete local gate from the repository root (set `PHP_BIN` when the
+default PHP is older than 8.2):
+
+```bash
+PHP_BIN=/opt/remi/php85/root/usr/bin/php ./scripts/release-check.sh
+```
+
 1. Confirm `composer validate --strict`, PHPUnit, frontend type checking/build,
    browser tests, accessibility checks and the originality scan all pass.
 2. Review dependency audits and `THIRD_PARTY_NOTICES.md`.
@@ -17,7 +24,7 @@ description: Maintainer checklist for testing, tagging and publishing SoFinder p
    audit before announcing the release.
 
 The current beta's exact Composer constraint is
-`sohophp/sofinder:0.1.0-beta.14`. Published tags must never be moved.
+`sohophp/sofinder:0.1.0-beta.15`. Published tags must never be moved.
 
 The S3 adapter is maintained in `packages/sofinder-s3` and released as an
 independent repository after the matching core prerelease. The current adapter

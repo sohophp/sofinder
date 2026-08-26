@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace SohoPHP\SoFinder\Http;
 
 use SohoPHP\SoFinder\Exception\SoFinderException;
+use SohoPHP\SoFinder\Feature\FeaturePolicy;
 use SohoPHP\SoFinder\Metadata\MetadataManager;
 use SohoPHP\SoFinder\Symfony\CsrfGuard;
 use SohoPHP\SoFinder\Value\OperationResult;
@@ -16,12 +17,17 @@ final readonly class MetadataController
     public function __construct(
         private MetadataManager $metadata,
         private CsrfGuard $csrf,
+        private ?FeaturePolicy $features = null,
     ) {
     }
 
     public function get(Request $request): JsonResponse
     {
-        return new JsonResponse(OperationResult::success($this->metadata->get((string) $request->query->get('resource', 'Files'))));
+        $policy = $this->featurePolicy();
+        if (!$policy->enabled('recent') && !$policy->enabled('favorites') && !$policy->enabled('tags')) {
+            $policy->assertEnabled('recent');
+        }
+        return new JsonResponse(OperationResult::success($this->filtered((string) $request->query->get('resource', 'Files'))));
     }
 
     public function update(Request $request): JsonResponse
@@ -37,14 +43,24 @@ final readonly class MetadataController
         }
         $resource = (string) ($data['resource'] ?? 'Files');
         $path = (string) ($data['path'] ?? '');
-        match ((string) ($data['action'] ?? '')) {
-            'favorite' => $this->metadata->favorite($resource, $path, (bool) ($data['favorite'] ?? false)),
-            'tags' => $this->metadata->tags($resource, $path, $this->tags($data['tags'] ?? null)),
-            'touch' => $this->metadata->touch($resource, $path),
+        $action = (string) ($data['action'] ?? '');
+        $this->featurePolicy()->assertEnabled(match ($action) {
+            'favorite' => 'favorites',
+            'tags' => 'tags',
+            'touch', 'forget' => 'recent',
             default => throw new SoFinderException('The metadata action is invalid.', 'invalid_metadata_action', 400),
-        };
+        });
+        if ($action === 'favorite') {
+            $this->metadata->favorite($resource, $path, (bool) ($data['favorite'] ?? false));
+        } elseif ($action === 'tags') {
+            $this->metadata->tags($resource, $path, $this->tags($data['tags'] ?? null));
+        } elseif ($action === 'touch') {
+            $this->metadata->touch($resource, $path);
+        } else {
+            $this->metadata->forget($resource, $path);
+        }
 
-        return new JsonResponse(OperationResult::success($this->metadata->get($resource)));
+        return new JsonResponse(OperationResult::success($this->filtered($resource)));
     }
 
     /** @return list<string> */
@@ -55,5 +71,28 @@ final readonly class MetadataController
         }
 
         return array_values($tags);
+    }
+
+    private function featurePolicy(): FeaturePolicy
+    {
+        return $this->features ?? new FeaturePolicy();
+    }
+
+    /** @return array{favorites:list<string>,tags:array<string,list<string>>,recent:list<array{path:string,touchedAt:int}>} */
+    private function filtered(string $resource): array
+    {
+        $policy = $this->featurePolicy();
+        $metadata = $this->metadata->get($resource);
+        if (!$policy->enabled('recent')) {
+            $metadata['recent'] = [];
+        }
+        if (!$policy->enabled('favorites')) {
+            $metadata['favorites'] = [];
+        }
+        if (!$policy->enabled('tags')) {
+            $metadata['tags'] = [];
+        }
+
+        return $metadata;
     }
 }

@@ -3,9 +3,12 @@ export interface SoFinderConfig {
   csrfToken: string;
   language: "en" | "zh-cn" | "zh-tw";
   resource: string;
+  initialPath: string;
   selectMode: boolean;
   selectionKind: "any" | "file" | "image";
   ckeditorFunction: number;
+  pickerRequestId: string;
+  pickerOrigin: string;
   theme: {
     accent: string;
     background: string;
@@ -16,6 +19,14 @@ export interface SoFinderConfig {
     radius: string;
   };
   featureDefaults: { folderTree: boolean };
+  featureAvailability?: {
+    folderTree: boolean;
+    recent: boolean;
+    favorites: boolean;
+    tags: boolean;
+    archive: boolean;
+    trash: boolean;
+  };
   uiDefaults: {
     scale: UiScale;
     mode?: "manager" | "picker";
@@ -34,6 +45,17 @@ export interface PluginDescriptor {
   name: string;
   version: string;
   capabilities: string[];
+  uiActions?: PluginUiAction[];
+}
+
+export interface PluginUiAction {
+  id: string;
+  label: { en: string; "zh-cn"?: string; "zh-tw"?: string };
+  slot: "utility" | "toolbar" | "context";
+  url: string;
+  selection: "none" | "any" | "file" | "image";
+  requires: string;
+  plugin?: string;
 }
 
 export interface ImageFormatCapability {
@@ -129,7 +151,7 @@ export interface ApiResponse<T> {
 }
 
 export interface BatchResult {
-  operation: "copy" | "move" | "delete";
+  operation: "copy" | "move" | "delete" | "rename";
   total: number;
   succeeded: number;
   failed: number;

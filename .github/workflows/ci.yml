@@ -64,7 +64,7 @@ jobs:
         with:
           php-version: '8.5'
           coverage: none
-      - run: composer config repositories.sofinder '{"type":"path","url":"../..","options":{"versions":{"sohophp/sofinder":"0.1.0-beta.14"}}}'
+      - run: composer config repositories.sofinder '{"type":"path","url":"../..","options":{"versions":{"sohophp/sofinder":"0.1.0-beta.15"}}}'
         working-directory: packages/sofinder-s3
       - run: composer install --no-interaction --prefer-dist
         working-directory: packages/sofinder-s3
@@ -80,16 +80,100 @@ jobs:
 
   quality:
     runs-on: ubuntu-latest
+    services:
+      redis:
+        image: redis:7.4-alpine
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 5s
+          --health-timeout 3s
+          --health-retries 10
     steps:
       - uses: actions/checkout@v5
       - uses: shivammathur/setup-php@v2
         with:
           php-version: '8.5'
           coverage: pcov
-          extensions: gd, imagick
+          extensions: gd, imagick, pcntl, pdo_sqlite, redis
       - run: composer install --no-interaction --prefer-dist
       - run: composer phpstan
       - run: vendor/bin/phpunit --coverage-clover var/coverage.xml
+
+  pdo-state:
+    runs-on: ubuntu-latest
+    services:
+      mysql:
+        image: mysql:8.4
+        env:
+          MYSQL_DATABASE: sofinder
+          MYSQL_USER: sofinder
+          MYSQL_PASSWORD: sofinder
+          MYSQL_ROOT_PASSWORD: root
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd "mysqladmin ping -h 127.0.0.1 -usofinder -psofinder"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 20
+      postgres:
+        image: postgres:17-alpine
+        env:
+          POSTGRES_DB: sofinder
+          POSTGRES_USER: sofinder
+          POSTGRES_PASSWORD: sofinder
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U sofinder -d sofinder"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 20
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - driver: mysql
+            dsn: mysql:host=127.0.0.1;port=3306;dbname=sofinder
+          - driver: pgsql
+            dsn: pgsql:host=127.0.0.1;port=5432;dbname=sofinder
+    steps:
+      - uses: actions/checkout@v5
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.5'
+          coverage: none
+          extensions: pcntl, pdo_${{ matrix.driver }}
+      - run: composer install --no-interaction --prefer-dist
+      - run: vendor/bin/phpunit tests/PdoSharedStateDatabaseTest.php
+        env:
+          SOFINDER_STATE_DSN: ${{ matrix.dsn }}
+          SOFINDER_STATE_USER: sofinder
+          SOFINDER_STATE_PASSWORD: sofinder
+
+  clamav:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.5'
+          coverage: none
+      - run: composer install --no-interaction --prefer-dist
+      - run: docker run -d --name sofinder-clamav -p 3310:3310 clamav/clamav:stable
+      - name: Wait for ClamAV daemon
+        run: |
+          for attempt in {1..60}; do
+            if timeout 1 bash -c '</dev/tcp/127.0.0.1/3310' 2>/dev/null; then exit 0; fi
+            sleep 5
+          done
+          docker logs sofinder-clamav
+          exit 1
+      - run: vendor/bin/phpunit tests/ClamAvLiveTest.php
+        env:
+          SOFINDER_CLAMAV_ENDPOINT: tcp://127.0.0.1:3310
 
   symfony-example:
     runs-on: ubuntu-latest

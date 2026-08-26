@@ -79,4 +79,24 @@ final class ContentControllerTest extends TestCase
         $this->expectExceptionMessage('not satisfiable');
         $this->controller->content(Request::create('/api/content?resource=Files&path=sample.txt', server: ['HTTP_RANGE' => 'bytes=50-60']));
     }
+
+    public function testReturnsBoundedUtf8TextPreview(): void
+    {
+        $response = $this->controller->textPreview(Request::create('/api/preview/text?resource=Files&path=sample.txt'));
+        $data = json_decode((string) $response->getContent(), true, 512, JSON_THROW_ON_ERROR)['data'];
+
+        self::assertSame('0123456789', $data['content']);
+        self::assertFalse($data['truncated']);
+        self::assertSame('text/plain', $data['mimeType']);
+    }
+
+    public function testReturnsSha256ChecksumWithoutExposingStoragePath(): void
+    {
+        $response = $this->controller->checksum(Request::create('/api/checksum?resource=Files&path=sample.txt'));
+        $data = json_decode((string) $response->getContent(), true, 512, JSON_THROW_ON_ERROR)['data'];
+
+        self::assertSame(hash('sha256', '0123456789'), $data['checksum']);
+        self::assertSame('sha256', $data['algorithm']);
+        self::assertStringNotContainsString($this->directory, (string) $response->getContent());
+    }
 }

@@ -5,6 +5,17 @@ description: SoFinder 每个公开版本的重要变更。
 
 # 更新日志
 
+## 0.1.0-beta.15 - 2026-08-26
+
+- 新增带版本的弹窗 Picker SDK、深层链接，以及 CKEditor 5、TinyMCE、TipTap、Quill 和普通表单适配器，并提供可运行的本地集成矩阵。
+- 新增文件夹上传、确定性批量重命名、有界 UTF-8 文本预览与 SHA-256 校验值。
+- 深层链接指向已删除或失效目录时自动返回资源根目录，目录树不再重复请求该失效路径。
+- 新增宿主强制功能策略、失效最近项目清理、目标目录恢复和文件夹上传预览确认。
+- 新增安全的插件 UI Action、上传扫描器与健康检查契约，并提供可运行的授权参考插件和失败时关闭的 clamd `INSTREAM` 扫描器。
+- 新增 PDO／Redis 原子状态后端，可共享 metadata、配额及请求门禁，并加入多进程 SQLite、Redis、MySQL 与 PostgreSQL 集成测试。
+- 新增受验证的就绪状态、Prometheus、请求关联、机器可读安全审计及逐路由校验的 OpenAPI 3.1 契约。
+- 完成并验证编辑器集成、插件及多节点生产部署的英文、简体中文与繁体中文文档。
+
 ## 0.1.0-beta.14 - 2026-08-26
 
 - 新增经验证的 `filesystem_permissions.directory_mode` 与 `file_mode` 配置，供本机存储和缩略图缓存使用。

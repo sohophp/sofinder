@@ -39,6 +39,7 @@ final readonly class OperationAuditSubscriber implements EventSubscriberInterfac
             'resource' => $event->resource->name,
             'path' => $event->path,
             'request_ip' => $request?->getClientIp(),
+            'request_id' => (string) $request?->attributes->get('_sofinder_request_id', ''),
             'route' => $request?->attributes->get('_route'),
             'operation_context' => $context,
         ]);

@@ -6,6 +6,7 @@ namespace SohoPHP\SoFinder\Http;
 
 use SohoPHP\SoFinder\Exception\SoFinderException;
 use SohoPHP\SoFinder\FileManager;
+use SohoPHP\SoFinder\Feature\FeaturePolicy;
 use SohoPHP\SoFinder\Contract\ImageCapabilityProviderInterface;
 use SohoPHP\SoFinder\Metadata\MetadataManager;
 use SohoPHP\SoFinder\Plugin\PluginRegistry;
@@ -30,6 +31,7 @@ final readonly class ApiController
         private ?ImageCapabilityProviderInterface $imageCapabilities = null,
         /** @var array{mode?:string,header?:bool,logo?:bool,search?:bool,language_switcher?:bool,view_switcher?:bool,folder_tree?:bool,scale?:string} */
         private array $ui = [],
+        private ?FeaturePolicy $features = null,
     ) {
     }
 
@@ -53,6 +55,7 @@ final readonly class ApiController
                 'languageSwitcher' => (bool) ($this->ui['language_switcher'] ?? true),
                 'viewSwitcher' => (bool) ($this->ui['view_switcher'] ?? true),
             ],
+            'featureAvailability' => $this->featurePolicy()->browserAvailability(),
         ]);
     }
 
@@ -62,9 +65,12 @@ final readonly class ApiController
         $search = (string) $request->query->get('search', '');
         $searchMode = strtolower((string) $request->query->get('searchMode', 'name'));
         $onlyPaths = null;
-        if ($searchMode === 'tags' && trim($search) !== '') {
-            $onlyPaths = $this->taggedPaths($resource, $search);
-            $search = '';
+        if ($searchMode === 'tags') {
+            $this->featurePolicy()->assertEnabled('tags');
+            if (trim($search) !== '') {
+                $onlyPaths = $this->taggedPaths($resource, $search);
+                $search = '';
+            }
         }
         return $this->success($this->files->list(
             $resource,
@@ -186,6 +192,8 @@ final readonly class ApiController
 
     public function trash(Request $request): JsonResponse
     {
+        $this->featurePolicy()->assertEnabled('trash');
+
         return $this->success($this->files->trash(
             $this->resource($request),
             $request->query->getInt('offset'),
@@ -196,6 +204,7 @@ final readonly class ApiController
 
     public function restoreTrash(Request $request, string $id): JsonResponse
     {
+        $this->featurePolicy()->assertEnabled('trash');
         $this->csrf->assertMutation($request);
         $data = $this->json($request);
         $entry = $this->files->restoreTrash(
@@ -209,6 +218,7 @@ final readonly class ApiController
 
     public function permanentlyDeleteTrash(Request $request, string $id): JsonResponse
     {
+        $this->featurePolicy()->assertEnabled('trash');
         $this->csrf->assertMutation($request);
         $data = $this->json($request);
         $this->files->permanentlyDeleteTrash($this->resource($request, $data), $id);
@@ -235,6 +245,23 @@ final readonly class ApiController
         ));
     }
 
+    public function batchRename(Request $request): JsonResponse
+    {
+        $this->csrf->assertMutation($request);
+        $data = $this->json($request);
+        $renames = $data['renames'] ?? null;
+        if (!is_array($renames)) throw new SoFinderException('Batch renames must be an array.', 'invalid_batch_paths', 400);
+        $normalized = [];
+        foreach ($renames as $rename) {
+            if (!is_array($rename) || !is_string($rename['path'] ?? null) || !is_string($rename['name'] ?? null)) {
+                throw new SoFinderException('Each batch rename requires string path and name fields.', 'invalid_batch_paths', 400);
+            }
+            $normalized[] = ['path' => $rename['path'], 'name' => $rename['name']];
+        }
+
+        return $this->success($this->files->batchRename($this->resource($request, $data), $normalized));
+    }
+
     /** @param array<string, mixed>|null $data */
     private function resource(Request $request, ?array $data = null): string
     {
@@ -255,6 +282,11 @@ final readonly class ApiController
         }
 
         return $data;
+    }
+
+    private function featurePolicy(): FeaturePolicy
+    {
+        return $this->features ?? new FeaturePolicy();
     }
 
     /** @param array<string, mixed> $data */

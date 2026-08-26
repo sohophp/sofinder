@@ -8,6 +8,7 @@ use SohoPHP\SoFinder\Exception\SoFinderException;
 use SohoPHP\SoFinder\FileManager;
 use SohoPHP\SoFinder\Image\ImageFormatRegistry;
 use Symfony\Component\HttpFoundation\Request;
+use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpFoundation\ResponseHeaderBag;
 use Symfony\Component\HttpFoundation\StreamedResponse;
@@ -15,6 +16,9 @@ use Symfony\Component\HttpFoundation\StreamedResponse;
 /** Streams authenticated file content without exposing storage internals. */
 final readonly class ContentController
 {
+    private const MAX_TEXT_PREVIEW_BYTES = 262_144;
+    private const MAX_CHECKSUM_BYTES = 536_870_912;
+
     public function __construct(
         private FileManager $files,
         private ImageFormatRegistry $imageFormats = new ImageFormatRegistry(),
@@ -118,6 +122,51 @@ final readonly class ContentController
         return $response;
     }
 
+    public function checksum(Request $request): JsonResponse
+    {
+        $resource = $this->resource($request);
+        $path = (string) $request->query->get('path', '');
+        $entry = $this->files->entry($resource, $path);
+        if ($entry->directory) throw new SoFinderException('Folders do not have a file checksum.', 'invalid_type', 400);
+        if ($entry->size > self::MAX_CHECKSUM_BYTES) throw new SoFinderException('The file is too large for an interactive checksum.', 'checksum_too_large', 413);
+        $stream = $this->files->read($resource, $path);
+        try {
+            $context = hash_init('sha256');
+            hash_update_stream($context, $stream, self::MAX_CHECKSUM_BYTES + 1);
+            $checksum = hash_final($context);
+        } finally {
+            fclose($stream);
+        }
+
+        return new JsonResponse(['success' => true, 'data' => ['algorithm' => 'sha256', 'checksum' => $checksum, 'size' => $entry->size]]);
+    }
+
+    public function textPreview(Request $request): JsonResponse
+    {
+        $resource = $this->resource($request);
+        $path = (string) $request->query->get('path', '');
+        $entry = $this->files->entry($resource, $path);
+        $mime = strtolower($entry->mimeType ?? '');
+        if ($entry->directory || !$this->isTextMime($mime)) {
+            throw new SoFinderException('This file type does not support a text preview.', 'preview_unsupported', 415);
+        }
+        $stream = $this->files->read($resource, $path);
+        try {
+            $content = stream_get_contents($stream, self::MAX_TEXT_PREVIEW_BYTES + 1);
+            if ($content === false) throw new SoFinderException('Unable to read the text preview.', 'preview_failed', 500);
+        } finally {
+            fclose($stream);
+        }
+        $truncated = strlen($content) > self::MAX_TEXT_PREVIEW_BYTES;
+        if ($truncated) $content = substr($content, 0, self::MAX_TEXT_PREVIEW_BYTES);
+        if (str_starts_with($content, "\xEF\xBB\xBF")) $content = substr($content, 3);
+        if (!mb_check_encoding($content, 'UTF-8')) {
+            throw new SoFinderException('Only UTF-8 text files can be previewed.', 'preview_encoding_unsupported', 415);
+        }
+
+        return new JsonResponse(['success' => true, 'data' => ['content' => $content, 'truncated' => $truncated, 'mimeType' => $mime, 'size' => $entry->size]]);
+    }
+
     /** @return array{int,int} */
     private function parseRange(string $range, int $size): array
     {
@@ -145,5 +194,12 @@ final readonly class ContentController
     private function resource(Request $request): string
     {
         return (string) $request->query->get('resource', $request->request->get('resource', 'Files'));
+    }
+
+    private function isTextMime(string $mime): bool
+    {
+        return str_starts_with($mime, 'text/') || in_array($mime, [
+            'application/json', 'application/ld+json', 'application/xml', 'application/x-yaml', 'application/yaml',
+        ], true) || str_ends_with($mime, '+json') || str_ends_with($mime, '+xml');
     }
 }

@@ -45,4 +45,4 @@ composer require sohophp/sofinder:^0.1@beta
 SoFinder 目前是公開 Beta。請明確指定 Beta 版本條件，升級前閱讀[更新紀錄](/zh-TW/changelog)及[升級指南](/zh-TW/upgrading)。
 :::
 
-已經在使用 SoFinder？請閱讀[檔案管理器指南](/zh-TW/user-guide)、[圖片管理](/zh-TW/image-guide)和 [CKEditor 4](/zh-TW/ckeditor4)。開發整合請查看[開發者指南](/zh-TW/developer-guide)及 [HTTP API 參考](/zh-TW/api-reference)。
+已經在使用 SoFinder？請閱讀[檔案管理器指南](/zh-TW/user-guide)、[圖片管理](/zh-TW/image-guide)和[主流編輯器整合](/zh-TW/editor-integrations)。開發整合請查看[開發者指南](/zh-TW/developer-guide)及 [HTTP API 參考](/zh-TW/api-reference)。

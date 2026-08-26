@@ -6,10 +6,12 @@ namespace SohoPHP\SoFinder\Tests;
 
 use PHPUnit\Framework\TestCase;
 use SohoPHP\SoFinder\Exception\SoFinderException;
+use SohoPHP\SoFinder\Contract\UploadScannerInterface;
 use SohoPHP\SoFinder\Image\GdImageProcessor;
 use SohoPHP\SoFinder\Security\DefaultFileInspector;
 use SohoPHP\SoFinder\Security\UploadPipeline;
 use SohoPHP\SoFinder\Value\ResourceType;
+use SohoPHP\SoFinder\Value\InspectedFile;
 
 final class UploadPipelineTest extends TestCase
 {
@@ -115,6 +117,33 @@ final class UploadPipelineTest extends TestCase
         try {
             $inspection = $this->pipeline()->quarantine($stream, 'processed.png', new ResourceType('Images', '/tmp', '/images', ['png']));
             self::assertSame('image/png', $inspection['inspection']->mimeType);
+        } finally {
+            fclose($stream);
+        }
+    }
+
+    public function testRunsTaggedScannerBeforePublishingAndRemovesRejectedQuarantine(): void
+    {
+        $scanner = new class implements UploadScannerInterface {
+            public string $scannedPath = '';
+            public function scan(string $path, string $fileName, ResourceType $resource, InspectedFile $inspection): void
+            {
+                $this->scannedPath = $path;
+                throw new SoFinderException('Malware was detected.', 'malware_detected', 415);
+            }
+        };
+        $stream = fopen('php://temp', 'w+b');
+        fwrite($stream, 'safe text');
+        rewind($stream);
+        $pipeline = new UploadPipeline(new DefaultFileInspector(new GdImageProcessor()), $this->directory, [$scanner]);
+
+        try {
+            $pipeline->quarantine($stream, 'file.txt', new ResourceType('Files', '/tmp', '/files', ['txt']));
+            self::fail('A rejected scan must stop publication.');
+        } catch (SoFinderException $exception) {
+            self::assertSame('malware_detected', $exception->errorCode);
+            self::assertNotSame('', $scanner->scannedPath);
+            self::assertFileDoesNotExist($scanner->scannedPath);
         } finally {
             fclose($stream);
         }

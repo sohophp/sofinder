@@ -7,6 +7,7 @@ namespace SohoPHP\SoFinder\Tests;
 use PHPUnit\Framework\TestCase;
 use SohoPHP\SoFinder\Contract\AuthorizationInterface;
 use SohoPHP\SoFinder\FileManager;
+use SohoPHP\SoFinder\Feature\FeaturePolicy;
 use SohoPHP\SoFinder\Http\BrowserController;
 use SohoPHP\SoFinder\ResourceRegistry;
 use SohoPHP\SoFinder\Storage\LocalStorageAdapter;
@@ -48,6 +49,24 @@ final class BrowserControllerTest extends TestCase
         self::assertTrue($config['uiDefaults']['fullTools']);
     }
 
+    public function testAcceptsSafeDeepLinkAndPickerHandshake(): void
+    {
+        $config = $this->config(Request::create('/browser?select=1&type=Images&path=campaign/hero&pickerRequestId=12345678-abcd-4321-abcd-123456789012'));
+
+        self::assertSame('campaign/hero', $config['initialPath']);
+        self::assertSame('12345678-abcd-4321-abcd-123456789012', $config['pickerRequestId']);
+        self::assertSame('http://localhost', $config['pickerOrigin']);
+    }
+
+    public function testRejectsUnsafeDeepLinkAndPickerRequestId(): void
+    {
+        $config = $this->config(Request::create("/browser?path=bad%00path&pickerRequestId=javascript:alert(1)"));
+
+        self::assertSame('', $config['initialPath']);
+        self::assertSame('', $config['pickerRequestId']);
+        self::assertSame('', $config['pickerOrigin']);
+    }
+
     public function testInvalidOverridesFallBackToHostDefaults(): void
     {
         $config = $this->config(Request::create('/browser?uiMode=wide&uiHeader=yes&uiSearch=no'));
@@ -58,8 +77,17 @@ final class BrowserControllerTest extends TestCase
         self::assertFalse($config['uiDefaults']['fullTools']);
     }
 
+    public function testPublishesHostFeatureAvailability(): void
+    {
+        $config = $this->config(Request::create('/browser'), new FeaturePolicy(['tags' => false, 'archive' => false]));
+
+        self::assertFalse($config['featureAvailability']['tags']);
+        self::assertFalse($config['featureAvailability']['archive']);
+        self::assertTrue($config['featureAvailability']['recent']);
+    }
+
     /** @return array<string,mixed> */
-    private function config(Request $request): array
+    private function config(Request $request, ?FeaturePolicy $features = null): array
     {
         $resource = new ResourceType('Files', $this->directory, '/files');
         $authorization = new class implements AuthorizationInterface {
@@ -75,7 +103,7 @@ final class BrowserControllerTest extends TestCase
         $controller = new BrowserController($files, $router, $csrf, 'test', $theme, [
             'mode' => 'auto', 'header' => false, 'logo' => false, 'search' => true,
             'language_switcher' => true, 'view_switcher' => true, 'folder_tree' => false, 'scale' => 'standard',
-        ]);
+        ], $features);
         $html = (string) $controller($request)->getContent();
         self::assertMatchesRegularExpression('/data-config="([^"]+)"/', $html);
         preg_match('/data-config="([^"]+)"/', $html, $matches);

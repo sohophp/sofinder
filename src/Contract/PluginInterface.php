@@ -14,7 +14,12 @@ namespace SohoPHP\SoFinder\Contract;
 interface PluginInterface
 {
     /**
-     * @return array{name: string, version: string, capabilities: list<string>}
+     * @return array{
+     *   name:string,
+     *   version:string,
+     *   capabilities:list<string>,
+     *   uiActions?:list<array{id:string,label:array{en:string,zh-cn?:string,zh-tw?:string},slot:string,url:string,selection?:string,requires?:string}>
+     * }
      */
     public function descriptor(): array;
 }

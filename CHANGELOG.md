@@ -1,5 +1,25 @@
 # Changelog
 
+## 0.1.0-beta.15 - 2026-08-26
+
+- Add a versioned popup Picker SDK with deep links and adapters for CKEditor 5,
+  TinyMCE, TipTap, Quill and ordinary form fields, plus a runnable local matrix.
+- Add folder uploads, deterministic batch rename, bounded UTF-8 text previews
+  and SHA-256 checksums to the authenticated manager and HTTP API.
+- Recover stale or deleted deep-link folders to the resource root without making
+  the optional folder tree repeat the missing-path request.
+- Add host-enforced feature policy, stale recent-entry cleanup, resilient
+  destination browsing and a folder-upload confirmation preview.
+- Add safe plugin UI actions and tagged upload-scanner and health-check contracts,
+  including a runnable authorized reference plugin and fail-closed clamd
+  `INSTREAM` scanner.
+- Add PDO and Redis atomic state backends for shared metadata, quota and request
+  gates, with multi-process SQLite, Redis, MySQL and PostgreSQL integration coverage.
+- Add authenticated readiness and Prometheus endpoints, request correlation,
+  machine-readable security audits and a route-checked OpenAPI 3.1 contract.
+- Expand and verify the English, Simplified Chinese and Traditional Chinese
+  documentation for editor integration, plugins and multi-node production use.
+
 ## 0.1.0-beta.14 - 2026-08-26
 
 - Add validated `filesystem_permissions.directory_mode` and `file_mode`

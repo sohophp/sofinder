@@ -38,6 +38,44 @@ final class PluginRegistryTest extends TestCase
         new PluginRegistry([$this->plugin('<script>', '1.0.0', [])]);
     }
 
+    public function testNormalizesSafeSameOriginUiActions(): void
+    {
+        $plugin = new class implements PluginInterface {
+            public function descriptor(): array
+            {
+                return [
+                    'name' => 'document-tools',
+                    'version' => '1.2.0',
+                    'capabilities' => ['preview'],
+                    'uiActions' => [[
+                        'id' => 'inspect',
+                        'label' => ['en' => 'Inspect', 'zh-cn' => '检查'],
+                        'slot' => 'context',
+                        'url' => '/admin/documents/inspect',
+                        'selection' => 'file',
+                        'requires' => 'read',
+                    ]],
+                ];
+            }
+        };
+
+        self::assertSame('/admin/documents/inspect', (new PluginRegistry([$plugin]))->descriptors()[0]['uiActions'][0]['url']);
+    }
+
+    public function testRejectsCrossOriginUiActions(): void
+    {
+        $this->expectException(\InvalidArgumentException::class);
+        $plugin = new class implements PluginInterface {
+            public function descriptor(): array
+            {
+                return ['name' => 'unsafe-actions', 'version' => '1.0.0', 'capabilities' => [], 'uiActions' => [[
+                    'id' => 'leave', 'label' => ['en' => 'Leave'], 'slot' => 'utility', 'url' => '//attacker.invalid/x',
+                ]]];
+            }
+        };
+        new PluginRegistry([$plugin]);
+    }
+
     /** @param list<string> $capabilities */
     private function plugin(string $name, string $version, array $capabilities): PluginInterface
     {

@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace SohoPHP\SoFinder\Security;
 
 use SohoPHP\SoFinder\Contract\FileInspectorInterface;
+use SohoPHP\SoFinder\Contract\UploadScannerInterface;
 use SohoPHP\SoFinder\Exception\SoFinderException;
 use SohoPHP\SoFinder\Value\InspectedFile;
 use SohoPHP\SoFinder\Value\ResourceType;
@@ -14,6 +15,8 @@ final readonly class UploadPipeline
     public function __construct(
         private FileInspectorInterface $inspector,
         private string $quarantineDirectory,
+        /** @var iterable<UploadScannerInterface> */
+        private iterable $scanners = [],
     ) {
     }
 
@@ -57,7 +60,12 @@ final readonly class UploadPipeline
             $output = null;
             @chmod($temporary, 0600);
 
-            return ['path' => $temporary, 'inspection' => $this->inspector->inspect($temporary, $fileName, $resource)];
+            $inspection = $this->inspector->inspect($temporary, $fileName, $resource);
+            foreach ($this->scanners as $scanner) {
+                $scanner->scan($temporary, $fileName, $resource, $inspection);
+            }
+
+            return ['path' => $temporary, 'inspection' => $inspection];
         } catch (\Throwable $exception) {
             @unlink($temporary);
             throw $exception;

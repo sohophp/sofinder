@@ -55,4 +55,24 @@ final readonly class MetadataManager
         $entry = $this->files->entry($resource, $path);
         $this->store->touch($this->actors->actorId(), $resource, $entry->path, time());
     }
+
+    /** Remove metadata for a path that disappeared outside SoFinder after reauthorizing its parent. */
+    public function forget(string $resource, string $path): void
+    {
+        $separator = strrpos($path, '/');
+        $parent = $separator === false ? '' : substr($path, 0, $separator);
+        while (true) {
+            try {
+                $this->files->entry($resource, $parent);
+                break;
+            } catch (SoFinderException $exception) {
+                if ($exception->errorCode !== 'not_found' || $parent === '') {
+                    throw $exception;
+                }
+                $separator = strrpos($parent, '/');
+                $parent = $separator === false ? '' : substr($parent, 0, $separator);
+            }
+        }
+        $this->store->deletePath($this->actors->actorId(), $resource, $path);
+    }
 }

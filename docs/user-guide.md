@@ -95,6 +95,12 @@ Manager mode provides creation, upload, rename, copy, move, delete and image too
 
 For image editing, continue with [managing images](/image-guide). For editor workflows, see [CKEditor 4 user guide](/ckeditor4).
 
+## Folder upload, batch rename and verification
+
+**Upload folder** preserves the selected folder's relative structure, creates validated parent folders, respects the configured depth and accepts at most 500 files per selection. Select two or more entries and choose **Batch rename** to preview a `{name}`, `{n}`, `{ext}` pattern before applying it. Extensions remain locked and every result is reported separately.
+
+Preview supports images and bounded UTF-8 text/JSON/XML/YAML content. The preview details can calculate SHA-256 for files up to 512 MiB; select the displayed value to copy it when verifying a transfer.
+
 ## When an action is unavailable
 
 Common reasons are read-only storage, an operation role or path ACL, unsupported adapter capability, resource quota, folder depth, missing GD/Imagick support, or picker mode. Refresh after an administrator changes permissions. If a failure persists, give support the resource name, visible path, action and exact message—never send private file contents, credentials or signed URLs.

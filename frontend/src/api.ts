@@ -34,7 +34,7 @@ export class Api {
     this.base = config.apiBase.replace(/\/config$/, "");
   }
 
-  configData() { return this.request<{ apiVersion: string; resources: ResourceType[]; plugins: PluginDescriptor[]; imagePresets: Record<string, ImagePreset>; imageCapabilities?: ImageCapabilities; uiDefaults?: { scale: UiScale } }>("/config"); }
+  configData() { return this.request<{ apiVersion: string; resources: ResourceType[]; plugins: PluginDescriptor[]; imagePresets: Record<string, ImagePreset>; imageCapabilities?: ImageCapabilities; featureAvailability?: SoFinderConfig["featureAvailability"]; uiDefaults?: { scale: UiScale } }>("/config"); }
 
   list(resource: string, path: string, search = "", sort = "name", direction = "asc", offset = 0, limit = 100, searchMode: "name" | "tags" = "name", cursor: string | null = null) {
     const query = new URLSearchParams({ resource, path, search, searchMode, sort, direction, offset: String(offset), limit: String(limit) });
@@ -65,6 +65,13 @@ export class Api {
     return this.request<BatchResult>("/entries/batch", {
       method: "POST",
       body: JSON.stringify({ operation, resource, paths, destination, autoRename: true }),
+    });
+  }
+
+  batchRename(resource: string, renames: Array<{ path: string; name: string }>) {
+    return this.request<BatchResult>("/entries/batch-rename", {
+      method: "POST",
+      body: JSON.stringify({ resource, renames }),
     });
   }
 
@@ -211,6 +218,14 @@ export class Api {
     return `${this.base}/content?${new URLSearchParams({ resource, path, disposition: "inline" })}`;
   }
 
+  textPreview(resource: string, path: string) {
+    return this.request<{ content: string; truncated: boolean; mimeType: string; size: number }>(`/preview/text?${new URLSearchParams({ resource, path })}`);
+  }
+
+  checksum(resource: string, path: string) {
+    return this.request<{ algorithm: "sha256"; checksum: string; size: number }>(`/checksum?${new URLSearchParams({ resource, path })}`);
+  }
+
   thumbnailUrl(resource: string, entry: Entry, width = 240, height = 180) {
     return `${this.base}/images/thumbnail?${new URLSearchParams({ resource, path: entry.path, width: String(width), height: String(height), v: `${entry.modifiedAt}-${entry.size}` })}`;
   }
@@ -277,7 +292,7 @@ export class Api {
     return this.request<MetadataState>(`/metadata?${new URLSearchParams({ resource })}`);
   }
 
-  updateMetadata(resource: string, path: string, action: "favorite" | "tags" | "touch", values: { favorite?: boolean; tags?: string[] } = {}) {
+  updateMetadata(resource: string, path: string, action: "favorite" | "tags" | "touch" | "forget", values: { favorite?: boolean; tags?: string[] } = {}) {
     return this.request<MetadataState>("/metadata", {
       method: "PATCH",
       body: JSON.stringify({ resource, path, action, ...values }),

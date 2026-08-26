@@ -18,16 +18,20 @@ use SohoPHP\SoFinder\Contract\ActorProviderInterface;
 use SohoPHP\SoFinder\Contract\ImageProcessorInterface;
 use SohoPHP\SoFinder\Contract\ImageCapabilityProviderInterface;
 use SohoPHP\SoFinder\Contract\FileInspectorInterface;
+use SohoPHP\SoFinder\Contract\HealthCheckInterface;
+use SohoPHP\SoFinder\Contract\UploadScannerInterface;
 use SohoPHP\SoFinder\Contract\EntryUrlGeneratorInterface;
 use SohoPHP\SoFinder\Contract\EntryUrlContextProviderInterface;
 use SohoPHP\SoFinder\Contract\MetadataStoreInterface;
 use SohoPHP\SoFinder\Contract\MaintenanceDispatcherInterface;
+use SohoPHP\SoFinder\Contract\MetricsStoreInterface;
 use SohoPHP\SoFinder\Contract\PluginInterface;
 use SohoPHP\SoFinder\Contract\RecycleBinInterface;
 use SohoPHP\SoFinder\Contract\RequestGateStoreInterface;
 use SohoPHP\SoFinder\Contract\StorageAdapterFactoryInterface;
 use SohoPHP\SoFinder\Contract\UsageTrackerInterface;
 use SohoPHP\SoFinder\FileManager;
+use SohoPHP\SoFinder\Feature\FeaturePolicy;
 use SohoPHP\SoFinder\Http\ApiController;
 use SohoPHP\SoFinder\Http\ArchiveController;
 use SohoPHP\SoFinder\Http\AssetController;
@@ -37,6 +41,9 @@ use SohoPHP\SoFinder\Http\ContentController;
 use SohoPHP\SoFinder\Http\ExceptionSubscriber;
 use SohoPHP\SoFinder\Http\FailureAuditSubscriber;
 use SohoPHP\SoFinder\Http\ImageController;
+use SohoPHP\SoFinder\Http\HealthController;
+use SohoPHP\SoFinder\Http\MetricsController;
+use SohoPHP\SoFinder\Http\RequestIdSubscriber;
 use SohoPHP\SoFinder\Http\MetadataController;
 use SohoPHP\SoFinder\Http\QuickUploadController;
 use SohoPHP\SoFinder\Http\SecurityResponseSubscriber;
@@ -47,6 +54,11 @@ use SohoPHP\SoFinder\Image\ImageFormatRegistry;
 use SohoPHP\SoFinder\Image\ImagickImageProcessor;
 use SohoPHP\SoFinder\Image\ImageManager;
 use SohoPHP\SoFinder\Metadata\JsonMetadataStore;
+use SohoPHP\SoFinder\Health\HealthManager;
+use SohoPHP\SoFinder\Health\RuntimeHealthCheck;
+use SohoPHP\SoFinder\Health\StorageHealthCheck;
+use SohoPHP\SoFinder\Observability\LocalMetricsStore;
+use SohoPHP\SoFinder\Observability\OperationMetricsSubscriber;
 use SohoPHP\SoFinder\Metadata\MetadataManager;
 use SohoPHP\SoFinder\Maintenance\MaintenanceCoordinator;
 use SohoPHP\SoFinder\Maintenance\MaintenanceMessageHandler;
@@ -113,11 +125,13 @@ final class SoFinderExtension extends Extension
             throw new \InvalidArgumentException('SoFinder maintenance.mode is messenger, but symfony/messenger is not installed.');
         }
         $container->registerForAutoconfiguration(PluginInterface::class)->addTag('sofinder.plugin');
+        $container->registerForAutoconfiguration(UploadScannerInterface::class)->addTag('sofinder.upload_scanner');
+        $container->registerForAutoconfiguration(HealthCheckInterface::class)->addTag('sofinder.health_check');
         $container->registerForAutoconfiguration(StorageAdapterFactoryInterface::class)->addTag('sofinder.storage_factory');
         $container->registerForAutoconfiguration(EntryUrlContextProviderInterface::class)->addTag('sofinder.entry_url_context_provider');
         $packageDir = dirname(__DIR__, 2);
         $container->setParameter('so_finder.package_dir', $packageDir);
-        $assetFiles = [$packageDir . '/dist/sofinder.js', $packageDir . '/dist/sofinder.css'];
+        $assetFiles = [$packageDir . '/dist/sofinder.js', $packageDir . '/dist/sofinder-picker.js', $packageDir . '/dist/sofinder.css'];
         $assetFingerprint = hash_init('sha256');
         foreach ($assetFiles as $assetFile) {
             if (is_file($assetFile)) {
@@ -200,6 +214,7 @@ final class SoFinderExtension extends Extension
             ->setArguments([
                 new Reference(FileInspectorInterface::class),
                 $config['quarantine_dir'],
+                new TaggedIteratorArgument('sofinder.upload_scanner'),
             ]));
         $container->setDefinition(TrashManager::class, (new Definition(TrashManager::class))
             ->setArguments([
@@ -285,6 +300,22 @@ final class SoFinderExtension extends Extension
         $container->setDefinition(Theme::class, (new Definition(Theme::class))->setArgument('$values', $config['theme']));
         $container->setDefinition(PluginRegistry::class, (new Definition(PluginRegistry::class))
             ->setArgument('$plugins', new TaggedIteratorArgument('sofinder.plugin')));
+        $container->setDefinition(FeaturePolicy::class, (new Definition(FeaturePolicy::class))
+            ->setArgument('$features', $config['features']));
+        $container->setDefinition(RuntimeHealthCheck::class, (new Definition(RuntimeHealthCheck::class))
+            ->setArguments([
+                [$config['cache_dir'], $config['quarantine_dir'], $config['chunk_dir'], $config['trash_dir'], $config['usage_dir'], dirname((string) $config['metadata_file'])],
+                $assetFiles,
+            ])
+            ->addTag('sofinder.health_check', ['priority' => 100]));
+        $container->setDefinition(StorageHealthCheck::class, (new Definition(StorageHealthCheck::class))
+            ->setArgument('$resources', new Reference(ResourceRegistry::class))
+            ->addTag('sofinder.health_check', ['priority' => 90]));
+        $container->setDefinition(HealthManager::class, (new Definition(HealthManager::class))
+            ->setArgument('$checks', new TaggedIteratorArgument('sofinder.health_check')));
+        $container->setDefinition(LocalMetricsStore::class, (new Definition(LocalMetricsStore::class))
+            ->setArgument('$file', rtrim((string) $config['cache_dir'], '/') . '/metrics.json'));
+        $container->setAlias(MetricsStoreInterface::class, new Alias(LocalMetricsStore::class));
 
         $this->controller($container, BrowserController::class, [
             new Reference(FileManager::class),
@@ -293,6 +324,7 @@ final class SoFinderExtension extends Extension
             $container->getParameter('so_finder.asset_version'),
             new Reference(Theme::class),
             $config['ui'],
+            new Reference(FeaturePolicy::class),
         ]);
         $this->controller($container, ApiController::class, [
             new Reference(FileManager::class),
@@ -302,6 +334,7 @@ final class SoFinderExtension extends Extension
             new Reference(MetadataManager::class),
             new Reference(ImageCapabilityProviderInterface::class),
             $config['ui'],
+            new Reference(FeaturePolicy::class),
         ]);
         $this->controller($container, ContentController::class, [
             new Reference(FileManager::class),
@@ -326,16 +359,22 @@ final class SoFinderExtension extends Extension
         $this->controller($container, ArchiveController::class, [
             new Reference(ArchiveManager::class),
             new Reference(CsrfGuard::class),
+            new Reference(FeaturePolicy::class),
         ]);
         $this->controller($container, MetadataController::class, [
             new Reference(MetadataManager::class),
             new Reference(CsrfGuard::class),
+            new Reference(FeaturePolicy::class),
         ]);
+        $this->controller($container, HealthController::class, [new Reference(HealthManager::class)]);
+        $this->controller($container, MetricsController::class, [new Reference(MetricsStoreInterface::class), new Reference(HealthManager::class)]);
         $this->controller($container, AssetController::class, [$container->getParameter('so_finder.package_dir')]);
 
         $container->setDefinition(ExceptionSubscriber::class, (new Definition(ExceptionSubscriber::class))
             ->addTag('kernel.event_subscriber'));
         $container->setDefinition(SecurityResponseSubscriber::class, (new Definition(SecurityResponseSubscriber::class))
+            ->addTag('kernel.event_subscriber'));
+        $container->setDefinition(RequestIdSubscriber::class, (new Definition(RequestIdSubscriber::class))
             ->addTag('kernel.event_subscriber'));
         $container->setDefinition(LocalRequestGateStore::class, (new Definition(LocalRequestGateStore::class))
             ->setArgument('$directory', rtrim((string) $config['cache_dir'], '/') . '/rate-limit'));
@@ -348,13 +387,16 @@ final class SoFinderExtension extends Extension
             ])
             ->addTag('kernel.event_subscriber'));
         $container->setDefinition(FailureAuditSubscriber::class, (new Definition(FailureAuditSubscriber::class))
-            ->setArgument('$logger', new Reference(LoggerInterface::class))
+            ->setArguments([new Reference(LoggerInterface::class), new Reference(MetricsStoreInterface::class)])
             ->addTag('kernel.event_subscriber'));
         $container->setDefinition(OperationAuditSubscriber::class, (new Definition(OperationAuditSubscriber::class))
             ->setArguments([
                 new Reference(LoggerInterface::class),
                 new Reference(RequestStack::class),
             ])
+            ->addTag('kernel.event_subscriber'));
+        $container->setDefinition(OperationMetricsSubscriber::class, (new Definition(OperationMetricsSubscriber::class))
+            ->setArgument('$metrics', new Reference(MetricsStoreInterface::class))
             ->addTag('kernel.event_subscriber'));
         $container->setDefinition(MetadataOperationSubscriber::class, (new Definition(MetadataOperationSubscriber::class))
             ->setArguments([

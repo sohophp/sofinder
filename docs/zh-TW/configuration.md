@@ -71,6 +71,20 @@ so_finder:
 
 `mode` 可設為 `auto`、`manager` 或 `picker`。啟用 `logo` 時，左側顯示 Logo 和可選品牌文字，搜尋置中，麵包屑位於檔案清單或網格上方；關閉 `logo` 時，麵包屑占用原 Logo 位置，寬螢幕搜尋框向右移動。啟用 Logo 時，設定 `header: false` 只隱藏品牌文字。`scale` 可設為 `compact`、`standard`、`large` 或 `xlarge`。瀏覽器偏好和 `uiTools=common|full` 只能改變顯示方式，不會授予伺服器能力。
 
+Host 可為選用功能設定不可越過的上限。關閉後，瀏覽器設定不再顯示該功能，專用 HTTP
+Endpoint 統一回傳 `feature_disabled` 404：
+
+```yaml
+so_finder:
+  features:
+    folder_tree: true
+    recent: true
+    favorites: true
+    tags: true
+    archive: true
+    trash: true
+```
+
 ## 主題
 
 ```yaml

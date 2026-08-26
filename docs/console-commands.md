@@ -11,9 +11,11 @@ Run commands through the host Symfony application's `bin/console`.
 
 ```bash
 bin/console sofinder:security:audit
+bin/console sofinder:security:audit --json
 ```
 
 Audits configured storage roots and private working directories. Run it during deployment and after changing paths, permissions or storage configuration.
+The JSON form is intended for deployment gates and monitoring; critical findings return a non-zero exit status in both forms.
 
 ## Image capabilities
 

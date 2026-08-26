@@ -23,6 +23,14 @@ final class ConfigurationTest extends TestCase
         self::assertFalse($config['ckeditor4']['overwrite_on_upload']);
         self::assertSame('0775', $config['filesystem_permissions']['directory_mode']);
         self::assertSame('0664', $config['filesystem_permissions']['file_mode']);
+        self::assertSame([
+            'folder_tree' => true,
+            'recent' => true,
+            'favorites' => true,
+            'tags' => true,
+            'archive' => true,
+            'trash' => true,
+        ], $config['features']);
     }
 
     public function testFilesystemPermissionsAcceptQuotedOctalModes(): void
@@ -51,5 +59,17 @@ final class ConfigurationTest extends TestCase
         ]]);
 
         self::assertTrue($config['ckeditor4']['overwrite_on_upload']);
+    }
+
+    public function testOptionalFeaturesCanBeDisabledByTheHost(): void
+    {
+        $config = (new Processor())->processConfiguration(new Configuration(), [[
+            'features' => ['tags' => false, 'archive' => false],
+            'resources' => ['Files' => ['root' => '/tmp/sofinder']],
+        ]]);
+
+        self::assertFalse($config['features']['tags']);
+        self::assertFalse($config['features']['archive']);
+        self::assertTrue($config['features']['recent']);
     }
 }

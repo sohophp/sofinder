@@ -1,0 +1,59 @@
+// @vitest-environment jsdom
+
+import { afterEach, describe, expect, it, vi } from "vitest";
+import { openPicker, pickerUrl, registerTinyMce, selectForCkeditor5, selectForInput } from "../src/picker";
+
+afterEach(() => vi.restoreAllMocks());
+
+describe("picker SDK", () => {
+  it("builds a reproducible picker deep link", () => {
+    const url = pickerUrl({ baseUrl: "/sofinder/browser", kind: "image", resource: "Images", path: "campaign/hero", language: "zh-cn", tools: "full" }, "12345678-abcd-4321-abcd-123456789012");
+    expect(url.pathname).toBe("/sofinder/browser");
+    expect(url.searchParams.get("selection")).toBe("image");
+    expect(url.searchParams.get("type")).toBe("Images");
+    expect(url.searchParams.get("path")).toBe("campaign/hero");
+    expect(url.searchParams.get("pickerRequestId")).toBe("12345678-abcd-4321-abcd-123456789012");
+  });
+
+  it("accepts only a matching source, origin, version and request", async () => {
+    const popup = { closed: false } as Window;
+    vi.spyOn(window, "open").mockReturnValue(popup);
+    const promise = openPicker({ baseUrl: "/sofinder/browser", kind: "file" });
+    const opened = new URL(String(vi.mocked(window.open).mock.calls[0][0]), window.location.href);
+    const id = opened.searchParams.get("pickerRequestId");
+    const entry = { path: "manual.pdf", name: "manual.pdf", directory: false, size: 12, modifiedAt: 1, mimeType: "application/pdf", url: "/files/manual.pdf", capabilities: {} };
+
+    window.dispatchEvent(new MessageEvent("message", { source: popup, origin: "https://attacker.invalid", data: { type: "sofinder:select", version: "1.0", requestId: id, entry } }));
+    window.dispatchEvent(new MessageEvent("message", { source: popup, origin: window.location.origin, data: { type: "sofinder:select", version: "1.0", requestId: id, entry } }));
+
+    await expect(promise).resolves.toEqual(entry);
+  });
+
+  it("provides editor and form adapters over the same picker protocol", async () => {
+    const popup = { closed: false } as Window;
+    vi.spyOn(window, "open").mockReturnValue(popup);
+    const editor = { execute: vi.fn(), editing: { view: { focus: vi.fn() } } };
+    const promise = selectForCkeditor5(editor, { baseUrl: "/sofinder/browser" });
+    const opened = new URL(String(vi.mocked(window.open).mock.calls.at(-1)?.[0]), window.location.href);
+    const entry = { path: "photo.png", name: "photo.png", directory: false, size: 12, modifiedAt: 1, mimeType: "image/png", url: "/files/photo.png", capabilities: {} };
+    window.dispatchEvent(new MessageEvent("message", { source: popup, origin: window.location.origin, data: { type: "sofinder:select", version: "1.0", requestId: opened.searchParams.get("pickerRequestId"), entry } }));
+    await promise;
+    expect(editor.execute).toHaveBeenCalledWith("insertImage", { source: entry.url });
+
+    const input = document.createElement("input");
+    const changed = vi.fn();
+    input.addEventListener("change", changed);
+    const inputPromise = selectForInput(input, { baseUrl: "/sofinder/browser" });
+    const inputUrl = new URL(String(vi.mocked(window.open).mock.calls.at(-1)?.[0]), window.location.href);
+    window.dispatchEvent(new MessageEvent("message", { source: popup, origin: window.location.origin, data: { type: "sofinder:select", version: "1.0", requestId: inputUrl.searchParams.get("pickerRequestId"), entry } }));
+    await inputPromise;
+    expect(input.value).toBe(entry.url);
+    expect(changed).toHaveBeenCalledOnce();
+  });
+
+  it("registers TinyMCE without importing editor internals", () => {
+    const add = vi.fn();
+    registerTinyMce({ PluginManager: { add } }, { baseUrl: "/sofinder/browser" });
+    expect(add).toHaveBeenCalledWith("sofinder", expect.any(Function));
+  });
+});

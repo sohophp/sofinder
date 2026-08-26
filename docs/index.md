@@ -61,4 +61,4 @@ SoFinder is currently in public beta. Pin an explicit beta constraint, read the 
 
 Start with the [storage adapter guide](/storage-adapters), or go directly to [S3-compatible storage](/s3).
 
-Using an existing installation? Start with the [file manager user guide](/user-guide), [image guide](/image-guide) or [CKEditor 4 guide](/ckeditor4). Building an integration? See the [developer guide](/developer-guide) and [HTTP API reference](/api-reference).
+Using an existing installation? Start with the [file manager user guide](/user-guide), [image guide](/image-guide) or [editor integrations](/editor-integrations). Building an integration? See the [developer guide](/developer-guide) and [HTTP API reference](/api-reference).

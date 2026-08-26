@@ -8,7 +8,7 @@ use SohoPHP\SoFinder\Contract\PluginInterface;
 
 final readonly class PluginRegistry
 {
-    /** @var list<array{name: string, version: string, capabilities: list<string>}> */
+    /** @var list<array<string,mixed>> */
     private array $descriptors;
 
     /** @param iterable<PluginInterface> $plugins */
@@ -29,15 +29,15 @@ final readonly class PluginRegistry
         $this->descriptors = $descriptors;
     }
 
-    /** @return list<array{name: string, version: string, capabilities: list<string>}> */
+    /** @return list<array<string,mixed>> */
     public function descriptors(): array
     {
         return $this->descriptors;
     }
 
     /**
-     * @param array{name?: mixed, version?: mixed, capabilities?: mixed} $descriptor
-     * @return array{name: string, version: string, capabilities: list<string>}
+     * @param array<string,mixed> $descriptor
+     * @return array<string,mixed>
      */
     private function normalize(array $descriptor): array
     {
@@ -62,6 +62,56 @@ final readonly class PluginRegistry
             $normalized[$capability] = true;
         }
 
-        return ['name' => $name, 'version' => $version, 'capabilities' => array_keys($normalized)];
+        $result = ['name' => $name, 'version' => $version, 'capabilities' => array_keys($normalized)];
+        if (array_key_exists('uiActions', $descriptor)) {
+            $result['uiActions'] = $this->normalizeUiActions($name, $descriptor['uiActions']);
+        }
+
+        return $result;
+    }
+
+    /** @return list<array<string,mixed>> */
+    private function normalizeUiActions(string $plugin, mixed $actions): array
+    {
+        if (!is_array($actions) || count($actions) > 20) {
+            throw new \InvalidArgumentException(sprintf('SoFinder plugin "%s" uiActions must be an array of at most 20 actions.', $plugin));
+        }
+        $result = [];
+        $ids = [];
+        foreach ($actions as $action) {
+            if (!is_array($action)) {
+                throw new \InvalidArgumentException(sprintf('SoFinder plugin "%s" contains an invalid UI action.', $plugin));
+            }
+            $id = $action['id'] ?? null;
+            $labels = $action['label'] ?? null;
+            $slot = $action['slot'] ?? null;
+            $url = $action['url'] ?? null;
+            $selection = $action['selection'] ?? 'any';
+            $requires = $action['requires'] ?? 'read';
+            if (!is_string($id) || preg_match('/^[a-z][a-z0-9_-]{1,31}$/D', $id) !== 1 || isset($ids[$id])) {
+                throw new \InvalidArgumentException(sprintf('SoFinder plugin "%s" UI action IDs must be unique safe identifiers.', $plugin));
+            }
+            if (!is_array($labels) || !isset($labels['en']) || !is_string($labels['en'])) {
+                throw new \InvalidArgumentException(sprintf('SoFinder plugin "%s" UI actions require an English label.', $plugin));
+            }
+            $normalizedLabels = [];
+            foreach (['en', 'zh-cn', 'zh-tw'] as $locale) {
+                if (!isset($labels[$locale])) continue;
+                if (!is_string($labels[$locale]) || trim($labels[$locale]) === '' || mb_strlen($labels[$locale]) > 48 || preg_match('/[\x00-\x1F\x7F]/u', $labels[$locale]) === 1) {
+                    throw new \InvalidArgumentException(sprintf('SoFinder plugin "%s" contains an invalid UI action label.', $plugin));
+                }
+                $normalizedLabels[$locale] = trim($labels[$locale]);
+            }
+            if (!is_string($slot) || !in_array($slot, ['utility', 'toolbar', 'context'], true)
+                || !is_string($selection) || !in_array($selection, ['none', 'any', 'file', 'image'], true)
+                || !is_string($requires) || preg_match('/^[a-z][a-z0-9_-]{0,31}$/D', $requires) !== 1
+                || !is_string($url) || !str_starts_with($url, '/') || str_starts_with($url, '//') || strlen($url) > 512 || preg_match('/[\x00-\x20\x7F]/', $url) === 1) {
+                throw new \InvalidArgumentException(sprintf('SoFinder plugin "%s" contains an unsafe UI action.', $plugin));
+            }
+            $ids[$id] = true;
+            $result[] = ['id' => $id, 'label' => $normalizedLabels, 'slot' => $slot, 'url' => $url, 'selection' => $selection, 'requires' => $requires];
+        }
+
+        return $result;
     }
 }
