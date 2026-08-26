@@ -124,6 +124,7 @@ final class LocalStorageAdapter implements StorageAdapterInterface, LocalPathPro
     {
         $relative = $this->pathGuard->normalize($path);
         if ($relative === '') {
+            clearstatcache(true, $this->root);
             return new Entry('', '', true, 0, (int) filemtime($this->root), null, $this->publicUrl(''));
         }
 
@@ -308,6 +309,9 @@ final class LocalStorageAdapter implements StorageAdapterInterface, LocalPathPro
 
     private function makeEntry(string $relative, string $absolute): Entry
     {
+        // Long-lived workers and repeated operations in the same request must
+        // observe replacements made after an earlier stat of this path.
+        clearstatcache(true, $absolute);
         $directory = is_dir($absolute);
         $mime = $directory ? null : ((new \finfo(FILEINFO_MIME_TYPE))->file($absolute) ?: 'application/octet-stream');
 
