@@ -45,10 +45,16 @@ final class PdoAtomicStateStore implements AtomicStateStoreInterface
         $this->prepare($namespace);
         $hash = hash('sha256', $key);
         $this->ensureRow($namespace, $hash);
+        $sqlite = $this->driver() === 'sqlite';
+        $transactionStarted = false;
         try {
-            if ($this->driver() === 'sqlite') $this->pdo->exec('BEGIN IMMEDIATE');
-            else $this->pdo->beginTransaction();
-            $sql = sprintf('SELECT state_json FROM %s WHERE namespace = :namespace AND state_key = :key%s', $this->table, $this->driver() === 'sqlite' ? '' : ' FOR UPDATE');
+            if ($sqlite) {
+                $this->pdo->exec('BEGIN IMMEDIATE');
+            } else {
+                $this->pdo->beginTransaction();
+            }
+            $transactionStarted = true;
+            $sql = sprintf('SELECT state_json FROM %s WHERE namespace = :namespace AND state_key = :key%s', $this->table, $sqlite ? '' : ' FOR UPDATE');
             $select = $this->pdo->prepare($sql);
             $select->execute(['namespace' => $namespace, 'key' => $hash]);
             $json = $select->fetchColumn();
@@ -58,11 +64,22 @@ final class PdoAtomicStateStore implements AtomicStateStoreInterface
                 'json' => json_encode($state, JSON_THROW_ON_ERROR | JSON_UNESCAPED_SLASHES),
                 'updated' => time(), 'namespace' => $namespace, 'key' => $hash,
             ]);
-            $this->pdo->commit();
+            if ($sqlite) {
+                $this->pdo->exec('COMMIT');
+            } else {
+                $this->pdo->commit();
+            }
+            $transactionStarted = false;
 
             return $state;
         } catch (\Throwable $exception) {
-            if ($this->pdo->inTransaction()) $this->pdo->rollBack();
+            if ($transactionStarted) {
+                try {
+                    if ($sqlite) $this->pdo->exec('ROLLBACK');
+                    elseif ($this->pdo->inTransaction()) $this->pdo->rollBack();
+                } catch (\Throwable) {
+                }
+            }
             if ($exception instanceof SoFinderException || $exception instanceof \InvalidArgumentException || $exception instanceof \LogicException) throw $exception;
             throw new SoFinderException('The shared database state is unavailable.', 'shared_state_unavailable', 503, $exception);
         }
