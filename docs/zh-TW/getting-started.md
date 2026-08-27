@@ -72,7 +72,10 @@ so_finder:
 mkdir -p var/sofinder/documents
 ```
 
-私有資源不可放在 `public/` 下。使用 `delivery_mode: proxy` 時，SoFinder 會先驗證使用者及其存取權限，再串流檔案。
+<SecurityCallout title="安全">
+絕不能直接公開私有儲存路徑。請將私有資源放在 `public/` 以外；使用
+`delivery_mode: proxy` 時，SoFinder 會先驗證使用者及其存取權限，再串流檔案。
+</SecurityCallout>
 
 這份建議白名單涵蓋常用文字、PDF、Microsoft Office、OpenDocument、圖片、
 壓縮檔、音訊和視訊檔案。用途更單一的資源應進一步縮小範圍。PHP、腳本、

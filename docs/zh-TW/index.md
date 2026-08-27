@@ -1,16 +1,14 @@
 ---
 layout: home
+markdownStyles: false
 title: SoFinder 文件
 titleTemplate: PHP 與 Symfony 安全檔案管理
 description: 安裝、設定及擴充適用於 PHP 8.2–8.5 和 Symfony 6.4/7.4 的 SoFinder。
 
 hero:
-  name: SoFinder
-  text: PHP 與 Symfony 安全檔案管理
-  tagline: 支援本機與 S3 相容儲存、細緻權限、可靠上傳及圖片工具的 MIT 授權檔案管理器。
-  image:
-    src: /logo.svg
-    alt: SoFinder 標誌
+  name: 安全的檔案管理
+  text: 面向 PHP 與 Symfony
+  tagline: MIT 授權，支援本機與 S3 相容儲存、細緻權限控制、可靠上傳及圖片工具。
   actions:
     - theme: brand
       text: 開始使用
@@ -24,13 +22,35 @@ hero:
 
 features:
   - title: 以安全為設計核心
-    details: 路徑沙箱、私有隔離區、CSRF 保護、繼承式 ACL、操作門禁及有界圖片與壓縮檔處理。
+    icon: { src: /feature-security.svg, alt: '' }
+    details: 路徑沙箱、私有隔離區、CSRF 保護、繼承式 ACL 與操作門禁。
+    link: /zh-TW/security
+    linkText: 瞭解安全設計
   - title: 完整檔案瀏覽器
-    details: 跨目錄資產搜尋、上傳、資料夾、複製移動、回收站、多語言資產中繼資料、圖片編輯及主流編輯器整合。
+    icon: { src: /feature-browser.svg, alt: '' }
+    details: 響應式檔案瀏覽器，支援目錄、預覽、搜尋、拖放、批次操作與回收站。
+    link: /zh-TW/user-guide
+    linkText: 瀏覽介面能力
   - title: 彈性儲存
-    details: 使用本機儲存，或透過選用套件連接 AWS S3、Cloudflare R2、MinIO 等相容服務。
+    icon: { src: /feature-storage.svg, alt: '' }
+    details: 支援本機儲存及 AWS S3、Cloudflare R2、MinIO 等 S3 相容儲存。
+    link: /zh-TW/storage-adapters
+    linkText: 比較儲存方案
+  - title: 適合框架整合
+    icon: { src: /feature-framework.svg, alt: '' }
+    details: Symfony Bundle、公開 PHP 契約、事件、Tagged Service 與可擴充 API。
+    link: /zh-TW/developer-guide
+    linkText: 整合 SoFinder
+  - title: 面向真實應用
+    icon: { src: /feature-ready.svg, alt: '' }
+    details: 圖片處理、可靠上傳、Picker 模式、穩定資產 ID 與私有交付。
+    link: /zh-TW/image-guide
+    linkText: 探索產品能力
   - title: 適合正式環境
-    details: 穩定資產 ID、使用關係刪除預檢、私有存取工作階段、配額、排程維護、部署安全稽核及 public/proxy delivery。
+    icon: { src: /feature-operations.svg, alt: '' }
+    details: 配額、分頁、限流、維護命令與部署時安全稽核。
+    link: /zh-TW/production
+    linkText: 正式環境運維
 ---
 
 ## 安裝

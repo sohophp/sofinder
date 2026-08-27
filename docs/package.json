@@ -7,9 +7,12 @@
     "dev": "vitepress .",
     "build": "vitepress build .",
     "preview": "vitepress preview .",
-    "check": "node scripts/check-locales.mjs && vitepress build . && node scripts/check-built-links.mjs"
+    "check": "node scripts/check-locales.mjs && vitepress build . && node scripts/check-built-links.mjs",
+    "test:ui": "playwright test"
   },
   "devDependencies": {
+    "@axe-core/playwright": "4.13.0",
+    "@playwright/test": "1.62.1",
     "vitepress": "1.6.4"
   },
   "packageManager": "pnpm@11.8.0"

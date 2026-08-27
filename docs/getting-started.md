@@ -72,7 +72,11 @@ Create the directory and make it writable by the PHP runtime user:
 mkdir -p var/sofinder/documents
 ```
 
-Do not put a private resource below `public/`. With `delivery_mode: proxy`, SoFinder authenticates and authorizes content requests before streaming the file.
+<SecurityCallout title="Security">
+Never expose private storage paths directly. Keep private resources outside
+`public/`; with `delivery_mode: proxy`, SoFinder authenticates and authorizes
+every content request before streaming the file.
+</SecurityCallout>
 
 This recommended allowlist covers common text, PDF, Microsoft Office,
 OpenDocument, image, archive, audio and video files. Reduce it for resources

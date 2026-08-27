@@ -1,16 +1,14 @@
 ---
 layout: home
+markdownStyles: false
 title: SoFinder documentation
 titleTemplate: Secure file management for PHP and Symfony
 description: Install, configure and extend SoFinder, a secure web file manager for PHP 8.2–8.5 and Symfony 6.4/7.4.
 
 hero:
-  name: SoFinder
-  text: Secure file management for PHP and Symfony
+  name: Secure file management
+  text: for PHP and Symfony
   tagline: An MIT-licensed file manager with local and S3-compatible storage, granular access control, resilient uploads and image tools.
-  image:
-    src: /logo.svg
-    alt: SoFinder logo
   actions:
     - theme: brand
       text: Get started
@@ -24,17 +22,35 @@ hero:
 
 features:
   - title: Secure by design
-    details: Sandboxed paths, private quarantine, CSRF protection, inherited ACLs, operation gates and bounded archive and image processing.
+    icon: { src: /feature-security.svg, alt: '' }
+    details: Sandboxed paths, private quarantine, CSRF protection, inherited ACLs and operation gates.
+    link: /security
+    linkText: Learn about security
   - title: Productive file browser
-    details: Cross-folder asset search, grid and list views, uploads, folders, recycle bin, localized metadata, image editing and editor integration.
+    icon: { src: /feature-browser.svg, alt: '' }
+    details: Responsive file browser with folders, previews, search, drag and drop, bulk operations and recycle bin.
+    link: /user-guide
+    linkText: Explore the interface
   - title: Flexible storage
-    details: Use local storage or the optional S3 adapter with AWS S3, Cloudflare R2, MinIO and compatible providers.
+    icon: { src: /feature-storage.svg, alt: '' }
+    details: Local and S3-compatible storage including AWS S3, Cloudflare R2 and MinIO.
+    link: /storage-adapters
+    linkText: Storage options
   - title: Framework-friendly core
-    details: Public PHP contracts, tagged storage and UI plugins, PSR-3 audit events and a Symfony 6.4/7.4 bundle.
+    icon: { src: /feature-framework.svg, alt: '' }
+    details: Symfony bundle, public PHP contracts, events, tagged services and extensible APIs.
+    link: /developer-guide
+    linkText: Integrate SoFinder
   - title: Ready for real applications
-    details: Stable asset IDs, usage-aware deletion, private access sessions, responsive React UI, picker mode and public or authenticated delivery.
+    icon: { src: /feature-ready.svg, alt: '' }
+    details: Image processing, resilient uploads, picker mode, stable asset IDs and private delivery.
+    link: /image-guide
+    linkText: Explore capabilities
   - title: Operationally bounded
-    details: Quotas, pagination, request and concurrency limits, scheduled maintenance commands and deploy-time security audits.
+    icon: { src: /feature-operations.svg, alt: '' }
+    details: Quotas, pagination, rate limits, maintenance commands and deploy-time security audits.
+    link: /production
+    linkText: Production operations
 ---
 
 ## Install in a Symfony application

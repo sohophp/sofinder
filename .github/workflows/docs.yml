@@ -51,6 +51,12 @@ jobs:
       - name: Check and build documentation
         run: pnpm check
         working-directory: docs
+      - name: Install documentation browser
+        run: pnpm exec playwright install --with-deps chromium
+        working-directory: docs
+      - name: Run documentation UI regression tests
+        run: pnpm test:ui
+        working-directory: docs
       - name: Setup GitHub Pages
         if: github.event_name != 'pull_request'
         uses: actions/configure-pages@983d7736d9b0ae728b81ab479565c72886d7745b # v5
