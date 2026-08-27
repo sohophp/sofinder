@@ -44,6 +44,7 @@ final class ApiContractSnapshotTest extends TestCase
             foreach ($schema['properties']['featureAvailability']['required'] as $field) {
                 self::assertIsBool($payload['data']['featureAvailability'][$field] ?? null, 'Feature capability ' . $field . ' must be a boolean.');
             }
+            self::assertSame(['en', 'zh-cn', 'zh-tw'], $payload['data']['assetCatalog']['altLocales']);
             $snapshot = [
                 'envelope' => array_keys($payload),
                 'data' => array_keys($payload['data']),

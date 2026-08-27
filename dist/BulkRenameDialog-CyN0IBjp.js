@@ -1,6 +1,6 @@
 import { t as e } from "./jsx-runtime-CmCsaYvT.js";
 import { t } from "./react-B5TC723I.js";
-import { t as n } from "./Modal-aP8IYcPB.js";
+import { t as n } from "./Modal-Fr6Afibb.js";
 import { t as r } from "./nameValidation-DURyMFRU.js";
 //#region src/components/BulkRenameDialog.tsx
 var i = t(), a = e(), o = (e, t, n) => {

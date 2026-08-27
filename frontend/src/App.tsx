@@ -108,6 +108,7 @@ export default function App({ config, initialMessages }: { config: SoFinderConfi
   const [plugins, setPlugins] = useState<PluginDescriptor[]>([]);
   const [signedUrls, setSignedUrls] = useState({ enabled: false, defaultTtlSeconds: 300, maxTtlSeconds: 3600 });
   const [assetCatalogEnabled, setAssetCatalogEnabled] = useState(false);
+  const [assetAltLocales, setAssetAltLocales] = useState(["en", "zh-cn", "zh-tw"]);
   const [assetMetadataDialog, setAssetMetadataDialog] = useState<{ asset: AssetReference; metadata: AssetMetadata } | null>(null);
   const [leftWidth, setLeftWidth] = useState(() => loadColumnWidth("left"));
   const [rightWidth, setRightWidth] = useState(() => loadColumnWidth("right"));
@@ -323,6 +324,7 @@ export default function App({ config, initialMessages }: { config: SoFinderConfi
       setResources(available);
       setPlugins(activePlugins || []);
       setAssetCatalogEnabled(assetCatalog?.enabled === true);
+      setAssetAltLocales(assetCatalog?.altLocales?.length ? assetCatalog.altLocales : ["en", "zh-cn", "zh-tw"]);
       setImagePresets(presets || {});
       setImageCapabilities(capabilities || { driver: "", formats: [] });
       setSignedUrls(signedUrlCapabilities || { enabled: false, defaultTtlSeconds: 300, maxTtlSeconds: 3600 });
@@ -1197,14 +1199,14 @@ export default function App({ config, initialMessages }: { config: SoFinderConfi
       onClose={() => setTagsOpen(false)}
       onSave={tags => { setTagsOpen(false); void mutateMetadata(resource, selected.path, "tags", { tags }).catch(report); }}
     /></Suspense>}
-    {assetMetadataDialog && <Suspense fallback={<div className="sf-state">{t("loading")}</div>}><AssetMetadataDialog asset={assetMetadataDialog.asset} metadata={assetMetadataDialog.metadata} labels={{ title: t("assetMetadata"), alt: t("assetAlt"), translatedAlt: t("translatedAlt"), translatedAltHelp: t("translatedAltHelp"), languageCode: t("languageCode"), addLanguage: t("addLanguage"), assetTitle: t("assetTitle"), tags: t("tags"), decorative: t("decorativeImage"), unsetAlt: t("assetAltUnset"), inheritAlt: t("inheritAlt"), save: t("save"), cancel: t("cancel"), locales: { en: t("languageEnglish"), "zh-cn": t("languageZhCn"), "zh-tw": t("languageZhTw") } }} onClose={() => setAssetMetadataDialog(null)} onSave={async value => { await api.updateAssetMetadata(assetMetadataDialog.asset.assetId || "", value); setAssetMetadataDialog(null); setNotice(t("assetMetadataSaved")); }}/></Suspense>}
+    {assetMetadataDialog && <Suspense fallback={<div className="sf-state">{t("loading")}</div>}><AssetMetadataDialog asset={assetMetadataDialog.asset} metadata={assetMetadataDialog.metadata} locales={assetAltLocales.map(code => ({ code, label: ({ en: t("languageEnglish"), "zh-cn": t("languageZhCn"), "zh-tw": t("languageZhTw") } as Record<string, string>)[code] ?? code }))} labels={{ title: t("assetMetadata"), alt: t("assetAlt"), translatedAlt: t("translatedAlt"), translatedAltHelp: t("translatedAltHelp"), language: t("languageCode"), addLanguage: t("addLanguage"), assetTitle: t("assetTitle"), tags: t("tags"), decorative: t("decorativeImage"), unsetAlt: t("assetAltUnset"), inheritAlt: t("inheritAlt"), save: t("save"), cancel: t("cancel") }} onClose={() => setAssetMetadataDialog(null)} onSave={async value => { await api.updateAssetMetadata(assetMetadataDialog.asset.assetId || "", value); setAssetMetadataDialog(null); setNotice(t("assetMetadataSaved")); }}/></Suspense>}
     {previewEntry && <Modal
       title={previewEntry.name}
       closeLabel={t("close")}
       maximizable
       onClose={() => setPreviewEntry(null)}
       className="sf-file-preview-modal"
-      footer={<><a className="sf-preview-download" href={previewEntry.url || api.downloadUrl(resource, previewEntry.path)} target="_blank" rel="noopener noreferrer">{t("download")}</a><button type="button" onClick={() => void openShare(previewEntry)}>{t("share")}</button>{assetCatalogEnabled && previewEntry.capabilities?.["metadata.update"] !== false && <button type="button" onClick={() => void openAssetMetadata(previewEntry)}>{t("assetMetadata")}</button>}<button className="primary" onClick={() => setPreviewEntry(null)}>{t("close")}</button></>}
+      footer={<><a className="sf-icon-action" href={previewEntry.url || api.downloadUrl(resource, previewEntry.path)} target="_blank" rel="noopener noreferrer" title={t("download")} aria-label={t("download")}><UiIcon name="download"/></a><button className="sf-icon-action" type="button" onClick={() => void openShare(previewEntry)} title={t("share")} aria-label={t("share")}><UiIcon name="share"/></button>{assetCatalogEnabled && previewEntry.capabilities?.["metadata.update"] !== false && <button className="sf-icon-action" type="button" onClick={() => void openAssetMetadata(previewEntry)} title={t("assetMetadata")} aria-label={t("assetMetadata")}><UiIcon name="asset-metadata"/></button>}<button className="primary" onClick={() => setPreviewEntry(null)}>{t("close")}</button></>}
     >
       <div className="sf-file-preview-body">
         {canPreviewImage(previewEntry)

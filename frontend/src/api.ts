@@ -39,7 +39,7 @@ export class Api {
   }
 
   async configData() {
-    const data = await this.request<{ apiVersion: string; resources: ResourceType[]; plugins: PluginDescriptor[]; imagePresets: Record<string, ImagePreset>; imageCapabilities?: ImageCapabilities; featureAvailability?: SoFinderConfig["featureAvailability"]; uiDefaults?: SoFinderConfig["uiDefaults"]; signedUrls?: { enabled: boolean; defaultTtlSeconds: number; maxTtlSeconds: number }; assetCatalog?: { enabled: boolean }; imageVariants?: { enabled: boolean } }>("/config");
+    const data = await this.request<{ apiVersion: string; resources: ResourceType[]; plugins: PluginDescriptor[]; imagePresets: Record<string, ImagePreset>; imageCapabilities?: ImageCapabilities; featureAvailability?: SoFinderConfig["featureAvailability"]; uiDefaults?: SoFinderConfig["uiDefaults"]; signedUrls?: { enabled: boolean; defaultTtlSeconds: number; maxTtlSeconds: number }; assetCatalog?: { enabled: boolean; altLocales?: string[] }; imageVariants?: { enabled: boolean } }>("/config");
     if (!isApiVersionSupported(data.apiVersion)) {
       throw new ApiError(`SoFinder UI requires API 1.x; server reported ${data.apiVersion || "an unknown version"}.`, "incompatible_api_version", 426);
     }

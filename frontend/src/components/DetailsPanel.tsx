@@ -3,6 +3,7 @@ import type { Api } from "../api";
 import type { Entry, ImageInfo, MetadataState } from "../types";
 import { formatSize } from "../format";
 import { EntryIcon, ThumbnailImage } from "./EntryVisuals";
+import { UiIcon } from "./UiIcon";
 
 export function DetailsPanel({ api, resource, selectedEntries, selected, imageInfo, metadata, showTags, previewImage, selectMode, selectAllowed, assetMetadataEnabled, labels, formatDate, onChoose, onShare, onAssetMetadata, pluginActions }: {
   api: Api;
@@ -31,7 +32,7 @@ export function DetailsPanel({ api, resource, selectedEntries, selected, imageIn
       <dl><dt>{labels.type}</dt><dd>{selected.directory ? labels.folder : selected.mimeType || labels.file}</dd><dt>{labels.size}</dt><dd>{selected.directory ? "—" : formatSize(selected.size)}</dd>{imageInfo && <><dt>{labels.dimensions}</dt><dd>{imageInfo.width} × {imageInfo.height} px</dd></>}<dt>{labels.modified}</dt><dd><time dateTime={new Date(selected.modifiedAt * 1000).toISOString()}>{formatDate(selected.modifiedAt)}</time></dd><dt>{labels.location}</dt><dd>{selected.path}</dd></dl>
       {showTags && (metadata.tags[selected.path] || []).length > 0 && <div className="sf-tags">{metadata.tags[selected.path].map(tag => <span key={tag}>{tag}</span>)}</div>}
       {selectMode && !selected.directory && selected.url && <><button className="sf-select primary" disabled={!selectAllowed} onClick={onChoose}>{labels.select}</button>{!selectAllowed && <p className="sf-warning" role="status">{labels.unsupportedWebImage}</p>}</>}
-      {!selected.directory && <div className="sf-detail-actions"><a className="sf-download" href={selected.url || api.downloadUrl(resource, selected.path)} target="_blank" rel="noopener noreferrer">{labels.download}</a><button type="button" onClick={() => onShare(selected)}>{labels.share}</button>{assetMetadataEnabled && selected.capabilities?.["metadata.update"] !== false && <button type="button" onClick={() => onAssetMetadata?.(selected)}>{labels.assetMetadata}</button>}</div>}
+      {!selected.directory && <div className="sf-detail-actions"><a className="sf-icon-action" href={selected.url || api.downloadUrl(resource, selected.path)} target="_blank" rel="noopener noreferrer" title={labels.download} aria-label={labels.download}><UiIcon name="download"/></a><button className="sf-icon-action" type="button" onClick={() => onShare(selected)} title={labels.share} aria-label={labels.share}><UiIcon name="share"/></button>{assetMetadataEnabled && selected.capabilities?.["metadata.update"] !== false && <button className="sf-icon-action" type="button" onClick={() => onAssetMetadata?.(selected)} title={labels.assetMetadata} aria-label={labels.assetMetadata}><UiIcon name="asset-metadata"/></button>}</div>}
       {pluginActions && <div className="sf-plugin-detail-actions">{pluginActions}</div>}
     </> : <div className="sf-state">—</div>}
   </aside>;

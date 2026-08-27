@@ -41,6 +41,8 @@ final readonly class ApiController
         private ?AssetReferenceFactory $assetReferences = null,
         private bool $assetCatalogEnabled = false,
         private bool $imageVariantsEnabled = false,
+        /** @var list<string> */
+        private array $assetAltLocales = ['en', 'zh-cn', 'zh-tw'],
     ) {
     }
 
@@ -72,7 +74,7 @@ final readonly class ApiController
                 'defaultTtlSeconds' => $this->signedUrlDefaultTtl,
                 'maxTtlSeconds' => $this->signedUrlMaxTtl,
             ],
-            'assetCatalog' => ['enabled' => $this->assetCatalogEnabled],
+            'assetCatalog' => ['enabled' => $this->assetCatalogEnabled, 'altLocales' => $this->assetAltLocales],
             'imageVariants' => ['enabled' => $this->imageVariantsEnabled],
         ]);
     }

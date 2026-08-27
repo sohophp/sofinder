@@ -2,7 +2,7 @@
 
 ## Unreleased
 
-- Refine the asset metadata dialog layout and add bounded language-specific alternative text with editor locale fallback while retaining the original asset catalog interface.
+- Refine asset metadata actions with compact accessible icons and use a host-controlled language selector for localized alternative text while retaining saved locales removed from configuration.
 - Complete asset alternative-text delivery across picker/upload integrations, expose metadata editing from details, preview and context menus, and add an independent `metadata.update` write capability.
 - Bind resumable upload sessions to the trusted Workspace and add an extensible audit for writable storage roots shared across Workspaces.
 - Enable the asset catalog and responsive variants in the Symfony demo, tighten their OpenAPI responses and keep the Picker build self-contained.

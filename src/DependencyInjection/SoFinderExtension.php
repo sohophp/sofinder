@@ -528,6 +528,7 @@ final class SoFinderExtension extends Extension
             new Reference(AssetReferenceFactory::class),
             $assetCatalogConfig['enabled'],
             $variantConfig['enabled'],
+            $assetCatalogConfig['alt_locales'],
         ]);
         $this->controller($container, CapabilityController::class, [new Reference(CapabilityCatalog::class)]);
         $this->controller($container, ContentController::class, [

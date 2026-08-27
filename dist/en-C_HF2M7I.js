@@ -4,7 +4,7 @@ var e = {
 	assetAlt: "Default alternative text",
 	translatedAlt: "Localized alternative text",
 	translatedAltHelp: "A localized value overrides the default for that content language.",
-	languageCode: "Language code",
+	languageCode: "Language",
 	addLanguage: "Add language",
 	inheritAlt: "Use default alternative text",
 	languageEnglish: "English",

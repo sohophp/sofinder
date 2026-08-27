@@ -1,5 +1,5 @@
 import { t as e } from "./jsx-runtime-CmCsaYvT.js";
-import { t } from "./UiIcon-CeAgi5_o.js";
+import { t } from "./UiIcon-ClFQjiWf.js";
 //#region src/components/UploadQueue.tsx
 var n = e();
 function r({ tasks: e, collapsed: r, labels: i, onToggle: a, onCancel: o, onCancelAll: s, onClearFinished: c, onRetry: l, onRemove: u }) {

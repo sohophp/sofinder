@@ -24,6 +24,7 @@ final class ConfigurationTest extends TestCase
         self::assertNull($config['ui']['lowercase_upload_extensions']);
         self::assertTrue($config['uploads']['naming']['lowercase_extensions']);
         self::assertFalse($config['ckeditor4']['overwrite_on_upload']);
+        self::assertSame(['en', 'zh-cn', 'zh-tw'], $config['asset_catalog']['alt_locales']);
         self::assertFalse($config['malware_scanning']['enabled']);
         self::assertSame('tcp://127.0.0.1:3310', $config['malware_scanning']['endpoint']);
         self::assertTrue($config['document_preview']['pdf']);
@@ -49,6 +50,16 @@ final class ConfigurationTest extends TestCase
             'checksum' => true,
             'qr_code' => true,
         ], $config['features']);
+    }
+
+    public function testAssetAlternativeTextLocalesAreHostControlled(): void
+    {
+        $config = (new Processor())->processConfiguration(new Configuration(), [[
+            'asset_catalog' => ['alt_locales' => ['en', 'de', 'fr-ca']],
+            'resources' => ['Files' => ['root' => '/tmp/sofinder']],
+        ]]);
+
+        self::assertSame(['en', 'de', 'fr-ca'], $config['asset_catalog']['alt_locales']);
     }
 
     public function testUploadConflictDefaultCanBeConfigured(): void

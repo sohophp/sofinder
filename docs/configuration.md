@@ -72,6 +72,7 @@ so_finder:
     enabled: false
     store_service: null
     register_existing: lazy
+    alt_locales: [en, zh-cn, zh-tw]
   image_variants:
     enabled: false
     widths: [320, 640, 960, 1280, 1920]
@@ -86,6 +87,10 @@ so_finder:
     resolver_service: null
     option_provider_service: null
 ```
+
+`asset_catalog.alt_locales` is the host-controlled list shown when an editor adds
+localized alternative text. Users choose from this list and cannot enter arbitrary
+language tags. Existing metadata in a removed locale remains readable and editable.
 
 The catalog assigns opaque UUIDs lazily. Rename, move, overwrite and recycle-bin
 restore retain the ID; upload and copy create a new one. With cluster state,

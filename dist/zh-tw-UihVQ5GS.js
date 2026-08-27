@@ -4,7 +4,7 @@ var e = {
 	assetAlt: "預設替代文字",
 	translatedAlt: "多語言替代文字",
 	translatedAltHelp: "設定後會在對應內容語言中覆蓋預設替代文字。",
-	languageCode: "語言代碼",
+	languageCode: "語言",
 	addLanguage: "新增語言",
 	inheritAlt: "使用預設替代文字",
 	languageEnglish: "英語",

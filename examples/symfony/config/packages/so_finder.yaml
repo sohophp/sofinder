@@ -13,6 +13,7 @@ so_finder:
   asset_catalog:
     enabled: true
     register_existing: lazy
+    alt_locales: [en, zh-cn, zh-tw]
   image_variants:
     enabled: true
     widths: [320, 640, 960, 1280, 1920]

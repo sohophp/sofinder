@@ -62,7 +62,7 @@ Secret 至少 32 Byte。签名 URL 绑定文件版本且只适用于 `proxy` 资
 
 ```yaml
 so_finder:
-  asset_catalog: { enabled: false, store_service: null, register_existing: lazy }
+  asset_catalog: { enabled: false, store_service: null, register_existing: lazy, alt_locales: [en, zh-cn, zh-tw] }
   image_variants:
     enabled: false
     widths: [320, 640, 960, 1280, 1920]
@@ -73,6 +73,8 @@ so_finder:
     cache_ttl_seconds: 2592000
   workspaces: { enabled: false, default: main, resolver_service: null, option_provider_service: null }
 ```
+
+`asset_catalog.alt_locales` 由宿主限定可添加的替代文本语言；用户只能从下拉列表选择，不能输入任意语言代码。配置中移除语言后，已保存的该语言文本仍会保留并可编辑。
 
 资产采用懒注册随机 UUID；重命名、移动、覆盖和回收站恢复保留 ID，上传及复制创建新 ID。集群状态启用时自动采用共享目录。图片变体只接受白名单尺寸和格式、不放大，并继承资源鉴权。Workspace 必须由宿主可信的 `WorkspaceResolverInterface` 从登录上下文解析，不能直接信任查询参数；真正的存储隔离仍由宿主资源映射保证。动态映射存储的宿主还应实现 `WorkspaceStorageAuditProviderInterface`，使 `sofinder:security:audit` 能在不同 Workspace 的可写资源误用同一物理目录时报告 critical。
 

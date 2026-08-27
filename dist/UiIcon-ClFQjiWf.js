@@ -6,6 +6,26 @@ var t = e(), n = {
 	warning: /* @__PURE__ */ (0, t.jsxs)(t.Fragment, { children: [/* @__PURE__ */ (0, t.jsx)("path", { d: "m12 3 9 17H3z" }), /* @__PURE__ */ (0, t.jsx)("path", { d: "M12 9v5M12 17h.01" })] }),
 	"add-folder": /* @__PURE__ */ (0, t.jsxs)(t.Fragment, { children: [/* @__PURE__ */ (0, t.jsx)("path", { d: "M3 6.5h6l2 2h10v10.5H3z" }), /* @__PURE__ */ (0, t.jsx)("path", { d: "M12 11v6M9 14h6" })] }),
 	upload: /* @__PURE__ */ (0, t.jsxs)(t.Fragment, { children: [/* @__PURE__ */ (0, t.jsx)("path", { d: "M12 16V4M7.5 8.5 12 4l4.5 4.5" }), /* @__PURE__ */ (0, t.jsx)("path", { d: "M4 15v5h16v-5" })] }),
+	download: /* @__PURE__ */ (0, t.jsxs)(t.Fragment, { children: [/* @__PURE__ */ (0, t.jsx)("path", { d: "M12 4v12M7.5 11.5 12 16l4.5-4.5" }), /* @__PURE__ */ (0, t.jsx)("path", { d: "M4 17v3h16v-3" })] }),
+	share: /* @__PURE__ */ (0, t.jsxs)(t.Fragment, { children: [
+		/* @__PURE__ */ (0, t.jsx)("circle", {
+			cx: "18",
+			cy: "5",
+			r: "2.5"
+		}),
+		/* @__PURE__ */ (0, t.jsx)("circle", {
+			cx: "6",
+			cy: "12",
+			r: "2.5"
+		}),
+		/* @__PURE__ */ (0, t.jsx)("circle", {
+			cx: "18",
+			cy: "19",
+			r: "2.5"
+		}),
+		/* @__PURE__ */ (0, t.jsx)("path", { d: "m8.2 10.8 7.6-4.5M8.2 13.2l7.6 4.5" })
+	] }),
+	"asset-metadata": /* @__PURE__ */ (0, t.jsxs)(t.Fragment, { children: [/* @__PURE__ */ (0, t.jsx)("path", { d: "M6 3h9l3 3v15H6z" }), /* @__PURE__ */ (0, t.jsx)("path", { d: "M15 3v4h4M9 11h6M9 15h6M9 19h4" })] }),
 	select: /* @__PURE__ */ (0, t.jsxs)(t.Fragment, { children: [/* @__PURE__ */ (0, t.jsx)("rect", {
 		x: "4",
 		y: "4",
