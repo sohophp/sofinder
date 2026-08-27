@@ -1,5 +1,11 @@
 # Changelog
 
+## Unreleased
+
+- Expand the Symfony demo and quick-start file-resource allowlists to include
+  common Microsoft Office/OpenDocument, text, image, archive, audio and video
+  formats while retaining the default active/executable extension denylist.
+
 ## 0.1.0-beta.18 - 2026-08-27
 
 - Keep the normal Symfony `s3` demo bootable with one configured provider by

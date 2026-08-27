@@ -61,7 +61,7 @@ so_finder:
       root: '%kernel.project_dir%/var/sofinder/documents'
       public_url: ''
       delivery_mode: proxy
-      allowed_extensions: [jpg, jpeg, png, webp, pdf, txt, zip]
+      allowed_extensions: [txt, md, csv, tsv, rtf, pdf, doc, docx, odt, xls, xlsx, ods, ppt, pptx, odp, jpg, jpeg, png, gif, webp, avif, bmp, ico, heic, heif, tif, tiff, zip, 7z, rar, tar, gz, tgz, mp3, wav, ogg, m4a, flac, mp4, webm, mov]
       max_size: 20971520
       roles: [ROLE_USER]
 ```
@@ -73,6 +73,12 @@ mkdir -p var/sofinder/documents
 ```
 
 Do not put a private resource below `public/`. With `delivery_mode: proxy`, SoFinder authenticates and authorizes content requests before streaming the file.
+
+This recommended allowlist covers common text, PDF, Microsoft Office,
+OpenDocument, image, archive, audio and video files. Reduce it for resources
+with a narrower purpose. PHP, scripts, HTML and executable formats remain on
+the default denylist; an empty `allowed_extensions` list means “allow every
+extension not denied”, not “allow nothing”.
 
 ## 5. Protect the route
 

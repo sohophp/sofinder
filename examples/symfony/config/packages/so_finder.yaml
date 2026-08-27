@@ -19,14 +19,16 @@ so_finder:
       root: '%kernel.project_dir%/var/storage'
       public_url: '/uploads'
       delivery_mode: public
-      allowed_extensions: [txt, jpg, jpeg, png, webp, pdf, doc, docx, odt, xls, xlsx, ods, ppt, pptx, odp]
+      # Common documents, Office/OpenDocument files, images, archives and media.
+      # Active/executable formats remain denied by the bundle defaults.
+      allowed_extensions: [txt, md, csv, tsv, rtf, pdf, doc, docx, odt, xls, xlsx, ods, ppt, pptx, odp, jpg, jpeg, png, gif, webp, avif, bmp, ico, heic, heif, tif, tiff, zip, 7z, rar, tar, gz, tgz, mp3, wav, ogg, m4a, flac, mp4, webm, mov]
       roles: [ROLE_USER]
     Private:
       adapter: local
       root: '%kernel.project_dir%/var/private-storage'
       public_url: ''
       delivery_mode: proxy
-      allowed_extensions: [txt, jpg, jpeg, png, webp, pdf]
+      allowed_extensions: [txt, md, csv, tsv, rtf, pdf, doc, docx, odt, xls, xlsx, ods, ppt, pptx, odp, jpg, jpeg, png, gif, webp, avif, bmp, ico, heic, heif, tif, tiff, zip, 7z, rar, tar, gz, tgz, mp3, wav, ogg, m4a, flac, mp4, webm, mov]
       roles: [ROLE_USER]
   document_preview:
     pdf: true

@@ -61,7 +61,7 @@ so_finder:
       root: '%kernel.project_dir%/var/sofinder/documents'
       public_url: ''
       delivery_mode: proxy
-      allowed_extensions: [jpg, jpeg, png, webp, pdf, txt, zip]
+      allowed_extensions: [txt, md, csv, tsv, rtf, pdf, doc, docx, odt, xls, xlsx, ods, ppt, pptx, odp, jpg, jpeg, png, gif, webp, avif, bmp, ico, heic, heif, tif, tiff, zip, 7z, rar, tar, gz, tgz, mp3, wav, ogg, m4a, flac, mp4, webm, mov]
       max_size: 20971520
       roles: [ROLE_USER]
 ```
@@ -73,6 +73,11 @@ mkdir -p var/sofinder/documents
 ```
 
 私有資源不可放在 `public/` 下。使用 `delivery_mode: proxy` 時，SoFinder 會先驗證使用者及其存取權限，再串流檔案。
+
+這份建議白名單涵蓋常用文字、PDF、Microsoft Office、OpenDocument、圖片、
+壓縮檔、音訊和視訊檔案。用途更單一的資源應進一步縮小範圍。PHP、腳本、
+HTML 和可執行格式仍在預設拒絕清單中；`allowed_extensions` 為空表示「允許所有
+未被拒絕的副檔名」，並非「不允許任何副檔名」。
 
 ## 5. 保護路由
 
