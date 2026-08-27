@@ -77,6 +77,11 @@ need another public symlink. `S3Files` uses `SOFINDER_PROVIDER_PREFIX`. The same
 without renaming. Backblaze B2 should use its regional HTTPS endpoint and
 `SOFINDER_PROVIDER_USE_PATH_STYLE_ENDPOINT=0`.
 
+The normal `s3` environment intentionally registers only one remote provider.
+To demonstrate two providers, set `APP_ENV=s3_dual` and configure every required
+`SOFINDER_PROVIDER_*2` value from `.env.example`. A missing optional second
+provider never prevents the normal `s3` browser from starting.
+
 There is no fixed limit or prescribed naming for S3 resources. Add another
 entry under `so_finder.resources` in `config/packages/s3/so_finder.yaml` for
 each bucket or prefix. Resource names such as `BackblazeFiles`, `MediaArchive`,

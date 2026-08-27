@@ -229,6 +229,17 @@ jobs:
       - run: php bin/console sofinder:security:audit --env=prod
         working-directory: examples/symfony
         env: { APP_ENV: prod, APP_DEBUG: 0 }
+      - name: Warm the single-provider S3 demo without optional provider 2 variables
+        run: php bin/console cache:warmup --env=s3 --no-interaction
+        working-directory: examples/symfony
+        env:
+          APP_ENV: s3
+          APP_DEBUG: 0
+          SOFINDER_PROVIDER_ENDPOINT: https://s3.example.invalid
+          SOFINDER_PROVIDER_REGION: us-east-1
+          SOFINDER_PROVIDER_BUCKET: sofinder-ci
+          SOFINDER_PROVIDER_ACCESS_KEY: ci-access-key
+          SOFINDER_PROVIDER_SECRET_KEY: ci-secret-key
 
   originality:
     runs-on: ubuntu-latest

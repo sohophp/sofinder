@@ -37,18 +37,3 @@ so_finder:
         access_key_id: "%env(SOFINDER_PROVIDER_ACCESS_KEY)%"
         secret_access_key: "%env(SOFINDER_PROVIDER_SECRET_KEY)%"
         session_token: "%env(SOFINDER_PROVIDER_SESSION_TOKEN)%"
-    S3Files2:
-      adapter: s3
-      root: "%env(SOFINDER_PROVIDER_PREFIX2)%"
-      public_url: "%env(SOFINDER_PROVIDER_PUBLIC_URL2)%"
-      delivery_mode: proxy
-      allowed_extensions: [txt, jpg, jpeg, png, gif, webp, svg, pdf, zip]
-      roles: [ROLE_USER]
-      options:
-        bucket: "%env(SOFINDER_PROVIDER_BUCKET2)%"
-        region: "%env(SOFINDER_PROVIDER_REGION2)%"
-        endpoint: "%env(SOFINDER_PROVIDER_ENDPOINT2)%"
-        use_path_style_endpoint: "%env(bool:SOFINDER_PROVIDER_USE_PATH_STYLE_ENDPOINT2)%"
-        access_key_id: "%env(SOFINDER_PROVIDER_ACCESS_KEY2)%"
-        secret_access_key: "%env(SOFINDER_PROVIDER_SECRET_KEY2)%"
-        session_token: "%env(SOFINDER_PROVIDER_SESSION_TOKEN2)%"
