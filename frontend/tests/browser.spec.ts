@@ -126,6 +126,56 @@ test("shows and copies an absolute public file URL", async ({ page }) => {
   await expect(dialog.getByRole("status")).toContainText("网址已复制");
 });
 
+test("edits image alternative text from the context, details and preview surfaces", async ({ page }) => {
+  const assetId = "00000000-0000-4000-8000-000000000001";
+  let savedAlt: string | null = null;
+  await page.route("**/sofinder/api/config", route => route.fulfill({ json: { success: true, data: { apiVersion: "1.0", resources: [{ name: "Files", publicUrl: "/files", allowedExtensions: ["png"], maxSize: 1000000, readOnly: false, quotaBytes: 0, usedBytes: 68, maxFileNameLength: 120, maxFolderNameLength: 50, maxFolderDepth: 5, deliveryMode: "public", storageCapabilities: { search: true, sort: true, cursorPagination: false, atomicMove: true, nativeCopy: true, recoverableDelete: true, publicUrl: true } }], plugins: [], imagePresets: {}, imageCapabilities: { driver: "gd", formats: [{ format: "png", extensions: ["png"], mimes: ["image/png"], processor: "gd", read: true, edit: true, thumbnail: true, webEmbeddable: true }] }, assetCatalog: { enabled: true }, imageVariants: { enabled: true } } } }));
+  await page.route("**/sofinder/api/entries?*", route => route.fulfill({ json: { success: true, data: { entries: [{ path: "photo.png", name: "photo.png", directory: false, size: 68, modifiedAt: 2, mimeType: "image/png", url: "/files/photo.png", capabilities: { read: true, "metadata.update": true } }], total: 1, path: "", offset: 0, limit: 100, nextCursor: null, sort: "name", direction: "asc", capabilities: {} } } }));
+  const asset = { schemaVersion: "1.0", assetId, resource: "Files", path: "photo.png", name: "photo.png", directory: false, mimeType: "image/png", size: 68, modifiedAt: 2, version: "2-68", url: "/files/photo.png", downloadUrl: "/sofinder/api/download?resource=Files&path=photo.png", width: 1200, height: 400, alt: "A campaign photo", variants: [{ width: 320, height: 107, url: "/sofinder/api/images/variant?width=320", mimeType: "image/webp" }], capabilities: { embeddable: true, responsiveImages: true, assetMetadata: true, "metadata.update": true } };
+  await page.route("**/sofinder/api/assets/resolve?*", route => route.fulfill({ json: { success: true, data: { asset } } }));
+  await page.route(`**/sofinder/api/assets/${assetId}**`, async route => {
+    if (route.request().method() === "PATCH") {
+      const body = route.request().postDataJSON() as { alt: string | null };
+      savedAlt = body.alt;
+      await route.fulfill({ json: { success: true, data: { metadata: { alt: body.alt, title: null, tags: [], version: 2, updatedAt: 3 } } } });
+      return;
+    }
+    await route.fulfill({ json: { success: true, data: { asset, metadata: { alt: asset.alt, title: null, tags: [], version: 1, updatedAt: 2 } } } });
+  });
+  await page.setContent(`<!doctype html><html lang="zh-CN"><body><main id="sofinder-root" data-config='${JSON.stringify(config)}'></main></body></html>`);
+  await page.addStyleTag({ path: resolve(import.meta.dirname, "../../dist/sofinder.css") });
+  await page.addScriptTag({ path: resolve(import.meta.dirname, "../../dist/sofinder.js"), type: "module" });
+
+  const photo = page.locator(".sf-entry", { hasText: "photo.png" });
+  await expect(photo).toBeVisible();
+  await photo.click();
+  await expect(page.locator(".sf-details").getByRole("button", { name: "资产元数据" })).toBeVisible();
+  await photo.click({ button: "right" });
+  await page.getByRole("menuitem", { name: "资产元数据" }).click();
+  const dialog = page.getByRole("dialog", { name: "资产元数据" });
+  await expect(dialog.getByRole("textbox", { name: "默认替代文本" })).toHaveValue("A campaign photo");
+  await dialog.getByRole("checkbox", { name: /装饰性图片/ }).check();
+  await dialog.getByRole("button", { name: "保存" }).click();
+  await expect.poll(() => savedAlt).toBe("");
+
+  await photo.click({ button: "right" });
+  await page.getByRole("menuitem", { name: "预览" }).click();
+  await expect(page.getByRole("dialog", { name: "photo.png" }).getByRole("button", { name: "资产元数据" })).toBeVisible();
+});
+
+test("shows trusted Workspace choices only when more than one is available", async ({ page }) => {
+  const workspaceConfig = { ...config, workspace: { id: "site-a", resources: ["Files"], options: [
+    { id: "site-a", label: "站点 A", url: "/site-a/files" },
+    { id: "site-b", label: "站点 B", url: "/site-b/files" },
+  ] } };
+  await page.setContent(`<!doctype html><html lang="zh-CN"><body><main id="sofinder-root" data-config='${JSON.stringify(workspaceConfig)}'></main></body></html>`);
+  await page.addStyleTag({ path: resolve(import.meta.dirname, "../../dist/sofinder.css") });
+  await page.addScriptTag({ path: resolve(import.meta.dirname, "../../dist/sofinder.js"), type: "module" });
+  const switcher = page.getByRole("combobox", { name: "工作空间" });
+  await expect(switcher).toHaveValue("site-a");
+  await expect(switcher.locator("option")).toHaveCount(2);
+});
+
 test("enables a local QR Code action and keeps file delivery actions together", async ({ page }) => {
   await page.getByRole("button", { name: "更多操作" }).click();
   await page.getByRole("menuitem", { name: "设置" }).click();

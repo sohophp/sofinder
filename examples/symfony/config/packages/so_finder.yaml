@@ -8,6 +8,19 @@ so_finder:
     secret: '%kernel.secret%'
     default_ttl_seconds: 300
     max_ttl_seconds: 3600
+  # Enabled in the demo so the editor integrations visibly exercise stable IDs,
+  # alternative text and responsive image delivery. Library defaults stay off.
+  asset_catalog:
+    enabled: true
+    register_existing: lazy
+  image_variants:
+    enabled: true
+    widths: [320, 640, 960, 1280, 1920]
+    formats: [original, webp]
+    quality: 82
+    mode: on_demand
+    max_variants_per_asset: 10
+    cache_ttl_seconds: 2592000
   malware_scanning:
     enabled: '%env(bool:SOFINDER_CLAMAV_ENABLED)%'
     endpoint: 'tcp://127.0.0.1:3310'

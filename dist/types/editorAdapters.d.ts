@@ -8,6 +8,7 @@ export interface EditorAdapterOptions extends Omit<SoFinderClientOptions, "onCon
     sizes?: string | ((asset: AssetReference) => string);
     onConflict?: SoFinderClientOptions["onConflict"];
     onTaskChange?: (task: UploadTaskSnapshot) => void;
+    onAssetReady?: (asset: AssetReference) => void;
     onError?: (error: SoFinderSdkError) => void;
     toolbarUpload?: boolean;
 }
@@ -20,17 +21,45 @@ export interface CkeditorLoader {
     uploaded?: number;
     uploadTotal?: number;
 }
+export declare const ckeditorUploadResult: (asset: AssetReference, options: EditorAdapterOptions) => Record<string, unknown>;
 export declare const createCkeditor5UploadPlugin: (options: EditorAdapterOptions) => (editor: {
     plugins: {
-        get(name: "FileRepository"): {
-            createUploadAdapter: (loader: CkeditorLoader) => {
-                upload(): Promise<Record<string, string>>;
-                abort(): void;
-            };
+        get(name: string): any;
+    };
+    model?: {
+        schema: {
+            extend(name: string, options: {
+                allowAttributes: string[];
+            }): void;
+        };
+        change(callback: (writer: {
+            setAttribute(name: string, value: unknown, item: unknown): void;
+        }) => void): void;
+    };
+    conversion?: {
+        for(direction: string): {
+            attributeToAttribute(definition: object): void;
         };
     };
 }) => void;
 export declare const tinyMceImagesUploadHandler: (options: EditorAdapterOptions) => (blobInfo: {
+    blob(): Blob;
+    filename(): string;
+}, progress: (value: number) => void) => Promise<string>;
+/**
+ * TinyMCE's native upload callback returns only a URL. This integration keeps
+ * the corresponding AssetReference until TinyMCE creates the image node, then
+ * applies alt, dimensions, srcset and the stable asset ID through public DOM APIs.
+ */
+export declare const createTinyMceUploadIntegration: (editor: {
+    on(event: string, listener: (event: {
+        element?: Element;
+    }) => void): void;
+    dom: {
+        getAttrib(node: Element, name: string): string;
+        setAttrib(node: Element, name: string, value: string): void;
+    };
+}, options: EditorAdapterOptions) => (blobInfo: {
     blob(): Blob;
     filename(): string;
 }, progress: (value: number) => void) => Promise<string>;
@@ -64,6 +93,9 @@ export declare const installQuillUploads: (quill: {
         index: number;
     } | null;
     insertEmbed(index: number, type: string, value: string, source: string): void;
+    clipboard?: {
+        dangerouslyPasteHTML(index: number, html: string, source: string): void;
+    };
 }, options: EditorAdapterOptions) => (() => void);
 export declare const bindMarkdownUploads: (input: HTMLTextAreaElement, options: EditorAdapterOptions) => (() => void);
 export declare const bindAssetInput: (fileInput: HTMLInputElement, output: HTMLInputElement | HTMLTextAreaElement, options: EditorAdapterOptions, outputMode?: "url" | "json") => (() => void);

@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+- Complete asset alternative-text delivery across picker/upload integrations, expose metadata editing from details, preview and context menus, and add an independent `metadata.update` write capability.
+- Bind resumable upload sessions to the trusted Workspace and add an extensible audit for writable storage roots shared across Workspaces.
+- Enable the asset catalog and responsive variants in the Symfony demo, tighten their OpenAPI responses and keep the Picker build self-contained.
+- Add a host-controlled Workspace switcher, wrap CKEditor responsive URLs according to its public upload contract, and pin the documentation build to the security-fixed Vite 6.4.3.
+
 ## 0.1.0-beta.23 - 2026-08-27
 
 - Add optional host-resolved Workspace contexts and enforce their resource boundary throughout file, asset and user-metadata operations.

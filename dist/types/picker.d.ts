@@ -33,6 +33,8 @@ export interface PickerOptions {
     width?: number;
     height?: number;
     windowName?: string;
+    defaultAlt?: (asset: PickerEntry) => string;
+    sizes?: string | ((asset: PickerEntry) => string);
 }
 export interface PickerMessage {
     type: "sofinder:select";
@@ -46,9 +48,10 @@ export declare const openPicker: (options: PickerOptions) => Promise<PickerEntry
 type EditorPickerOptions = Omit<PickerOptions, "kind">;
 /** Select an image and insert it through CKEditor 5's public command API. */
 export declare const selectForCkeditor5: (editor: {
-    execute(command: string, options: {
-        source: string;
-    }): void;
+    execute(command: string, options: Record<string, unknown>): void;
+    commands?: {
+        get(name: string): unknown;
+    };
     editing?: {
         view?: {
             focus?: () => void;
@@ -65,10 +68,7 @@ export declare const registerTinyMce: (tinymce: {
 export declare const selectForTiptap: (editor: {
     chain(): {
         focus(): {
-            setImage(options: {
-                src: string;
-                alt: string;
-            }): {
+            setImage(options: Record<string, string>): {
                 run(): unknown;
             };
         };
@@ -83,6 +83,9 @@ export declare const registerQuill: (quill: {
         index: number;
     } | null;
     insertEmbed(index: number, type: string, value: string, source: string): void;
+    clipboard?: {
+        dangerouslyPasteHTML(index: number, html: string, source: string): void;
+    };
 }, options: EditorPickerOptions) => void;
 /** Bind a picker result to a plain URL input and emit normal input/change events. */
 export declare const selectForInput: (input: HTMLInputElement, options: PickerOptions) => Promise<PickerEntry>;

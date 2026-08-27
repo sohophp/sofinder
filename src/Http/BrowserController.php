@@ -15,6 +15,7 @@ use Symfony\Component\Routing\RouterInterface;
 use Symfony\Component\Security\Csrf\CsrfTokenManagerInterface;
 use Symfony\Component\Security\Core\Authorization\AuthorizationCheckerInterface;
 use SohoPHP\SoFinder\Workspace\WorkspaceProvider;
+use SohoPHP\SoFinder\Contract\WorkspaceOptionProviderInterface;
 
 final readonly class BrowserController
 {
@@ -31,6 +32,7 @@ final readonly class BrowserController
         /** @var list<string> */ private array $securityStatusRoles = [],
         /** @var list<string> */ private array $pickerAllowedOrigins = [],
         private ?WorkspaceProvider $workspaces = null,
+        private ?WorkspaceOptionProviderInterface $workspaceOptions = null,
     ) {
     }
 
@@ -80,7 +82,7 @@ final readonly class BrowserController
                 'lowercaseUploadExtensions' => (bool) ($this->ui['lowercase_upload_extensions'] ?? true),
                 ...$ui,
             ],
-            'workspace' => $this->workspaces?->current()->jsonSerialize(),
+            'workspace' => $this->workspaceConfiguration($request),
         ];
         $encoded = htmlspecialchars(json_encode($config, JSON_THROW_ON_ERROR | JSON_UNESCAPED_SLASHES), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
         $version = rawurlencode($this->assetVersion);
@@ -109,6 +111,30 @@ HTML;
             'Cache-Control' => 'no-store, private',
             'X-Frame-Options' => 'SAMEORIGIN',
         ]);
+    }
+
+    /** @return array{id:string,resources:list<string>,options:list<array{id:string,label:string,url:string}>}|null */
+    private function workspaceConfiguration(Request $request): ?array
+    {
+        if ($this->workspaces === null) return null;
+        $current = $this->workspaces->current();
+        $options = $this->workspaceOptions?->options($request, $current) ?? [];
+        $options = array_values(array_filter($options, $this->validWorkspaceOption(...)));
+
+        return $current->jsonSerialize() + ['options' => $options];
+    }
+
+    /** @param array{id?:mixed,label?:mixed,url?:mixed} $option */
+    private function validWorkspaceOption(array $option): bool
+    {
+        if (!is_string($option['id'] ?? null) || !is_string($option['label'] ?? null) || !is_string($option['url'] ?? null)) return false;
+        $path = parse_url($option['url'], PHP_URL_PATH);
+
+        return preg_match('/^[A-Za-z0-9][A-Za-z0-9._-]{0,63}$/D', $option['id']) === 1
+            && trim($option['label']) !== '' && strlen($option['label']) <= 100
+            && is_string($path) && str_starts_with($path, '/') && !str_starts_with($path, '//')
+            && preg_match('#(?:^|/)\.\.(?:/|$)|[\x00-\x1F\x7F]#', $path) !== 1
+            && parse_url($option['url'], PHP_URL_SCHEME) === null && parse_url($option['url'], PHP_URL_HOST) === null;
     }
 
     /** @param list<string> $allowed */

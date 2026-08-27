@@ -6,6 +6,8 @@ var e = {
 	decorativeImage: "装饰性图片（空替代文本）",
 	assetAltUnset: "留空时使用文件名",
 	assetMetadataSaved: "资产元数据已保存",
+	workspace: "工作空间",
+	workspaceUploadBlocked: "请等待上传完成或取消上传后再切换工作空间。",
 	files: "文件",
 	images: "图片",
 	newFolder: "新建文件夹",

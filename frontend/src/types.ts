@@ -9,7 +9,7 @@ export interface SoFinderConfig {
   ckeditorFunction: number;
   pickerRequestId: string;
   pickerOrigin: string;
-  workspace?: { id: string; resources: string[] } | null;
+  workspace?: { id: string; resources: string[]; options?: Array<{ id: string; label: string; url: string }> } | null;
   theme: {
     accent: string;
     background: string;

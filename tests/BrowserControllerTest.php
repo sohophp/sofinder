@@ -6,6 +6,8 @@ namespace SohoPHP\SoFinder\Tests;
 
 use PHPUnit\Framework\TestCase;
 use SohoPHP\SoFinder\Contract\AuthorizationInterface;
+use SohoPHP\SoFinder\Contract\WorkspaceOptionProviderInterface;
+use SohoPHP\SoFinder\Contract\WorkspaceResolverInterface;
 use SohoPHP\SoFinder\FileManager;
 use SohoPHP\SoFinder\Feature\FeaturePolicy;
 use SohoPHP\SoFinder\Http\BrowserController;
@@ -14,8 +16,11 @@ use SohoPHP\SoFinder\Storage\LocalStorageAdapter;
 use SohoPHP\SoFinder\Value\ResourceStorage;
 use SohoPHP\SoFinder\Value\ResourceType;
 use SohoPHP\SoFinder\Value\Theme;
+use SohoPHP\SoFinder\Value\WorkspaceContext;
+use SohoPHP\SoFinder\Workspace\WorkspaceProvider;
 use Symfony\Component\EventDispatcher\EventDispatcher;
 use Symfony\Component\HttpFoundation\Request;
+use Symfony\Component\HttpFoundation\RequestStack;
 use Symfony\Component\Routing\RouterInterface;
 use Symfony\Component\Security\Csrf\CsrfToken;
 use Symfony\Component\Security\Csrf\CsrfTokenManagerInterface;
@@ -99,8 +104,24 @@ final class BrowserControllerTest extends TestCase
         self::assertTrue($config['featureAvailability']['recent']);
     }
 
+    public function testPublishesOnlySafeTrustedWorkspaceNavigationOptions(): void
+    {
+        $request = Request::create('/browser'); $stack = new RequestStack(); $stack->push($request);
+        $resolver = new class implements WorkspaceResolverInterface { public function resolve(Request $request): WorkspaceContext { return new WorkspaceContext('site-a', 'actor', ['Files']); } };
+        $provider = new class implements WorkspaceOptionProviderInterface { public function options(Request $request, WorkspaceContext $current): array { return [
+            ['id' => 'site-a', 'label' => 'Site A', 'url' => '/site-a/files'],
+            ['id' => 'site-b', 'label' => 'Site B', 'url' => '/site-b/files?from=sofinder'],
+            ['id' => 'evil', 'label' => 'Evil', 'url' => '//evil.example/files'],
+            ['id' => 'traversal', 'label' => 'Traversal', 'url' => '/site-a/../admin'],
+        ]; } };
+        $config = $this->config($request, workspaces: new WorkspaceProvider($resolver, $stack), workspaceOptions: $provider);
+
+        self::assertSame('site-a', $config['workspace']['id']);
+        self::assertSame(['site-a', 'site-b'], array_column($config['workspace']['options'], 'id'));
+    }
+
     /** @param list<string> $allowedOrigins @return array<string,mixed> */
-    private function config(Request $request, ?FeaturePolicy $features = null, array $allowedOrigins = []): array
+    private function config(Request $request, ?FeaturePolicy $features = null, array $allowedOrigins = [], ?WorkspaceProvider $workspaces = null, ?WorkspaceOptionProviderInterface $workspaceOptions = null): array
     {
         $resource = new ResourceType('Files', $this->directory, '/files');
         $authorization = new class implements AuthorizationInterface {
@@ -116,7 +137,7 @@ final class BrowserControllerTest extends TestCase
         $controller = new BrowserController($files, $router, $csrf, 'test', $theme, [
             'mode' => 'auto', 'header' => false, 'logo' => false, 'search' => true,
             'language_switcher' => true, 'view_switcher' => true, 'folder_tree' => false, 'scale' => 'standard', 'upload_conflict_strategy' => 'ask',
-        ], $features, null, [], $allowedOrigins);
+        ], $features, null, [], $allowedOrigins, $workspaces, $workspaceOptions);
         $html = (string) $controller($request)->getContent();
         self::assertMatchesRegularExpression('/data-config="([^"]+)"/', $html);
         preg_match('/data-config="([^"]+)"/', $html, $matches);

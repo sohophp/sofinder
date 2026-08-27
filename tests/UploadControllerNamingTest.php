@@ -7,6 +7,9 @@ namespace SohoPHP\SoFinder\Tests;
 use PHPUnit\Framework\TestCase;
 use SohoPHP\SoFinder\Contract\ActorProviderInterface;
 use SohoPHP\SoFinder\Contract\AuthorizationInterface;
+use SohoPHP\SoFinder\Contract\ChunkUploadStoreInterface;
+use SohoPHP\SoFinder\Contract\WorkspaceResolverInterface;
+use SohoPHP\SoFinder\Exception\SoFinderException;
 use SohoPHP\SoFinder\FileManager;
 use SohoPHP\SoFinder\Http\ApiController;
 use SohoPHP\SoFinder\Http\ChunkUploadController;
@@ -16,6 +19,8 @@ use SohoPHP\SoFinder\Symfony\CsrfGuard;
 use SohoPHP\SoFinder\Symfony\ResourceRegistryFactory;
 use SohoPHP\SoFinder\Upload\ChunkUploadManager;
 use SohoPHP\SoFinder\Value\ResourceType;
+use SohoPHP\SoFinder\Value\WorkspaceContext;
+use SohoPHP\SoFinder\Workspace\WorkspaceProvider;
 use Symfony\Component\EventDispatcher\EventDispatcher;
 use Symfony\Component\HttpFoundation\File\UploadedFile;
 use Symfony\Component\HttpFoundation\Request;
@@ -74,6 +79,30 @@ final class UploadControllerNamingTest extends TestCase
 
         self::assertSame(201, $response->getStatusCode());
         self::assertFileExists($this->directory . '/Archive.zip');
+    }
+
+    public function testChunkStatusIsHiddenAcrossWorkspaceBoundaries(): void
+    {
+        $request = Request::create('/api/uploads/chunks/abcdefghijklmnop');
+        $stack = new RequestStack(); $stack->push($request);
+        $resolver = new class implements WorkspaceResolverInterface {
+            public function resolve(Request $request): WorkspaceContext { return new WorkspaceContext('site-b', 'actor', ['Files']); }
+        };
+        $chunks = new class implements ChunkUploadStoreInterface {
+            public function accept(string $id, int $index, int $total, mixed $stream, int $maximumFileBytes, array $context = []): array { return ['complete' => false]; }
+            public function status(string $id): array { return ['id' => $id, 'total' => 2, 'resource' => 'Files', 'path' => '', 'name' => 'one.zip', 'overwrite' => false, 'autoRename' => false, 'workspace' => 'site-a', 'received' => [0], 'complete' => false, 'updatedAt' => time()]; }
+            public function discard(string $id): void {}
+            public function cleanupExpired(bool $allActors = false, ?int $limit = null): int { return 0; }
+        };
+        $controller = new ChunkUploadController($this->files($request), $chunks, $this->csrf(), workspaces: new WorkspaceProvider($resolver, $stack));
+
+        try {
+            $controller->status('abcdefghijklmnop');
+            self::fail('A chunk session from another workspace must not be disclosed.');
+        } catch (SoFinderException $exception) {
+            self::assertSame('upload_session_not_found', $exception->errorCode);
+            self::assertSame(404, $exception->httpStatus);
+        }
     }
 
     private function files(Request $request): FileManager

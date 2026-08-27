@@ -22,6 +22,8 @@ use SohoPHP\SoFinder\Contract\ChunkUploadStoreInterface;
 use SohoPHP\SoFinder\Contract\ActorProviderInterface;
 use SohoPHP\SoFinder\Contract\AssetCatalogInterface;
 use SohoPHP\SoFinder\Contract\WorkspaceResolverInterface;
+use SohoPHP\SoFinder\Contract\WorkspaceStorageAuditProviderInterface;
+use SohoPHP\SoFinder\Contract\WorkspaceOptionProviderInterface;
 use SohoPHP\SoFinder\Contract\ImageProcessorInterface;
 use SohoPHP\SoFinder\Contract\ImageCapabilityProviderInterface;
 use SohoPHP\SoFinder\Contract\FileInspectorInterface;
@@ -192,6 +194,7 @@ final class SoFinderExtension extends Extension
         $container->registerForAutoconfiguration(QueueHealthProviderInterface::class)->addTag('sofinder.queue_health_provider');
         $container->registerForAutoconfiguration(StorageAdapterFactoryInterface::class)->addTag('sofinder.storage_factory');
         $container->registerForAutoconfiguration(EntryUrlContextProviderInterface::class)->addTag('sofinder.entry_url_context_provider');
+        $container->registerForAutoconfiguration(WorkspaceStorageAuditProviderInterface::class)->addTag('sofinder.workspace_storage_audit_provider');
         $packageDir = dirname(__DIR__, 2);
         $container->setParameter('so_finder.package_dir', $packageDir);
         $assetFiles = [$packageDir . '/dist/sofinder.js', $packageDir . '/dist/sofinder-picker.js', $packageDir . '/dist/sofinder.css'];
@@ -507,6 +510,7 @@ final class SoFinderExtension extends Extension
             $malwareConfig['status_roles'],
             $config['picker']['allowed_origins'],
             $workspaceConfig['enabled'] ? new Reference(WorkspaceProvider::class) : null,
+            $workspaceConfig['enabled'] && $workspaceConfig['option_provider_service'] !== null ? new Reference((string) $workspaceConfig['option_provider_service']) : null,
         ]);
         $this->controller($container, ApiController::class, [
             new Reference(FileManager::class),
@@ -545,6 +549,7 @@ final class SoFinderExtension extends Extension
             new Reference(MaintenanceCoordinator::class),
             new Reference(UploadNamePolicy::class),
             new Reference(AssetReferenceFactory::class),
+            $workspaceConfig['enabled'] ? new Reference(WorkspaceProvider::class) : null,
         ]);
         $this->controller($container, ImageController::class, [
             new Reference(ImageManager::class),
@@ -697,6 +702,7 @@ final class SoFinderExtension extends Extension
                 $clusterConfig['shared_preview_cache'],
                 $documentPreviewConfig['mode'],
                 $documentPreviewConfig['office'],
+                new TaggedIteratorArgument('sofinder.workspace_storage_audit_provider'),
             ])
             ->addTag('console.command'));
         $container->setDefinition(ImageCapabilitiesCommand::class, (new Definition(ImageCapabilitiesCommand::class))

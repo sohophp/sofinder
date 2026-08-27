@@ -13,6 +13,7 @@ use SohoPHP\SoFinder\Contract\WorkspaceResolverInterface;
 use SohoPHP\SoFinder\Event\AssetOperationEvent;
 use SohoPHP\SoFinder\Event\OperationEvent;
 use SohoPHP\SoFinder\Exception\SoFinderException;
+use SohoPHP\SoFinder\Exception\AccessDeniedException;
 use SohoPHP\SoFinder\FileManager;
 use SohoPHP\SoFinder\Http\AssetApiController;
 use SohoPHP\SoFinder\Http\ImageController;
@@ -83,6 +84,25 @@ final class AssetPlatformTest extends TestCase
 
         $this->expectException(SoFinderException::class);
         $controller->update(Request::create('/assets/id/metadata', 'PATCH', server: ['HTTP_X_CSRF_TOKEN' => 'valid'], content: json_encode(['alt' => str_repeat('x', 1001), 'version' => 2], JSON_THROW_ON_ERROR)), $asset['assetId']);
+    }
+
+    public function testAssetMetadataRequiresItsOwnWriteCapability(): void
+    {
+        $catalog = new JsonAssetCatalog($this->directory . '/denied-assets.json');
+        $authorization = new class implements AuthorizationInterface {
+            public function isAuthenticated(): bool { return true; }
+            public function isGranted(string $operation, ResourceType $resource, string $path): bool { return $operation !== 'metadata.update'; }
+        };
+        $files = new FileManager($this->registry(), $authorization, new EventDispatcher(), workspaces: $this->workspaces);
+        $router = $this->createMock(RouterInterface::class); $router->method('generate')->willReturn('/download');
+        $factory = new AssetReferenceFactory($router, $this->workspaces, $catalog, catalogEnabled: true);
+        $tokens = $this->createMock(CsrfTokenManagerInterface::class); $tokens->method('isTokenValid')->willReturn(true);
+        $controller = new AssetApiController($files, $factory, $catalog, $this->workspaces, new CsrfGuard($tokens, $authorization), true);
+        $asset = $this->data($controller->resolve(new Request(['resource' => 'Files', 'path' => 'manual.txt'])))['asset'];
+        self::assertFalse($asset['capabilities']['assetMetadata']);
+
+        $this->expectException(AccessDeniedException::class);
+        $controller->update(Request::create('/assets/id/metadata', 'PATCH', server: ['HTTP_X_CSRF_TOKEN' => 'valid'], content: json_encode(['alt' => 'Denied', 'version' => 1], JSON_THROW_ON_ERROR)), $asset['assetId']);
     }
 
     public function testCatalogAndVersionedSubscribersTrackIdentityAndFailureSafely(): void

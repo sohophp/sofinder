@@ -27,7 +27,7 @@ describe("picker SDK", () => {
     const entry = { resource: "Images", path: "photo.png", name: "photo.png", directory: false, size: 12, modifiedAt: 1, mimeType: "image/png", url: "/files/photo.png", width: 320, height: 180, capabilities: {} };
     window.dispatchEvent(new MessageEvent("message", { source: popup, origin: window.location.origin, data: { type: "sofinder:select", version: "1.0", requestId: opened.searchParams.get("pickerRequestId"), entry } }));
     await promise;
-    expect(textarea.value).toBe("Before ![photo.png](</files/photo.png>)after");
+    expect(textarea.value).toBe("Before ![photo](</files/photo.png>)after");
   });
 
   it("accepts only a matching source, origin, version and request", async () => {
@@ -55,6 +55,7 @@ describe("picker SDK", () => {
     window.dispatchEvent(new MessageEvent("message", { source: popup, origin: window.location.origin, data: { type: "sofinder:select", version: "1.0", requestId: opened.searchParams.get("pickerRequestId"), entry } }));
     await promise;
     expect(editor.execute).toHaveBeenCalledWith("insertImage", { source: entry.url });
+    expect(editor.execute).toHaveBeenCalledWith("imageTextAlternative", { newValue: "photo" });
 
     const input = document.createElement("input");
     const changed = vi.fn();

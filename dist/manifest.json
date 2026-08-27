@@ -27,8 +27,8 @@
     "file": "defineProperty-B_lfzbVN.js",
     "name": "defineProperty"
   },
-  "_editorAdapters-CirZlFhV.js": {
-    "file": "editorAdapters-CirZlFhV.js",
+  "_editorAdapters-8MkE6Rip.js": {
+    "file": "editorAdapters-8MkE6Rip.js",
     "name": "editorAdapters",
     "imports": [
       "src/sdk.ts"
@@ -59,7 +59,7 @@
     "src": "src/ckeditor5.ts",
     "isEntry": true,
     "imports": [
-      "_editorAdapters-CirZlFhV.js"
+      "_editorAdapters-8MkE6Rip.js"
     ]
   },
   "src/components/AssetMetadataDialog.tsx": {
@@ -107,7 +107,7 @@
     ]
   },
   "src/components/DetailsPanel.tsx": {
-    "file": "DetailsPanel-DOaLAuvT.js",
+    "file": "DetailsPanel-B1NHUDuI.js",
     "name": "DetailsPanel",
     "src": "src/components/DetailsPanel.tsx",
     "isDynamicEntry": true,
@@ -266,23 +266,23 @@
     "src": "src/editors.ts",
     "isEntry": true,
     "imports": [
-      "_editorAdapters-CirZlFhV.js"
+      "_editorAdapters-8MkE6Rip.js"
     ]
   },
   "src/locales/en.ts": {
-    "file": "en-5z6hVc9z.js",
+    "file": "en-Chkg4AUX.js",
     "name": "en",
     "src": "src/locales/en.ts",
     "isDynamicEntry": true
   },
   "src/locales/zh-cn.ts": {
-    "file": "zh-cn-CsQlSxpw.js",
+    "file": "zh-cn-CyEi5PvU.js",
     "name": "zh-cn",
     "src": "src/locales/zh-cn.ts",
     "isDynamicEntry": true
   },
   "src/locales/zh-tw.ts": {
-    "file": "zh-tw-BP23stJS.js",
+    "file": "zh-tw-ECaL11o-.js",
     "name": "zh-tw",
     "src": "src/locales/zh-tw.ts",
     "isDynamicEntry": true
@@ -338,7 +338,7 @@
     "src": "src/quill.ts",
     "isEntry": true,
     "imports": [
-      "_editorAdapters-CirZlFhV.js"
+      "_editorAdapters-8MkE6Rip.js"
     ]
   },
   "src/sdk.ts": {
@@ -356,7 +356,7 @@
     "src": "src/tinymce.ts",
     "isEntry": true,
     "imports": [
-      "_editorAdapters-CirZlFhV.js"
+      "_editorAdapters-8MkE6Rip.js"
     ]
   },
   "src/tiptap.ts": {
@@ -365,7 +365,7 @@
     "src": "src/tiptap.ts",
     "isEntry": true,
     "imports": [
-      "_editorAdapters-CirZlFhV.js"
+      "_editorAdapters-8MkE6Rip.js"
     ]
   },
   "style.css": {

@@ -760,6 +760,7 @@ export default function App({ config, initialMessages }: { config: SoFinderConfi
     else if (command === "quick-access" && target) void toggleQuickAccess(target);
     else if (command === "download" && target && !target.directory) window.open(target.url || api.downloadUrl(resource, target.path), "_blank", "noopener,noreferrer");
     else if (command === "share" && target && !target.directory) void openShare(target);
+    else if (command === "asset-metadata" && target && !target.directory) void openAssetMetadata(target);
   };
 
   const applyPreset = async (name: string) => {
@@ -1055,6 +1056,7 @@ export default function App({ config, initialMessages }: { config: SoFinderConfi
       </nav>}
       {config.uiDefaults.search !== false && <div className="sf-search"><UiIcon name="search"/><select value={searchMode} disabled={collectionView !== null} onChange={event => { const next = event.target.value as "name" | "tags"; setSearchMode(next); setOffset(0); }} aria-label={t("searchScope")}><option value="name" disabled={currentResource?.storageCapabilities?.search === false}>{t("name")}</option><option value="tags">{t("tags")}</option></select><input disabled={collectionView === null && searchMode === "name" && currentResource?.storageCapabilities?.search === false} value={search} onChange={e => setSearch(e.target.value)} placeholder={collectionView === "favorites" ? t("searchFavorites") : searchMode === "tags" ? t("searchTags") : t("search")} aria-label={collectionView === "favorites" ? t("searchFavorites") : searchMode === "tags" ? t("searchTags") : t("search")}/></div>}
       <div className="sf-command-actions">
+      {(config.workspace?.options?.length ?? 0) > 1 && <label className="sf-workspace-switcher"><span className="sf-sr-only">{t("workspace")}</span><select aria-label={t("workspace")} value={config.workspace?.id} disabled={uploadActive} title={uploadActive ? t("workspaceUploadBlocked") : t("workspace")} onChange={event => { const option = config.workspace?.options?.find(item => item.id === event.target.value); if (option) window.location.assign(option.url); }}>{config.workspace?.options?.map(option => <option key={option.id} value={option.id}>{option.label}</option>)}</select></label>}
       {config.uiDefaults.viewSwitcher !== false && <div className="sf-view-toggle" role="group" aria-label={`${t("grid")} / ${t("list")}`}>
         <button className={view === "grid" ? "active" : ""} disabled={collectionView !== null} onClick={() => setViewMode("grid")} title={t("grid")} aria-label={t("grid")}><UiIcon name="grid"/></button>
         <button className={view === "list" ? "active" : ""} disabled={collectionView !== null} onClick={() => setViewMode("list")} title={t("list")} aria-label={t("list")}><UiIcon name="list"/></button>
@@ -1195,14 +1197,14 @@ export default function App({ config, initialMessages }: { config: SoFinderConfi
       onClose={() => setTagsOpen(false)}
       onSave={tags => { setTagsOpen(false); void mutateMetadata(resource, selected.path, "tags", { tags }).catch(report); }}
     /></Suspense>}
-    {assetMetadataDialog && <Suspense fallback={<div className="sf-state">{t("loading")}</div>}><AssetMetadataDialog asset={assetMetadataDialog.asset} metadata={assetMetadataDialog.metadata} labels={{ title: t("assetMetadata"), alt: t("assetAlt"), assetTitle: t("assetTitle"), tags: t("tags"), decorative: t("decorativeImage"), unsetAlt: t("assetAltUnset"), save: t("save"), cancel: t("cancel") }} onClose={() => setAssetMetadataDialog(null)} onSave={async value => { const result = await api.updateAssetMetadata(assetMetadataDialog.asset.assetId || "", value); setAssetMetadataDialog(current => current ? { ...current, metadata: result.metadata, asset: { ...current.asset, alt: result.metadata.alt } } : null); setNotice(t("assetMetadataSaved")); }}/></Suspense>}
+    {assetMetadataDialog && <Suspense fallback={<div className="sf-state">{t("loading")}</div>}><AssetMetadataDialog asset={assetMetadataDialog.asset} metadata={assetMetadataDialog.metadata} labels={{ title: t("assetMetadata"), alt: t("assetAlt"), assetTitle: t("assetTitle"), tags: t("tags"), decorative: t("decorativeImage"), unsetAlt: t("assetAltUnset"), save: t("save"), cancel: t("cancel") }} onClose={() => setAssetMetadataDialog(null)} onSave={async value => { await api.updateAssetMetadata(assetMetadataDialog.asset.assetId || "", value); setAssetMetadataDialog(null); setNotice(t("assetMetadataSaved")); }}/></Suspense>}
     {previewEntry && <Modal
       title={previewEntry.name}
       closeLabel={t("close")}
       maximizable
       onClose={() => setPreviewEntry(null)}
       className="sf-file-preview-modal"
-      footer={<><a className="sf-preview-download" href={previewEntry.url || api.downloadUrl(resource, previewEntry.path)} target="_blank" rel="noopener noreferrer">{t("download")}</a><button type="button" onClick={() => void openShare(previewEntry)}>{t("share")}</button><button className="primary" onClick={() => setPreviewEntry(null)}>{t("close")}</button></>}
+      footer={<><a className="sf-preview-download" href={previewEntry.url || api.downloadUrl(resource, previewEntry.path)} target="_blank" rel="noopener noreferrer">{t("download")}</a><button type="button" onClick={() => void openShare(previewEntry)}>{t("share")}</button>{assetCatalogEnabled && previewEntry.capabilities?.["metadata.update"] !== false && <button type="button" onClick={() => void openAssetMetadata(previewEntry)}>{t("assetMetadata")}</button>}<button className="primary" onClick={() => setPreviewEntry(null)}>{t("close")}</button></>}
     >
       <div className="sf-file-preview-body">
         {canPreviewImage(previewEntry)
@@ -1273,6 +1275,7 @@ export default function App({ config, initialMessages }: { config: SoFinderConfi
       ...(uiMode === "manager" ? [
         ...(features.favorites ? [{ id: "favorite", label: metadata.favorites.includes(contextMenu.entry.path) ? t("removeFavorite") : t("favorite") }] : []),
         ...(quickAccessEnabled && features.sidebarQuickAccess && canQuickAccess(contextMenu.entry) ? [{ id: "quick-access", label: metadata.quickAccess.includes(contextMenu.entry.path) ? t("unpinQuickAccess") : t("pinQuickAccess") }] : []),
+        ...(assetCatalogEnabled && !contextMenu.entry.directory && contextMenu.entry.capabilities?.["metadata.update"] !== false ? [{ id: "asset-metadata", label: t("assetMetadata") }] : []),
         { id: "rename", label: t("rename"), disabled: contextMenu.entry.capabilities?.rename === false },
         { id: "copy", label: t("copy"), disabled: contextMenu.entry.capabilities?.copy === false },
         { id: "move", label: t("move"), disabled: contextMenu.entry.capabilities?.move === false },

@@ -7,6 +7,11 @@ description: SoFinder 每个公开版本的重要变更。
 
 ## 尚未发布
 
+- 补齐 Picker／上传编辑器集成中的图片替代文本，详情、预览和右键均可编辑资产元数据，并增加独立的 `metadata.update` 写权限。
+- 将断点续传 Session 绑定可信 Workspace，增加可扩展的跨 Workspace 可写存储目录安全审计。
+- Symfony 演示启用资产目录和响应式变体，收紧相关 OpenAPI 返回契约，并保持 Picker 单文件独立构建。
+- 新增宿主控制的 Workspace 切换器，按 CKEditor 公开上传契约封装响应式 URL，并将文档构建固定到已修复安全问题的 Vite 6.4.3。
+
 ## 0.1.0-beta.23 - 2026-08-27
 
 - 新增可选的宿主 Workspace 解析及资源边界，并隔离文件、资产和用户元数据。

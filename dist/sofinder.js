@@ -8187,9 +8187,9 @@ var u = /* @__PURE__ */ e(((e) => {
 		return i.data;
 	}
 }, x = {
-	en: () => import("./en-5z6hVc9z.js"),
-	"zh-cn": () => import("./zh-cn-CsQlSxpw.js"),
-	"zh-tw": () => import("./zh-tw-BP23stJS.js")
+	en: () => import("./en-Chkg4AUX.js"),
+	"zh-cn": () => import("./zh-cn-CyEi5PvU.js"),
+	"zh-tw": () => import("./zh-tw-ECaL11o-.js")
 }, ee = async (e) => (await x[e]()).default, te = (e) => (t) => e[t], S = (e) => {
 	let t = localStorage.getItem("sofinder.language");
 	return t === "en" || t === "zh-cn" || t === "zh-tw" ? t : e;
@@ -8786,7 +8786,7 @@ function Ie(e, t, n, r) {
 }
 //#endregion
 //#region src/App.tsx
-var Le = (0, g.lazy)(() => import("./ImageEditor-BC9FnRNj.js").then((e) => ({ default: e.ImageEditor }))), Re = (0, g.lazy)(() => import("./ImageProcessDialog-BXXUiXNB.js").then((e) => ({ default: e.ImageProcessDialog }))), ze = (0, g.lazy)(() => import("./SecurityStatusDialog-CLbhkkDo.js").then((e) => ({ default: e.SecurityStatusDialog }))), Be = (0, g.lazy)(() => import("./DocumentPreviewPane-DhmHG-pU.js")), Ve = (0, g.lazy)(() => import("./SettingsDialog-BhOPM_OQ.js").then((e) => ({ default: e.SettingsDialog }))), He = (0, g.lazy)(() => import("./DestinationDialog-CHfiXcOr.js").then((e) => ({ default: e.DestinationDialog }))), Ue = (0, g.lazy)(() => import("./BulkRenameDialog-Dr9MLWWP.js").then((e) => ({ default: e.BulkRenameDialog }))), We = (0, g.lazy)(() => import("./TrashDialog-CRUzG7u0.js").then((e) => ({ default: e.TrashDialog }))), Ge = (0, g.lazy)(() => import("./TagsDialog-C5MRKRfY.js").then((e) => ({ default: e.TagsDialog }))), Ke = (0, g.lazy)(() => import("./FolderTree-CmQzaPks.js").then((e) => ({ default: e.FolderTree }))), qe = (0, g.lazy)(() => import("./DetailsPanel-DOaLAuvT.js").then((e) => ({ default: e.DetailsPanel }))), Je = (0, g.lazy)(() => import("./ShareDialog-eimnLvhx.js")), Ye = (0, g.lazy)(() => import("./FavoritesPage-CsbtbprE.js")), Xe = (0, g.lazy)(() => import("./MetadataSidebarPanels-B5JLnmbU.js")), Ze = (0, g.lazy)(() => import("./MetadataSidebarPanels-B5JLnmbU.js").then((e) => ({ default: e.RecentPanel }))), Qe = (0, g.lazy)(() => import("./ContextMenu-B5qP5e8D.js").then((e) => ({ default: e.ContextMenu }))), $e = (0, g.lazy)(() => import("./UploadQueue-DORLpY6-.js").then((e) => ({ default: e.UploadQueue }))), et = (0, g.lazy)(() => import("./ImagePreviewPane-D5O_-Lqv.js")), tt = (0, g.lazy)(() => import("./AssetMetadataDialog-DNmujGaU.js").then((e) => ({ default: e.AssetMetadataDialog }))), nt = () => {
+var Le = (0, g.lazy)(() => import("./ImageEditor-BC9FnRNj.js").then((e) => ({ default: e.ImageEditor }))), Re = (0, g.lazy)(() => import("./ImageProcessDialog-BXXUiXNB.js").then((e) => ({ default: e.ImageProcessDialog }))), ze = (0, g.lazy)(() => import("./SecurityStatusDialog-CLbhkkDo.js").then((e) => ({ default: e.SecurityStatusDialog }))), Be = (0, g.lazy)(() => import("./DocumentPreviewPane-DhmHG-pU.js")), Ve = (0, g.lazy)(() => import("./SettingsDialog-BhOPM_OQ.js").then((e) => ({ default: e.SettingsDialog }))), He = (0, g.lazy)(() => import("./DestinationDialog-CHfiXcOr.js").then((e) => ({ default: e.DestinationDialog }))), Ue = (0, g.lazy)(() => import("./BulkRenameDialog-Dr9MLWWP.js").then((e) => ({ default: e.BulkRenameDialog }))), We = (0, g.lazy)(() => import("./TrashDialog-CRUzG7u0.js").then((e) => ({ default: e.TrashDialog }))), Ge = (0, g.lazy)(() => import("./TagsDialog-C5MRKRfY.js").then((e) => ({ default: e.TagsDialog }))), Ke = (0, g.lazy)(() => import("./FolderTree-CmQzaPks.js").then((e) => ({ default: e.FolderTree }))), qe = (0, g.lazy)(() => import("./DetailsPanel-B1NHUDuI.js").then((e) => ({ default: e.DetailsPanel }))), Je = (0, g.lazy)(() => import("./ShareDialog-eimnLvhx.js")), Ye = (0, g.lazy)(() => import("./FavoritesPage-CsbtbprE.js")), Xe = (0, g.lazy)(() => import("./MetadataSidebarPanels-B5JLnmbU.js")), Ze = (0, g.lazy)(() => import("./MetadataSidebarPanels-B5JLnmbU.js").then((e) => ({ default: e.RecentPanel }))), Qe = (0, g.lazy)(() => import("./ContextMenu-B5qP5e8D.js").then((e) => ({ default: e.ContextMenu }))), $e = (0, g.lazy)(() => import("./UploadQueue-DORLpY6-.js").then((e) => ({ default: e.UploadQueue }))), et = (0, g.lazy)(() => import("./ImagePreviewPane-D5O_-Lqv.js")), tt = (0, g.lazy)(() => import("./AssetMetadataDialog-DNmujGaU.js").then((e) => ({ default: e.AssetMetadataDialog }))), nt = () => {
 	let e = localStorage.getItem("sofinder.groupMode.v1");
 	return e === "name" || e === "type" || e === "size" || e === "modified" || e === "tags" ? e : "none";
 }, rt = () => {
@@ -9441,7 +9441,7 @@ function it({ config: e, initialMessages: t }) {
 			n && hi(n, t);
 			return;
 		}
-		e === "open" && t?.directory ? gi(t) : e === "preview" && t && !t.directory ? Wn(t) : e === "select" && t ? Ci(t) : e === "rename" ? vi() : e === "copy" ? Si("copy", O) : e === "move" ? Si("move", O) : e === "delete" ? yi() : e === "favorite" && t ? Pi(t) : e === "quick-access" && t ? Fi(t) : e === "download" && t && !t.directory ? window.open(t.url || r.downloadUrl(S, t.path), "_blank", "noopener,noreferrer") : e === "share" && t && !t.directory && ci(t);
+		e === "open" && t?.directory ? gi(t) : e === "preview" && t && !t.directory ? Wn(t) : e === "select" && t ? Ci(t) : e === "rename" ? vi() : e === "copy" ? Si("copy", O) : e === "move" ? Si("move", O) : e === "delete" ? yi() : e === "favorite" && t ? Pi(t) : e === "quick-access" && t ? Fi(t) : e === "download" && t && !t.directory ? window.open(t.url || r.downloadUrl(S, t.path), "_blank", "noopener,noreferrer") : e === "share" && t && !t.directory ? ci(t) : e === "asset-metadata" && t && !t.directory && li(t);
 	}, Vi = async (e) => {
 		if (z) try {
 			let t = await r.applyImageActions(S, z.path, [{
@@ -9763,214 +9763,237 @@ function it({ config: e, initialMessages: t }) {
 					}),
 					/* @__PURE__ */ (0, C.jsxs)("div", {
 						className: "sf-command-actions",
-						children: [e.uiDefaults.viewSwitcher !== !1 && /* @__PURE__ */ (0, C.jsxs)("div", {
-							className: "sf-view-toggle",
-							role: "group",
-							"aria-label": `${h("grid")} / ${h("list")}`,
-							children: [/* @__PURE__ */ (0, C.jsx)("button", {
-								className: Dt === "grid" ? "active" : "",
-								disabled: A !== null,
-								onClick: () => zi("grid"),
-								title: h("grid"),
-								"aria-label": h("grid"),
-								children: /* @__PURE__ */ (0, C.jsx)(i, { name: "grid" })
-							}), /* @__PURE__ */ (0, C.jsx)("button", {
-								className: Dt === "list" ? "active" : "",
-								disabled: A !== null,
-								onClick: () => zi("list"),
-								title: h("list"),
-								"aria-label": h("list"),
-								children: /* @__PURE__ */ (0, C.jsx)(i, { name: "list" })
-							})]
-						}), /* @__PURE__ */ (0, C.jsxs)("div", {
-							ref: yr,
-							className: "sf-utility",
-							children: [/* @__PURE__ */ (0, C.jsx)("button", {
-								ref: br,
-								className: "sf-icon-only",
-								onClick: () => un((e) => !e),
-								"aria-expanded": ln,
-								title: h("moreActions"),
-								"aria-label": h("moreActions"),
-								children: /* @__PURE__ */ (0, C.jsx)(i, { name: "more" })
-							}), ln && /* @__PURE__ */ (0, C.jsxs)("div", {
-								className: "sf-utility-menu",
-								role: "menu",
-								children: [
-									e.uiDefaults.languageSwitcher !== !1 && /* @__PURE__ */ (0, C.jsxs)("label", { children: [/* @__PURE__ */ (0, C.jsx)("span", { children: h("language") }), /* @__PURE__ */ (0, C.jsxs)("select", {
-										value: d,
-										onChange: (e) => f(e.target.value),
-										"aria-label": h("language"),
-										children: [
-											/* @__PURE__ */ (0, C.jsx)("option", {
-												value: "zh-cn",
-												children: "简中"
-											}),
-											/* @__PURE__ */ (0, C.jsx)("option", {
-												value: "zh-tw",
-												children: "繁中"
-											}),
-											/* @__PURE__ */ (0, C.jsx)("option", {
-												value: "en",
-												children: "EN"
-											})
-										]
-									})] }),
-									/* @__PURE__ */ (0, C.jsxs)("label", { children: [/* @__PURE__ */ (0, C.jsx)("span", { children: h("sort") }), /* @__PURE__ */ (0, C.jsxs)("select", {
-										value: ct,
-										disabled: A !== null || I?.storageCapabilities?.sort === !1,
-										"aria-label": h("sort"),
-										onChange: (e) => Ca(e.target.value, !1),
-										children: [
-											/* @__PURE__ */ (0, C.jsx)("option", {
-												value: "name",
-												children: h("name")
-											}),
-											/* @__PURE__ */ (0, C.jsx)("option", {
-												value: "size",
-												children: h("size")
-											}),
-											/* @__PURE__ */ (0, C.jsx)("option", {
-												value: "type",
-												children: h("type")
-											}),
-											/* @__PURE__ */ (0, C.jsx)("option", {
-												value: "modified",
-												children: h("modified")
-											})
-										]
-									})] }),
-									/* @__PURE__ */ (0, C.jsxs)("label", { children: [/* @__PURE__ */ (0, C.jsx)("span", { children: h("groupBy") }), /* @__PURE__ */ (0, C.jsxs)("select", {
-										value: Yr,
-										disabled: A !== null,
-										"aria-label": h("groupBy"),
-										onChange: (e) => {
-											let t = e.target.value;
-											mn(t), localStorage.setItem("sofinder.groupMode.v1", t);
-										},
-										children: [
-											/* @__PURE__ */ (0, C.jsx)("option", {
-												value: "none",
-												children: h("groupNone")
-											}),
-											/* @__PURE__ */ (0, C.jsx)("option", {
-												value: "name",
-												children: h("name")
-											}),
-											/* @__PURE__ */ (0, C.jsx)("option", {
-												value: "type",
-												children: h("type")
-											}),
-											/* @__PURE__ */ (0, C.jsx)("option", {
-												value: "size",
-												children: h("size")
-											}),
-											/* @__PURE__ */ (0, C.jsx)("option", {
-												value: "modified",
-												children: h("modified")
-											}),
-											j.tags && /* @__PURE__ */ (0, C.jsx)("option", {
-												value: "tags",
-												children: h("tags")
-											})
-										]
-									})] }),
-									/* @__PURE__ */ (0, C.jsxs)("label", { children: [/* @__PURE__ */ (0, C.jsx)("span", { children: h("filterType") }), /* @__PURE__ */ (0, C.jsxs)("select", {
-										value: hn,
-										disabled: A !== null,
-										"aria-label": h("filterType"),
-										onChange: (e) => {
-											let t = e.target.value;
-											gn(t), localStorage.setItem("sofinder.typeFilter.v1", t), Ti();
-										},
-										children: [
-											/* @__PURE__ */ (0, C.jsx)("option", {
-												value: "all",
-												children: h("allTypes")
-											}),
-											/* @__PURE__ */ (0, C.jsx)("option", {
-												value: "folder",
-												children: h("folder")
-											}),
-											/* @__PURE__ */ (0, C.jsx)("option", {
-												value: "image",
-												children: h("images")
-											}),
-											/* @__PURE__ */ (0, C.jsx)("option", {
-												value: "document",
-												children: h("documents")
-											}),
-											/* @__PURE__ */ (0, C.jsx)("option", {
-												value: "audio",
-												children: h("audio")
-											}),
-											/* @__PURE__ */ (0, C.jsx)("option", {
-												value: "video",
-												children: h("video")
-											}),
-											/* @__PURE__ */ (0, C.jsx)("option", {
-												value: "archive",
-												children: h("archives")
-											}),
-											/* @__PURE__ */ (0, C.jsx)("option", {
-												value: "other",
-												children: h("other")
-											})
-										]
-									})] }),
-									/* @__PURE__ */ (0, C.jsx)("button", {
-										role: "menuitem",
-										className: `sf-sort-direction ${ut}`,
-										disabled: A !== null || I?.storageCapabilities?.sort === !1,
-										"aria-label": `${h("direction")}: ${h(ut === "asc" ? "ascending" : "descending")}`,
-										onClick: wa,
-										children: H(ut === "asc" ? "sort-asc" : "sort-desc", h(ut === "asc" ? "ascending" : "descending"))
-									}),
-									/* @__PURE__ */ (0, C.jsx)("button", {
-										role: "menuitem",
-										onClick: () => {
-											un(!1), A === "favorites" ? P(S, !0).catch(N) : F();
-										},
-										children: H("refresh", h("refresh"))
-									}),
-									/* @__PURE__ */ (0, C.jsx)("button", {
-										role: "menuitem",
-										onClick: () => {
-											un(!1), on(!0);
-										},
-										children: H("settings", h("settings"))
-									}),
-									(o === "manager" || ia) && e.securityStatusAvailable !== !1 && /* @__PURE__ */ (0, C.jsx)("button", {
-										role: "menuitem",
-										onClick: () => {
-											un(!1), cn(!0);
-										},
-										children: H("security", h("securityStatus"))
-									}),
-									(o === "manager" || ia) && j.trash && oa && /* @__PURE__ */ (0, C.jsx)("button", {
-										role: "menuitem",
-										onClick: () => {
-											un(!1), Ln(!0);
-										},
-										children: H("trash", h("trash"))
-									}),
-									(o === "manager" || ia) && j.favorites && /* @__PURE__ */ (0, C.jsx)("button", {
-										role: "menuitem",
-										onClick: () => {
-											un(!1), ga();
-										},
-										children: H("favorite", h("favorites"))
-									}),
-									(o === "manager" || ia) && pi.filter((e) => e.slot === "utility" && ke(e, null)).map((e) => /* @__PURE__ */ (0, C.jsx)("button", {
-										role: "menuitem",
-										onClick: () => {
-											un(!1), hi(e, null);
-										},
-										children: Ee(e, d)
-									}, `${e.plugin}:${e.id}`))
-								]
-							})]
-						})]
+						children: [
+							(e.workspace?.options?.length ?? 0) > 1 && /* @__PURE__ */ (0, C.jsxs)("label", {
+								className: "sf-workspace-switcher",
+								children: [/* @__PURE__ */ (0, C.jsx)("span", {
+									className: "sf-sr-only",
+									children: h("workspace")
+								}), /* @__PURE__ */ (0, C.jsx)("select", {
+									"aria-label": h("workspace"),
+									value: e.workspace?.id,
+									disabled: ra,
+									title: h(ra ? "workspaceUploadBlocked" : "workspace"),
+									onChange: (t) => {
+										let n = e.workspace?.options?.find((e) => e.id === t.target.value);
+										n && window.location.assign(n.url);
+									},
+									children: e.workspace?.options?.map((e) => /* @__PURE__ */ (0, C.jsx)("option", {
+										value: e.id,
+										children: e.label
+									}, e.id))
+								})]
+							}),
+							e.uiDefaults.viewSwitcher !== !1 && /* @__PURE__ */ (0, C.jsxs)("div", {
+								className: "sf-view-toggle",
+								role: "group",
+								"aria-label": `${h("grid")} / ${h("list")}`,
+								children: [/* @__PURE__ */ (0, C.jsx)("button", {
+									className: Dt === "grid" ? "active" : "",
+									disabled: A !== null,
+									onClick: () => zi("grid"),
+									title: h("grid"),
+									"aria-label": h("grid"),
+									children: /* @__PURE__ */ (0, C.jsx)(i, { name: "grid" })
+								}), /* @__PURE__ */ (0, C.jsx)("button", {
+									className: Dt === "list" ? "active" : "",
+									disabled: A !== null,
+									onClick: () => zi("list"),
+									title: h("list"),
+									"aria-label": h("list"),
+									children: /* @__PURE__ */ (0, C.jsx)(i, { name: "list" })
+								})]
+							}),
+							/* @__PURE__ */ (0, C.jsxs)("div", {
+								ref: yr,
+								className: "sf-utility",
+								children: [/* @__PURE__ */ (0, C.jsx)("button", {
+									ref: br,
+									className: "sf-icon-only",
+									onClick: () => un((e) => !e),
+									"aria-expanded": ln,
+									title: h("moreActions"),
+									"aria-label": h("moreActions"),
+									children: /* @__PURE__ */ (0, C.jsx)(i, { name: "more" })
+								}), ln && /* @__PURE__ */ (0, C.jsxs)("div", {
+									className: "sf-utility-menu",
+									role: "menu",
+									children: [
+										e.uiDefaults.languageSwitcher !== !1 && /* @__PURE__ */ (0, C.jsxs)("label", { children: [/* @__PURE__ */ (0, C.jsx)("span", { children: h("language") }), /* @__PURE__ */ (0, C.jsxs)("select", {
+											value: d,
+											onChange: (e) => f(e.target.value),
+											"aria-label": h("language"),
+											children: [
+												/* @__PURE__ */ (0, C.jsx)("option", {
+													value: "zh-cn",
+													children: "简中"
+												}),
+												/* @__PURE__ */ (0, C.jsx)("option", {
+													value: "zh-tw",
+													children: "繁中"
+												}),
+												/* @__PURE__ */ (0, C.jsx)("option", {
+													value: "en",
+													children: "EN"
+												})
+											]
+										})] }),
+										/* @__PURE__ */ (0, C.jsxs)("label", { children: [/* @__PURE__ */ (0, C.jsx)("span", { children: h("sort") }), /* @__PURE__ */ (0, C.jsxs)("select", {
+											value: ct,
+											disabled: A !== null || I?.storageCapabilities?.sort === !1,
+											"aria-label": h("sort"),
+											onChange: (e) => Ca(e.target.value, !1),
+											children: [
+												/* @__PURE__ */ (0, C.jsx)("option", {
+													value: "name",
+													children: h("name")
+												}),
+												/* @__PURE__ */ (0, C.jsx)("option", {
+													value: "size",
+													children: h("size")
+												}),
+												/* @__PURE__ */ (0, C.jsx)("option", {
+													value: "type",
+													children: h("type")
+												}),
+												/* @__PURE__ */ (0, C.jsx)("option", {
+													value: "modified",
+													children: h("modified")
+												})
+											]
+										})] }),
+										/* @__PURE__ */ (0, C.jsxs)("label", { children: [/* @__PURE__ */ (0, C.jsx)("span", { children: h("groupBy") }), /* @__PURE__ */ (0, C.jsxs)("select", {
+											value: Yr,
+											disabled: A !== null,
+											"aria-label": h("groupBy"),
+											onChange: (e) => {
+												let t = e.target.value;
+												mn(t), localStorage.setItem("sofinder.groupMode.v1", t);
+											},
+											children: [
+												/* @__PURE__ */ (0, C.jsx)("option", {
+													value: "none",
+													children: h("groupNone")
+												}),
+												/* @__PURE__ */ (0, C.jsx)("option", {
+													value: "name",
+													children: h("name")
+												}),
+												/* @__PURE__ */ (0, C.jsx)("option", {
+													value: "type",
+													children: h("type")
+												}),
+												/* @__PURE__ */ (0, C.jsx)("option", {
+													value: "size",
+													children: h("size")
+												}),
+												/* @__PURE__ */ (0, C.jsx)("option", {
+													value: "modified",
+													children: h("modified")
+												}),
+												j.tags && /* @__PURE__ */ (0, C.jsx)("option", {
+													value: "tags",
+													children: h("tags")
+												})
+											]
+										})] }),
+										/* @__PURE__ */ (0, C.jsxs)("label", { children: [/* @__PURE__ */ (0, C.jsx)("span", { children: h("filterType") }), /* @__PURE__ */ (0, C.jsxs)("select", {
+											value: hn,
+											disabled: A !== null,
+											"aria-label": h("filterType"),
+											onChange: (e) => {
+												let t = e.target.value;
+												gn(t), localStorage.setItem("sofinder.typeFilter.v1", t), Ti();
+											},
+											children: [
+												/* @__PURE__ */ (0, C.jsx)("option", {
+													value: "all",
+													children: h("allTypes")
+												}),
+												/* @__PURE__ */ (0, C.jsx)("option", {
+													value: "folder",
+													children: h("folder")
+												}),
+												/* @__PURE__ */ (0, C.jsx)("option", {
+													value: "image",
+													children: h("images")
+												}),
+												/* @__PURE__ */ (0, C.jsx)("option", {
+													value: "document",
+													children: h("documents")
+												}),
+												/* @__PURE__ */ (0, C.jsx)("option", {
+													value: "audio",
+													children: h("audio")
+												}),
+												/* @__PURE__ */ (0, C.jsx)("option", {
+													value: "video",
+													children: h("video")
+												}),
+												/* @__PURE__ */ (0, C.jsx)("option", {
+													value: "archive",
+													children: h("archives")
+												}),
+												/* @__PURE__ */ (0, C.jsx)("option", {
+													value: "other",
+													children: h("other")
+												})
+											]
+										})] }),
+										/* @__PURE__ */ (0, C.jsx)("button", {
+											role: "menuitem",
+											className: `sf-sort-direction ${ut}`,
+											disabled: A !== null || I?.storageCapabilities?.sort === !1,
+											"aria-label": `${h("direction")}: ${h(ut === "asc" ? "ascending" : "descending")}`,
+											onClick: wa,
+											children: H(ut === "asc" ? "sort-asc" : "sort-desc", h(ut === "asc" ? "ascending" : "descending"))
+										}),
+										/* @__PURE__ */ (0, C.jsx)("button", {
+											role: "menuitem",
+											onClick: () => {
+												un(!1), A === "favorites" ? P(S, !0).catch(N) : F();
+											},
+											children: H("refresh", h("refresh"))
+										}),
+										/* @__PURE__ */ (0, C.jsx)("button", {
+											role: "menuitem",
+											onClick: () => {
+												un(!1), on(!0);
+											},
+											children: H("settings", h("settings"))
+										}),
+										(o === "manager" || ia) && e.securityStatusAvailable !== !1 && /* @__PURE__ */ (0, C.jsx)("button", {
+											role: "menuitem",
+											onClick: () => {
+												un(!1), cn(!0);
+											},
+											children: H("security", h("securityStatus"))
+										}),
+										(o === "manager" || ia) && j.trash && oa && /* @__PURE__ */ (0, C.jsx)("button", {
+											role: "menuitem",
+											onClick: () => {
+												un(!1), Ln(!0);
+											},
+											children: H("trash", h("trash"))
+										}),
+										(o === "manager" || ia) && j.favorites && /* @__PURE__ */ (0, C.jsx)("button", {
+											role: "menuitem",
+											onClick: () => {
+												un(!1), ga();
+											},
+											children: H("favorite", h("favorites"))
+										}),
+										(o === "manager" || ia) && pi.filter((e) => e.slot === "utility" && ke(e, null)).map((e) => /* @__PURE__ */ (0, C.jsx)("button", {
+											role: "menuitem",
+											onClick: () => {
+												un(!1), hi(e, null);
+											},
+											children: Ee(e, d)
+										}, `${e.plugin}:${e.id}`))
+									]
+								})]
+							})
+						]
 					})
 				]
 			}),
@@ -10805,15 +10828,7 @@ function it({ config: e, initialMessages: t }) {
 					},
 					onClose: () => cr(null),
 					onSave: async (e) => {
-						let t = await r.updateAssetMetadata(sr.asset.assetId || "", e);
-						cr((e) => e ? {
-							...e,
-							metadata: t.metadata,
-							asset: {
-								...e.asset,
-								alt: t.metadata.alt
-							}
-						} : null), k(h("assetMetadataSaved"));
+						await r.updateAssetMetadata(sr.asset.assetId || "", e), cr(null), k(h("assetMetadataSaved"));
 					}
 				})
 			}),
@@ -10835,6 +10850,11 @@ function it({ config: e, initialMessages: t }) {
 						type: "button",
 						onClick: () => void ci(M),
 						children: h("share")
+					}),
+					ar && M.capabilities?.["metadata.update"] !== !1 && /* @__PURE__ */ (0, C.jsx)("button", {
+						type: "button",
+						onClick: () => void li(M),
+						children: h("assetMetadata")
 					}),
 					/* @__PURE__ */ (0, C.jsx)("button", {
 						className: "primary",
@@ -11101,6 +11121,10 @@ function it({ config: e, initialMessages: t }) {
 							...la && j.sidebarQuickAccess && fi(Bn.entry) ? [{
 								id: "quick-access",
 								label: Rt.quickAccess.includes(Bn.entry.path) ? h("unpinQuickAccess") : h("pinQuickAccess")
+							}] : [],
+							...ar && !Bn.entry.directory && Bn.entry.capabilities?.["metadata.update"] !== !1 ? [{
+								id: "asset-metadata",
+								label: h("assetMetadata")
 							}] : [],
 							{
 								id: "rename",

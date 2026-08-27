@@ -43,7 +43,8 @@ final readonly class AssetApiController
 
     public function update(Request $request, string $id): JsonResponse
     {
-        $this->csrf->assertMutation($request); $record = $this->record($id); $this->files->entry($record->resource, $record->path);
+        $this->csrf->assertMutation($request); $record = $this->record($id);
+        $this->files->assertOperation($record->resource, 'metadata.update', $record->path, true);
         try { $data = json_decode($request->getContent(), true, 32, JSON_THROW_ON_ERROR); } catch (\JsonException $e) { throw new SoFinderException('The request body must be valid JSON.', 'invalid_json', 400, $e); }
         if (!is_array($data)) throw new SoFinderException('The request body must be an object.', 'invalid_json', 400);
         $alt = array_key_exists('alt', $data) && $data['alt'] !== null ? trim((string) $data['alt']) : null;

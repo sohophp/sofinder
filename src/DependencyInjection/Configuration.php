@@ -81,6 +81,7 @@ final class Configuration implements ConfigurationInterface
                         ->booleanNode('enabled')->defaultFalse()->end()
                         ->scalarNode('default')->defaultValue('main')->cannotBeEmpty()->end()
                         ->scalarNode('resolver_service')->defaultNull()->end()
+                        ->scalarNode('option_provider_service')->defaultNull()->end()
                     ->end()
                 ->end()
                 ->arrayNode('filesystem_permissions')

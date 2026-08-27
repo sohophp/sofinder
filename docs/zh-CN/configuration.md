@@ -71,10 +71,12 @@ so_finder:
     mode: on_demand
     max_variants_per_asset: 10
     cache_ttl_seconds: 2592000
-  workspaces: { enabled: false, default: main, resolver_service: null }
+  workspaces: { enabled: false, default: main, resolver_service: null, option_provider_service: null }
 ```
 
-资产采用懒注册随机 UUID；重命名、移动、覆盖和回收站恢复保留 ID，上传及复制创建新 ID。集群状态启用时自动采用共享目录。图片变体只接受白名单尺寸和格式、不放大，并继承资源鉴权。Workspace 必须由宿主可信的 `WorkspaceResolverInterface` 从登录上下文解析，不能直接信任查询参数；真正的存储隔离仍由宿主资源映射保证。
+资产采用懒注册随机 UUID；重命名、移动、覆盖和回收站恢复保留 ID，上传及复制创建新 ID。集群状态启用时自动采用共享目录。图片变体只接受白名单尺寸和格式、不放大，并继承资源鉴权。Workspace 必须由宿主可信的 `WorkspaceResolverInterface` 从登录上下文解析，不能直接信任查询参数；真正的存储隔离仍由宿主资源映射保证。动态映射存储的宿主还应实现 `WorkspaceStorageAuditProviderInterface`，使 `sofinder:security:audit` 能在不同 Workspace 的可写资源误用同一物理目录时报告 critical。
+
+可选的 `WorkspaceOptionProviderInterface` 服务可以返回可信的同源导航地址。只有两个及以上选项时浏览器才显示切换器；上传进行中会禁用切换，页面导航会自然清空选择、预览及未提交状态。
 
 ## 文件系统权限
 
@@ -246,6 +248,8 @@ so_finder:
 | `path_acl` | 空列表 | 资源相对路径下可继承的 Allow 或 Deny 规则。 |
 
 资源也支持 Unicode 文件名／文件夹名称长度、文件夹深度、批次大小、递归操作、压缩文件项目／Byte，以及图片尺寸／像素限制。[Symfony 整合指南](/zh-CN/symfony)提供包含 ACL、宿主路由及显示选项的完整示例。
+
+`metadata.update` 是独立的写操作。需要让资产替代文本、标题和共享标签比文件读取受到更严格限制时，可在 `operation_roles` 或 `path_acl` 中单独配置；只读资源始终拒绝该操作。
 
 ## 检查有效配置
 

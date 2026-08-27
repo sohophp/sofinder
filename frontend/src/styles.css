@@ -1894,6 +1894,16 @@ select:focus-visible,
   gap: 10px;
 }
 
+.sf-workspace-switcher select {
+  max-width: 180px;
+  min-height: 34px;
+  border: 1px solid var(--sf-line);
+  border-radius: var(--sf-radius);
+  background: var(--sf-panel);
+  color: var(--sf-text);
+  padding: 0 28px 0 10px;
+}
+
 .sf-commandbar .sf-search {
   height: var(--sf-control-height);
   border: 1px solid var(--sf-line);

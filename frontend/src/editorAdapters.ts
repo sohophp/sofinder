@@ -1,3 +1,4 @@
+import { altForAsset, attributesForAsset, imageHtmlForAsset } from "./assetPresentation";
 import { createSoFinderClient, SoFinderSdkError, type SoFinderClientOptions, type UploadTask, type UploadTaskSnapshot } from "./sdk";
 import type { AssetReference, UploadConflictStrategy } from "./types";
 
@@ -9,6 +10,7 @@ export interface EditorAdapterOptions extends Omit<SoFinderClientOptions, "onCon
   sizes?: string | ((asset: AssetReference) => string);
   onConflict?: SoFinderClientOptions["onConflict"];
   onTaskChange?: (task: UploadTaskSnapshot) => void;
+  onAssetReady?: (asset: AssetReference) => void;
   onError?: (error: SoFinderSdkError) => void;
   toolbarUpload?: boolean;
 }
@@ -19,33 +21,21 @@ export const uploadForEditor = (file: File, options: EditorAdapterOptions, sourc
   const client = createSoFinderClient(options);
   const task = client.upload({ file, resource: options.resource, path: path(options), source, conflictStrategy: options.conflictStrategy ?? "ask" });
   if (options.onTaskChange) task.subscribe(options.onTaskChange);
+  void task.completion.then(asset => options.onAssetReady?.(asset)).catch(() => undefined);
   void task.completion.catch(error => { if (error instanceof SoFinderSdkError) options.onError?.(error); });
   return task;
 };
 
-export const altFor = (asset: AssetReference, options: EditorAdapterOptions): string => options.defaultAlt?.(asset) ?? asset.alt ?? asset.name.replace(/\.[^.]+$/, "");
+export const altFor = (asset: AssetReference, options: EditorAdapterOptions): string => altForAsset(asset, options);
 
 const embeddable = (asset: AssetReference): AssetReference => {
   if (!asset.capabilities.embeddable || asset.url === "") throw new SoFinderSdkError("asset_not_embeddable", "This resource does not provide a stable embeddable URL.", 422, false);
   return asset;
 };
 
-export const attributesFor = (asset: AssetReference, options: EditorAdapterOptions): Record<string, string> => {
-  const attributes: Record<string, string> = { src: asset.url, alt: altFor(asset, options) };
-  if (asset.assetId) attributes["data-sofinder-asset-id"] = asset.assetId;
-  if (asset.width) attributes.width = String(asset.width);
-  if (asset.height) attributes.height = String(asset.height);
-  if (asset.variants.length) {
-    attributes.srcset = asset.variants.map(variant => `${variant.url} ${variant.width}w`).join(", ");
-    attributes.sizes = typeof options.sizes === "function" ? options.sizes(asset) : options.sizes ?? (asset.width ? `(max-width: ${asset.width}px) 100vw, ${asset.width}px` : "100vw");
-  }
-  return attributes;
-};
+export const attributesFor = (asset: AssetReference, options: EditorAdapterOptions): Record<string, string> => attributesForAsset(asset, options);
 
-export const imageHtml = (asset: AssetReference, options: EditorAdapterOptions): string => {
-  const escape = (value: string) => value.replace(/&/g, "&amp;").replace(/"/g, "&quot;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
-  return `<img ${Object.entries(attributesFor(asset, options)).map(([name, value]) => `${name}="${escape(value)}"`).join(" ")}>`;
-};
+export const imageHtml = (asset: AssetReference, options: EditorAdapterOptions): string => imageHtmlForAsset(asset, options);
 
 export interface CkeditorLoader {
   file: Promise<File>;
@@ -53,19 +43,47 @@ export interface CkeditorLoader {
   uploadTotal?: number;
 }
 
+export const ckeditorUploadResult = (asset: AssetReference, options: EditorAdapterOptions): Record<string, unknown> => {
+  const urls: Record<string, string> = { default: asset.url };
+  if (asset.width) urls[String(asset.width)] = asset.url;
+  for (const variant of asset.variants) urls[String(variant.width)] = variant.url;
+  const result: Record<string, unknown> = { urls, sofinderAlt: altFor(asset, options) };
+  if (asset.assetId) result.sofinderAssetId = asset.assetId;
+  if (asset.width) result.sofinderWidth = asset.width;
+  if (asset.height) result.sofinderHeight = asset.height;
+  return result;
+};
+
 export const createCkeditor5UploadPlugin = (options: EditorAdapterOptions) => (editor: {
-  plugins: { get(name: "FileRepository"): { createUploadAdapter: (loader: CkeditorLoader) => { upload(): Promise<Record<string, string>>; abort(): void } } };
+  plugins: { get(name: string): any };
+  model?: { schema: { extend(name: string, options: { allowAttributes: string[] }): void }; change(callback: (writer: { setAttribute(name: string, value: unknown, item: unknown): void }) => void): void };
+  conversion?: { for(direction: string): { attributeToAttribute(definition: object): void } };
 }) => {
-  editor.plugins.get("FileRepository").createUploadAdapter = loader => {
+  const repository = editor.plugins.get("FileRepository") as { createUploadAdapter: (loader: CkeditorLoader) => { upload(): Promise<Record<string, unknown>>; abort(): void } };
+  const assetAttributes = ["sofinderAssetId", "sofinderWidth", "sofinderHeight"];
+  if (editor.model && editor.conversion) {
+    for (const modelName of ["imageBlock", "imageInline"]) editor.model.schema.extend(modelName, { allowAttributes: assetAttributes });
+    for (const key of assetAttributes) {
+      const view = key === "sofinderAssetId" ? "data-sofinder-asset-id" : key.replace("sofinder", "").toLowerCase();
+      editor.conversion.for("downcast").attributeToAttribute({ model: key, view });
+      editor.conversion.for("upcast").attributeToAttribute({ view, model: key });
+    }
+    const uploadEditing = editor.plugins.get("ImageUploadEditing") as { on?: (event: string, listener: (_event: unknown, payload: { data: Record<string, unknown>; imageElement: unknown }) => void) => void };
+    uploadEditing?.on?.("uploadComplete", (_event, { data, imageElement }) => editor.model?.change(writer => {
+      if (typeof data.sofinderAlt === "string") writer.setAttribute("alt", data.sofinderAlt, imageElement);
+      if (typeof data.sofinderAssetId === "string" && data.sofinderAssetId !== "") writer.setAttribute("sofinderAssetId", data.sofinderAssetId, imageElement);
+      if (typeof data.sofinderWidth === "number") writer.setAttribute("sofinderWidth", data.sofinderWidth, imageElement);
+      if (typeof data.sofinderHeight === "number") writer.setAttribute("sofinderHeight", data.sofinderHeight, imageElement);
+    }));
+  }
+  repository.createUploadAdapter = loader => {
     let task: UploadTask | null = null;
     return {
       async upload() {
         const file = await loader.file;
         task = uploadForEditor(file, { ...options, onTaskChange: snapshot => { loader.uploaded = snapshot.progress; loader.uploadTotal = 100; options.onTaskChange?.(snapshot); } });
         const asset = embeddable(await task.completion);
-        const result: Record<string, string> = { default: asset.url };
-        for (const variant of asset.variants) result[String(variant.width)] = variant.url;
-        return result;
+        return ckeditorUploadResult(asset, options);
       },
       abort() { task?.cancel(); },
     };
@@ -77,6 +95,28 @@ export const tinyMceImagesUploadHandler = (options: EditorAdapterOptions) => asy
   const file = blob instanceof File ? blob : new File([blob], blobInfo.filename(), { type: blob.type });
   const task = uploadForEditor(file, { ...options, onTaskChange: snapshot => { progress(snapshot.progress); options.onTaskChange?.(snapshot); } }, "paste");
   return embeddable(await task.completion).url;
+};
+
+/**
+ * TinyMCE's native upload callback returns only a URL. This integration keeps
+ * the corresponding AssetReference until TinyMCE creates the image node, then
+ * applies alt, dimensions, srcset and the stable asset ID through public DOM APIs.
+ */
+export const createTinyMceUploadIntegration = (editor: {
+  on(event: string, listener: (event: { element?: Element }) => void): void;
+  dom: { getAttrib(node: Element, name: string): string; setAttrib(node: Element, name: string, value: string): void };
+}, options: EditorAdapterOptions) => {
+  const assets = new Map<string, AssetReference>();
+  editor.on("NodeChange", event => {
+    const candidates = event.element instanceof HTMLImageElement ? [event.element] : Array.from(event.element?.querySelectorAll("img") ?? []);
+    for (const image of candidates) {
+      const asset = assets.get(editor.dom.getAttrib(image, "src"));
+      if (!asset) continue;
+      for (const [name, value] of Object.entries(attributesFor(asset, options))) editor.dom.setAttrib(image, name, value);
+      assets.delete(asset.url);
+    }
+  });
+  return tinyMceImagesUploadHandler({ ...options, onAssetReady: asset => { assets.set(asset.url, asset); options.onAssetReady?.(asset); } });
 };
 
 export const uploadForTiptap = async (editor: { chain(): { focus(): { setImage(attributes: Record<string, string>): { run(): unknown } } } }, file: File, options: EditorAdapterOptions, source: "input" | "paste" | "drop" = "input"): Promise<AssetReference> => {
@@ -97,10 +137,13 @@ export const installQuillUploads = (quill: {
   getModule(name: "toolbar"): { addHandler(name: string, handler: () => void): void };
   getSelection(focus?: boolean): { index: number } | null;
   insertEmbed(index: number, type: string, value: string, source: string): void;
+  clipboard?: { dangerouslyPasteHTML(index: number, html: string, source: string): void };
 }, options: EditorAdapterOptions): (() => void) => {
   const upload = async (file: File, source: "input" | "paste" | "drop") => {
     const asset = embeddable(await uploadForEditor(file, options, source).completion);
-    quill.insertEmbed(quill.getSelection(true)?.index ?? 0, "image", asset.url, "user");
+    const index = quill.getSelection(true)?.index ?? 0;
+    if (quill.clipboard) quill.clipboard.dangerouslyPasteHTML(index, imageHtml(asset, options), "user");
+    else quill.insertEmbed(index, "image", asset.url, "user");
   };
   const choose = () => { const input = document.createElement("input"); input.type = "file"; input.accept = "image/*"; input.onchange = () => { const file = input.files?.[0]; if (file) void upload(file, "input"); }; input.click(); };
   if (options.toolbarUpload !== false) quill.getModule("toolbar").addHandler("image", choose);

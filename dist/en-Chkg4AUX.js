@@ -6,6 +6,8 @@ var e = {
 	decorativeImage: "Decorative image (empty alternative text)",
 	assetAltUnset: "Leave blank to use the file name",
 	assetMetadataSaved: "Asset metadata saved",
+	workspace: "Workspace",
+	workspaceUploadBlocked: "Wait for or cancel active uploads before switching Workspace.",
 	files: "Files",
 	images: "Images",
 	newFolder: "New folder",

@@ -84,6 +84,7 @@ so_finder:
     enabled: false
     default: main
     resolver_service: null
+    option_provider_service: null
 ```
 
 The catalog assigns opaque UUIDs lazily. Rename, move, overwrite and recycle-bin
@@ -94,7 +95,14 @@ formats only, never enlarge the original and inherit resource authorization.
 Workspace IDs must come from a trusted host `WorkspaceResolverInterface`, never
 from an unchecked query parameter. A workspace is an authorization context, not
 automatic physical storage isolation; the host must map its resources to
-separate storage where tenant isolation requires it.
+separate storage where tenant isolation requires it. Hosts with dynamic storage
+mapping should also implement `WorkspaceStorageAuditProviderInterface`; its
+autoconfigured mappings let `sofinder:security:audit` fail when writable roots
+from different workspaces resolve to the same physical directory.
+An optional `WorkspaceOptionProviderInterface` service may return trusted
+same-origin navigation targets. The browser renders its switcher only when at
+least two options are available, and disables switching while uploads are active;
+navigation clears selection, preview and uncommitted browser state naturally.
 
 ## Filesystem permissions
 
@@ -272,6 +280,10 @@ At least one named resource is required.
 | `path_acl` | empty | Inherited allow or deny rules below resource-relative paths. |
 
 Resources also support limits for Unicode file and folder name length, folder depth, batch size, recursive operations, archive entries/bytes and image dimensions/pixels. The [Symfony guide](/symfony) contains a complete example with ACLs, host routes and presentation options.
+
+`metadata.update` is a first-class write operation. Use it in
+`operation_roles` or `path_acl` when asset alt/title/tag editing should be more
+restricted than file reading; read-only resources always deny it.
 
 ## Inspect effective configuration
 

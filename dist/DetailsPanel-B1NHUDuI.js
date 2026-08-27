@@ -74,7 +74,7 @@ function a({ api: e, resource: a, selectedEntries: o, selected: s, imageInfo: c,
 						onClick: () => v(s),
 						children: h.share
 					}),
-					m && /* @__PURE__ */ (0, i.jsx)("button", {
+					m && s.capabilities?.["metadata.update"] !== !1 && /* @__PURE__ */ (0, i.jsx)("button", {
 						type: "button",
 						onClick: () => y?.(s),
 						children: h.assetMetadata

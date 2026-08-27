@@ -47,7 +47,7 @@ button.addEventListener('click', () => selectForCkeditor5(editor, {
 }))
 ```
 
-The adapter executes CKEditor 5's public `insertImage` command. Configure its
+The adapter executes CKEditor 5's public `insertImage` and alternative-text commands. When the asset catalog is enabled, picker and upload insertion preserve explicit `alt=""`, use the asset default alt when set, and otherwise fall back to the extension-free filename. Responsive variants, dimensions and `data-sofinder-asset-id` are also carried where the editor model supports them. Configure its
 Image plugin and follow the [official installation and licensing guide](https://ckeditor.com/docs/ckeditor5/latest/getting-started/installation/cloud/quick-start.html).
 The legacy CKEditor 4 callback and quick-upload endpoints remain available.
 
@@ -98,9 +98,14 @@ for CDN keys or self-hosting.
 Direct upload adapters are separate ESM entries:
 
 ```js
-import { createTinyMceUploadHandler } from '/sofinder/assets/sofinder-tinymce.js'
+import { createTinyMceUploadIntegration } from '/sofinder/assets/sofinder-tinymce.js'
 // TipTap: sofinder-tiptap.js; Quill: sofinder-quill.js
 ```
+
+Create the TinyMCE integration in its `setup` callback and forward
+`images_upload_handler` to it. This lets the bridge apply the full asset
+attributes after TinyMCE creates the image node instead of losing everything
+except the URL.
 
 All accept `apiBase`, `csrfToken`, `resource`, optional dynamic `path`, conflict
 strategy, default-alt callback, task observer and error callback. The generic

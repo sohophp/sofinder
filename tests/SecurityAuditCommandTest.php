@@ -6,6 +6,7 @@ namespace SohoPHP\SoFinder\Tests;
 
 use PHPUnit\Framework\TestCase;
 use SohoPHP\SoFinder\Command\SecurityAuditCommand;
+use SohoPHP\SoFinder\Contract\WorkspaceStorageAuditProviderInterface;
 use SohoPHP\SoFinder\ResourceRegistry;
 use SohoPHP\SoFinder\Storage\LocalStorageAdapter;
 use SohoPHP\SoFinder\Value\ResourceStorage;
@@ -51,6 +52,27 @@ final class SecurityAuditCommandTest extends TestCase
             self::assertStringContainsString('shared document preview cache', $tester->getDisplay());
         } finally {
             foreach (['project', 'quarantine', 'chunks', 'trash'] as $directory) @rmdir($base . '/' . $directory);
+            @rmdir($base);
+        }
+    }
+
+    public function testDifferentWorkspacesCannotShareAWritablePhysicalRoot(): void
+    {
+        $base = sys_get_temp_dir() . '/sofinder-workspace-audit-' . bin2hex(random_bytes(8));
+        foreach (['project', 'quarantine', 'chunks', 'trash', 'shared'] as $directory) mkdir($base . '/' . $directory, 0775, true);
+        $provider = new class($base . '/shared') implements WorkspaceStorageAuditProviderInterface {
+            public function __construct(private readonly string $root) {}
+            public function workspaceStorageMappings(): array { return [
+                ['workspace' => 'site-a', 'resource' => 'Files', 'root' => $this->root, 'writable' => true],
+                ['workspace' => 'site-b', 'resource' => 'Files', 'root' => $this->root, 'writable' => true],
+            ]; }
+        };
+        $tester = new CommandTester(new SecurityAuditCommand(new ResourceRegistry([]), $base . '/project', $base . '/quarantine', $base . '/chunks', $base . '/trash', workspaceStorageAuditProviders: [$provider]));
+        try {
+            self::assertSame(Command::FAILURE, $tester->execute(['--json' => true]));
+            self::assertStringContainsString('different workspaces share the same physical storage root', $tester->getDisplay());
+        } finally {
+            foreach (['project', 'quarantine', 'chunks', 'trash', 'shared'] as $directory) @rmdir($base . '/' . $directory);
             @rmdir($base);
         }
     }

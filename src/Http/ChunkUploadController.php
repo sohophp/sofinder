@@ -16,6 +16,7 @@ use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use SohoPHP\SoFinder\Upload\UploadNamePolicy;
 use SohoPHP\SoFinder\Asset\AssetReferenceFactory;
+use SohoPHP\SoFinder\Workspace\WorkspaceProvider;
 
 final readonly class ChunkUploadController
 {
@@ -26,6 +27,7 @@ final readonly class ChunkUploadController
         private ?MaintenanceCoordinator $maintenance = null,
         private UploadNamePolicy $uploadNames = new UploadNamePolicy(),
         private ?AssetReferenceFactory $assetReferences = null,
+        private ?WorkspaceProvider $workspaces = null,
     )
     {
     }
@@ -57,6 +59,7 @@ final readonly class ChunkUploadController
                     'name' => $name,
                     'overwrite' => $request->request->getBoolean('overwrite'),
                     'autoRename' => $request->request->getBoolean('autoRename'),
+                    'workspace' => $this->workspaceId(),
                 ],
             );
         } finally { fclose($stream); }
@@ -65,6 +68,7 @@ final readonly class ChunkUploadController
             throw new SoFinderException('The completed upload session is missing its assembled file.', 'chunk_assembly_failed', 500);
         }
         $session = $this->chunks->status($id);
+        $this->assertSessionWorkspace($session);
 
         $assembled = @fopen((string) $state['path'], 'rb');
         if ($assembled === false) throw new SoFinderException('Unable to read the assembled upload.', 'chunk_assembly_failed', 500);
@@ -90,6 +94,7 @@ final readonly class ChunkUploadController
     public function cancel(Request $request, string $id): JsonResponse
     {
         $this->csrf->assertMutation($request);
+        $this->assertSessionWorkspace($this->chunks->status($id));
         $this->chunks->discard($id);
 
         return new JsonResponse(OperationResult::success());
@@ -98,8 +103,22 @@ final readonly class ChunkUploadController
     public function status(string $id): JsonResponse
     {
         $state = $this->chunks->status($id);
+        $this->assertSessionWorkspace($state);
         $this->files->uploadLimit($state['resource'], $state['path'], $state['name']);
 
         return new JsonResponse(OperationResult::success($state));
+    }
+
+    private function workspaceId(): string
+    {
+        return $this->workspaces?->current()->id ?? '';
+    }
+
+    /** @param array<string,mixed> $state */
+    private function assertSessionWorkspace(array $state): void
+    {
+        if ((string) ($state['workspace'] ?? '') !== $this->workspaceId()) {
+            throw new SoFinderException('The upload session does not belong to the current workspace.', 'upload_session_not_found', 404);
+        }
     }
 }

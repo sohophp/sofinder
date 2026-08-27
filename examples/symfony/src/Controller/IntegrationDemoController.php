@@ -45,7 +45,7 @@ final readonly class IntegrationDemoController
   import { registerQuill, registerTinyMce, selectForCkeditor5, selectForInput, selectForTiptap } from '/sofinder/assets/sofinder-picker.js';
   import { bindAssetInput } from '/sofinder/assets/sofinder-editors.js';
   import { createCkeditor5UploadPlugin } from '/sofinder/assets/sofinder-ckeditor5.js';
-  import { tinyMceImagesUploadHandler } from '/sofinder/assets/sofinder-tinymce.js';
+  import { createTinyMceUploadIntegration } from '/sofinder/assets/sofinder-tinymce.js';
   import { installTiptapUploads, uploadForTiptap } from '/sofinder/assets/sofinder-tiptap.js';
   import { installQuillUploads } from '/sofinder/assets/sofinder-quill.js';
   const baseUrl = '/sofinder/browser';
@@ -66,7 +66,8 @@ final readonly class IntegrationDemoController
   } catch (error) { document.getElementById('ckeditor-status').textContent = `CKEditor 初始化失败：${error.message}`; }
 
   registerTinyMce(window.tinymce, imageOptions);
-  window.tinymce.init({ selector: '#tinymce-editor', height: 280, base_url: 'https://cdn.jsdelivr.net/npm/tinymce@8.0.2', suffix: '.min', license_key: 'gpl', plugins: 'sofinder link lists image', toolbar: 'undo redo | bold italic | link image sofinder', images_upload_handler: tinyMceImagesUploadHandler(editorOptions), automatic_uploads: true, paste_data_images: true, promotion: false });
+  let tinyUploadHandler;
+  window.tinymce.init({ selector: '#tinymce-editor', height: 280, base_url: 'https://cdn.jsdelivr.net/npm/tinymce@8.0.2', suffix: '.min', license_key: 'gpl', plugins: 'sofinder link lists image', toolbar: 'undo redo | bold italic | link image sofinder', setup: editor => { tinyUploadHandler = createTinyMceUploadIntegration(editor, editorOptions); }, images_upload_handler: (...args) => tinyUploadHandler(...args), automatic_uploads: true, paste_data_images: true, promotion: false });
 
   const [{ Editor }, { default: StarterKit }, { default: Image }] = await Promise.all([import('https://esm.sh/@tiptap/core'), import('https://esm.sh/@tiptap/starter-kit'), import('https://esm.sh/@tiptap/extension-image')]);
   const tiptap = new Editor({ element: document.getElementById('tiptap-editor'), extensions: [StarterKit, Image], content: '<p>在这里编辑内容，然后从 SoFinder 插入图片。</p>' });

@@ -49,6 +49,28 @@ final class OpenApiContractTest extends TestCase
         self::assertStringNotContainsString('"additionalProperties": true', $document);
         self::assertStringContainsString('DocumentPreviewJobData', $document);
         self::assertStringContainsString('MutationRequest', $document);
+        $spec = json_decode($document, true, 512, JSON_THROW_ON_ERROR);
+        self::assertSame('#/components/responses/AssetMetadata', $spec['paths']['/api/assets/{id}/metadata']['patch']['responses']['200']['$ref']);
+        self::assertSame('#/components/responses/ChunkUpload', $spec['paths']['/api/uploads/chunks']['post']['responses']['201']['$ref']);
+        self::assertSame('#/components/responses/ChunkStatus', $spec['paths']['/api/uploads/chunks/{id}']['get']['responses']['200']['$ref']);
+        self::assertContains('workspace', $spec['components']['schemas']['ChunkStatusData']['required']);
+        foreach ($spec['paths'] as $path => $pathItem) {
+            foreach ($pathItem as $method => $operation) {
+                if (!is_array($operation)) continue;
+                self::assertNotSame(
+                    '#/components/requestBodies/JsonMutation',
+                    $operation['requestBody']['$ref'] ?? null,
+                    strtoupper($method) . ' ' . $path . ' must publish a route-specific request body.',
+                );
+                foreach ($operation['responses'] ?? [] as $status => $response) {
+                    self::assertNotSame(
+                        '#/components/responses/Success',
+                        $response['$ref'] ?? null,
+                        strtoupper($method) . ' ' . $path . ' ' . $status . ' must publish a route-specific response.',
+                    );
+                }
+            }
+        }
     }
 
     public function testMachineErrorCatalogCoversEveryLiteralPublicExceptionCodeAndStatus(): void

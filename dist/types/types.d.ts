@@ -12,6 +12,11 @@ export interface SoFinderConfig {
     workspace?: {
         id: string;
         resources: string[];
+        options?: Array<{
+            id: string;
+            label: string;
+            url: string;
+        }>;
     } | null;
     theme: {
         accent: string;

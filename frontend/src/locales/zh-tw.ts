@@ -1,6 +1,6 @@
 const messages = {
   assetMetadata: "資產中繼資料", assetAlt: "預設替代文字", assetTitle: "資產標題", decorativeImage: "裝飾性圖片（空替代文字）", assetAltUnset: "留空時使用檔案名稱", assetMetadataSaved: "資產中繼資料已儲存",
-  files: "檔案", images: "圖片", newFolder: "新增資料夾", upload: "上傳", uploadFolder: "上傳資料夾", folderUploadTooMany: "單次資料夾上傳最多 500 個檔案。", folderUploadPreview: "頂層資料夾", refresh: "重新整理",
+  workspace: "工作空間", workspaceUploadBlocked: "請等待上傳完成或取消上傳後再切換工作空間。", files: "檔案", images: "圖片", newFolder: "新增資料夾", upload: "上傳", uploadFolder: "上傳資料夾", folderUploadTooMany: "單次資料夾上傳最多 500 個檔案。", folderUploadPreview: "頂層資料夾", refresh: "重新整理",
   search: "搜尋檔案", searchTags: "搜尋標籤（多個標籤以逗號分隔）", searchScope: "搜尋範圍", searchTrash: "搜尋已刪除的檔案", name: "名稱", size: "大小", modified: "修改時間", empty: "此資料夾是空的",
   select: "選取", rename: "重新命名", batchRename: "批次重新命名", renamePattern: "名稱規則", renamePatternHint: "使用 {name} 表示原主檔名、{n} 表示序號、{ext} 表示鎖定的副檔名。", oldName: "原名稱", duplicateRename: "預覽中有重複名稱。", remove: "刪除", download: "下載", copy: "複製", move: "移動", webImageUnsupported: "此圖片格式不能直接用於網頁內容。",
   details: "詳細資訊", type: "類型", folder: "資料夾", file: "檔案", location: "位置", chooseFolder: "目標資料夾", fileUrl: "檔案網址", temporaryFileUrl: "臨時檔案網址", linkExpires: "失效時間", copyUrl: "複製網址", urlAction: "網址", urlCopied: "網址已複製", copyUrlFailed: "自動複製失敗，網址仍保持選取，可手動複製。", clickUrlToCopy: "點選網址輸入框即可複製。", loginRequired: "需要登入", language: "語言", qrCode: "QR Code", qrCodeFeature: "檔案網址 QR Code", qrCodeHint: "掃碼開啟此檔案網址，登入要求和失效時間仍然有效。", qrCodeFailed: "網址過長，無法產生 QR Code。", downloadQrCode: "下載 QR Code",

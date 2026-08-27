@@ -554,6 +554,17 @@ final readonly class FileManager
         return $this->present($item, $item->storage->entry($path));
     }
 
+    /**
+     * Assert a public operation capability without exposing the underlying storage.
+     *
+     * Controllers for optional platform features (for example asset metadata)
+     * must use the same authorization and read-only checks as core file writes.
+     */
+    public function assertOperation(string $resourceName, string $operation, string $path, bool $write = false): void
+    {
+        $this->authorized($resourceName, $operation, $path, $write);
+    }
+
     /** @return resource */
     public function read(string $resourceName, string $path): mixed
     {
@@ -598,10 +609,10 @@ final readonly class FileManager
     /** @return array<string, bool> */
     private function capabilities(ResourceStorage $item, string $path): array
     {
-        $operations = ['read', 'list', 'upload', 'overwrite', 'create_folder', 'rename', 'copy', 'move', 'delete'];
+        $operations = ['read', 'list', 'upload', 'overwrite', 'create_folder', 'rename', 'copy', 'move', 'delete', 'metadata.update'];
         $capabilities = [];
         foreach ($operations as $operation) {
-            $write = in_array($operation, ['upload', 'overwrite', 'create_folder', 'rename', 'copy', 'move', 'delete'], true);
+            $write = in_array($operation, ['upload', 'overwrite', 'create_folder', 'rename', 'copy', 'move', 'delete', 'metadata.update'], true);
             $capabilities[$operation] = (!$write || !$item->resource->readOnly)
                 && $this->authorization->isGranted($operation, $item->resource, $path);
         }

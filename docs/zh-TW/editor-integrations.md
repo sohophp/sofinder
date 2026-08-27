@@ -40,7 +40,7 @@ button.addEventListener('click', () => selectForCkeditor5(editor, {
 }))
 ```
 
-Adapter 呼叫 CKEditor 5 公開的 `insertImage` Command。安裝與授權要求請參考
+Adapter 呼叫 CKEditor 5 公開的 `insertImage` 與替代文字 Command。啟用資產目錄後，Picker 與上傳會保留明確的 `alt=""`，優先使用資產預設替代文字；未設定時才使用移除副檔名的檔名，並盡量寫入響應式變體、寬高及 `data-sofinder-asset-id`。安裝與授權要求請參考
 [CKEditor 官方指南](https://ckeditor.com/docs/ckeditor5/latest/getting-started/installation/cloud/quick-start.html)。
 既有 CKEditor 4 Callback 與 Quick Upload Endpoint 會繼續保留。
 
@@ -77,6 +77,8 @@ tinymce.init({
 
 Adapter 透過 TinyMCE 公開 API 插入已編碼的 `<img>`。CDN Key 與自託管方式參見
 [TinyMCE 官方部署文件](https://www.tiny.cloud/docs/tinymce/latest/editor-and-features/)。
+
+直接上傳請從 `sofinder-tinymce.js` 使用 `createTinyMceUploadIntegration(editor, options)`，並在 TinyMCE 的 `setup` Callback 建立。它會在圖片節點產生後補齊 `alt`、寬高、`srcset` 和穩定資產 ID，而不只保留上傳 URL。
 
 ## TipTap、Quill 與一般表單
 

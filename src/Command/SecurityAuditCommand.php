@@ -8,6 +8,7 @@ use SohoPHP\SoFinder\Contract\ImageCapabilityProviderInterface;
 use SohoPHP\SoFinder\Contract\LocalPathProviderInterface;
 use SohoPHP\SoFinder\Contract\StorageAuditProviderInterface;
 use SohoPHP\SoFinder\Contract\HealthCheckInterface;
+use SohoPHP\SoFinder\Contract\WorkspaceStorageAuditProviderInterface;
 use SohoPHP\SoFinder\Image\ImageFormatRegistry;
 use SohoPHP\SoFinder\ResourceRegistry;
 use Symfony\Component\Console\Attribute\AsCommand;
@@ -37,6 +38,8 @@ final class SecurityAuditCommand extends Command
         private readonly bool $sharedPreviewCache = false,
         private readonly string $documentPreviewMode = 'inline',
         private readonly bool $officePreviewEnabled = false,
+        /** @var iterable<WorkspaceStorageAuditProviderInterface> */
+        private readonly iterable $workspaceStorageAuditProviders = [],
     ) {
         parent::__construct();
     }
@@ -98,6 +101,20 @@ final class SecurityAuditCommand extends Command
             $deliveryModes = array_values(array_unique(array_column($items, 'delivery')));
             if (count($items) < 2 || !in_array('public', $deliveryModes, true) || !in_array('proxy', $deliveryModes, true)) continue;
             $findings[] = ['critical', implode(', ', array_column($items, 'name')), 'Public and proxy resources share the same physical storage root. Separate them to prevent private files from being publicly reachable.'];
+        }
+        /** @var array<string,list<array{workspace:string,resource:string}>> $workspaceRoots */
+        $workspaceRoots = [];
+        foreach ($this->workspaceStorageAuditProviders as $provider) {
+            foreach ($provider->workspaceStorageMappings() as $mapping) {
+                if (($mapping['writable'] ?? true) !== true || trim($mapping['root'] ?? '') === '') continue;
+                $root = realpath($mapping['root']) ?: $this->normalizeAbsolute($mapping['root']);
+                $workspaceRoots[$root][] = ['workspace' => (string) $mapping['workspace'], 'resource' => (string) $mapping['resource']];
+            }
+        }
+        foreach ($workspaceRoots as $items) {
+            if (count(array_unique(array_column($items, 'workspace'))) < 2) continue;
+            $scope = implode(', ', array_map(static fn (array $item): string => $item['workspace'] . ':' . $item['resource'], $items));
+            $findings[] = ['critical', $scope, 'Writable resources from different workspaces share the same physical storage root.'];
         }
         foreach (['quarantine' => $this->quarantineDirectory, 'chunks' => $this->chunkDirectory, 'trash' => $this->trashDirectory] as $name => $privateDirectory) {
             $resolved = realpath($privateDirectory) ?: $this->normalizeAbsolute($privateDirectory);

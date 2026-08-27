@@ -46,8 +46,8 @@ final readonly class SharedChunkUploadStore implements ChunkUploadStoreInterface
             throw new SoFinderException('The upload session does not exist or is invalid.', 'upload_session_not_found', 404);
         }
 
-        /** @var array{id:string,total:int,received:list<int>,complete:bool,resource:string,path:string,name:string,overwrite:bool,autoRename:bool,updatedAt:int} $state */
-        return $state + ['autoRename' => false];
+        /** @var array{id:string,total:int,received:list<int>,complete:bool,resource:string,path:string,name:string,overwrite:bool,autoRename?:bool,workspace?:string,updatedAt:int} $state */
+        return $state + ['autoRename' => false, 'workspace' => ''];
     }
 
     public function discard(string $id): void

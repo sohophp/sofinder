@@ -30,6 +30,8 @@ export interface PickerOptions {
   width?: number;
   height?: number;
   windowName?: string;
+  defaultAlt?: (asset: PickerEntry) => string;
+  sizes?: string | ((asset: PickerEntry) => string);
 }
 
 export interface PickerMessage {
@@ -103,10 +105,28 @@ const validEntry = (value: unknown): value is PickerEntry => {
 
 type EditorPickerOptions = Omit<PickerOptions, "kind">;
 
+const pickerAlt = (entry: PickerEntry, options: PickerOptions): string => options.defaultAlt?.(entry) ?? entry.alt ?? entry.name.replace(/\.[^.]+$/, "");
+const pickerAttributes = (entry: PickerEntry, options: PickerOptions): Record<string, string> => {
+  const attributes: Record<string, string> = { src: entry.url, alt: pickerAlt(entry, options) };
+  if (entry.assetId) attributes["data-sofinder-asset-id"] = entry.assetId;
+  if (entry.width) attributes.width = String(entry.width);
+  if (entry.height) attributes.height = String(entry.height);
+  if (entry.variants?.length) {
+    attributes.srcset = entry.variants.map(variant => `${variant.url} ${variant.width}w`).join(", ");
+    attributes.sizes = typeof options.sizes === "function" ? options.sizes(entry) : options.sizes ?? (entry.width ? `(max-width: ${entry.width}px) 100vw, ${entry.width}px` : "100vw");
+  }
+  return attributes;
+};
+const pickerImageHtml = (entry: PickerEntry, options: PickerOptions): string => {
+  const escape = (value: string) => value.replace(/&/g, "&amp;").replace(/"/g, "&quot;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+  return `<img ${Object.entries(pickerAttributes(entry, options)).map(([name, value]) => `${name}="${escape(value)}"`).join(" ")}>`;
+};
+
 /** Select an image and insert it through CKEditor 5's public command API. */
-export const selectForCkeditor5 = async (editor: { execute(command: string, options: { source: string }): void; editing?: { view?: { focus?: () => void } } }, options: EditorPickerOptions): Promise<PickerEntry> => {
+export const selectForCkeditor5 = async (editor: { execute(command: string, options: Record<string, unknown>): void; commands?: { get(name: string): unknown }; editing?: { view?: { focus?: () => void } } }, options: EditorPickerOptions): Promise<PickerEntry> => {
   const entry = await openPicker({ ...options, kind: "image" });
   editor.execute("insertImage", { source: entry.url });
+  if (!editor.commands || editor.commands.get("imageTextAlternative")) editor.execute("imageTextAlternative", { newValue: pickerAlt(entry, options) });
   editor.editing?.view?.focus?.();
   return entry;
 };
@@ -116,7 +136,7 @@ export const registerTinyMce = (tinymce: { PluginManager: { add(name: string, se
   tinymce.PluginManager.add("sofinder", editor => {
     const choose = async () => {
       const entry = await openPicker({ ...options, kind: "image" });
-      editor.insertContent(`<img src="${editor.dom.encode(entry.url)}" alt="${editor.dom.encode(entry.name)}">`);
+      editor.insertContent(pickerImageHtml(entry, options));
     };
     editor.ui.registry.addButton("sofinder", { text: "Files", tooltip: "Choose from SoFinder", onAction: choose });
     editor.ui.registry.addMenuItem("sofinder", { text: "Choose from SoFinder", onAction: choose });
@@ -125,18 +145,19 @@ export const registerTinyMce = (tinymce: { PluginManager: { add(name: string, se
 };
 
 /** Select an image and insert it through TipTap's Image extension. */
-export const selectForTiptap = async (editor: { chain(): { focus(): { setImage(options: { src: string; alt: string }): { run(): unknown } } } }, options: EditorPickerOptions): Promise<PickerEntry> => {
+export const selectForTiptap = async (editor: { chain(): { focus(): { setImage(options: Record<string, string>): { run(): unknown } } } }, options: EditorPickerOptions): Promise<PickerEntry> => {
   const entry = await openPicker({ ...options, kind: "image" });
-  editor.chain().focus().setImage({ src: entry.url, alt: entry.name }).run();
+  editor.chain().focus().setImage(pickerAttributes(entry, options)).run();
   return entry;
 };
 
 /** Install a SoFinder image handler on a Quill toolbar. */
-export const registerQuill = (quill: { getModule(name: "toolbar"): { addHandler(name: string, handler: () => void): void }; getSelection(focus?: boolean): { index: number } | null; insertEmbed(index: number, type: string, value: string, source: string): void }, options: EditorPickerOptions): void => {
+export const registerQuill = (quill: { getModule(name: "toolbar"): { addHandler(name: string, handler: () => void): void }; getSelection(focus?: boolean): { index: number } | null; insertEmbed(index: number, type: string, value: string, source: string): void; clipboard?: { dangerouslyPasteHTML(index: number, html: string, source: string): void } }, options: EditorPickerOptions): void => {
   quill.getModule("toolbar").addHandler("image", () => {
     void openPicker({ ...options, kind: "image" }).then(entry => {
       const range = quill.getSelection(true);
-      quill.insertEmbed(range?.index ?? 0, "image", entry.url, "user");
+      if (quill.clipboard) quill.clipboard.dangerouslyPasteHTML(range?.index ?? 0, pickerImageHtml(entry, options), "user");
+      else quill.insertEmbed(range?.index ?? 0, "image", entry.url, "user");
     });
   });
 };
@@ -153,9 +174,9 @@ export const selectForInput = async (input: HTMLInputElement, options: PickerOpt
 /** Insert a Markdown image or link at the current textarea selection. */
 export const selectForMarkdown = async (input: HTMLTextAreaElement, options: PickerOptions): Promise<PickerEntry> => {
   const entry = await openPicker(options);
-  const label = entry.name.replace(/([\\\[\]])/g, "\\$1");
-  const destination = entry.url.replace(/</g, "%3C").replace(/>/g, "%3E");
   const image = options.kind === "image" || entry.mimeType?.startsWith("image/") === true;
+  const label = (image ? pickerAlt(entry, options) : entry.name).replace(/([\\\[\]])/g, "\\$1");
+  const destination = entry.url.replace(/</g, "%3C").replace(/>/g, "%3E");
   const markdown = `${image ? "!" : ""}[${label}](<${destination}>)`;
   const start = input.selectionStart ?? input.value.length;
   const end = input.selectionEnd ?? start;

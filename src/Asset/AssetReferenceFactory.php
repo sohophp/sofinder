@@ -41,7 +41,7 @@ final readonly class AssetReferenceFactory
         $capabilities = $entry->capabilities + [];
         $capabilities['embeddable'] = $embeddable;
         $capabilities['responsiveImages'] = $embeddable && $this->variantsEnabled && $dimensions !== null && $entry->mimeType !== null && str_starts_with($entry->mimeType, 'image/');
-        $capabilities['assetMetadata'] = $record !== null;
+        $capabilities['assetMetadata'] = $record !== null && ($entry->capabilities['metadata.update'] ?? false);
 
         $variants = [];
         if ($embeddable && $this->variantsEnabled && $dimensions !== null && $entry->mimeType !== null && str_starts_with($entry->mimeType, 'image/')) {

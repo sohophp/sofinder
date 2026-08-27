@@ -1,6 +1,6 @@
 const messages = {
     assetMetadata: "资产元数据", assetAlt: "默认替代文本", assetTitle: "资产标题", decorativeImage: "装饰性图片（空替代文本）", assetAltUnset: "留空时使用文件名", assetMetadataSaved: "资产元数据已保存",
-    files: "文件", images: "图片", newFolder: "新建文件夹", upload: "上传", uploadFolder: "上传文件夹", folderUploadTooMany: "单次文件夹上传最多 500 个文件。", folderUploadPreview: "顶层文件夹", refresh: "刷新",
+    workspace: "工作空间", workspaceUploadBlocked: "请等待上传完成或取消上传后再切换工作空间。", files: "文件", images: "图片", newFolder: "新建文件夹", upload: "上传", uploadFolder: "上传文件夹", folderUploadTooMany: "单次文件夹上传最多 500 个文件。", folderUploadPreview: "顶层文件夹", refresh: "刷新",
     search: "搜索文件", searchTags: "搜索标签（多个标签用逗号分隔）", searchScope: "搜索范围", searchTrash: "搜索已删除文件", name: "名称", size: "大小", modified: "修改时间", empty: "此文件夹为空",
     select: "选择", rename: "重命名", batchRename: "批量重命名", renamePattern: "名称规则", renamePatternHint: "使用 {name} 表示原主文件名、{n} 表示序号、{ext} 表示锁定的扩展名。", oldName: "原名称", duplicateRename: "预览中存在重复名称。", remove: "删除", download: "下载", copy: "复制", move: "移动", webImageUnsupported: "此图片格式不能直接用于网页内容。",
     details: "详细信息", type: "类型", folder: "文件夹", file: "文件", location: "位置", chooseFolder: "目标文件夹", fileUrl: "文件网址", temporaryFileUrl: "临时文件网址", linkExpires: "失效时间", copyUrl: "复制网址", urlAction: "网址", urlCopied: "网址已复制", copyUrlFailed: "自动复制失败，网址仍保持选中，可手动复制。", clickUrlToCopy: "点击网址输入框即可复制。", loginRequired: "需要登录", language: "语言", qrCode: "QR Code", qrCodeFeature: "文件网址 QR Code", qrCodeHint: "扫码打开此文件网址，登录要求和失效时间仍然有效。", qrCodeFailed: "网址过长，无法生成 QR Code。", downloadQrCode: "下载 QR Code",

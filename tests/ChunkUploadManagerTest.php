@@ -73,6 +73,23 @@ final class ChunkUploadManagerTest extends TestCase
         }
     }
 
+    public function testWorkspaceIsImmutableSessionMetadata(): void
+    {
+        $manager = new ChunkUploadManager($this->directory, $this->actor(), 10, 3);
+        $stream = fopen('php://temp', 'w+b'); fwrite($stream, 'a'); rewind($stream);
+        $manager->accept('abcdefghijklmnop', 0, 2, $stream, 10, ['resource' => 'Files', 'name' => 'one.txt', 'workspace' => 'site-a']);
+        self::assertSame('site-a', $manager->status('abcdefghijklmnop')['workspace']);
+        rewind($stream);
+        try {
+            $manager->accept('abcdefghijklmnop', 1, 2, $stream, 10, ['resource' => 'Files', 'name' => 'one.txt', 'workspace' => 'site-b']);
+            self::fail('A resumed upload must not cross a workspace boundary.');
+        } catch (SoFinderException $exception) {
+            self::assertSame('upload_session_mismatch', $exception->errorCode);
+        } finally {
+            fclose($stream);
+        }
+    }
+
     public function testExpiredSessionsCanBeCleanedAcrossActorDirectories(): void
     {
         $manager = new ChunkUploadManager($this->directory, $this->actor(), 10, 3);
