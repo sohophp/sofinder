@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## 0.1.0-beta.19 - 2026-08-27
 
 - Expand the Symfony demo and quick-start file-resource allowlists to include
   common Microsoft Office/OpenDocument, text, image, archive, audio and video

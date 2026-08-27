@@ -5,6 +5,13 @@ description: 各 SoFinder 預發布版本的相容性、設定與 adapter 升級
 
 # 升級 SoFinder
 
+## 從 0.1.0-beta.18 升級至 0.1.0-beta.19
+
+無需遷移檔案、metadata 或 API。Symfony 展示環境與快速開始現在使用更完整的
+建議白名單，涵蓋常用 Office、OpenDocument、文字、圖片、壓縮檔、音訊和視訊
+檔案。既有 Host 繼續使用自己的 `allowed_extensions`；只應在確實需要這些格式的
+Resource 中同步擴充清單。主動內容／可執行副檔名拒絕清單和上傳大小限制維持不變。
+
 ## 從 0.1.0-beta.17 升級至 0.1.0-beta.18
 
 無需遷移檔案或 metadata。Symfony 範例的 `APP_ENV=s3` 現在只註冊

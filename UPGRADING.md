@@ -1,5 +1,14 @@
 # Upgrading SoFinder
 
+## From 0.1.0-beta.18 to 0.1.0-beta.19
+
+No files, metadata or APIs are migrated. The Symfony demo and quick-start
+examples now use a broader recommended allowlist for common Office,
+OpenDocument, text, image, archive, audio and video files. Existing host
+applications keep their configured `allowed_extensions`; copy the expanded
+list only where those formats should be accepted. The active/executable
+extension denylist and upload size limits are unchanged.
+
 ## From 0.1.0-beta.17 to 0.1.0-beta.18
 
 No files or metadata are migrated. The Symfony example's `APP_ENV=s3` now

@@ -5,6 +5,12 @@ description: SoFinder 每个公开版本的重要变更。
 
 # 更新日志
 
+## 0.1.0-beta.19 - 2026-08-27
+
+- 扩展 Symfony 演示和快速开始的文件资源白名单，默认涵盖常用 Microsoft
+  Office／OpenDocument、文本、图片、压缩包、音频和视频格式，同时保留主动内容
+  及可执行扩展名的默认拒绝列表。
+
 ## 0.1.0-beta.18 - 2026-08-27
 
 - 普通 Symfony `s3` 演示环境只需配置一个 Provider 即可启动；可选的第二个 Provider 移至明确启用的 `s3_dual` 环境。
