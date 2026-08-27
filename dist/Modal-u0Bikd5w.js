@@ -111,6 +111,8 @@ var n = e(), r = t(), i = {
 	resize: /* @__PURE__ */ (0, r.jsxs)(r.Fragment, { children: [/* @__PURE__ */ (0, r.jsx)("path", { d: "M4 8V4h4M16 4h4v4M20 16v4h-4M8 20H4v-4" }), /* @__PURE__ */ (0, r.jsx)("path", { d: "m9 9 6 6M15 9l-6 6" })] }),
 	crop: /* @__PURE__ */ (0, r.jsx)("path", { d: "M7 3v14a2 2 0 0 0 2 2h12M3 7h14a2 2 0 0 1 2 2v12" }),
 	sort: /* @__PURE__ */ (0, r.jsx)(r.Fragment, { children: /* @__PURE__ */ (0, r.jsx)("path", { d: "M8 5v14M5 8l3-3 3 3M16 19V5M13 16l3 3 3-3" }) }),
+	"sort-asc": /* @__PURE__ */ (0, r.jsxs)(r.Fragment, { children: [/* @__PURE__ */ (0, r.jsx)("path", { d: "M7 19V5M3.5 8.5 7 5l3.5 3.5" }), /* @__PURE__ */ (0, r.jsx)("path", { d: "M14 7h7M14 12h5M14 17h3" })] }),
+	"sort-desc": /* @__PURE__ */ (0, r.jsxs)(r.Fragment, { children: [/* @__PURE__ */ (0, r.jsx)("path", { d: "M7 5v14M3.5 15.5 7 19l3.5-3.5" }), /* @__PURE__ */ (0, r.jsx)("path", { d: "M14 7h3M14 12h5M14 17h7" })] }),
 	search: /* @__PURE__ */ (0, r.jsxs)(r.Fragment, { children: [/* @__PURE__ */ (0, r.jsx)("circle", {
 		cx: "10.5",
 		cy: "10.5",
@@ -130,6 +132,7 @@ var n = e(), r = t(), i = {
 function a({ name: e }) {
 	return /* @__PURE__ */ (0, r.jsx)("svg", {
 		className: "sf-ui-icon",
+		"data-icon": e,
 		viewBox: "0 0 24 24",
 		"aria-hidden": "true",
 		focusable: "false",

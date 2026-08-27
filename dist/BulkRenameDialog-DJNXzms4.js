@@ -1,5 +1,5 @@
 import { n as e, t } from "./jsx-runtime-BuvfPIin.js";
-import { t as n } from "./Modal-C1uNxIi2.js";
+import { t as n } from "./Modal-u0Bikd5w.js";
 import { t as r } from "./nameValidation-DURyMFRU.js";
 //#region src/components/BulkRenameDialog.tsx
 var i = e(), a = t(), o = (e, t, n) => {

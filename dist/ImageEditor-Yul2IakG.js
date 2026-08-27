@@ -1,5 +1,5 @@
 import { i as e, n as t, r as n, t as r } from "./jsx-runtime-BuvfPIin.js";
-import { t as i } from "./Modal-C1uNxIi2.js";
+import { t as i } from "./Modal-u0Bikd5w.js";
 import { t as a } from "./nameValidation-DURyMFRU.js";
 //#region node_modules/.pnpm/cropperjs@1.6.2/node_modules/cropperjs/dist/cropper.js
 var o = /* @__PURE__ */ n(((e, t) => {

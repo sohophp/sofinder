@@ -358,6 +358,46 @@ test("persists precise list-column choices", async ({ page }) => {
   await expect.poll(() => page.evaluate(() => localStorage.getItem("sofinder.listColumns.v1"))).toContain('"type":true');
 });
 
+test("sorts from every visible list header and exposes type and direction controls", async ({ page }) => {
+  await page.getByRole("button", { name: "列表" }).click();
+  const waitForSort = (sort: string, direction: string) => page.waitForRequest(request => {
+    const url = new URL(request.url());
+    return url.pathname === "/sofinder/api/entries" && url.searchParams.get("sort") === sort && url.searchParams.get("direction") === direction;
+  });
+
+  let request = waitForSort("name", "desc");
+  await page.getByRole("button", { name: "名称, 升序" }).click();
+  await request;
+  await expect(page.locator('.sf-list-head button[aria-pressed="true"] svg')).toHaveAttribute("data-icon", "sort-desc");
+
+  request = waitForSort("size", "asc");
+  await page.locator(".sf-list-head .sf-list-size").click();
+  await request;
+  request = waitForSort("size", "desc");
+  await page.getByRole("button", { name: "大小, 升序" }).click();
+  await request;
+
+  request = waitForSort("modified", "asc");
+  await page.locator(".sf-list-head .sf-list-modified").click();
+  await request;
+
+  await page.getByRole("button", { name: "更多操作" }).click();
+  await page.getByRole("menuitem", { name: "设置" }).click();
+  const settings = page.getByRole("dialog", { name: "设置" });
+  await settings.getByText("显示 MIME 类型", { exact: true }).click();
+  await settings.getByRole("button", { name: "完成" }).click();
+
+  await page.getByRole("button", { name: "更多操作" }).click();
+  request = waitForSort("type", "asc");
+  await page.getByLabel("排序", { exact: true }).selectOption("type");
+  await request;
+  await expect(page.locator(".sf-sort-direction svg")).toHaveAttribute("data-icon", "sort-asc");
+  request = waitForSort("type", "desc");
+  await page.locator(".sf-list-head .sf-list-type").click();
+  await request;
+  await expect(page.locator('.sf-list-head .sf-list-type svg')).toHaveAttribute("data-icon", "sort-desc");
+});
+
 test("persists independent grid and list entry sizes", async ({ page }) => {
   await expect(page.locator(".sf-entry", { hasText: "photo.png" }).locator(".sf-entry-icon")).toHaveCSS("height", "90px");
   await page.getByRole("button", { name: "更多操作" }).click();

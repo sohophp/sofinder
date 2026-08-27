@@ -80,6 +80,7 @@ final class LocalStorageAdapter implements StorageAdapterInterface, LocalPathPro
             }
             $comparison = match ($query->sort) {
                 'size' => $a->size <=> $b->size,
+                'type' => strnatcasecmp($a->mimeType ?? '', $b->mimeType ?? ''),
                 'modified' => $a->modifiedAt <=> $b->modifiedAt,
                 default => strnatcasecmp($a->name, $b->name),
             };

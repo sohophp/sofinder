@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- Make every visible list header a server-backed sort control, toggle direction
+  on repeated clicks, add MIME-type sorting and use distinct ascending and
+  descending icons in both the header and utility menu.
 - Close the top-right utility menu when the user clicks outside it, preserve
   interaction with controls inside the menu and support Escape with focus
   restoration.

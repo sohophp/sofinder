@@ -161,6 +161,19 @@ final class LocalStorageAdapterTest extends TestCase
         self::assertTrue($this->storage->capabilities()->recoverableDelete);
     }
 
+    public function testSortsFilesByTheirDisplayedMimeType(): void
+    {
+        file_put_contents($this->directory . '/notes.txt', 'plain text');
+        file_put_contents($this->directory . '/data.json', '{"value":1}');
+
+        $ascending = $this->storage->list(new ListQuery(sort: 'type'));
+        $descending = $this->storage->list(new ListQuery(sort: 'type', direction: 'desc'));
+
+        self::assertSame(['data.json', 'notes.txt'], array_column($ascending->entries, 'name'));
+        self::assertSame(['notes.txt', 'data.json'], array_column($descending->entries, 'name'));
+        self::assertSame('type', (new ListQuery(sort: 'type'))->sort);
+    }
+
     private function remove(string $path): void
     {
         if (is_link($path) || is_file($path)) {

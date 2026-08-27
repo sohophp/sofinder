@@ -1,5 +1,5 @@
 import { n as e, r as t, t as n } from "./jsx-runtime-BuvfPIin.js";
-import { n as r, t as i } from "./Modal-C1uNxIi2.js";
+import { n as r, t as i } from "./Modal-u0Bikd5w.js";
 import { t as a } from "./nameValidation-DURyMFRU.js";
 import { n as o, r as s, t as c } from "./EntryVisuals-CZ0BEx0U.js";
 import { t as l } from "./format-GD3_dnvn.js";
@@ -8246,6 +8246,8 @@ var ee = (e) => /^1(?:\.|$)/.test(e), S = class extends Error {
 		home: "Home",
 		sort: "Sort",
 		direction: "Sort direction",
+		ascending: "Ascending",
+		descending: "Descending",
 		pagination: "Pagination",
 		page: "Page",
 		previous: "Previous",
@@ -8490,6 +8492,8 @@ var ee = (e) => /^1(?:\.|$)/.test(e), S = class extends Error {
 		home: "首页",
 		sort: "排序",
 		direction: "排序方向",
+		ascending: "升序",
+		descending: "降序",
 		pagination: "分页",
 		page: "第",
 		previous: "上一页",
@@ -8734,6 +8738,8 @@ var ee = (e) => /^1(?:\.|$)/.test(e), S = class extends Error {
 	home: "首頁",
 	sort: "排序",
 	direction: "排序方向",
+	ascending: "升冪",
+	descending: "降冪",
 	pagination: "分頁",
 	page: "第",
 	previous: "上一頁",
@@ -9746,7 +9752,7 @@ var ke = (e, t) => e.label[t] || e.label.en, Ae = (e, t) => {
 	if (!r) return null;
 	let i = new URL(r.url, window.location.href);
 	return i.searchParams.set("resource", n), i.searchParams.set("path", e.path), i.toString();
-}, Me = (e, t) => e.selection === "none" ? t === null : !t || e.selection === "file" && t.directory || e.selection === "image" && (t.directory || !t.mimeType?.startsWith("image/")) ? !1 : t.capabilities?.[e.requires] !== !1, Ne = (0, g.lazy)(() => import("./ImageEditor-CacYGDQE.js").then((e) => ({ default: e.ImageEditor }))), Pe = (0, g.lazy)(() => import("./ImageProcessDialog-DjWE4_D0.js").then((e) => ({ default: e.ImageProcessDialog }))), Fe = (0, g.lazy)(() => import("./SecurityStatusDialog-n-WcU-OL.js").then((e) => ({ default: e.SecurityStatusDialog }))), Ie = (0, g.lazy)(() => import("./DocumentPreviewPane-DU8zWCno.js")), Le = (0, g.lazy)(() => import("./SettingsDialog-DChc82l_.js").then((e) => ({ default: e.SettingsDialog }))), Re = (0, g.lazy)(() => import("./DestinationDialog-DPemnj2C.js").then((e) => ({ default: e.DestinationDialog }))), ze = (0, g.lazy)(() => import("./BulkRenameDialog-De2F7_GP.js").then((e) => ({ default: e.BulkRenameDialog }))), Be = (0, g.lazy)(() => import("./TrashDialog-C9NRSLSA.js").then((e) => ({ default: e.TrashDialog }))), Ve = (0, g.lazy)(() => import("./TagsDialog-ObFqAP7F.js").then((e) => ({ default: e.TagsDialog })));
+}, Me = (e, t) => e.selection === "none" ? t === null : !t || e.selection === "file" && t.directory || e.selection === "image" && (t.directory || !t.mimeType?.startsWith("image/")) ? !1 : t.capabilities?.[e.requires] !== !1, Ne = (0, g.lazy)(() => import("./ImageEditor-Yul2IakG.js").then((e) => ({ default: e.ImageEditor }))), Pe = (0, g.lazy)(() => import("./ImageProcessDialog-tN8NxEZQ.js").then((e) => ({ default: e.ImageProcessDialog }))), Fe = (0, g.lazy)(() => import("./SecurityStatusDialog-BPkuBEhN.js").then((e) => ({ default: e.SecurityStatusDialog }))), Ie = (0, g.lazy)(() => import("./DocumentPreviewPane-DU8zWCno.js")), Le = (0, g.lazy)(() => import("./SettingsDialog-CCwVPOUO.js").then((e) => ({ default: e.SettingsDialog }))), Re = (0, g.lazy)(() => import("./DestinationDialog-B4CBeZ2f.js").then((e) => ({ default: e.DestinationDialog }))), ze = (0, g.lazy)(() => import("./BulkRenameDialog-DJNXzms4.js").then((e) => ({ default: e.BulkRenameDialog }))), Be = (0, g.lazy)(() => import("./TrashDialog-mzDr6crW.js").then((e) => ({ default: e.TrashDialog }))), Ve = (0, g.lazy)(() => import("./TagsDialog-BtHZ84rd.js").then((e) => ({ default: e.TagsDialog })));
 function He({ config: e }) {
 	let t = (0, g.useId)(), n = (0, g.useMemo)(() => new te(e), [e]), a = e.uiDefaults.mode ?? (e.selectMode ? "picker" : "manager"), u = e.featureAvailability ?? he, [d, f] = (0, g.useState)(() => {
 		let t = localStorage.getItem("sofinder.language");
@@ -10380,6 +10386,23 @@ function He({ config: e }) {
 		}
 		let t = Se(e);
 		ot(String(t)), t !== rt && (st.current = t, it(t), localStorage.setItem("sofinder.pageSize.v1", String(t)), nt([]), N(v, b, de, 0, We, O, Ce, null));
+	}, ni = (e, t) => {
+		let n = t && We === e && O === "asc" ? "desc" : "asc";
+		Ge(e), Ke(n), nt([]), N(v, b, de, 0, e, n, Ce, null);
+	}, ri = () => {
+		let e = O === "asc" ? "desc" : "asc";
+		Ke(e), nt([]), N(v, b, de, 0, We, e, Ce, null);
+	}, ii = (e, t, n = "") => {
+		let i = We === e, a = p(O === "asc" ? "ascending" : "descending");
+		return /* @__PURE__ */ (0, w.jsxs)("button", {
+			type: "button",
+			className: `${n}${i ? " active" : ""}`,
+			disabled: P?.storageCapabilities?.sort === !1,
+			"aria-pressed": i,
+			"aria-label": i ? `${t}, ${a}` : t,
+			onClick: () => ni(e, !0),
+			children: [/* @__PURE__ */ (0, w.jsx)("span", { children: t }), i && /* @__PURE__ */ (0, w.jsx)(r, { name: O === "asc" ? "sort-asc" : "sort-desc" })]
+		});
 	};
 	return /* @__PURE__ */ (0, w.jsxs)("main", {
 		className: `sf-app sf-mode-${a}${Yr ? "" : " sf-no-sidebar"}${Zr ? "" : " sf-no-details"}${(a === "manager" || Kr) && F.length > 0 ? " sf-has-selection-actions" : ""}`,
@@ -10499,10 +10522,8 @@ function He({ config: e }) {
 									/* @__PURE__ */ (0, w.jsxs)("label", { children: [/* @__PURE__ */ (0, w.jsx)("span", { children: p("sort") }), /* @__PURE__ */ (0, w.jsxs)("select", {
 										value: We,
 										disabled: P?.storageCapabilities?.sort === !1,
-										onChange: (e) => {
-											let t = e.target.value;
-											Ge(t), nt([]), N(v, b, de, 0, t, O, Ce, null);
-										},
+										"aria-label": p("sort"),
+										onChange: (e) => ni(e.target.value, !1),
 										children: [
 											/* @__PURE__ */ (0, w.jsx)("option", {
 												value: "name",
@@ -10513,6 +10534,10 @@ function He({ config: e }) {
 												children: p("size")
 											}),
 											/* @__PURE__ */ (0, w.jsx)("option", {
+												value: "type",
+												children: p("type")
+											}),
+											/* @__PURE__ */ (0, w.jsx)("option", {
 												value: "modified",
 												children: p("modified")
 											})
@@ -10520,12 +10545,11 @@ function He({ config: e }) {
 									})] }),
 									/* @__PURE__ */ (0, w.jsx)("button", {
 										role: "menuitem",
+										className: `sf-sort-direction ${O}`,
 										disabled: P?.storageCapabilities?.sort === !1,
-										onClick: () => {
-											let e = O === "asc" ? "desc" : "asc";
-											Ke(e), nt([]), N(v, b, de, 0, We, e, Ce, null);
-										},
-										children: L("sort", p("direction"))
+										"aria-label": `${p("direction")}: ${p(O === "asc" ? "ascending" : "descending")}`,
+										onClick: ri,
+										children: L(O === "asc" ? "sort-asc" : "sort-desc", p(O === "asc" ? "ascending" : "descending"))
 									}),
 									/* @__PURE__ */ (0, w.jsx)("button", {
 										role: "menuitem",
@@ -10840,22 +10864,11 @@ function He({ config: e }) {
 								"aria-label": p("files"),
 								children: [ct === "list" && /* @__PURE__ */ (0, w.jsxs)("div", {
 									className: "sf-list-head",
-									role: "presentation",
-									"aria-hidden": "true",
 									children: [
-										/* @__PURE__ */ (0, w.jsx)("span", { children: p("name") }),
-										Et.size && /* @__PURE__ */ (0, w.jsx)("span", {
-											className: "sf-list-size",
-											children: p("size")
-										}),
-										Et.type && /* @__PURE__ */ (0, w.jsx)("span", {
-											className: "sf-list-type",
-											children: p("type")
-										}),
-										Et.modified && /* @__PURE__ */ (0, w.jsx)("span", {
-											className: "sf-list-modified",
-											children: p("modified")
-										})
+										ii("name", p("name")),
+										Et.size && ii("size", p("size"), "sf-list-size"),
+										Et.type && ii("type", p("type"), "sf-list-type"),
+										Et.modified && ii("modified", p("modified"), "sf-list-modified")
 									]
 								}), C.map((e, t) => {
 									let i = !e.directory && ir(e);

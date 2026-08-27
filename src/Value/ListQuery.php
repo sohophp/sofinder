@@ -23,7 +23,7 @@ final readonly class ListQuery
         public ?array $onlyPaths = null,
         public ?\Closure $filter = null,
     ) {
-        $this->sort = in_array($sort, ['name', 'size', 'modified'], true) ? $sort : 'name';
+        $this->sort = in_array($sort, ['name', 'size', 'type', 'modified'], true) ? $sort : 'name';
         $this->direction = strtolower($direction) === 'desc' ? 'desc' : 'asc';
         $this->offset = max(0, $offset);
         $this->limit = max(1, min($limit, 500));

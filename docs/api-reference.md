@@ -96,7 +96,7 @@ Query parameters:
 | `path` | empty | Directory to list. |
 | `search` | empty | Name term, or comma-separated tag terms when `searchMode=tags`. |
 | `searchMode` | `name` | `name` or `tags`. |
-| `sort` | `name` | `name`, `size` or `modified`. |
+| `sort` | `name` | `name`, `size`, `type` (MIME type) or `modified`. |
 | `direction` | `asc` | `asc` or `desc`. |
 | `offset` | `0` | Offset for adapters that support it. |
 | `limit` | `100` | Requested page size, bounded to 10–500. |

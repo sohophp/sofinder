@@ -1595,6 +1595,12 @@ select:focus-visible,
 .sf-utility-menu button:hover:not(:disabled) {
   background: var(--sf-accent-soft);
 }
+.sf-utility-menu .sf-sort-direction.asc {
+  color: var(--sf-accent);
+}
+.sf-utility-menu .sf-sort-direction.desc {
+  color: var(--sf-danger);
+}
 
 .sf-toolbar {
   min-height: 48px;

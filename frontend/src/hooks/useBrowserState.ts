@@ -3,7 +3,7 @@ import type { Entry } from "../types";
 import { loadPageSize } from "../preferences";
 
 export type ViewMode = "grid" | "list";
-export type SortMode = "name" | "size" | "modified";
+export type SortMode = "name" | "size" | "type" | "modified";
 
 export function useBrowserState(initialResource: string, initialPath: string) {
   const [resource, setResource] = useState(initialResource);

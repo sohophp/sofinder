@@ -1,5 +1,5 @@
 import { n as e, t } from "./jsx-runtime-BuvfPIin.js";
-import { t as n } from "./Modal-C1uNxIi2.js";
+import { t as n } from "./Modal-u0Bikd5w.js";
 //#region src/components/ImageProcessDialog.tsx
 var r = e(), i = t();
 function a({ entries: e, resource: t, formats: a, labels: o, onClose: s, onApply: c }) {

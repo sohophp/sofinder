@@ -298,6 +298,32 @@ input {
   font-size: 12px;
   font-weight: 700;
 }
+.sf-list-head button {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 5px;
+  min-width: 0;
+  border: 0;
+  padding: 2px 0;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+}
+.sf-list-head button:not(:disabled) {
+  cursor: pointer;
+}
+.sf-list-head button:hover:not(:disabled),
+.sf-list-head button:focus-visible,
+.sf-list-head button.active {
+  color: var(--sf-accent);
+}
+.sf-list-head button .sf-ui-icon {
+  width: 15px;
+  height: 15px;
+  flex: 0 0 auto;
+}
 .sf-entries.list .sf-entry {
   position: relative;
   width: 100%;

@@ -760,6 +760,24 @@ export default function App({ config }: { config: SoFinderConfig }) {
     setCursorHistory([]);
     void load(resource, path, search, 0, sort, direction, searchMode, null);
   };
+  const changeSort = (nextSort: SortMode, toggleCurrent: boolean) => {
+    const nextDirection = toggleCurrent && sort === nextSort ? (direction === "asc" ? "desc" : "asc") : "asc";
+    setSort(nextSort);
+    setDirection(nextDirection);
+    setCursorHistory([]);
+    void load(resource, path, search, 0, nextSort, nextDirection, searchMode, null);
+  };
+  const changeDirection = () => {
+    const nextDirection = direction === "asc" ? "desc" : "asc";
+    setDirection(nextDirection);
+    setCursorHistory([]);
+    void load(resource, path, search, 0, sort, nextDirection, searchMode, null);
+  };
+  const sortHeading = (mode: SortMode, label: string, className = "") => {
+    const active = sort === mode;
+    const directionLabel = t(direction === "asc" ? "ascending" : "descending");
+    return <button type="button" className={`${className}${active ? " active" : ""}`} disabled={currentResource?.storageCapabilities?.sort === false} aria-pressed={active} aria-label={active ? `${label}, ${directionLabel}` : label} onClick={() => changeSort(mode, true)}><span>{label}</span>{active && <UiIcon name={direction === "asc" ? "sort-asc" : "sort-desc"}/>}</button>;
+  };
 
   return <main className={`sf-app sf-mode-${uiMode}${showSidebar ? "" : " sf-no-sidebar"}${showDetails ? "" : " sf-no-details"}${(uiMode === "manager" || fullTools) && selectedEntries.length > 0 ? " sf-has-selection-actions" : ""}`} onKeyDown={handleKeyDown} onDragOver={event => event.preventDefault()} onDrop={event => { event.preventDefault(); if (event.dataTransfer.files.length) void upload(event.dataTransfer.files); }}>
     <div className={`sf-commandbar ${hasLogo ? "sf-has-brand" : "sf-no-brand"}`}>
@@ -777,8 +795,8 @@ export default function App({ config }: { config: SoFinderConfig }) {
         <button ref={utilityButton} className="sf-icon-only" onClick={() => setUtilityOpen(open => !open)} aria-expanded={utilityOpen} title={t("moreActions")} aria-label={t("moreActions")}><UiIcon name="more"/></button>
         {utilityOpen && <div className="sf-utility-menu" role="menu">
           {config.uiDefaults.languageSwitcher !== false && <label><span>{t("language")}</span><select value={language} onChange={event => setLanguage(event.target.value as Language)} aria-label={t("language")}><option value="zh-cn">简中</option><option value="zh-tw">繁中</option><option value="en">EN</option></select></label>}
-          <label><span>{t("sort")}</span><select value={sort} disabled={currentResource?.storageCapabilities?.sort === false} onChange={event => { const next = event.target.value as SortMode; setSort(next); setCursorHistory([]); void load(resource, path, search, 0, next, direction, searchMode, null); }}><option value="name">{t("name")}</option><option value="size">{t("size")}</option><option value="modified">{t("modified")}</option></select></label>
-          <button role="menuitem" disabled={currentResource?.storageCapabilities?.sort === false} onClick={() => { const next = direction === "asc" ? "desc" : "asc"; setDirection(next); setCursorHistory([]); void load(resource, path, search, 0, sort, next, searchMode, null); }}>{iconButton("sort", t("direction"))}</button>
+          <label><span>{t("sort")}</span><select value={sort} disabled={currentResource?.storageCapabilities?.sort === false} aria-label={t("sort")} onChange={event => changeSort(event.target.value as SortMode, false)}><option value="name">{t("name")}</option><option value="size">{t("size")}</option><option value="type">{t("type")}</option><option value="modified">{t("modified")}</option></select></label>
+          <button role="menuitem" className={`sf-sort-direction ${direction}`} disabled={currentResource?.storageCapabilities?.sort === false} aria-label={`${t("direction")}: ${t(direction === "asc" ? "ascending" : "descending")}`} onClick={changeDirection}>{iconButton(direction === "asc" ? "sort-asc" : "sort-desc", t(direction === "asc" ? "ascending" : "descending"))}</button>
           <button role="menuitem" onClick={() => { setUtilityOpen(false); void load(); }}>{iconButton("refresh", t("refresh"))}</button>
           <button role="menuitem" onClick={() => { setUtilityOpen(false); setSettingsOpen(true); }}>{iconButton("settings", t("settings"))}</button>
           {(uiMode === "manager" || fullTools) && config.securityStatusAvailable !== false && <button role="menuitem" onClick={() => { setUtilityOpen(false); setSecurityStatusOpen(true); }}>{iconButton("security", t("securityStatus"))}</button>}
@@ -840,7 +858,7 @@ export default function App({ config }: { config: SoFinderConfig }) {
         </nav>}
         {loading ? <div className="sf-state">{t("loading")}</div> : entries.length === 0 ? <div className="sf-state">{t("empty")}</div> :
           <div className={`sf-entries ${view} sf-grid-size-${viewSizes.grid} sf-list-size-${viewSizes.list}${view === "list" && listColumns.size ? " sf-list-has-size" : ""}`} style={view === "list" ? { "--sf-list-columns": ["minmax(220px, 1fr)", ...(listColumns.size ? ["100px"] : []), ...(listColumns.type ? ["160px"] : []), ...(listColumns.modified ? ["180px"] : [])].join(" ") } as React.CSSProperties : undefined} role="listbox" aria-multiselectable={uiMode === "manager"} aria-label={t("files")}>
-            {view === "list" && <div className="sf-list-head" role="presentation" aria-hidden="true"><span>{t("name")}</span>{listColumns.size && <span className="sf-list-size">{t("size")}</span>}{listColumns.type && <span className="sf-list-type">{t("type")}</span>}{listColumns.modified && <span className="sf-list-modified">{t("modified")}</span>}</div>}
+            {view === "list" && <div className="sf-list-head">{sortHeading("name", t("name"))}{listColumns.size && sortHeading("size", t("size"), "sf-list-size")}{listColumns.type && sortHeading("type", t("type"), "sf-list-type")}{listColumns.modified && sortHeading("modified", t("modified"), "sf-list-modified")}</div>}
             {entries.map((entry, index) => {
               const image = !entry.directory && canPreviewImage(entry);
               return <button key={entry.path} data-entry-index={index} role="option" aria-selected={selectedPaths.has(entry.path)} aria-label={`${entry.name}, ${entry.directory ? t("folder") : formatSize(entry.size)}`} className={`sf-entry ${selectedPaths.has(entry.path) ? "selected" : ""}`} onClick={event => selectEntry(entry, event)} onDoubleClick={() => openEntry(entry)} onContextMenu={event => { event.preventDefault(); setSelectedPaths(new Set([entry.path])); setSelectionAnchor(entry.path); setContextMenu({ x: event.clientX, y: event.clientY, entry }); }} onPointerDown={event => { if (event.pointerType === "touch") longPress.current = window.setTimeout(() => { setSelectedPaths(new Set([entry.path])); setSelectionAnchor(entry.path); setContextMenu({ x: event.clientX, y: event.clientY, entry }); }, 550); }} onPointerUp={() => { if (longPress.current !== null) window.clearTimeout(longPress.current); longPress.current = null; }} onPointerCancel={() => { if (longPress.current !== null) window.clearTimeout(longPress.current); longPress.current = null; }} onDragOver={event => { if (entry.directory) event.preventDefault(); }} onDrop={event => { if (entry.directory && event.dataTransfer.files.length) { event.preventDefault(); void uploadTo(entry.path, event.dataTransfer.files); } }}>

@@ -1,5 +1,5 @@
 import { t as e } from "./jsx-runtime-BuvfPIin.js";
-import { t } from "./Modal-C1uNxIi2.js";
+import { t } from "./Modal-u0Bikd5w.js";
 //#region src/components/SettingsDialog.tsx
 var n = e();
 function r({ resource: e, tools: r, features: i, columns: a, viewSizes: o, availability: s, scale: c, uploadConflictStrategy: l, translate: u, onToolChange: d, onFeatureChange: f, onColumnChange: p, onViewSizeChange: m, onScaleChange: h, onUploadConflictStrategyChange: g, onClose: _ }) {

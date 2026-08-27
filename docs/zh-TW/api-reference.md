@@ -85,7 +85,7 @@ Plugin Slot／Selection 和 Picker Kind。
 | `path` | 空 | 要列出的資料夾。 |
 | `search` | 空 | 名稱關鍵詞；`searchMode=tags` 時為逗號分隔標籤。 |
 | `searchMode` | `name` | `name` 或 `tags`。 |
-| `sort` | `name` | `name`、`size`、`modified`。 |
+| `sort` | `name` | `name`、`size`、`type`（MIME 類型）、`modified`。 |
 | `direction` | `asc` | `asc` 或 `desc`。 |
 | `offset` | `0` | 支援 Offset 的 Adapter 使用。 |
 | `limit` | `100` | 請求頁大小，伺服器限制為 10–500。 |

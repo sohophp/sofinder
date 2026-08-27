@@ -1,5 +1,5 @@
 import { n as e, t } from "./jsx-runtime-BuvfPIin.js";
-import { n, t as r } from "./Modal-C1uNxIi2.js";
+import { n, t as r } from "./Modal-u0Bikd5w.js";
 //#region src/components/TagsDialog.tsx
 var i = e(), a = t();
 function o({ initial: e, suggestions: t, labels: o, onSave: s, onClose: c }) {

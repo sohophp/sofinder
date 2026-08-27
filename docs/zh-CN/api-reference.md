@@ -86,7 +86,7 @@ Snapshot 检查实际 Discovery Response。
 | `path` | 空 | 要列出的文件夹。 |
 | `search` | 空 | 名称关键词；`searchMode=tags` 时为逗号分隔标签。 |
 | `searchMode` | `name` | `name` 或 `tags`。 |
-| `sort` | `name` | `name`、`size`、`modified`。 |
+| `sort` | `name` | `name`、`size`、`type`（MIME 类型）、`modified`。 |
 | `direction` | `asc` | `asc` 或 `desc`。 |
 | `offset` | `0` | 支持 Offset 的 Adapter 使用。 |
 | `limit` | `100` | 请求页大小，服务器限制为 10–500。 |

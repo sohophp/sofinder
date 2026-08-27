@@ -1,4 +1,4 @@
-export type UiIconName = "add-folder" | "upload" | "select" | "rename" | "copy" | "move" | "delete" | "trash" | "refresh" | "settings" | "security" | "grid" | "list" | "more" | "archive" | "favorite" | "tags" | "rotate-left" | "rotate-right" | "resize" | "crop" | "sort" | "search" | "close" | "add" | "history" | "chevron-left" | "chevron-right" | "chevron-down";
+export type UiIconName = "add-folder" | "upload" | "select" | "rename" | "copy" | "move" | "delete" | "trash" | "refresh" | "settings" | "security" | "grid" | "list" | "more" | "archive" | "favorite" | "tags" | "rotate-left" | "rotate-right" | "resize" | "crop" | "sort" | "sort-asc" | "sort-desc" | "search" | "close" | "add" | "history" | "chevron-left" | "chevron-right" | "chevron-down";
 
 const paths: Record<UiIconName, React.ReactNode> = {
   "add-folder": <><path d="M3 6.5h6l2 2h10v10.5H3z"/><path d="M12 11v6M9 14h6"/></>,
@@ -23,6 +23,8 @@ const paths: Record<UiIconName, React.ReactNode> = {
   resize: <><path d="M4 8V4h4M16 4h4v4M20 16v4h-4M8 20H4v-4"/><path d="m9 9 6 6M15 9l-6 6"/></>,
   crop: <path d="M7 3v14a2 2 0 0 0 2 2h12M3 7h14a2 2 0 0 1 2 2v12"/>,
   sort: <><path d="M8 5v14M5 8l3-3 3 3M16 19V5M13 16l3 3 3-3"/></>,
+  "sort-asc": <><path d="M7 19V5M3.5 8.5 7 5l3.5 3.5"/><path d="M14 7h7M14 12h5M14 17h3"/></>,
+  "sort-desc": <><path d="M7 5v14M3.5 15.5 7 19l3.5-3.5"/><path d="M14 7h3M14 12h5M14 17h7"/></>,
   search: <><circle cx="10.5" cy="10.5" r="6.5"/><path d="m16 16 4 4"/></>,
   close: <path d="m6 6 12 12M18 6 6 18"/>,
   add: <path d="M12 5v14M5 12h14"/>,
@@ -33,5 +35,5 @@ const paths: Record<UiIconName, React.ReactNode> = {
 };
 
 export function UiIcon({ name }: { name: UiIconName }) {
-  return <svg className="sf-ui-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">{paths[name]}</svg>;
+  return <svg className="sf-ui-icon" data-icon={name} viewBox="0 0 24 24" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">{paths[name]}</svg>;
 }
