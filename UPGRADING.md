@@ -1,5 +1,12 @@
 # Upgrading SoFinder
 
+## From 0.1.0-beta.17 to 0.1.0-beta.18
+
+No files or metadata are migrated. The Symfony example's `APP_ENV=s3` now
+registers only `S3Files`; deployments that intentionally demonstrate a second
+provider must switch to `APP_ENV=s3_dual` and define every required
+`SOFINDER_PROVIDER_*2` value. Production host configurations are unchanged.
+
 ## From 0.1.0-beta.16 to 0.1.0-beta.17
 
 Deploy all rebuilt browser assets together. Existing files and metadata need no

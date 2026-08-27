@@ -5,6 +5,12 @@ description: SoFinder 每个公开版本的重要变更。
 
 # 更新日志
 
+## 0.1.0-beta.18 - 2026-08-27
+
+- 普通 Symfony `s3` 演示环境只需配置一个 Provider 即可启动；可选的第二个 Provider 移至明确启用的 `s3_dual` 环境。
+- 为可选的 S3 Prefix、公开 URL、Session Token 和 Path-Style 设置提供安全默认值，同时继续强制配置 Endpoint、Bucket 和凭据。
+- CI 新增单 Provider S3 演示预热测试，确保未配置第二套变量时文件浏览器仍可启动。
+
 ## 0.1.0-beta.17 - 2026-08-27
 
 - 将演示 `Private` 资源隔离到新的空白代理目录，并由安全审计阻止公开与代理资源共用物理根目录。

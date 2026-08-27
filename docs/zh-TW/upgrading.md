@@ -5,6 +5,12 @@ description: 各 SoFinder 預發布版本的相容性、設定與 adapter 升級
 
 # 升級 SoFinder
 
+## 從 0.1.0-beta.17 升級至 0.1.0-beta.18
+
+無需遷移檔案或 metadata。Symfony 範例的 `APP_ENV=s3` 現在只註冊
+`S3Files`；確實需要展示第二個 Provider 時，應改用 `APP_ENV=s3_dual` 並完整設定
+`SOFINDER_PROVIDER_*2` 必要變數。正式 Host 的自訂設定不受影響。
+
 ## 從 0.1.0-beta.16 升級至 0.1.0-beta.17
 
 請一併部署全部重建的 Browser Asset，檔案與 Metadata 無需遷移。新增 Host 功能開關

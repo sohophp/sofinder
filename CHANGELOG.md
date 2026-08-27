@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.1.0-beta.18 - 2026-08-27
+
+- Keep the normal Symfony `s3` demo bootable with one configured provider by
+  moving the optional second provider to an explicit `s3_dual` environment.
+- Add safe defaults for optional S3 prefix, public URL, session token and
+  path-style settings while keeping endpoint, bucket and credentials required.
+- Add CI coverage that warms the single-provider S3 demo without any provider-2
+  variables, preventing optional integrations from breaking the file browser.
+
 ## 0.1.0-beta.17 - 2026-08-27
 
 - Isolate the example `Private` resource in a new empty proxy-only root and make
