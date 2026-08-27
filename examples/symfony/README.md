@@ -28,12 +28,14 @@ pins CKEditor 5 Classic, TinyMCE 8 GPL, TipTap and Quill CDN versions and needs
 no cloud API key; review each editor's license and self-host or update the pinned
 versions before using them in an application.
 
-The example also registers `App\Plugin\FileInspectorPlugin`, a complete
-first-party reference for third-party extensions. Right-click a file in
-SoFinder and choose **Inspect file**. Its same-origin host route receives the
-selection, resolves it again through `FileManager` (therefore repeating
-authorization), and renders only escaped metadata. The same plugin implements
-`HealthCheckInterface`, so it also appears in `/sofinder/health`.
+In the `dev` environment only, the example registers
+`App\Plugin\FileInspectorPlugin`, a complete first-party reference for
+third-party extensions. Right-click a file in SoFinder and choose **Inspect
+file**. Its same-origin host route receives the selection, resolves it again
+through `FileManager` (therefore repeating authorization), and renders only
+escaped metadata. The same plugin implements `HealthCheckInterface`, so it also
+appears in `/sofinder/health`. Production and non-demo environments do not
+register this action or its route.
 
 PDF and Office previews are enabled in the example. `/sofinder/health` must
 report `document-preview: ready`; Office files are converted to private cached

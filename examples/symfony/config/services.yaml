@@ -5,8 +5,23 @@ services:
 
   App\:
     resource: '../src/'
-    exclude: '../src/Kernel.php'
+    exclude:
+      - '../src/Kernel.php'
+      - '../src/Plugin/FileInspectorPlugin.php'
+      - '../src/Controller/PluginInspectorController.php'
 
   App\Controller\:
     resource: '../src/Controller/'
+    exclude: '../src/Controller/PluginInspectorController.php'
     tags: ['controller.service_arguments']
+
+when@dev:
+  services:
+    App\Plugin\FileInspectorPlugin:
+      autowire: true
+      autoconfigure: true
+
+    App\Controller\PluginInspectorController:
+      autowire: true
+      autoconfigure: true
+      tags: ['controller.service_arguments']

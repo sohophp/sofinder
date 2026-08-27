@@ -223,6 +223,13 @@ jobs:
       - run: php bin/console cache:warmup --env=prod --no-interaction
         working-directory: examples/symfony
         env: { APP_ENV: prod, APP_DEBUG: 0 }
+      - name: Verify the reference inspector is available only in the dev demo
+        run: |
+          php bin/console debug:router --env=dev | grep -F '/integrations/plugin-inspector'
+          php bin/console debug:container --tag=sofinder.plugin --env=dev | grep -F 'App\Plugin\FileInspectorPlugin'
+          if php bin/console debug:router --env=prod | grep -F '/integrations/plugin-inspector'; then exit 1; fi
+          if php bin/console debug:container --tag=sofinder.plugin --env=prod | grep -F 'App\Plugin\FileInspectorPlugin'; then exit 1; fi
+        working-directory: examples/symfony
       - run: php bin/console sofinder:image:capabilities --env=prod --json
         working-directory: examples/symfony
         env: { APP_ENV: prod, APP_DEBUG: 0 }

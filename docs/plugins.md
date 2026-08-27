@@ -69,8 +69,10 @@ The repository includes a runnable reference in
 `examples/symfony/src/Plugin/FileInspectorPlugin.php` with its matching
 `PluginInspectorController`. It demonstrates autoconfiguration, a context action,
 repeat authorization through `FileManager`, escaped output, restrictive response
-headers and a plugin health check. Use that pair as the starting point for a
-real extension rather than trusting the path supplied by the browser.
+headers and a plugin health check. The example registers both the action and its
+route only in `APP_ENV=dev`; installing SoFinder in another application never
+registers this demo plugin. Use that pair as the starting point for a real
+extension rather than trusting the path supplied by the browser.
 
 Uploads can add fail-closed scanners through `UploadScannerInterface`; health
 providers implement `HealthCheckInterface`. Both are autoconfigured. The bundled

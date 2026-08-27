@@ -51,7 +51,8 @@ Component 或远程 URL。
 仓库中的 `examples/symfony/src/Plugin/FileInspectorPlugin.php` 及配套
 `PluginInspectorController` 是可直接运行的参考实现，覆盖自动注册、右键动作、通过
 `FileManager` 重新授权、转义输出、限制性响应头和健康检查。实际扩展应以此为起点，
-绝不能信任浏览器传入的路径。
+绝不能信任浏览器传入的路径。示例只在 `APP_ENV=dev` 时注册该动作及路由；其他项目安装
+SoFinder 时不会注册这个演示插件。
 
 上传扫描器实现 `UploadScannerInterface`，健康检查实现 `HealthCheckInterface`，两者会
 自动配置 Tag。内置 `ClamAvScanner` 见[生产与多节点运行](/zh-CN/production)。

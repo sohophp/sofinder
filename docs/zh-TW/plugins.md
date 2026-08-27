@@ -45,7 +45,8 @@ Component 或遠端 URL。
 Repository 中的 `examples/symfony/src/Plugin/FileInspectorPlugin.php` 及配套
 `PluginInspectorController` 是可直接執行的參考實作，涵蓋自動註冊、右鍵動作、透過
 `FileManager` 重新授權、轉義輸出、限制性 Response Header 和健康檢查。實際擴充應以此
-為起點，絕不能信任瀏覽器傳入的路徑。
+為起點，絕不能信任瀏覽器傳入的路徑。範例只在 `APP_ENV=dev` 時註冊該動作及路由；其他
+專案安裝 SoFinder 時不會註冊這個示範 Plugin。
 
 上傳掃描器實作 `UploadScannerInterface`，健康檢查實作 `HealthCheckInterface`，兩者會
 自動設定 Tag。內建 `ClamAvScanner` 見[正式環境與多節點執行](/zh-TW/production)。

@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Restrict the Symfony reference file-inspector action and host route to the
+  development demo so production and consuming applications never expose it.
 - Make every visible list header a server-backed sort control, toggle direction
   on repeated clicks, add MIME-type sorting and use distinct ascending and
   descending icons in both the header and utility menu.

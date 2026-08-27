@@ -1,0 +1,4 @@
+example.plugin.inspector:
+  path: '/integrations/plugin-inspector'
+  controller: 'App\Controller\PluginInspectorController'
+  methods: [GET]

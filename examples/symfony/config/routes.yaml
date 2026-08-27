@@ -7,11 +7,6 @@ example.integrations:
   controller: 'App\Controller\IntegrationDemoController'
   methods: [GET]
 
-example.plugin.inspector:
-  path: '/integrations/plugin-inspector'
-  controller: 'App\Controller\PluginInspectorController'
-  methods: [GET]
-
 example.file.output:
   path: '/host-files/{resource}/{name}'
   controller: 'App\Controller\HostFileController::output'
