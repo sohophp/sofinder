@@ -3,6 +3,7 @@ export interface PresentableImageAsset {
     name: string;
     url: string;
     alt?: string | null;
+    altTranslations?: Record<string, string>;
     width?: number | null;
     height?: number | null;
     variants?: Array<{
@@ -12,6 +13,7 @@ export interface PresentableImageAsset {
 }
 export interface ImagePresentationOptions<T extends PresentableImageAsset = PresentableImageAsset> {
     defaultAlt?: (asset: T) => string;
+    locale?: string;
     sizes?: string | ((asset: T) => string);
 }
 export declare const altForAsset: <T extends PresentableImageAsset>(asset: T, options?: ImagePresentationOptions<T>) => string;

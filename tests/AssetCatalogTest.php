@@ -31,7 +31,7 @@ final class AssetCatalogTest extends TestCase
     public function testMetadataDistinguishesUnsetAndDecorativeAltAndUsesOptimisticVersion(): void
     {
         $catalog = new JsonAssetCatalog($this->directory . '/assets.json'); $asset = $catalog->register('main', 'Files', new Entry('photo.jpg', 'photo.jpg', false, 1, 1));
-        $updated = $catalog->updateMetadata($asset->id, '', null, ['hero'], 1); self::assertSame('', $updated->alt); self::assertSame(2, $updated->metadataVersion);
+        $updated = $catalog->updateLocalizedMetadata($asset->id, '', null, ['hero'], 1, ['en' => 'Hero image']); self::assertSame('', $updated->alt); self::assertSame(['en' => 'Hero image'], $updated->altTranslations); self::assertSame(2, $updated->metadataVersion);
         $this->expectException(SoFinderException::class); $this->expectExceptionMessage('changed by another request'); $catalog->updateMetadata($asset->id, null, null, [], 1);
     }
 

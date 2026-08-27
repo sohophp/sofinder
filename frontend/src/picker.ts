@@ -17,6 +17,7 @@ export interface PickerEntry {
   version?: string;
   downloadUrl?: string | null;
   alt?: string | null;
+  altTranslations?: Record<string, string>;
   variants?: Array<{ width: number; height: number; url: string; mimeType: string }>;
 }
 
@@ -105,7 +106,15 @@ const validEntry = (value: unknown): value is PickerEntry => {
 
 type EditorPickerOptions = Omit<PickerOptions, "kind">;
 
-const pickerAlt = (entry: PickerEntry, options: PickerOptions): string => options.defaultAlt?.(entry) ?? entry.alt ?? entry.name.replace(/\.[^.]+$/, "");
+const pickerAlt = (entry: PickerEntry, options: PickerOptions): string => {
+  const locale = options.language?.toLowerCase();
+  const localized = locale && Object.prototype.hasOwnProperty.call(entry.altTranslations ?? {}, locale)
+    ? entry.altTranslations?.[locale]
+    : locale && Object.prototype.hasOwnProperty.call(entry.altTranslations ?? {}, locale.split("-")[0])
+      ? entry.altTranslations?.[locale.split("-")[0]]
+      : undefined;
+  return options.defaultAlt?.(entry) ?? localized ?? entry.alt ?? entry.name.replace(/\.[^.]+$/, "");
+};
 const pickerAttributes = (entry: PickerEntry, options: PickerOptions): Record<string, string> => {
   const attributes: Record<string, string> = { src: entry.url, alt: pickerAlt(entry, options) };
   if (entry.assetId) attributes["data-sofinder-asset-id"] = entry.assetId;

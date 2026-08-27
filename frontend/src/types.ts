@@ -217,11 +217,12 @@ export interface AssetReference {
   width: number | null;
   height: number | null;
   alt: string | null;
+  altTranslations?: Record<string, string>;
   variants: ImageVariant[];
   capabilities: Record<string, boolean>;
 }
 
-export interface AssetMetadata { alt: string | null; title: string | null; tags: string[]; version: number; updatedAt: number }
+export interface AssetMetadata { alt: string | null; altTranslations?: Record<string, string>; title: string | null; tags: string[]; version: number; updatedAt: number }
 
 export interface TrashItem {
   id: string;

@@ -77,8 +77,8 @@ final class AssetPlatformTest extends TestCase
         $responsive = (new AssetReferenceFactory($router, $this->workspaces, variantsEnabled: true, variantWidths: [320, 1200], variantFormats: ['original']))->create('Files', new Entry('photo.jpg', 'photo.jpg', false, 100, 10, 'image/jpeg', '/files/photo.jpg'), ['width' => 1000, 'height' => 500]);
         self::assertSame([320], array_column($responsive['variants'], 'width')); self::assertSame(160, $responsive['variants'][0]['height']);
         $loaded = $this->data($controller->get($asset['assetId'])); self::assertNull($loaded['metadata']['alt']);
-        $request = Request::create('/assets/id/metadata', 'PATCH', server: ['HTTP_X_CSRF_TOKEN' => 'valid'], content: json_encode(['alt' => '', 'title' => 'Manual', 'tags' => ['docs'], 'version' => 1], JSON_THROW_ON_ERROR));
-        $updated = $this->data($controller->update($request, $asset['assetId'])); self::assertSame('', $updated['metadata']['alt']); self::assertSame(2, $updated['metadata']['version']);
+        $request = Request::create('/assets/id/metadata', 'PATCH', server: ['HTTP_X_CSRF_TOKEN' => 'valid'], content: json_encode(['alt' => '', 'altTranslations' => ['ZH-CN' => '操作手册', 'en' => 'Manual'], 'title' => 'Manual', 'tags' => ['docs'], 'version' => 1], JSON_THROW_ON_ERROR));
+        $updated = $this->data($controller->update($request, $asset['assetId'])); self::assertSame('', $updated['metadata']['alt']); self::assertSame(['en' => 'Manual', 'zh-cn' => '操作手册'], $updated['metadata']['altTranslations']); self::assertSame(2, $updated['metadata']['version']);
         self::assertSame(['before', 'after'], array_column(array_map(static fn (AssetOperationEvent $event): array => $event->jsonSerialize(), $published), 'phase')); self::assertSame($published[0]->operationId, $published[1]->operationId);
         self::assertSame('asset_metadata_conflict', $publisher->errorCode(new SoFinderException('conflict', 'asset_metadata_conflict', 409)));
 

@@ -19,7 +19,10 @@ var e = "1.0", t = () => typeof crypto < "u" && typeof crypto.randomUUID == "fun
 	if (!e || typeof e != "object") return !1;
 	let t = e;
 	return typeof t.resource == "string" && t.resource !== "" && typeof t.path == "string" && typeof t.name == "string" && t.directory === !1 && typeof t.size == "number" && typeof t.modifiedAt == "number" && typeof t.url == "string" && t.url !== "" && (t.mimeType === null || typeof t.mimeType == "string") && (t.width === null || typeof t.width == "number") && (t.height === null || typeof t.height == "number") && typeof t.capabilities == "object" && t.capabilities !== null;
-}, a = (e, t) => t.defaultAlt?.(e) ?? e.alt ?? e.name.replace(/\.[^.]+$/, ""), o = (e, t) => {
+}, a = (e, t) => {
+	let n = t.language?.toLowerCase(), r = n && Object.prototype.hasOwnProperty.call(e.altTranslations ?? {}, n) ? e.altTranslations?.[n] : n && Object.prototype.hasOwnProperty.call(e.altTranslations ?? {}, n.split("-")[0]) ? e.altTranslations?.[n.split("-")[0]] : void 0;
+	return t.defaultAlt?.(e) ?? r ?? e.alt ?? e.name.replace(/\.[^.]+$/, "");
+}, o = (e, t) => {
 	let n = {
 		src: e.url,
 		alt: a(e, t)

@@ -3,6 +3,7 @@ export interface PresentableImageAsset {
   name: string;
   url: string;
   alt?: string | null;
+  altTranslations?: Record<string, string>;
   width?: number | null;
   height?: number | null;
   variants?: Array<{ width: number; url: string }>;
@@ -10,11 +11,21 @@ export interface PresentableImageAsset {
 
 export interface ImagePresentationOptions<T extends PresentableImageAsset = PresentableImageAsset> {
   defaultAlt?: (asset: T) => string;
+  locale?: string;
   sizes?: string | ((asset: T) => string);
 }
 
+const localizedAlt = (asset: PresentableImageAsset, locale?: string): string | null | undefined => {
+  if (!locale) return undefined;
+  const normalized = locale.trim().toLowerCase();
+  if (!normalized) return undefined;
+  if (Object.prototype.hasOwnProperty.call(asset.altTranslations ?? {}, normalized)) return asset.altTranslations?.[normalized];
+  const language = normalized.split("-")[0];
+  return Object.prototype.hasOwnProperty.call(asset.altTranslations ?? {}, language) ? asset.altTranslations?.[language] : undefined;
+};
+
 export const altForAsset = <T extends PresentableImageAsset>(asset: T, options: ImagePresentationOptions<T> = {}): string =>
-  options.defaultAlt?.(asset) ?? asset.alt ?? asset.name.replace(/\.[^.]+$/, "");
+  options.defaultAlt?.(asset) ?? localizedAlt(asset, options.locale) ?? asset.alt ?? asset.name.replace(/\.[^.]+$/, "");
 
 export const attributesForAsset = <T extends PresentableImageAsset>(asset: T, options: ImagePresentationOptions<T> = {}): Record<string, string> => {
   const attributes: Record<string, string> = { src: asset.url, alt: altForAsset(asset, options) };

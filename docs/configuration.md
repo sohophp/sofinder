@@ -284,6 +284,7 @@ Resources also support limits for Unicode file and folder name length, folder de
 `metadata.update` is a first-class write operation. Use it in
 `operation_roles` or `path_acl` when asset alt/title/tag editing should be more
 restricted than file reading; read-only resources always deny it.
+The built-in catalogs also implement `LocalizedAssetMetadataCatalogInterface`, which stores up to 20 normalized language tags in `altTranslations`. Third-party catalogs can opt in through that additive interface without changing `AssetCatalogInterface`.
 
 ## Inspect effective configuration
 

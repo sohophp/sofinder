@@ -60,7 +60,7 @@ final readonly class AssetReferenceFactory
             'downloadUrl' => $this->router->generate('sofinder_api_download', ['resource' => $resource, 'path' => $entry->path], UrlGeneratorInterface::ABSOLUTE_PATH),
             'width' => isset($dimensions['width']) ? (int) $dimensions['width'] : null,
             'height' => isset($dimensions['height']) ? (int) $dimensions['height'] : null,
-            'alt' => $record?->alt, 'variants' => $variants, 'capabilities' => $capabilities,
+            'alt' => $record?->alt, 'altTranslations' => $record->altTranslations ?? [], 'variants' => $variants, 'capabilities' => $capabilities,
         ];
     }
 }

@@ -5,6 +5,7 @@ export interface EditorAdapterOptions extends Omit<SoFinderClientOptions, "onCon
     path?: string | (() => string);
     conflictStrategy?: UploadConflictStrategy;
     defaultAlt?: (asset: AssetReference) => string;
+    locale?: string;
     sizes?: string | ((asset: AssetReference) => string);
     onConflict?: SoFinderClientOptions["onConflict"];
     onTaskChange?: (task: UploadTaskSnapshot) => void;

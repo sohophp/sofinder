@@ -22,12 +22,12 @@ describe("picker SDK", () => {
     const textarea = document.createElement("textarea");
     textarea.value = "Before after";
     textarea.setSelectionRange(7, 7);
-    const promise = selectForMarkdown(textarea, { baseUrl: "/sofinder/browser", kind: "image" });
+    const promise = selectForMarkdown(textarea, { baseUrl: "/sofinder/browser", kind: "image", language: "zh-cn" });
     const opened = new URL(String(vi.mocked(window.open).mock.calls.at(-1)?.[0]), window.location.href);
-    const entry = { resource: "Images", path: "photo.png", name: "photo.png", directory: false, size: 12, modifiedAt: 1, mimeType: "image/png", url: "/files/photo.png", width: 320, height: 180, capabilities: {} };
+    const entry = { resource: "Images", path: "photo.png", name: "photo.png", directory: false, size: 12, modifiedAt: 1, mimeType: "image/png", url: "/files/photo.png", width: 320, height: 180, altTranslations: { "zh-cn": "产品照片" }, capabilities: {} };
     window.dispatchEvent(new MessageEvent("message", { source: popup, origin: window.location.origin, data: { type: "sofinder:select", version: "1.0", requestId: opened.searchParams.get("pickerRequestId"), entry } }));
     await promise;
-    expect(textarea.value).toBe("Before ![photo](</files/photo.png>)after");
+    expect(textarea.value).toBe("Before ![产品照片](</files/photo.png>)after");
   });
 
   it("accepts only a matching source, origin, version and request", async () => {

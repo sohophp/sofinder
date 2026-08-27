@@ -53,7 +53,7 @@ export class Api {
   }
 
   asset(id: string) { return this.request<{ asset: AssetReference; metadata: AssetMetadata }>(`/assets/${encodeURIComponent(id)}`); }
-  updateAssetMetadata(id: string, metadata: Pick<AssetMetadata, "alt" | "title" | "tags" | "version">) {
+  updateAssetMetadata(id: string, metadata: Pick<AssetMetadata, "alt" | "altTranslations" | "title" | "tags" | "version">) {
     return this.request<{ metadata: AssetMetadata }>(`/assets/${encodeURIComponent(id)}/metadata`, { method: "PATCH", body: JSON.stringify(metadata) });
   }
 

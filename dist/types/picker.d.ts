@@ -16,6 +16,7 @@ export interface PickerEntry {
     version?: string;
     downloadUrl?: string | null;
     alt?: string | null;
+    altTranslations?: Record<string, string>;
     variants?: Array<{
         width: number;
         height: number;

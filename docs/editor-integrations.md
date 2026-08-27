@@ -43,11 +43,12 @@ import { selectForCkeditor5 } from '/sofinder/assets/sofinder-picker.js'
 
 button.addEventListener('click', () => selectForCkeditor5(editor, {
   baseUrl: '/sofinder/browser',
-  resource: 'Images'
+  resource: 'Images',
+  language: 'en'
 }))
 ```
 
-The adapter executes CKEditor 5's public `insertImage` and alternative-text commands. When the asset catalog is enabled, picker and upload insertion preserve explicit `alt=""`, use the asset default alt when set, and otherwise fall back to the extension-free filename. Responsive variants, dimensions and `data-sofinder-asset-id` are also carried where the editor model supports them. Configure its
+The adapter executes CKEditor 5's public `insertImage` and alternative-text commands. When the asset catalog is enabled, picker and upload insertion preserve explicit `alt=""`, resolve `altTranslations` for `language`/`locale`, use the asset default alt next, and otherwise fall back to the extension-free filename. Translation keys are normalized BCP 47-style tags such as `en`, `zh-cn` and `fr-ca`; the metadata API accepts up to 20. Pass `locale: 'en'` to an upload adapter. Responsive variants, dimensions and `data-sofinder-asset-id` are also carried where the editor model supports them. Configure its
 Image plugin and follow the [official installation and licensing guide](https://ckeditor.com/docs/ckeditor5/latest/getting-started/installation/cloud/quick-start.html).
 The legacy CKEditor 4 callback and quick-upload endpoints remain available.
 

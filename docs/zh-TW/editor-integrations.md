@@ -36,11 +36,12 @@ import { selectForCkeditor5 } from '/sofinder/assets/sofinder-picker.js'
 
 button.addEventListener('click', () => selectForCkeditor5(editor, {
   baseUrl: '/sofinder/browser',
-  resource: 'Images'
+  resource: 'Images',
+  language: 'zh-tw'
 }))
 ```
 
-Adapter 呼叫 CKEditor 5 公開的 `insertImage` 與替代文字 Command。啟用資產目錄後，Picker 與上傳會保留明確的 `alt=""`，優先使用資產預設替代文字；未設定時才使用移除副檔名的檔名，並盡量寫入響應式變體、寬高及 `data-sofinder-asset-id`。安裝與授權要求請參考
+Adapter 呼叫 CKEditor 5 公開的 `insertImage` 與替代文字 Command。啟用資產目錄後，Picker 與上傳會保留明確的 `alt=""`，先依 `language`／`locale` 讀取 `altTranslations`，再使用資產預設替代文字；仍未設定時才使用移除副檔名的檔名。語言鍵採規範化 BCP 47 風格，例如 `en`、`zh-tw`、`fr-ca`，中繼資料 API 最多接受 20 種語言；上傳 Adapter 可傳 `locale: 'zh-tw'`。同時會盡量寫入響應式變體、寬高及 `data-sofinder-asset-id`。安裝與授權要求請參考
 [CKEditor 官方指南](https://ckeditor.com/docs/ckeditor5/latest/getting-started/installation/cloud/quick-start.html)。
 既有 CKEditor 4 Callback 與 Quick Upload Endpoint 會繼續保留。
 

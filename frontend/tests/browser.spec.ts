@@ -129,15 +129,17 @@ test("shows and copies an absolute public file URL", async ({ page }) => {
 test("edits image alternative text from the context, details and preview surfaces", async ({ page }) => {
   const assetId = "00000000-0000-4000-8000-000000000001";
   let savedAlt: string | null = null;
+  let savedTranslations: Record<string, string> = {};
   await page.route("**/sofinder/api/config", route => route.fulfill({ json: { success: true, data: { apiVersion: "1.0", resources: [{ name: "Files", publicUrl: "/files", allowedExtensions: ["png"], maxSize: 1000000, readOnly: false, quotaBytes: 0, usedBytes: 68, maxFileNameLength: 120, maxFolderNameLength: 50, maxFolderDepth: 5, deliveryMode: "public", storageCapabilities: { search: true, sort: true, cursorPagination: false, atomicMove: true, nativeCopy: true, recoverableDelete: true, publicUrl: true } }], plugins: [], imagePresets: {}, imageCapabilities: { driver: "gd", formats: [{ format: "png", extensions: ["png"], mimes: ["image/png"], processor: "gd", read: true, edit: true, thumbnail: true, webEmbeddable: true }] }, assetCatalog: { enabled: true }, imageVariants: { enabled: true } } } }));
   await page.route("**/sofinder/api/entries?*", route => route.fulfill({ json: { success: true, data: { entries: [{ path: "photo.png", name: "photo.png", directory: false, size: 68, modifiedAt: 2, mimeType: "image/png", url: "/files/photo.png", capabilities: { read: true, "metadata.update": true } }], total: 1, path: "", offset: 0, limit: 100, nextCursor: null, sort: "name", direction: "asc", capabilities: {} } } }));
   const asset = { schemaVersion: "1.0", assetId, resource: "Files", path: "photo.png", name: "photo.png", directory: false, mimeType: "image/png", size: 68, modifiedAt: 2, version: "2-68", url: "/files/photo.png", downloadUrl: "/sofinder/api/download?resource=Files&path=photo.png", width: 1200, height: 400, alt: "A campaign photo", variants: [{ width: 320, height: 107, url: "/sofinder/api/images/variant?width=320", mimeType: "image/webp" }], capabilities: { embeddable: true, responsiveImages: true, assetMetadata: true, "metadata.update": true } };
   await page.route("**/sofinder/api/assets/resolve?*", route => route.fulfill({ json: { success: true, data: { asset } } }));
   await page.route(`**/sofinder/api/assets/${assetId}**`, async route => {
     if (route.request().method() === "PATCH") {
-      const body = route.request().postDataJSON() as { alt: string | null };
+      const body = route.request().postDataJSON() as { alt: string | null; altTranslations: Record<string, string> };
       savedAlt = body.alt;
-      await route.fulfill({ json: { success: true, data: { metadata: { alt: body.alt, title: null, tags: [], version: 2, updatedAt: 3 } } } });
+      savedTranslations = body.altTranslations;
+      await route.fulfill({ json: { success: true, data: { metadata: { alt: body.alt, altTranslations: body.altTranslations, title: null, tags: [], version: 2, updatedAt: 3 } } } });
       return;
     }
     await route.fulfill({ json: { success: true, data: { asset, metadata: { alt: asset.alt, title: null, tags: [], version: 1, updatedAt: 2 } } } });
@@ -154,9 +156,17 @@ test("edits image alternative text from the context, details and preview surface
   await page.getByRole("menuitem", { name: "资产元数据" }).click();
   const dialog = page.getByRole("dialog", { name: "资产元数据" });
   await expect(dialog.getByRole("textbox", { name: "默认替代文本" })).toHaveValue("A campaign photo");
+  await expect(dialog.locator(".sf-asset-decorative")).toHaveCSS("display", "flex");
+  await expect(dialog.locator(".sf-modal-actions")).toHaveCSS("justify-content", "flex-end");
+  expect((await dialog.getByRole("textbox", { name: "默认替代文本" }).boundingBox())?.height).toBeGreaterThanOrEqual(38);
+  await dialog.getByRole("textbox", { name: "简体中文" }).fill("活动照片");
+  await dialog.getByRole("textbox", { name: "语言代码" }).fill("fr-CA");
+  await dialog.getByRole("button", { name: "添加语言" }).click();
+  await dialog.getByRole("textbox", { name: "fr-ca" }).fill("Photo de campagne");
   await dialog.getByRole("checkbox", { name: /装饰性图片/ }).check();
   await dialog.getByRole("button", { name: "保存" }).click();
   await expect.poll(() => savedAlt).toBe("");
+  await expect.poll(() => savedTranslations).toEqual({ "zh-cn": "活动照片", "fr-ca": "Photo de campagne" });
 
   await photo.click({ button: "right" });
   await page.getByRole("menuitem", { name: "预览" }).click();

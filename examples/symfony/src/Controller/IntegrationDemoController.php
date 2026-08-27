@@ -49,8 +49,8 @@ final readonly class IntegrationDemoController
   import { installTiptapUploads, uploadForTiptap } from '/sofinder/assets/sofinder-tiptap.js';
   import { installQuillUploads } from '/sofinder/assets/sofinder-quill.js';
   const baseUrl = '/sofinder/browser';
-  const editorOptions = { apiBase: '/sofinder/api', csrfToken: __CSRF_TOKEN__, resource: 'Files', conflictStrategy: 'ask', onTaskChange: task => task.status !== 'ready' && console.info('SoFinder upload', task.status, task.progress) };
-  const imageOptions = { baseUrl, resource: 'Files', tools: 'common' };
+  const editorOptions = { apiBase: '/sofinder/api', csrfToken: __CSRF_TOKEN__, resource: 'Files', locale: 'zh-cn', conflictStrategy: 'ask', onTaskChange: task => task.status !== 'ready' && console.info('SoFinder upload', task.status, task.progress) };
+  const imageOptions = { baseUrl, resource: 'Files', language: 'zh-cn', tools: 'common' };
   const status = (id, value) => document.getElementById(id).textContent = value ? `已选择：${value.name}` : '';
   document.querySelectorAll('[data-pane]').forEach(button => button.addEventListener('click', () => {
     document.querySelectorAll('[data-pane]').forEach(item => item.classList.toggle('active', item === button));

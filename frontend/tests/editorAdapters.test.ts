@@ -18,6 +18,13 @@ describe("editor adapters", () => {
     expect(imageHtmlForAsset({ ...asset, alt: 'A <photo> & "caption"' })).toContain('alt="A &lt;photo&gt; &amp; &quot;caption&quot;"');
   });
 
+  it("selects localized alt before the default and preserves localized decorative text", () => {
+    const localized = { ...asset, altTranslations: { en: "English photo", "zh-cn": "中文照片", "zh-tw": "" } };
+    expect(altForAsset(localized, { locale: "zh-CN" })).toBe("中文照片");
+    expect(altForAsset(localized, { locale: "zh-TW" })).toBe("");
+    expect(altForAsset(localized, { locale: "fr-FR" })).toBe("A photo");
+  });
+
   it("registers a CKEditor 5 public upload adapter factory", () => {
     const repository = { createUploadAdapter: vi.fn() }; const editor = { plugins: { get: vi.fn(() => repository) } };
     createCkeditor5UploadPlugin({ apiBase: "/api", csrfToken: "token", resource: "Images" })(editor);

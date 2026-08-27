@@ -5,12 +5,13 @@ declare(strict_types=1);
 namespace SohoPHP\SoFinder\Asset;
 
 use SohoPHP\SoFinder\Contract\AssetCatalogInterface;
+use SohoPHP\SoFinder\Contract\LocalizedAssetMetadataCatalogInterface;
 use SohoPHP\SoFinder\Exception\NotFoundException;
 use SohoPHP\SoFinder\Exception\SoFinderException;
 use SohoPHP\SoFinder\Value\AssetRecord;
 use SohoPHP\SoFinder\Value\Entry;
 
-final readonly class JsonAssetCatalog implements AssetCatalogInterface
+final readonly class JsonAssetCatalog implements AssetCatalogInterface, LocalizedAssetMetadataCatalogInterface
 {
     public function __construct(private string $file)
     {
@@ -37,7 +38,7 @@ final readonly class JsonAssetCatalog implements AssetCatalogInterface
             if (!is_string($id) || !isset($data['assets'][$id])) $id = $this->uuid();
             $existing = is_array($data['assets'][$id] ?? null) ? $data['assets'][$id] : [];
             $data['paths'][$key] = $id;
-            $data['assets'][$id] = $existing + ['workspace' => $workspace, 'resource' => $resource, 'path' => $entry->path, 'alt' => null, 'title' => null, 'tags' => [], 'metadataVersion' => 1, 'updatedAt' => time()];
+            $data['assets'][$id] = $existing + ['workspace' => $workspace, 'resource' => $resource, 'path' => $entry->path, 'alt' => null, 'altTranslations' => [], 'title' => null, 'tags' => [], 'metadataVersion' => 1, 'updatedAt' => time()];
             $data['assets'][$id]['workspace'] = $workspace; $data['assets'][$id]['resource'] = $resource; $data['assets'][$id]['path'] = $entry->path;
             $data['assets'][$id]['version'] = $entry->modifiedAt . '-' . $entry->size; $data['assets'][$id]['deleted'] = false;
             return $this->record($id, $data['assets'][$id]);
@@ -76,11 +77,26 @@ final readonly class JsonAssetCatalog implements AssetCatalogInterface
 
     public function updateMetadata(string $assetId, ?string $alt, ?string $title, array $tags, int $expectedVersion): AssetRecord
     {
-        return $this->mutate(function (array &$data) use ($assetId, $alt, $title, $tags, $expectedVersion): AssetRecord {
+        return $this->writeMetadata($assetId, $alt, $title, $tags, $expectedVersion, null);
+    }
+
+    public function updateLocalizedMetadata(string $assetId, ?string $alt, ?string $title, array $tags, int $expectedVersion, array $altTranslations): AssetRecord
+    {
+        return $this->writeMetadata($assetId, $alt, $title, $tags, $expectedVersion, $altTranslations);
+    }
+
+    /**
+     * @param list<string> $tags
+     * @param array<string,string>|null $altTranslations
+     */
+    private function writeMetadata(string $assetId, ?string $alt, ?string $title, array $tags, int $expectedVersion, ?array $altTranslations): AssetRecord
+    {
+        return $this->mutate(function (array &$data) use ($assetId, $alt, $title, $tags, $expectedVersion, $altTranslations): AssetRecord {
             if (!isset($data['assets'][$assetId]) || !is_array($data['assets'][$assetId])) throw new NotFoundException('The asset does not exist.');
             $current = (int) ($data['assets'][$assetId]['metadataVersion'] ?? 1);
             if ($current !== $expectedVersion) throw new SoFinderException('The asset metadata was changed by another request.', 'asset_metadata_conflict', 409);
             $data['assets'][$assetId]['alt'] = $alt; $data['assets'][$assetId]['title'] = $title; $data['assets'][$assetId]['tags'] = $tags;
+            if ($altTranslations !== null) $data['assets'][$assetId]['altTranslations'] = $altTranslations;
             $data['assets'][$assetId]['metadataVersion'] = $current + 1; $data['assets'][$assetId]['updatedAt'] = time();
             return $this->record($assetId, $data['assets'][$assetId]);
         });
@@ -106,7 +122,7 @@ final readonly class JsonAssetCatalog implements AssetCatalogInterface
     /** @param array<string,mixed> $value */
     private function record(string $id, array $value): AssetRecord
     {
-        return new AssetRecord($id, (string) ($value['workspace'] ?? 'main'), (string) ($value['resource'] ?? ''), (string) ($value['path'] ?? ''), (string) ($value['version'] ?? ''), array_key_exists('alt', $value) && $value['alt'] !== null ? (string) $value['alt'] : null, array_key_exists('title', $value) && $value['title'] !== null ? (string) $value['title'] : null, array_values(array_filter((array) ($value['tags'] ?? []), 'is_string')), (int) ($value['metadataVersion'] ?? 1), (int) ($value['updatedAt'] ?? 0), (bool) ($value['deleted'] ?? false));
+        return new AssetRecord($id, (string) ($value['workspace'] ?? 'main'), (string) ($value['resource'] ?? ''), (string) ($value['path'] ?? ''), (string) ($value['version'] ?? ''), array_key_exists('alt', $value) && $value['alt'] !== null ? (string) $value['alt'] : null, array_key_exists('title', $value) && $value['title'] !== null ? (string) $value['title'] : null, array_values(array_filter((array) ($value['tags'] ?? []), 'is_string')), (int) ($value['metadataVersion'] ?? 1), (int) ($value['updatedAt'] ?? 0), (bool) ($value['deleted'] ?? false), array_filter((array) ($value['altTranslations'] ?? []), 'is_string'));
     }
 
     private function key(string $workspace, string $resource, string $path): string { return hash('sha256', $workspace . "\0" . $resource . "\0" . $path); }

@@ -231,6 +231,7 @@ so_finder:
 資源也支援 Unicode 檔名／資料夾名稱長度、資料夾深度、批次大小、遞迴操作、壓縮檔項目／Byte，以及圖片尺寸／像素限制。[Symfony 整合指南](/zh-TW/symfony)提供包含 ACL、宿主路由及顯示選項的完整範例。
 
 `metadata.update` 是獨立的寫入操作。若資產替代文字、標題及共享標籤需要比檔案讀取更嚴格的限制，可在 `operation_roles` 或 `path_acl` 中分別設定；唯讀資源一律拒絕此操作。
+內建資產目錄亦實作 `LocalizedAssetMetadataCatalogInterface`，透過 `altTranslations` 儲存最多 20 個規範化語言標籤。第三方目錄可選擇實作此新增介面，無需修改既有 `AssetCatalogInterface`。
 
 ## 檢查有效設定
 

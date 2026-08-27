@@ -8187,9 +8187,9 @@ var u = /* @__PURE__ */ e(((e) => {
 		return i.data;
 	}
 }, x = {
-	en: () => import("./en-Chkg4AUX.js"),
-	"zh-cn": () => import("./zh-cn-CyEi5PvU.js"),
-	"zh-tw": () => import("./zh-tw-ECaL11o-.js")
+	en: () => import("./en-rjzukFLR.js"),
+	"zh-cn": () => import("./zh-cn-CaMcD-Oy.js"),
+	"zh-tw": () => import("./zh-tw-b92g8Xwj.js")
 }, ee = async (e) => (await x[e]()).default, te = (e) => (t) => e[t], S = (e) => {
 	let t = localStorage.getItem("sofinder.language");
 	return t === "en" || t === "zh-cn" || t === "zh-tw" ? t : e;
@@ -8786,7 +8786,7 @@ function Ie(e, t, n, r) {
 }
 //#endregion
 //#region src/App.tsx
-var Le = (0, g.lazy)(() => import("./ImageEditor-BC9FnRNj.js").then((e) => ({ default: e.ImageEditor }))), Re = (0, g.lazy)(() => import("./ImageProcessDialog-BXXUiXNB.js").then((e) => ({ default: e.ImageProcessDialog }))), ze = (0, g.lazy)(() => import("./SecurityStatusDialog-CLbhkkDo.js").then((e) => ({ default: e.SecurityStatusDialog }))), Be = (0, g.lazy)(() => import("./DocumentPreviewPane-DhmHG-pU.js")), Ve = (0, g.lazy)(() => import("./SettingsDialog-BhOPM_OQ.js").then((e) => ({ default: e.SettingsDialog }))), He = (0, g.lazy)(() => import("./DestinationDialog-CHfiXcOr.js").then((e) => ({ default: e.DestinationDialog }))), Ue = (0, g.lazy)(() => import("./BulkRenameDialog-Dr9MLWWP.js").then((e) => ({ default: e.BulkRenameDialog }))), We = (0, g.lazy)(() => import("./TrashDialog-CRUzG7u0.js").then((e) => ({ default: e.TrashDialog }))), Ge = (0, g.lazy)(() => import("./TagsDialog-C5MRKRfY.js").then((e) => ({ default: e.TagsDialog }))), Ke = (0, g.lazy)(() => import("./FolderTree-CmQzaPks.js").then((e) => ({ default: e.FolderTree }))), qe = (0, g.lazy)(() => import("./DetailsPanel-B1NHUDuI.js").then((e) => ({ default: e.DetailsPanel }))), Je = (0, g.lazy)(() => import("./ShareDialog-eimnLvhx.js")), Ye = (0, g.lazy)(() => import("./FavoritesPage-CsbtbprE.js")), Xe = (0, g.lazy)(() => import("./MetadataSidebarPanels-B5JLnmbU.js")), Ze = (0, g.lazy)(() => import("./MetadataSidebarPanels-B5JLnmbU.js").then((e) => ({ default: e.RecentPanel }))), Qe = (0, g.lazy)(() => import("./ContextMenu-B5qP5e8D.js").then((e) => ({ default: e.ContextMenu }))), $e = (0, g.lazy)(() => import("./UploadQueue-DORLpY6-.js").then((e) => ({ default: e.UploadQueue }))), et = (0, g.lazy)(() => import("./ImagePreviewPane-D5O_-Lqv.js")), tt = (0, g.lazy)(() => import("./AssetMetadataDialog-DNmujGaU.js").then((e) => ({ default: e.AssetMetadataDialog }))), nt = () => {
+var Le = (0, g.lazy)(() => import("./ImageEditor-BC9FnRNj.js").then((e) => ({ default: e.ImageEditor }))), Re = (0, g.lazy)(() => import("./ImageProcessDialog-BXXUiXNB.js").then((e) => ({ default: e.ImageProcessDialog }))), ze = (0, g.lazy)(() => import("./SecurityStatusDialog-CLbhkkDo.js").then((e) => ({ default: e.SecurityStatusDialog }))), Be = (0, g.lazy)(() => import("./DocumentPreviewPane-DhmHG-pU.js")), Ve = (0, g.lazy)(() => import("./SettingsDialog-BhOPM_OQ.js").then((e) => ({ default: e.SettingsDialog }))), He = (0, g.lazy)(() => import("./DestinationDialog-CHfiXcOr.js").then((e) => ({ default: e.DestinationDialog }))), Ue = (0, g.lazy)(() => import("./BulkRenameDialog-Dr9MLWWP.js").then((e) => ({ default: e.BulkRenameDialog }))), We = (0, g.lazy)(() => import("./TrashDialog-CRUzG7u0.js").then((e) => ({ default: e.TrashDialog }))), Ge = (0, g.lazy)(() => import("./TagsDialog-C5MRKRfY.js").then((e) => ({ default: e.TagsDialog }))), Ke = (0, g.lazy)(() => import("./FolderTree-CmQzaPks.js").then((e) => ({ default: e.FolderTree }))), qe = (0, g.lazy)(() => import("./DetailsPanel-B1NHUDuI.js").then((e) => ({ default: e.DetailsPanel }))), Je = (0, g.lazy)(() => import("./ShareDialog-eimnLvhx.js")), Ye = (0, g.lazy)(() => import("./FavoritesPage-CsbtbprE.js")), Xe = (0, g.lazy)(() => import("./MetadataSidebarPanels-B5JLnmbU.js")), Ze = (0, g.lazy)(() => import("./MetadataSidebarPanels-B5JLnmbU.js").then((e) => ({ default: e.RecentPanel }))), Qe = (0, g.lazy)(() => import("./ContextMenu-B5qP5e8D.js").then((e) => ({ default: e.ContextMenu }))), $e = (0, g.lazy)(() => import("./UploadQueue-DORLpY6-.js").then((e) => ({ default: e.UploadQueue }))), et = (0, g.lazy)(() => import("./ImagePreviewPane-D5O_-Lqv.js")), tt = (0, g.lazy)(() => import("./AssetMetadataDialog-CJUhGoHm.js").then((e) => ({ default: e.AssetMetadataDialog }))), nt = () => {
 	let e = localStorage.getItem("sofinder.groupMode.v1");
 	return e === "name" || e === "type" || e === "size" || e === "modified" || e === "tags" ? e : "none";
 }, rt = () => {
@@ -10819,12 +10819,22 @@ function it({ config: e, initialMessages: t }) {
 					labels: {
 						title: h("assetMetadata"),
 						alt: h("assetAlt"),
+						translatedAlt: h("translatedAlt"),
+						translatedAltHelp: h("translatedAltHelp"),
+						languageCode: h("languageCode"),
+						addLanguage: h("addLanguage"),
 						assetTitle: h("assetTitle"),
 						tags: h("tags"),
 						decorative: h("decorativeImage"),
 						unsetAlt: h("assetAltUnset"),
+						inheritAlt: h("inheritAlt"),
 						save: h("save"),
-						cancel: h("cancel")
+						cancel: h("cancel"),
+						locales: {
+							en: h("languageEnglish"),
+							"zh-cn": h("languageZhCn"),
+							"zh-tw": h("languageZhTw")
+						}
 					},
 					onClose: () => cr(null),
 					onSave: async (e) => {
