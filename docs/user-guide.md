@@ -16,7 +16,7 @@ This guide is for people using an installed SoFinder browser. Administrators dec
 - The **More** menu contains language, sorting, refresh, Settings and the recycle bin.
 - Selecting an item opens the **Details** panel with type, size, location, modification time, image dimensions and available links.
 
-The browser remembers language, view, interface size, panel widths and optional-feature preferences on the current device.
+The browser remembers language, view, interface size, panel widths and optional-feature preferences on the current device. Settings provide separate Small, Medium and Large bounds for grid cards and list rows. In list view, drag a header divider to resize a column within its safe minimum and maximum; double-click the divider to fit that column to its content. The widths are also remembered on this device.
 
 ## Navigate and select
 

@@ -6,6 +6,8 @@ import { Modal } from "./Modal";
 export interface ToolPreferences { resize: boolean; crop: boolean; rotate: boolean; presets: boolean; process: boolean; batchRename: boolean }
 export interface FeaturePreferences { recent: boolean; favorites: boolean; tags: boolean; archive: boolean; trash: boolean; folderTree: boolean; autoCollapseUploads: boolean }
 export interface ListColumnPreferences { size: boolean; modified: boolean; type: boolean }
+export type ListColumnName = "name" | "size" | "type" | "modified";
+export type ListColumnWidths = Record<ListColumnName, number>;
 export type EntrySize = "small" | "medium" | "large";
 export interface ViewSizePreferences { grid: EntrySize; list: EntrySize }
 

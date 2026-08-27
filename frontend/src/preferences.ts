@@ -1,5 +1,5 @@
 import type { UiScale, UploadConflictStrategy } from "./types";
-import type { EntrySize, FeaturePreferences, ListColumnPreferences, ToolPreferences, ViewSizePreferences } from "./components/SettingsDialog";
+import type { EntrySize, FeaturePreferences, ListColumnName, ListColumnPreferences, ListColumnWidths, ToolPreferences, ViewSizePreferences } from "./components/SettingsDialog";
 
 export const defaultTools: ToolPreferences = { resize: false, crop: false, rotate: false, presets: false, process: false, batchRename: false };
 export const defaultViewSizes: ViewSizePreferences = { grid: "medium", list: "medium" };
@@ -35,6 +35,12 @@ export const loadUploadConflictStrategy = (fallback: UploadConflictStrategy): Up
 };
 
 export const columnLimits = { left: { initial: 220, min: 110, max: 330 }, right: { initial: 270, min: 135, max: 405 } } as const;
+export const listColumnLimits: Record<ListColumnName, { initial: number; min: number; max: number }> = {
+  name: { initial: 360, min: 180, max: 720 },
+  size: { initial: 100, min: 72, max: 180 },
+  type: { initial: 160, min: 120, max: 360 },
+  modified: { initial: 180, min: 150, max: 320 },
+};
 export const pageSizeLimits = { default: 100, min: 10, max: 500 } as const;
 export const clampPageSize = (value: number) => Math.max(pageSizeLimits.min, Math.min(pageSizeLimits.max, Math.trunc(value)));
 
@@ -49,4 +55,21 @@ export const loadColumnWidth = (side: "left" | "right") => {
   if (saved === null || saved.trim() === "") return limits.initial;
   const value = Number(saved);
   return Number.isFinite(value) ? Math.max(limits.min, Math.min(limits.max, value)) : limits.initial;
+};
+
+export const clampListColumnWidth = (column: ListColumnName, value: number) => {
+  const limits = listColumnLimits[column];
+  return Math.round(Math.max(limits.min, Math.min(limits.max, value)));
+};
+
+export const loadListColumnWidths = (): ListColumnWidths => {
+  try {
+    const saved = JSON.parse(localStorage.getItem("sofinder.listColumnWidths.v1") || "{}") as Partial<Record<ListColumnName, unknown>>;
+    return Object.fromEntries((Object.keys(listColumnLimits) as ListColumnName[]).map(column => {
+      const value = Number(saved[column]);
+      return [column, Number.isFinite(value) ? clampListColumnWidth(column, value) : listColumnLimits[column].initial];
+    })) as unknown as ListColumnWidths;
+  } catch {
+    return Object.fromEntries((Object.keys(listColumnLimits) as ListColumnName[]).map(column => [column, listColumnLimits[column].initial])) as unknown as ListColumnWidths;
+  }
 };

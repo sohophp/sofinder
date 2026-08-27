@@ -11,10 +11,10 @@ import { EntryIcon as Icon, LinkIcon, ThumbnailImage } from "./components/EntryV
 import { formatSize } from "./format";
 import { UploadQueue } from "./components/UploadQueue";
 import { DetailsPanel } from "./components/DetailsPanel";
-import type { EntrySize, FeaturePreferences, ListColumnPreferences, ToolPreferences, ViewSizePreferences } from "./components/SettingsDialog";
+import type { EntrySize, FeaturePreferences, ListColumnName, ListColumnPreferences, ListColumnWidths, ToolPreferences, ViewSizePreferences } from "./components/SettingsDialog";
 import { UiIcon, type UiIconName } from "./components/UiIcon";
 import { entryNameIssue } from "./nameValidation";
-import { clampPageSize, columnLimits, defaultFeatures, defaultFeatureAvailability, defaultListColumns, loadColumnWidth, loadPreferences, loadScale, loadToolPreferences, loadUploadConflictStrategy, loadViewSizes, pageSizeLimits } from "./preferences";
+import { clampListColumnWidth, clampPageSize, columnLimits, defaultFeatures, defaultFeatureAvailability, defaultListColumns, listColumnLimits, loadColumnWidth, loadListColumnWidths, loadPreferences, loadScale, loadToolPreferences, loadUploadConflictStrategy, loadViewSizes, pageSizeLimits } from "./preferences";
 import { useEntrySelection } from "./hooks/useEntrySelection";
 import { useBrowserState, type SortMode, type ViewMode } from "./hooks/useBrowserState";
 import { useBatchState } from "./hooks/useBatchState";
@@ -63,6 +63,7 @@ export default function App({ config }: { config: SoFinderConfig }) {
     };
   });
   const [listColumns, setListColumns] = useState<ListColumnPreferences>(() => loadPreferences("sofinder.listColumns.v1", defaultListColumns));
+  const [listColumnWidths, setListColumnWidths] = useState<ListColumnWidths>(loadListColumnWidths);
   const [viewSizes, setViewSizes] = useState<ViewSizePreferences>(loadViewSizes);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [securityStatusOpen, setSecurityStatusOpen] = useState(false);
@@ -92,6 +93,8 @@ export default function App({ config }: { config: SoFinderConfig }) {
   const uploadConflictResolver = useRef<((strategy: Exclude<UploadConflictStrategy, "ask">) => void) | null>(null);
   const longPress = useRef<number | null>(null);
   const columnDrag = useRef<{ side: "left" | "right"; startX: number; startWidth: number; currentWidth: number; element: HTMLDivElement } | null>(null);
+  const listColumnDrag = useRef<{ column: ListColumnName; startX: number; startWidth: number; currentWidth: number; element: HTMLDivElement } | null>(null);
+  const entriesList = useRef<HTMLDivElement>(null);
   const utility = useRef<HTMLDivElement>(null);
   const utilityButton = useRef<HTMLButtonElement>(null);
 
@@ -665,6 +668,58 @@ export default function App({ config }: { config: SoFinderConfig }) {
     setColumnWidth(side, current + (side === "left" ? direction : -direction) * 10, true);
   };
 
+  const setListColumnWidth = (column: ListColumnName, value: number, persist = false) => {
+    const width = clampListColumnWidth(column, value);
+    setListColumnWidths(current => {
+      const next = { ...current, [column]: width };
+      if (persist) localStorage.setItem("sofinder.listColumnWidths.v1", JSON.stringify(next));
+      return next;
+    });
+  };
+  const beginListColumnResize = (column: ListColumnName, event: React.PointerEvent<HTMLDivElement>) => {
+    event.preventDefault();
+    event.stopPropagation();
+    event.currentTarget.setPointerCapture(event.pointerId);
+    event.currentTarget.classList.add("is-resizing");
+    const startWidth = listColumnWidths[column];
+    listColumnDrag.current = { column, startX: event.clientX, startWidth, currentWidth: startWidth, element: event.currentTarget };
+  };
+  const moveListColumnResize = (event: React.PointerEvent<HTMLDivElement>) => {
+    const active = listColumnDrag.current;
+    if (!active) return;
+    active.currentWidth = clampListColumnWidth(active.column, active.startWidth + event.clientX - active.startX);
+    setListColumnWidth(active.column, active.currentWidth);
+  };
+  const endListColumnResize = () => {
+    const active = listColumnDrag.current;
+    listColumnDrag.current = null;
+    if (!active) return;
+    active.element.classList.remove("is-resizing");
+    setListColumnWidth(active.column, active.currentWidth, true);
+  };
+  const resizeListColumnWithKeyboard = (column: ListColumnName, event: React.KeyboardEvent<HTMLDivElement>) => {
+    const direction = event.key === "ArrowLeft" ? -1 : event.key === "ArrowRight" ? 1 : 0;
+    if (direction === 0) return;
+    event.preventDefault();
+    event.stopPropagation();
+    setListColumnWidth(column, listColumnWidths[column] + direction * 10, true);
+  };
+  const autoFitListColumn = (column: ListColumnName) => {
+    const root = entriesList.current;
+    if (!root) return;
+    const selector = column === "name" ? ".sf-entry-name" : column === "size" ? ".sf-entry-size" : column === "type" ? ".sf-entry-type" : ".sf-entry-modified";
+    const cells = Array.from(root.querySelectorAll<HTMLElement>(selector));
+    const heading = root.querySelector<HTMLElement>(`.sf-list-heading-${column} button`);
+    const contentWidth = (element: HTMLElement | null) => {
+      if (!element) return 0;
+      const range = document.createRange();
+      range.selectNodeContents(element);
+      return Math.ceil(range.getBoundingClientRect().width);
+    };
+    const desired = Math.max(contentWidth(heading), ...cells.map(contentWidth)) + 24;
+    setListColumnWidth(column, desired, true);
+  };
+
   const handleKeyDown = (event: React.KeyboardEvent<HTMLElement>) => {
     const target = event.target as HTMLElement;
     const isEntry = target.matches("button.sf-entry");
@@ -773,10 +828,14 @@ export default function App({ config }: { config: SoFinderConfig }) {
     setCursorHistory([]);
     void load(resource, path, search, 0, sort, nextDirection, searchMode, null);
   };
-  const sortHeading = (mode: SortMode, label: string, className = "") => {
+  const visibleListColumns: ListColumnName[] = ["name", ...(listColumns.size ? ["size" as const] : []), ...(listColumns.type ? ["type" as const] : []), ...(listColumns.modified ? ["modified" as const] : [])];
+  const listGridTemplate = `${visibleListColumns.map(column => `${listColumnWidths[column]}px`).join(" ")} minmax(0, 1fr)`;
+  const columnLabel = (column: ListColumnName) => t(column === "modified" ? "modified" : column);
+  const columnClass = (column: ListColumnName) => column === "name" ? "" : `sf-list-${column}`;
+  const sortHeading = (mode: SortMode, label: string, className = "", resizable = false) => {
     const active = sort === mode;
     const directionLabel = t(direction === "asc" ? "ascending" : "descending");
-    return <button type="button" className={`${className}${active ? " active" : ""}`} disabled={currentResource?.storageCapabilities?.sort === false} aria-pressed={active} aria-label={active ? `${label}, ${directionLabel}` : label} onClick={() => changeSort(mode, true)}><span>{label}</span>{active && <UiIcon name={direction === "asc" ? "sort-asc" : "sort-desc"}/>}</button>;
+    return <div key={mode} className={`sf-list-heading sf-list-heading-${mode}`}><button type="button" className={`${className}${active ? " active" : ""}`} disabled={currentResource?.storageCapabilities?.sort === false} aria-pressed={active} aria-label={active ? `${label}, ${directionLabel}` : label} onClick={() => changeSort(mode, true)}><span>{label}</span>{active && <UiIcon name={direction === "asc" ? "sort-asc" : "sort-desc"}/>}</button>{resizable && <div className="sf-list-column-resizer" role="separator" tabIndex={0} aria-label={`${t("resizeListColumn")}: ${label}`} title={t("autoFitListColumn")} aria-orientation="vertical" aria-valuemin={listColumnLimits[mode].min} aria-valuemax={listColumnLimits[mode].max} aria-valuenow={listColumnWidths[mode]} onPointerDown={event => beginListColumnResize(mode, event)} onPointerMove={moveListColumnResize} onPointerUp={endListColumnResize} onPointerCancel={endListColumnResize} onKeyDown={event => resizeListColumnWithKeyboard(mode, event)} onDoubleClick={event => { event.preventDefault(); event.stopPropagation(); autoFitListColumn(mode); }}/>}</div>;
   };
 
   return <main className={`sf-app sf-mode-${uiMode}${showSidebar ? "" : " sf-no-sidebar"}${showDetails ? "" : " sf-no-details"}${(uiMode === "manager" || fullTools) && selectedEntries.length > 0 ? " sf-has-selection-actions" : ""}`} onKeyDown={handleKeyDown} onDragOver={event => event.preventDefault()} onDrop={event => { event.preventDefault(); if (event.dataTransfer.files.length) void upload(event.dataTransfer.files); }}>
@@ -857,8 +916,8 @@ export default function App({ config }: { config: SoFinderConfig }) {
           {crumbs.map((crumb, index) => <span key={`${crumb}-${index}`}>› <button onClick={() => resetAndLoad(resource, crumbs.slice(0, index + 1).join("/"))}>{crumb}</button></span>)}
         </nav>}
         {loading ? <div className="sf-state">{t("loading")}</div> : entries.length === 0 ? <div className="sf-state">{t("empty")}</div> :
-          <div className={`sf-entries ${view} sf-grid-size-${viewSizes.grid} sf-list-size-${viewSizes.list}${view === "list" && listColumns.size ? " sf-list-has-size" : ""}`} style={view === "list" ? { "--sf-list-columns": ["minmax(220px, 1fr)", ...(listColumns.size ? ["100px"] : []), ...(listColumns.type ? ["160px"] : []), ...(listColumns.modified ? ["180px"] : [])].join(" ") } as React.CSSProperties : undefined} role="listbox" aria-multiselectable={uiMode === "manager"} aria-label={t("files")}>
-            {view === "list" && <div className="sf-list-head">{sortHeading("name", t("name"))}{listColumns.size && sortHeading("size", t("size"), "sf-list-size")}{listColumns.type && sortHeading("type", t("type"), "sf-list-type")}{listColumns.modified && sortHeading("modified", t("modified"), "sf-list-modified")}</div>}
+          <div ref={entriesList} className={`sf-entries ${view} sf-grid-size-${viewSizes.grid} sf-list-size-${viewSizes.list}${view === "list" && listColumns.size ? " sf-list-has-size" : ""}`} style={view === "list" ? { "--sf-list-columns": listGridTemplate } as React.CSSProperties : undefined} role="listbox" aria-multiselectable={uiMode === "manager"} aria-label={t("files")}>
+            {view === "list" && <div className="sf-list-head">{visibleListColumns.map(column => sortHeading(column, columnLabel(column), columnClass(column), true))}</div>}
             {entries.map((entry, index) => {
               const image = !entry.directory && canPreviewImage(entry);
               return <button key={entry.path} data-entry-index={index} role="option" aria-selected={selectedPaths.has(entry.path)} aria-label={`${entry.name}, ${entry.directory ? t("folder") : formatSize(entry.size)}`} className={`sf-entry ${selectedPaths.has(entry.path) ? "selected" : ""}`} onClick={event => selectEntry(entry, event)} onDoubleClick={() => openEntry(entry)} onContextMenu={event => { event.preventDefault(); setSelectedPaths(new Set([entry.path])); setSelectionAnchor(entry.path); setContextMenu({ x: event.clientX, y: event.clientY, entry }); }} onPointerDown={event => { if (event.pointerType === "touch") longPress.current = window.setTimeout(() => { setSelectedPaths(new Set([entry.path])); setSelectionAnchor(entry.path); setContextMenu({ x: event.clientX, y: event.clientY, entry }); }, 550); }} onPointerUp={() => { if (longPress.current !== null) window.clearTimeout(longPress.current); longPress.current = null; }} onPointerCancel={() => { if (longPress.current !== null) window.clearTimeout(longPress.current); longPress.current = null; }} onDragOver={event => { if (entry.directory) event.preventDefault(); }} onDrop={event => { if (entry.directory && event.dataTransfer.files.length) { event.preventDefault(); void uploadTo(entry.path, event.dataTransfer.files); } }}>

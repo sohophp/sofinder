@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- Persist bounded per-user grid/list sizes and list-column widths; list header
+  dividers now support pointer dragging, keyboard resizing and double-click
+  content fitting.
 - Restrict the Symfony reference file-inspector action and host route to the
   development demo so production and consuming applications never expose it.
 - Make every visible list header a server-backed sort control, toggle direction

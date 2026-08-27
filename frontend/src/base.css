@@ -298,6 +298,11 @@ input {
   font-size: 12px;
   font-weight: 700;
 }
+.sf-list-heading {
+  position: relative;
+  min-width: 0;
+  height: 100%;
+}
 .sf-list-head button {
   display: flex;
   align-items: center;
@@ -310,6 +315,39 @@ input {
   color: inherit;
   font: inherit;
   text-align: left;
+}
+.sf-list-heading > button {
+  width: 100%;
+}
+.sf-list-column-resizer {
+  position: absolute;
+  z-index: 2;
+  top: -8px;
+  right: -8px;
+  bottom: -8px;
+  width: 16px;
+  cursor: col-resize;
+  touch-action: none;
+}
+.sf-list-column-resizer::after {
+  position: absolute;
+  top: 5px;
+  bottom: 5px;
+  left: 7px;
+  width: 1px;
+  background: var(--sf-line);
+  content: "";
+  transition: background-color 120ms ease, width 120ms ease;
+}
+.sf-list-column-resizer:hover::after,
+.sf-list-column-resizer:focus-visible::after,
+.sf-list-column-resizer.is-resizing::after {
+  width: 2px;
+  background: var(--sf-accent);
+}
+.sf-list-column-resizer:focus-visible {
+  outline: 2px solid color-mix(in srgb, var(--sf-accent) 45%, transparent);
+  outline-offset: -3px;
 }
 .sf-list-head button:not(:disabled) {
   cursor: pointer;
@@ -451,8 +489,13 @@ input {
   }
   .sf-entry-modified,
   .sf-list-modified,
+  .sf-list-heading-modified,
   .sf-entry-type,
-  .sf-list-type {
+  .sf-list-type,
+  .sf-list-heading-type {
+    display: none;
+  }
+  .sf-list-column-resizer {
     display: none;
   }
 }

@@ -398,12 +398,17 @@ test("sorts from every visible list header and exposes type and direction contro
   await expect(page.locator('.sf-list-head .sf-list-type svg')).toHaveAttribute("data-icon", "sort-desc");
 });
 
-test("persists independent grid and list entry sizes", async ({ page }) => {
+test("persists independently bounded grid and list entry sizes", async ({ page }) => {
   await expect(page.locator(".sf-entry", { hasText: "photo.png" }).locator(".sf-entry-icon")).toHaveCSS("height", "90px");
   await page.getByRole("button", { name: "更多操作" }).click();
   await page.getByRole("menuitem", { name: "设置" }).click();
   let settings = page.getByRole("dialog", { name: "设置" });
-  await settings.getByRole("radiogroup", { name: "网格项目大小" }).getByRole("radio", { name: "大" }).click();
+  const gridSizeGroup = settings.getByRole("radiogroup", { name: "网格项目大小" });
+  const gridSizes = gridSizeGroup.getByRole("radio");
+  await expect(gridSizes).toHaveCount(3);
+  await expect(gridSizes.first()).toHaveValue("small");
+  await expect(gridSizes.last()).toHaveValue("large");
+  await gridSizeGroup.getByRole("radio", { name: "大" }).click();
   await settings.getByRole("button", { name: "完成" }).click();
   await expect(page.locator(".sf-entry", { hasText: "photo.png" }).locator(".sf-entry-icon")).toHaveCSS("height", "132px");
 
@@ -415,6 +420,47 @@ test("persists independent grid and list entry sizes", async ({ page }) => {
   await settings.getByRole("button", { name: "完成" }).click();
   await expect(page.locator(".sf-entry", { hasText: "photo.png" })).toHaveCSS("height", "40px");
   await expect.poll(() => page.evaluate(() => localStorage.getItem("sofinder.viewSizes.v1"))).toBe('{"grid":"large","list":"small"}');
+});
+
+test("resizes list columns within limits and double-clicks to fit content", async ({ page }) => {
+  await page.getByRole("button", { name: "列表" }).click();
+  const separator = page.getByRole("separator", { name: "调整列宽: 名称" });
+  await expect(separator).toHaveAttribute("aria-valuemin", "180");
+  await expect(separator).toHaveAttribute("aria-valuemax", "720");
+
+  const initial = Number(await separator.getAttribute("aria-valuenow"));
+  let box = await separator.boundingBox();
+  expect(box).not.toBeNull();
+  await page.mouse.move(box!.x + box!.width / 2, box!.y + box!.height / 2);
+  await page.mouse.down();
+  await page.mouse.move(box!.x + box!.width / 2 + 60, box!.y + box!.height / 2);
+  await page.mouse.up();
+  await expect.poll(async () => Number(await separator.getAttribute("aria-valuenow"))).toBeGreaterThanOrEqual(initial + 50);
+  await expect.poll(() => page.evaluate(() => JSON.parse(localStorage.getItem("sofinder.listColumnWidths.v1") || "{}").name)).toBeGreaterThanOrEqual(initial + 50);
+
+  box = await separator.boundingBox();
+  expect(box).not.toBeNull();
+  await page.mouse.move(box!.x + box!.width / 2, box!.y + box!.height / 2);
+  await page.mouse.down();
+  await page.mouse.move(box!.x + box!.width / 2 + 2000, box!.y + box!.height / 2);
+  await page.mouse.up();
+  await expect(separator).toHaveAttribute("aria-valuenow", "720");
+
+  await separator.dblclick();
+  await expect.poll(async () => Number(await separator.getAttribute("aria-valuenow"))).toBeLessThan(720);
+  await expect.poll(() => page.evaluate(() => JSON.parse(localStorage.getItem("sofinder.listColumnWidths.v1") || "{}").name)).toBeGreaterThanOrEqual(180);
+
+  await page.getByRole("button", { name: "更多操作" }).click();
+  await page.getByRole("menuitem", { name: "设置" }).click();
+  const settings = page.getByRole("dialog", { name: "设置" });
+  await settings.getByText("显示 MIME 类型", { exact: true }).click();
+  await settings.getByRole("button", { name: "完成" }).click();
+  await expect(page.locator(".sf-list-column-resizer")).toHaveCount(4);
+  const typeSeparator = page.getByRole("separator", { name: "调整列宽: 类型" });
+  await expect(typeSeparator).toHaveAttribute("aria-valuemin", "120");
+  await expect(typeSeparator).toHaveAttribute("aria-valuemax", "360");
+  await typeSeparator.press("ArrowRight");
+  await expect.poll(() => page.evaluate(() => JSON.parse(localStorage.getItem("sofinder.listColumnWidths.v1") || "{}").type)).toBe(170);
 });
 
 test("keeps previous and next pagination controls on one line", async ({ page }) => {
