@@ -90,10 +90,11 @@ final class BrowserControllerTest extends TestCase
 
     public function testPublishesHostFeatureAvailability(): void
     {
-        $config = $this->config(Request::create('/browser'), new FeaturePolicy(['tags' => false, 'archive' => false]));
+        $config = $this->config(Request::create('/browser'), new FeaturePolicy(['tags' => false, 'archive' => false, 'quick_access_files' => false]));
 
         self::assertFalse($config['featureAvailability']['tags']);
         self::assertFalse($config['featureAvailability']['archive']);
+        self::assertFalse($config['featureAvailability']['quickAccessFiles']);
         self::assertTrue($config['featureAvailability']['recent']);
     }
 

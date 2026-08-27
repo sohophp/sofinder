@@ -6,7 +6,7 @@ import { Modal } from "./Modal";
 
 export function SecurityStatusDialog({ api, labels, formatDate, onClose }: {
   api: Api;
-  labels: { title: string; close: string; loading: string; enabled: string; disabled: string; provider: string; service: string; scans: string; passed: string; quarantined: string; failed: string; pending: string; recent: string; none: string };
+  labels: { title: string; close: string; loading: string; enabled: string; disabled: string; provider: string; service: string; scans: string; passed: string; quarantined: string; failed: string; pending: string; recent: string; none: string; document: string; mode: string; converter: string; version: string; cache: string; writable: string; readOnly: string; jobs: string; lastSuccess: string; never: string; running: string; ready: string };
   formatDate: (timestamp: number) => string;
   onClose: () => void;
 }) {
@@ -19,6 +19,7 @@ export function SecurityStatusDialog({ api, labels, formatDate, onClose }: {
   }, [api]);
 
   const scan = status?.malwareScanning;
+  const document = status?.documentPreview;
   return <Modal title={labels.title} closeLabel={labels.close} onClose={onClose} className="sf-security-modal" footer={<button className="primary" onClick={onClose}>{labels.close}</button>}>
     {error ? <p className="sf-warning" role="alert">{error}</p> : !scan ? <div className="sf-state">{labels.loading}</div> : <>
       <section className={`sf-security-summary sf-security-${scan.status}`}>
@@ -29,6 +30,11 @@ export function SecurityStatusDialog({ api, labels, formatDate, onClose }: {
       <div className="sf-security-counts" aria-label={labels.scans}>
         <span><b>{scan.counts.passed}</b>{labels.passed}</span><span><b>{scan.counts.quarantined}</b>{labels.quarantined}</span><span><b>{scan.counts.failed}</b>{labels.failed}</span><span><b>{scan.counts.pending}</b>{labels.pending}</span>
       </div>
+      {document && <><h3>{labels.document}</h3><section className={`sf-security-summary sf-security-${document.available && document.cacheWritable ? "ready" : "down"}`}>
+        <span className="sf-security-indicator" aria-hidden="true"/>
+        <div><strong>{labels.document}</strong><small>{document.officeEnabled && document.available ? labels.ready : labels.disabled}</small></div>
+        <dl><dt>{labels.mode}</dt><dd>{document.effectiveMode}{document.configuredMode !== document.effectiveMode ? ` (${document.configuredMode})` : ""}</dd><dt>{labels.converter}</dt><dd>{document.binary}</dd><dt>{labels.version}</dt><dd>{document.version ?? "—"}</dd><dt>{labels.cache}</dt><dd>{document.cacheCount} · {document.cacheWritable ? labels.writable : labels.readOnly}</dd><dt>{labels.lastSuccess}</dt><dd>{document.lastSuccessfulAt ? formatDate(document.lastSuccessfulAt) : labels.never}</dd></dl>
+      </section><div className="sf-security-counts" aria-label={labels.jobs}><span><b>{document.counts.queued}</b>{labels.pending}</span><span><b>{document.counts.running}</b>{labels.running}</span><span><b>{document.counts.ready}</b>{labels.ready}</span><span><b>{document.counts.failed + document.counts.expired}</b>{labels.failed}</span></div></>}
       <h3>{labels.recent}</h3>
       {scan.recent.length === 0 ? <div className="sf-state">{labels.none}</div> : <div className="sf-security-history">
         {scan.recent.map(item => <article key={item.id}><span className={`sf-scan-status sf-scan-${item.status}`}>{item.status}</span><div><strong>{item.fileName}</strong><small>{item.resource} · {formatSize(item.bytes)} · {formatDate(item.finishedAt ?? item.startedAt)}{item.durationMilliseconds !== null ? ` · ${item.durationMilliseconds} ms` : ""}</small></div>{item.code && <code>{item.code}</code>}</article>)}

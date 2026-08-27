@@ -6,30 +6,70 @@ namespace SohoPHP\SoFinder\Metadata;
 
 use SohoPHP\SoFinder\Contract\ActorProviderInterface;
 use SohoPHP\SoFinder\Contract\MetadataStoreInterface;
+use SohoPHP\SoFinder\Contract\QuickAccessMetadataStoreInterface;
 use SohoPHP\SoFinder\Exception\SoFinderException;
 use SohoPHP\SoFinder\FileManager;
 
 final readonly class MetadataManager
 {
+    public const MAX_QUICK_ACCESS = 12;
+
     public function __construct(
         private FileManager $files,
         private MetadataStoreInterface $store,
         private ActorProviderInterface $actors,
+        private bool $allowQuickAccessFiles = true,
     ) {
     }
 
-    /** @return array{favorites:list<string>,tags:array<string,list<string>>,recent:list<array{path:string,touchedAt:int}>} */
+    /** @return array{favorites:list<string>,quickAccess:list<string>,tags:array<string,list<string>>,recent:list<array{path:string,touchedAt:int}>} */
     public function get(string $resource): array
     {
         $this->files->entry($resource, '');
 
-        return $this->store->get($this->actors->actorId(), $resource);
+        $metadata = $this->store->get($this->actors->actorId(), $resource);
+        $metadata['quickAccess'] = array_slice(array_values(array_filter((array) ($metadata['quickAccess'] ?? []), 'is_string')), 0, self::MAX_QUICK_ACCESS);
+
+        return $metadata;
     }
 
     public function favorite(string $resource, string $path, bool $favorite): void
     {
         $entry = $this->files->entry($resource, $path);
         $this->store->setFavorite($this->actors->actorId(), $resource, $entry->path, $favorite);
+    }
+
+    public function quickAccess(string $resource, string $path, bool $pinned): void
+    {
+        if (!$this->store instanceof QuickAccessMetadataStoreInterface) {
+            throw new SoFinderException('The configured metadata store does not support quick access.', 'quick_access_unsupported', 501);
+        }
+        $entry = $this->files->entry($resource, $path);
+        if ($pinned && !$entry->directory && !$this->allowQuickAccessFiles) {
+            throw new SoFinderException('Files are disabled for quick access.', 'quick_access_file_disabled', 422);
+        }
+        $actor = $this->actors->actorId();
+        $current = (array) ($this->store->get($actor, $resource)['quickAccess'] ?? []);
+        if ($pinned && !in_array($entry->path, $current, true) && count($current) >= self::MAX_QUICK_ACCESS) {
+            throw new SoFinderException('Quick access is limited to 12 entries.', 'quick_access_limit', 409);
+        }
+        $this->store->setQuickAccess($actor, $resource, $entry->path, $pinned);
+    }
+
+    /** @return list<array{path:string,name:string,directory:?bool,mimeType:?string,exists:bool}> */
+    public function quickAccessEntries(string $resource): array
+    {
+        $entries = [];
+        foreach ($this->get($resource)['quickAccess'] as $path) {
+            try {
+                $entry = $this->files->entry($resource, $path);
+                $entries[] = ['path' => $entry->path, 'name' => $entry->name, 'directory' => $entry->directory, 'mimeType' => $entry->mimeType, 'exists' => true];
+            } catch (SoFinderException $exception) {
+                if ($exception->errorCode !== 'not_found') throw $exception;
+                $entries[] = ['path' => $path, 'name' => basename($path), 'directory' => null, 'mimeType' => null, 'exists' => false];
+            }
+        }
+        return $entries;
     }
 
     /** @param list<string> $tags */

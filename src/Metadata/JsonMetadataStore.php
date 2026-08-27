@@ -4,10 +4,10 @@ declare(strict_types=1);
 
 namespace SohoPHP\SoFinder\Metadata;
 
-use SohoPHP\SoFinder\Contract\MetadataStoreInterface;
+use SohoPHP\SoFinder\Contract\QuickAccessMetadataStoreInterface;
 use SohoPHP\SoFinder\Exception\SoFinderException;
 
-final readonly class JsonMetadataStore implements MetadataStoreInterface
+final readonly class JsonMetadataStore implements QuickAccessMetadataStoreInterface
 {
     public function __construct(private string $file)
     {
@@ -20,9 +20,19 @@ final readonly class JsonMetadataStore implements MetadataStoreInterface
 
         return [
             'favorites' => array_values(array_filter((array) ($metadata['favorites'] ?? []), 'is_string')),
+            'quickAccess' => array_slice(array_values(array_filter((array) ($metadata['quickAccess'] ?? []), 'is_string')), 0, 12),
             'tags' => $this->normalizeStoredTags((array) ($metadata['tags'] ?? [])),
             'recent' => array_values(array_filter((array) ($metadata['recent'] ?? []), static fn (mixed $item): bool => is_array($item) && isset($item['path'], $item['touchedAt']) && is_string($item['path']) && is_int($item['touchedAt']))),
         ];
+    }
+
+    public function setQuickAccess(string $actor, string $resource, string $path, bool $pinned): void
+    {
+        $this->mutate(function (array &$data) use ($actor, $resource, $path, $pinned): void {
+            $paths = array_values(array_diff(array_filter((array) ($data['users'][$actor][$resource]['quickAccess'] ?? []), 'is_string'), [$path]));
+            if ($pinned) array_unshift($paths, $path);
+            $data['users'][$actor][$resource]['quickAccess'] = array_slice($paths, 0, 12);
+        });
     }
 
     public function setFavorite(string $actor, string $resource, string $path, bool $favorite): void
@@ -68,6 +78,7 @@ final readonly class JsonMetadataStore implements MetadataStoreInterface
                 ? $destination
                 : (str_starts_with($path, $source . '/') ? $destination . substr($path, strlen($source)) : $path);
             $metadata['favorites'] = array_values(array_unique(array_map($replace, array_filter((array) ($metadata['favorites'] ?? []), 'is_string'))));
+            $metadata['quickAccess'] = array_slice(array_values(array_unique(array_map($replace, array_filter((array) ($metadata['quickAccess'] ?? []), 'is_string')))), 0, 12);
             $tags = [];
             foreach ((array) ($metadata['tags'] ?? []) as $path => $values) {
                 if (is_string($path)) {
@@ -91,6 +102,10 @@ final readonly class JsonMetadataStore implements MetadataStoreInterface
             $metadata['favorites'] = array_values(array_filter(
                 (array) ($metadata['favorites'] ?? []),
                 static fn (mixed $favorite): bool => is_string($favorite) && !$matches($favorite),
+            ));
+            $metadata['quickAccess'] = array_values(array_filter(
+                (array) ($metadata['quickAccess'] ?? []),
+                static fn (mixed $item): bool => is_string($item) && !$matches($item),
             ));
             foreach (array_keys((array) ($metadata['tags'] ?? [])) as $tagPath) {
                 if (is_string($tagPath) && $matches($tagPath)) {

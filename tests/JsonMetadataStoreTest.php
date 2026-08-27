@@ -37,7 +37,7 @@ final class JsonMetadataStoreTest extends TestCase
         self::assertSame(['one.txt'], $metadata['favorites']);
         self::assertSame(['Important', 'News'], $metadata['tags']['one.txt']);
         self::assertSame([['path' => 'one.txt', 'touchedAt' => 123]], $metadata['recent']);
-        self::assertSame(['favorites' => [], 'tags' => [], 'recent' => []], $store->get('actor-b', 'Files'));
+        self::assertSame(['favorites' => [], 'quickAccess' => [], 'tags' => [], 'recent' => []], $store->get('actor-b', 'Files'));
     }
 
     public function testFavoriteAndTagsCanBeRemoved(): void
@@ -48,7 +48,7 @@ final class JsonMetadataStoreTest extends TestCase
         $store->setTags('actor', 'Files', 'one.txt', ['Tag']);
         $store->setTags('actor', 'Files', 'one.txt', []);
 
-        self::assertSame(['favorites' => [], 'tags' => [], 'recent' => []], $store->get('actor', 'Files'));
+        self::assertSame(['favorites' => [], 'quickAccess' => [], 'tags' => [], 'recent' => []], $store->get('actor', 'Files'));
     }
 
     public function testRecentEntriesAreDeduplicatedAndBounded(): void
@@ -79,6 +79,20 @@ final class JsonMetadataStoreTest extends TestCase
         self::assertSame('renamed/one.txt', $moved['recent'][0]['path']);
 
         $store->deletePath('actor', 'Files', 'renamed');
-        self::assertSame(['favorites' => [], 'tags' => [], 'recent' => []], $store->get('actor', 'Files'));
+        self::assertSame(['favorites' => [], 'quickAccess' => [], 'tags' => [], 'recent' => []], $store->get('actor', 'Files'));
+    }
+
+    public function testQuickAccessIsOrderedDeduplicatedBoundedAndFollowsFolders(): void
+    {
+        $store = new JsonMetadataStore($this->file);
+        foreach (range(1, 14) as $index) $store->setQuickAccess('actor', 'Files', "folder-$index", true);
+        $store->setQuickAccess('actor', 'Files', 'folder-5', true);
+        self::assertCount(12, $store->get('actor', 'Files')['quickAccess']);
+        self::assertSame('folder-5', $store->get('actor', 'Files')['quickAccess'][0]);
+
+        $store->movePath('actor', 'Files', 'folder-5', 'renamed');
+        self::assertSame('renamed', $store->get('actor', 'Files')['quickAccess'][0]);
+        $store->deletePath('actor', 'Files', 'renamed');
+        self::assertNotContains('renamed', $store->get('actor', 'Files')['quickAccess']);
     }
 }

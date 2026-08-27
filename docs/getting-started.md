@@ -88,6 +88,7 @@ SoFinder's default authorization requires a fully authenticated Symfony user. Yo
 # config/packages/security.yaml
 security:
   access_control:
+    - { path: '^/sofinder/live$', roles: PUBLIC_ACCESS }
     - { path: '^/sofinder', roles: ROLE_USER }
 ```
 

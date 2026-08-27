@@ -24,7 +24,7 @@ final readonly class MetadataController
     public function get(Request $request): JsonResponse
     {
         $policy = $this->featurePolicy();
-        if (!$policy->enabled('recent') && !$policy->enabled('favorites') && !$policy->enabled('tags')) {
+        if (!$policy->enabled('recent') && !$policy->enabled('favorites') && !$policy->enabled('quick_access') && !$policy->enabled('tags')) {
             $policy->assertEnabled('recent');
         }
         return new JsonResponse(OperationResult::success($this->filtered((string) $request->query->get('resource', 'Files'))));
@@ -46,12 +46,15 @@ final readonly class MetadataController
         $action = (string) ($data['action'] ?? '');
         $this->featurePolicy()->assertEnabled(match ($action) {
             'favorite' => 'favorites',
+            'quick_access' => 'quick_access',
             'tags' => 'tags',
             'touch', 'forget' => 'recent',
             default => throw new SoFinderException('The metadata action is invalid.', 'invalid_metadata_action', 400),
         });
         if ($action === 'favorite') {
             $this->metadata->favorite($resource, $path, (bool) ($data['favorite'] ?? false));
+        } elseif ($action === 'quick_access') {
+            $this->metadata->quickAccess($resource, $path, (bool) ($data['pinned'] ?? false));
         } elseif ($action === 'tags') {
             $this->metadata->tags($resource, $path, $this->tags($data['tags'] ?? null));
         } elseif ($action === 'touch') {
@@ -78,7 +81,7 @@ final readonly class MetadataController
         return $this->features ?? new FeaturePolicy();
     }
 
-    /** @return array{favorites:list<string>,tags:array<string,list<string>>,recent:list<array{path:string,touchedAt:int}>} */
+    /** @return array<string,mixed> */
     private function filtered(string $resource): array
     {
         $policy = $this->featurePolicy();
@@ -89,10 +92,14 @@ final readonly class MetadataController
         if (!$policy->enabled('favorites')) {
             $metadata['favorites'] = [];
         }
+        if (!$policy->enabled('quick_access')) {
+            $metadata['quickAccess'] = [];
+        }
         if (!$policy->enabled('tags')) {
             $metadata['tags'] = [];
         }
 
+        $metadata['quickAccessEntries'] = $policy->enabled('quick_access') ? $this->metadata->quickAccessEntries($resource) : [];
         return $metadata;
     }
 }

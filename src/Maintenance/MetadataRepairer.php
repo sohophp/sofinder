@@ -45,6 +45,7 @@ final readonly class MetadataRepairer
                     catch (SoFinderException) { ++$removed; continue; }
                     ++$resourceCount;
                     $favorites = $this->paths((array) ($metadata['favorites'] ?? []), $resource->storage, 500, $removed);
+                    $quickAccess = $this->paths((array) ($metadata['quickAccess'] ?? []), $resource->storage, 12, $removed);
                     $tags = [];
                     foreach ((array) ($metadata['tags'] ?? []) as $path => $values) {
                         if (!is_string($path) || !$this->exists($resource->storage, $path) || !is_array($values)) { ++$removed; continue; }
@@ -62,7 +63,7 @@ final readonly class MetadataRepairer
                         if (!is_array($item) || !is_string($item['path'] ?? null) || !is_int($item['touchedAt'] ?? null) || !$this->exists($resource->storage, $item['path'])) { ++$removed; continue; }
                         if (!isset($recent[$item['path']])) $recent[$item['path']] = ['path' => $item['path'], 'touchedAt' => $item['touchedAt']];
                     }
-                    $normalizedUsers[$actor][$resourceName] = ['favorites' => $favorites, 'tags' => $tags, 'recent' => array_slice(array_values($recent), 0, 50)];
+                    $normalizedUsers[$actor][$resourceName] = ['favorites' => $favorites, 'quickAccess' => $quickAccess, 'tags' => $tags, 'recent' => array_slice(array_values($recent), 0, 50)];
                 }
             }
             $normalized = ['version' => 1, 'users' => $normalizedUsers];
@@ -81,14 +82,19 @@ final readonly class MetadataRepairer
      * @param array<mixed,mixed> $values
      * @return list<string>
      */
-    private function paths(array $values, StorageAdapterInterface $storage, int $limit, int &$removed): array
+    private function paths(array $values, StorageAdapterInterface $storage, int $limit, int &$removed, bool $directoriesOnly = false): array
     {
         $result = [];
         foreach ($values as $path) {
-            if (!is_string($path) || isset($result[$path]) || !$this->exists($storage, $path)) { ++$removed; continue; }
+            if (!is_string($path) || isset($result[$path])) { ++$removed; continue; }
+            try { $entry = $storage->entry($path); }
+            catch (\Throwable) { ++$removed; continue; }
+            if ($directoriesOnly && !$entry->directory) { ++$removed; continue; }
             $result[$path] = $path;
         }
-        return array_slice(array_values($result), 0, $limit);
+        $result = array_values($result);
+        if (count($result) > $limit) $removed += count($result) - $limit;
+        return array_slice($result, 0, $limit);
     }
 
     private function exists(StorageAdapterInterface $storage, string $path): bool

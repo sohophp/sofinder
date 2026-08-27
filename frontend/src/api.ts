@@ -323,15 +323,19 @@ export class Api {
     return response.blob();
   }
 
-  metadata(resource: string) {
-    return this.request<MetadataState>(`/metadata?${new URLSearchParams({ resource })}`);
+  async metadata(resource: string) {
+    const data = await this.request<MetadataState>(`/metadata?${new URLSearchParams({ resource })}`);
+    const quickAccess = data.quickAccess || [];
+    return { ...data, quickAccess, quickAccessEntries: data.quickAccessEntries || quickAccess.map(path => ({ path, name: path.split("/").pop() || path, directory: null, mimeType: null, exists: true })) };
   }
 
-  updateMetadata(resource: string, path: string, action: "favorite" | "tags" | "touch" | "forget", values: { favorite?: boolean; tags?: string[] } = {}) {
-    return this.request<MetadataState>("/metadata", {
+  async updateMetadata(resource: string, path: string, action: "favorite" | "quick_access" | "tags" | "touch" | "forget", values: { favorite?: boolean; pinned?: boolean; tags?: string[] } = {}) {
+    const data = await this.request<MetadataState>("/metadata", {
       method: "PATCH",
       body: JSON.stringify({ resource, path, action, ...values }),
     });
+    const quickAccess = data.quickAccess || [];
+    return { ...data, quickAccess, quickAccessEntries: data.quickAccessEntries || quickAccess.map(item => ({ path: item, name: item.split("/").pop() || item, directory: null, mimeType: null, exists: true })) };
   }
 
   private async request<T>(path: string, init: RequestInit = {}): Promise<T> {

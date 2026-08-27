@@ -2,6 +2,39 @@
 
 ## Unreleased
 
+## 0.1.0-beta.20 - 2026-08-27
+
+- Make LibreOffice-converted Office previews fill the available content area in
+  full-screen mode instead of retaining the normal preview-frame height.
+- Clarify Office preview submission, queue, conversion and PDF-loading phases,
+  suppress cache-hit flicker, and expose converter, cache and job diagnostics in
+  the administrator security status view.
+- Make Quick access independent from Favorites, preserve backward-compatible
+  path metadata while adding file/folder/stale descriptors, and remove missing
+  entries safely when opened.
+- Reorganize preferences by task, add a separate Restore system defaults action,
+  and keep host-disabled capabilities authoritative over saved user profiles.
+- Load language packs on demand, lower the initial application budget to 95 KiB
+  gzip, and pin the browser regression runner to an exact version.
+- Keep `/live` anonymous and deliberately minimal while leaving deep `/health`
+  readiness details protected; cover the release UI in Chromium, Firefox and
+  WebKit, including dark, mobile, long-name and Windows scaling layouts.
+- Keep Quick access visible across storage-root switches by default, add an
+  all-roots/current-root preference, and support right-click unpinning.
+- Add browser-scoped named preference profiles for saving and immediately
+  applying complete UI setting combinations, with overwrite and deletion.
+- Rename the folder-tree option to Folder navigation and let each user place it
+  in the left or right sidebar.
+- Simplify single-file delivery to Download and Share: downloads open in a new
+  browsing context, while Share groups Copy URL and the optional locally
+  generated QR Code without weakening login or signed-link expiration rules.
+- Show a bounded Favorites section in the sidebar, link its heading to a
+  dedicated searchable Favorites page, and let each user pin up to 12 folders
+  to Quick access through an optional, backward-compatible metadata extension.
+- Group Select all, Clear and Invert selection in one menu, and add current-page
+  grouping by name, type, size, date or tag plus bounded type filtering.
+- Refine list-cell padding, width bounds and ellipsis behavior, and lazy-load
+  optional panels and locale packs to retain the 95 KiB gzip entry budget.
 - Persist bounded per-user grid/list sizes and list-column widths; list header
   dividers now support pointer dragging, keyboard resizing and double-click
   content fitting.

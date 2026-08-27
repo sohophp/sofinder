@@ -10,6 +10,6 @@ final readonly class LivenessController
 {
     public function __invoke(): JsonResponse
     {
-        return new JsonResponse(['success' => true, 'data' => ['status' => 'ready', 'phpVersion' => PHP_VERSION, 'bundle' => 'sofinder']]);
+        return new JsonResponse(['success' => true, 'data' => ['status' => 'ready']]);
     }
 }

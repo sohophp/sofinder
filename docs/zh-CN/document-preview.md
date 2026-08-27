@@ -36,6 +36,11 @@ Office 预览需要明确启用。SoFinder 使用参数数组调用绝对路径�
 iframe；PDF 与缓存命中仍立即返回。`inline` 始终在请求内转换；`messenger` 缺少 Bus
 时会使容器编译失败。Worker 处理 `DocumentPreviewMessageHandler`。
 
+任务响应包含实际 `mode`、缓存命中、创建／开始／更新／完成时间和转换耗时。浏览器会区分
+提交、排队、转换及加载 PDF，并短暂延迟进度提示，避免缓存命中时闪现误导性文案。管理员
+安全状态页会显示配置／实际模式、转换器路径和版本、缓存可写性、PDF 缓存数量、最近成功
+时间和有界任务统计。
+
 多节点异步部署必须同时共享 `AtomicStateStoreInterface` 状态与
 `cache_dir/document-previews` 文件系统。只有在每个节点完成共享挂载后才能设置
 `cluster.shared_preview_cache: true`，否则安全审计会报告 critical。

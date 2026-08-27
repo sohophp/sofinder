@@ -1,8 +1,9 @@
-import { n as e, t } from "./jsx-runtime-BuvfPIin.js";
-import { t as n } from "./Modal-u0Bikd5w.js";
+import { t as e } from "./jsx-runtime-CmCsaYvT.js";
+import { t } from "./react-B5TC723I.js";
+import { t as n } from "./Modal-aP8IYcPB.js";
 import { t as r } from "./nameValidation-DURyMFRU.js";
 //#region src/components/BulkRenameDialog.tsx
-var i = e(), a = t(), o = (e, t, n) => {
+var i = t(), a = e(), o = (e, t, n) => {
 	let r = e.directory ? -1 : e.name.lastIndexOf("."), i = r > 0 ? e.name.slice(r) : "", a = i ? e.name.slice(0, r) : e.name;
 	return t.replaceAll("{name}", a).replaceAll("{ext}", i).replaceAll("{n}", String(n + 1));
 };

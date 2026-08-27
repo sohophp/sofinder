@@ -1,102 +1,18 @@
-const messages = {
-  en: {
-    files: "Files", images: "Images", newFolder: "New folder", upload: "Upload", uploadFolder: "Upload folder", folderUploadTooMany: "A folder upload is limited to 500 files.", folderUploadPreview: "Top-level folders", refresh: "Refresh",
-    search: "Search files", searchTags: "Search tags (comma separates multiple)", searchScope: "Search scope", searchTrash: "Search deleted files", name: "Name", size: "Size", modified: "Modified", empty: "This folder is empty",
-    select: "Select", rename: "Rename", batchRename: "Batch rename", renamePattern: "Name pattern", renamePatternHint: "Use {name} for the original base name, {n} for its sequence and {ext} for the locked extension.", oldName: "Current name", duplicateRename: "The preview contains duplicate names.", remove: "Delete", download: "Download", copy: "Copy", move: "Move", webImageUnsupported: "This image format cannot be embedded directly in a web page.",
-    details: "Details", type: "Type", folder: "Folder", file: "File", location: "Location", chooseFolder: "Destination folder", fileUrl: "File URL", temporaryFileUrl: "Temporary file URL", linkExpires: "Expires", copyUrl: "Copy URL", urlCopied: "URL copied", copyUrlFailed: "Automatic copy failed. The URL remains selected for manual copying.", clickUrlToCopy: "Click the URL field to copy it.", loginRequired: "Login required", language: "Language",
-    confirmDelete: "Delete the selected entry?", permanentDeleteWarning: "This storage does not provide a recycle bin. This action cannot be undone.", folderName: "Folder name", newName: "New name", newBaseName: "New name; extension is locked", loading: "Loading…",
-    uploadDone: "Upload complete", error: "Something went wrong", missingPathFallback: "That folder no longer exists. Returned to the root folder.", missingDestinationFallback: "That destination no longer exists. Choose another folder from the root.", recentMissing: "That recent file no longer exists and was removed from the list.", grid: "Grid view", list: "List view", home: "Home",
-    sort: "Sort", direction: "Sort direction", ascending: "Ascending", descending: "Descending", pagination: "Pagination", page: "Page", previous: "Previous", next: "Next", itemsPerPage: "Items per page", moreActions: "More actions",
-    selectAll: "Select all", clearSelection: "Clear", selectedCount: "selected", confirmDeleteMany: "Delete selected entries? Count:", completed: "completed", failed: "failed",
-    uploadQueue: "Uploads", cancel: "Cancel", cancelAll: "Cancel all", clearFinished: "Clear finished", retryUpload: "Retry / resume", removeUploadTask: "Remove task", collapse: "Collapse", expand: "Expand", queued: "Queued", uploading: "Uploading", done: "Done", skipped: "Skipped", cancelled: "Cancelled", replaceFile: "A file with this name already exists", uploadConflictSetting: "Same-name upload handling", uploadConflictAsk: "Ask me each time", uploadConflictRename: "Rename automatically", uploadConflictOverwrite: "Overwrite", uploadConflictSkip: "Skip", uploadReselectToResume: "Upload interrupted; select the same file to resume.", uploadResuming: "Resuming previous upload…",
-    rotateLeft: "Rotate left", rotateRight: "Rotate right", resize: "Resize", resizePrompt: "Maximum width × height (1–4096)", invalidDimensions: "Enter dimensions such as 1200x1200.", imageUpdated: "Image updated",
-    crop: "Crop", cropPrompt: "Crop rectangle: x,y,width,height", invalidCrop: "Enter a valid crop rectangle such as 0,0,800,600.", preset: "Preset",
-    downloadZip: "Download ZIP",
-    readOnly: "Read only", storageUsage: "Storage",
-    favorite: "Favorite", tags: "Tags", tagsPrompt: "Tags separated by commas", recent: "Recent", recentEmpty: "No recent files yet. Select or open a file to add it here.",
-    fileActions: "File actions", keyboardHelp: "Keyboard: arrows navigate, Enter opens, F2 renames, Delete removes, Ctrl+A selects all, Escape clears selection",
-    dimensions: "Dimensions", width: "Width", height: "Height", settings: "Settings", interfaceScale: "Interface size", scaleCompact: "Compact (90%)", scaleStandard: "Standard (100%)", scaleLarge: "Large (112.5%)", scaleExtraLarge: "Extra large (125%)", gridItemSize: "Grid item size", listRowSize: "List row size", sizeSmall: "Small", sizeMedium: "Medium", sizeLarge: "Large", optionalTools: "Optional tools", imageTools: "Image tools", rotationTools: "Rotation controls",
-    listColumns: "List columns", showSizeColumn: "Show size", showModifiedColumn: "Show modified time", showTypeColumn: "Show MIME type", resizeListColumn: "Resize column", autoFitListColumn: "Double-click to fit content",
-    optionalFeatures: "Optional features", featureSettingsHint: "Enable only the extra tools needed for this browser.", autoCollapseUploads: "Auto-collapse completed upload queue", folderTreeFeature: "Left folder tree", recentFeature: "Recent files", favoriteFeature: "Favorites", tagsFeature: "Tags", archiveFeature: "ZIP download", trashFeature: "Recycle bin management",
-    resizeLeftPanel: "Resize left panel", resizeRightPanel: "Resize details panel",
-    toolSettingsHint: "Choose the view density and enable only the tools you need. Batch rename, optimization and watermarking are hidden by default.", close: "Close",
-    confirmImageOverwrite: "This operation overwrites the original image and cannot be undone. Continue?",
-    moveDestination: "Move to folder", copyDestination: "Copy to folder", rootFolder: "Root", noFolders: "No subfolders", currentFolder: "Selected folder", moveHere: "Move here", copyHere: "Copy here",
-    unsafeDestination: "Choose another folder. Moving to the current location, or placing a folder inside itself, is not allowed.", cropInstructions: "Drag over the image to select a crop area, then fine-tune the values if needed.", applyCrop: "Crop and overwrite",
-    maximum: "maximum", fileName: "file name", folderDepth: "folder levels", configuredLimits: "Configured limits", fileNameTooLong: "The file name exceeds the character limit:", fileNameTooLongMaximum: "The file name exceeds the {maximum} character limit.", folderNameTooLong: "The folder name exceeds the character limit:", invalidEntryName: "The name cannot use reserved names, leading dots, trailing dots or spaces, control characters, or < > : \" / \\ | ? *.", folderDepthReached: "The configured maximum folder depth has been reached.",
-    confirm: "Confirm", save: "Save", saving: "Saving…", overwrite: "Overwrite", trash: "Recycle bin", trashEmpty: "The recycle bin is empty", restore: "Restore", permanentDelete: "Delete permanently", expires: "Expires", restoreConflict: "The original location already contains an entry", restoreOverwrite: "Replace existing", restoreAutoRename: "Restore with new name", trashRetention: "The item will move to the private recycle bin and is retained for 30 days.", trashUsage: "Recycle bin usage", trashAutoPurged: "Recycle bin was full; oldest items automatically removed:", items: "items",
-    tagInput: "Add a tag", tagInputHint: "Press Enter or comma to add; Backspace removes the last tag.", tagMaximum: "Up to 10 tags, 30 characters each",
-    ratio: "Ratio", freeRatio: "Free", originalRatio: "Original", zoom: "Zoom", undo: "Undo", redo: "Redo", reset: "Reset", compare: "Hold to compare", saveMode: "Save mode", saveCopy: "Save as copy", imageCreated: "Image created", imageFormatLocked: "The {extension} format is fixed. Cropping does not convert the image format; the saved file is validated for its name, MIME type, dimensions and content safety.", panHint: "Drag outside the selection to draw a new crop; drag its corners or edges to resize it; arrow keys nudge one pixel.", open: "Open", preview: "Preview", previewUnavailable: "A visual preview is not available for this file type.", previewPreparing: "Preparing Office preview…", previewFailed: "The Office preview could not be prepared.", previewRetry: "Retry preview", previewTruncated: "Preview limited to the first 256 KiB.", calculateChecksum: "Calculate",
-    imageProcess: "Optimize / watermark", applyImageProcess: "Process images", processingImages: "Processing…", processingSelected: "{count} images selected", operation: "Operation", optimizeImage: "Compress and convert", textWatermark: "Text watermark", imageWatermark: "Image watermark", outputFormat: "Output format", keepFormat: "Keep original format", watermarkText: "Watermark text", color: "Color", watermarkResource: "Watermark resource", watermarkPath: "Watermark image path", position: "Position", topLeft: "Top left", topRight: "Top right", center: "Center", bottomLeft: "Bottom left", bottomRight: "Bottom right", opacity: "Opacity", watermarkScale: "Watermark width", quality: "Quality", conversionCopyHint: "Format conversion always saves a new copy so the extension and MIME type remain consistent.",
-    securityStatus: "Security status", malwareScanningEnabled: "Malware scanning enabled", malwareScanningDisabled: "Malware scanning disabled", scanProvider: "Provider", serviceStatus: "Service status", scanHistory: "Malware scan history", scanPassed: "Passed", scanQuarantined: "Blocked", scanFailed: "Failed", scanPending: "Pending", recentScans: "Recent scans", noScans: "No malware scans have been recorded.",
-  },
-  "zh-cn": {
-    files: "文件", images: "图片", newFolder: "新建文件夹", upload: "上传", uploadFolder: "上传文件夹", folderUploadTooMany: "单次文件夹上传最多 500 个文件。", folderUploadPreview: "顶层文件夹", refresh: "刷新",
-    search: "搜索文件", searchTags: "搜索标签（多个标签用逗号分隔）", searchScope: "搜索范围", searchTrash: "搜索已删除文件", name: "名称", size: "大小", modified: "修改时间", empty: "此文件夹为空",
-    select: "选择", rename: "重命名", batchRename: "批量重命名", renamePattern: "名称规则", renamePatternHint: "使用 {name} 表示原主文件名、{n} 表示序号、{ext} 表示锁定的扩展名。", oldName: "原名称", duplicateRename: "预览中存在重复名称。", remove: "删除", download: "下载", copy: "复制", move: "移动", webImageUnsupported: "此图片格式不能直接用于网页内容。",
-    details: "详细信息", type: "类型", folder: "文件夹", file: "文件", location: "位置", chooseFolder: "目标文件夹", fileUrl: "文件网址", temporaryFileUrl: "临时文件网址", linkExpires: "失效时间", copyUrl: "复制网址", urlCopied: "网址已复制", copyUrlFailed: "自动复制失败，网址仍保持选中，可手动复制。", clickUrlToCopy: "点击网址输入框即可复制。", loginRequired: "需要登录", language: "语言",
-    confirmDelete: "确定删除选中的项目吗？", permanentDeleteWarning: "此存储不提供回收站，本操作无法撤销。", folderName: "文件夹名称", newName: "新名称", newBaseName: "新名称；扩展名不可修改", loading: "加载中…",
-    uploadDone: "上传完成", error: "操作失败", missingPathFallback: "该文件夹已不存在，已返回根目录。", missingDestinationFallback: "目标文件夹已不存在，请从根目录重新选择。", recentMissing: "该最近使用文件已不存在，已从列表移除。", grid: "网格视图", list: "列表视图", home: "首页",
-    sort: "排序", direction: "排序方向", ascending: "升序", descending: "降序", pagination: "分页", page: "第", previous: "上一页", next: "下一页", itemsPerPage: "每页数量", moreActions: "更多操作",
-    selectAll: "全选", clearSelection: "取消全选", selectedCount: "项已选择", confirmDeleteMany: "确定删除所选项目吗？数量：", completed: "项完成", failed: "项失败",
-    uploadQueue: "上传任务", cancel: "取消", cancelAll: "全部取消", clearFinished: "清除已完成", retryUpload: "重试 / 继续", removeUploadTask: "移除任务", collapse: "收起", expand: "展开", queued: "等待中", uploading: "上传中", done: "已完成", skipped: "已跳过", cancelled: "已取消", replaceFile: "已存在同名文件", uploadConflictSetting: "同名文件处理方式", uploadConflictAsk: "每次由我选择", uploadConflictRename: "自动改名", uploadConflictOverwrite: "覆盖", uploadConflictSkip: "跳过", uploadReselectToResume: "上传已中断，请重新选择同一文件继续。", uploadResuming: "正在继续上次上传…",
-    rotateLeft: "向左旋转", rotateRight: "向右旋转", resize: "缩放", resizePrompt: "最大宽度 × 高度（1–4096）", invalidDimensions: "请输入类似 1200x1200 的尺寸。", imageUpdated: "图片已更新",
-    crop: "裁剪", cropPrompt: "裁剪区域：x,y,宽度,高度", invalidCrop: "请输入有效区域，例如 0,0,800,600。", preset: "预设尺寸",
-    downloadZip: "打包下载",
-    readOnly: "只读", storageUsage: "存储空间",
-    favorite: "收藏", tags: "标签", tagsPrompt: "使用逗号分隔标签", recent: "最近使用", recentEmpty: "暂无最近使用；选择或打开文件后会显示在这里。",
-    fileActions: "文件操作", keyboardHelp: "键盘：方向键导航，回车打开，F2 重命名，Delete 删除，Ctrl+A 全选，Esc 清除选择",
-    dimensions: "图片尺寸", width: "宽度", height: "高度", settings: "设置", interfaceScale: "界面大小", scaleCompact: "紧凑（90%）", scaleStandard: "标准（100%）", scaleLarge: "大（112.5%）", scaleExtraLarge: "特大（125%）", gridItemSize: "网格项目大小", listRowSize: "列表行大小", sizeSmall: "小", sizeMedium: "中", sizeLarge: "大", optionalTools: "可选工具", imageTools: "图片工具", rotationTools: "旋转工具",
-    listColumns: "列表列", showSizeColumn: "显示大小", showModifiedColumn: "显示修改时间", showTypeColumn: "显示 MIME 类型", resizeListColumn: "调整列宽", autoFitListColumn: "双击按内容自动调节",
-    optionalFeatures: "可选功能", featureSettingsHint: "只开放当前文件管理器实际需要的附加功能。", autoCollapseUploads: "上传全部结束后自动收起队列", folderTreeFeature: "左侧目录树", recentFeature: "最近使用", favoriteFeature: "收藏", tagsFeature: "标签", archiveFeature: "打包下载", trashFeature: "回收站管理",
-    resizeLeftPanel: "调整左侧栏宽度", resizeRightPanel: "调整详细信息栏宽度",
-    toolSettingsHint: "设置视图密度，并只启用需要的工具。批量重命名、压缩和水印默认隐藏。", close: "关闭",
-    confirmImageOverwrite: "此操作会覆盖原图片且无法撤销，确定继续吗？",
-    moveDestination: "移动到文件夹", copyDestination: "复制到文件夹", rootFolder: "根目录", noFolders: "没有子文件夹", currentFolder: "已选文件夹", moveHere: "移动到这里", copyHere: "复制到这里",
-    unsafeDestination: "请选择其他文件夹；不能移动到当前位置，也不能把文件夹放入自身或其子目录。", cropInstructions: "在图片上拖动以选择裁剪区域，也可以使用数值微调。", applyCrop: "裁剪并覆盖",
-    maximum: "最多", fileName: "文件名", folderDepth: "文件夹层数", configuredLimits: "当前限制", fileNameTooLong: "文件名超过字数限制：", fileNameTooLongMaximum: "文件名不能超过 {maximum} 个字符。", folderNameTooLong: "文件夹名超过字数限制：", invalidEntryName: "名称不能使用系统保留名、开头点号、结尾点号或空格、控制字符，以及 < > : \" / \\ | ? *。", folderDepthReached: "已经达到配置的最大文件夹层数。",
-    confirm: "确认", save: "保存", saving: "保存中…", overwrite: "覆盖原图", trash: "回收站", trashEmpty: "回收站为空", restore: "恢复", permanentDelete: "永久删除", expires: "到期时间", restoreConflict: "原位置已经存在同名项目", restoreOverwrite: "覆盖现有项目", restoreAutoRename: "自动改名恢复", trashRetention: "项目会移入私有回收站，并保留 30 天。", trashUsage: "回收站占用", trashAutoPurged: "回收站已满，已自动清理最旧项目：", items: "项",
-    tagInput: "添加标签", tagInputHint: "按回车或逗号添加；空输入时按退格删除最后一个标签。", tagMaximum: "最多 10 个标签，每个 30 个字符",
-    ratio: "比例", freeRatio: "自由比例", originalRatio: "原图比例", zoom: "缩放", undo: "撤销", redo: "重做", reset: "重置", compare: "按住前后对比", saveMode: "保存方式", saveCopy: "另存副本", imageCreated: "已生成图片", imageFormatLocked: "图片格式固定为 {extension}，裁剪不会转换格式；保存时会验证文件名、MIME 类型、图片尺寸和内容安全。", panHint: "在选区外拖动可重新框选；拖动四角或边线可调整大小，方向键每次微调一个像素。", open: "打开", preview: "预览", previewUnavailable: "此文件类型暂不支持可视化预览。", previewPreparing: "正在准备 Office 预览…", previewFailed: "无法生成 Office 预览。", previewRetry: "重试预览", previewTruncated: "预览仅显示前 256 KiB。", calculateChecksum: "计算校验值",
-    imageProcess: "压缩 / 水印", applyImageProcess: "开始处理", processingImages: "处理中…", processingSelected: "已选择 {count} 张图片", operation: "处理方式", optimizeImage: "压缩与格式转换", textWatermark: "文字水印", imageWatermark: "图片水印", outputFormat: "输出格式", keepFormat: "保持原格式", watermarkText: "水印文字", color: "颜色", watermarkResource: "水印所在资源", watermarkPath: "水印图片路径", position: "位置", topLeft: "左上", topRight: "右上", center: "居中", bottomLeft: "左下", bottomRight: "右下", opacity: "透明度", watermarkScale: "水印宽度", quality: "质量", conversionCopyHint: "格式转换始终另存副本，以保证扩展名与 MIME 类型一致。",
-    securityStatus: "安全状态", malwareScanningEnabled: "病毒扫描已启用", malwareScanningDisabled: "病毒扫描未启用", scanProvider: "扫描引擎", serviceStatus: "服务状态", scanHistory: "病毒扫描记录", scanPassed: "通过", scanQuarantined: "已拦截", scanFailed: "失败", scanPending: "待扫描", recentScans: "最近扫描", noScans: "尚无病毒扫描记录。",
-  },
-} as const;
+import type english from "./locales/en";
 
-export type MessageKey = keyof typeof messages.en;
-const traditionalChinese: Record<MessageKey, string> = {
-  files: "檔案", images: "圖片", newFolder: "新增資料夾", upload: "上傳", uploadFolder: "上傳資料夾", folderUploadTooMany: "單次資料夾上傳最多 500 個檔案。", folderUploadPreview: "頂層資料夾", refresh: "重新整理",
-  search: "搜尋檔案", searchTags: "搜尋標籤（多個標籤以逗號分隔）", searchScope: "搜尋範圍", searchTrash: "搜尋已刪除的檔案", name: "名稱", size: "大小", modified: "修改時間", empty: "此資料夾是空的",
-  select: "選取", rename: "重新命名", batchRename: "批次重新命名", renamePattern: "名稱規則", renamePatternHint: "使用 {name} 表示原主檔名、{n} 表示序號、{ext} 表示鎖定的副檔名。", oldName: "原名稱", duplicateRename: "預覽中有重複名稱。", remove: "刪除", download: "下載", copy: "複製", move: "移動", webImageUnsupported: "此圖片格式不能直接用於網頁內容。",
-  details: "詳細資訊", type: "類型", folder: "資料夾", file: "檔案", location: "位置", chooseFolder: "目標資料夾", fileUrl: "檔案網址", temporaryFileUrl: "臨時檔案網址", linkExpires: "失效時間", copyUrl: "複製網址", urlCopied: "網址已複製", copyUrlFailed: "自動複製失敗，網址仍保持選取，可手動複製。", clickUrlToCopy: "點選網址輸入框即可複製。", loginRequired: "需要登入", language: "語言",
-  confirmDelete: "確定要刪除選取的項目嗎？", permanentDeleteWarning: "此儲存空間不提供資源回收筒，此操作無法復原。", folderName: "資料夾名稱", newName: "新名稱", newBaseName: "新名稱；副檔名不可修改", loading: "載入中…",
-  uploadDone: "上傳完成", error: "操作失敗", missingPathFallback: "該資料夾已不存在，已返回根目錄。", missingDestinationFallback: "目標資料夾已不存在，請從根目錄重新選擇。", recentMissing: "該最近使用檔案已不存在，已從清單移除。", grid: "網格檢視", list: "清單檢視", home: "首頁",
-  sort: "排序", direction: "排序方向", ascending: "升冪", descending: "降冪", pagination: "分頁", page: "第", previous: "上一頁", next: "下一頁", itemsPerPage: "每頁數量", moreActions: "更多操作",
-  selectAll: "全選", clearSelection: "取消全選", selectedCount: "個項目已選取", confirmDeleteMany: "確定要刪除選取的項目嗎？數量：", completed: "個已完成", failed: "個失敗",
-  uploadQueue: "上傳佇列", cancel: "取消", cancelAll: "全部取消", clearFinished: "清除已完成項目", retryUpload: "重試 / 繼續", removeUploadTask: "移除工作", collapse: "收合", expand: "展開", queued: "等待中", uploading: "上傳中", done: "已完成", skipped: "已略過", cancelled: "已取消", replaceFile: "已有同名檔案", uploadConflictSetting: "同名檔案處理方式", uploadConflictAsk: "每次由我選擇", uploadConflictRename: "自動重新命名", uploadConflictOverwrite: "覆寫", uploadConflictSkip: "略過", uploadReselectToResume: "上傳已中斷，請重新選取同一檔案繼續。", uploadResuming: "正在繼續上次上傳…",
-  rotateLeft: "向左旋轉", rotateRight: "向右旋轉", resize: "縮放", resizePrompt: "最大寬度 × 高度（1–4096）", invalidDimensions: "請輸入類似 1200x1200 的尺寸。", imageUpdated: "圖片已更新",
-  crop: "裁切", cropPrompt: "裁切範圍：x,y,寬度,高度", invalidCrop: "請輸入有效範圍，例如 0,0,800,600。", preset: "預設尺寸",
-  downloadZip: "打包下載",
-  readOnly: "唯讀", storageUsage: "儲存空間",
-  favorite: "收藏", tags: "標籤", tagsPrompt: "使用逗號分隔標籤", recent: "最近使用", recentEmpty: "暫無最近使用；選取或開啟檔案後會顯示在這裡。",
-  fileActions: "檔案操作", keyboardHelp: "鍵盤：方向鍵導覽，Enter 開啟，F2 重新命名，Delete 刪除，Ctrl+A 全選，Esc 清除選取",
-  dimensions: "圖片尺寸", width: "寬度", height: "高度", settings: "設定", interfaceScale: "介面大小", scaleCompact: "緊湊（90%）", scaleStandard: "標準（100%）", scaleLarge: "大（112.5%）", scaleExtraLarge: "特大（125%）", gridItemSize: "網格項目大小", listRowSize: "清單列大小", sizeSmall: "小", sizeMedium: "中", sizeLarge: "大", optionalTools: "選用工具", imageTools: "圖片工具", rotationTools: "旋轉工具",
-  listColumns: "清單欄位", showSizeColumn: "顯示大小", showModifiedColumn: "顯示修改時間", showTypeColumn: "顯示 MIME 類型", resizeListColumn: "調整欄寬", autoFitListColumn: "按兩下依內容自動調整",
-  optionalFeatures: "選用功能", featureSettingsHint: "僅啟用此檔案管理器實際需要的附加功能。", autoCollapseUploads: "全部上傳完成後自動收合佇列", folderTreeFeature: "左側資料夾樹", recentFeature: "最近使用", favoriteFeature: "收藏", tagsFeature: "標籤", archiveFeature: "打包下載", trashFeature: "資源回收筒管理",
-  resizeLeftPanel: "調整左側欄寬度", resizeRightPanel: "調整詳細資訊欄寬度",
-  toolSettingsHint: "設定檢視密度，並僅啟用需要的工具。批次重新命名、壓縮和浮水印預設為隱藏。", close: "關閉",
-  confirmImageOverwrite: "此操作會覆寫原始圖片且無法復原，確定要繼續嗎？",
-  moveDestination: "移動到資料夾", copyDestination: "複製到資料夾", rootFolder: "根目錄", noFolders: "沒有子資料夾", currentFolder: "已選資料夾", moveHere: "移動到這裡", copyHere: "複製到這裡",
-  unsafeDestination: "請選擇其他資料夾；不能移動到目前位置，也不能將資料夾放入自身或其子目錄。", cropInstructions: "在圖片上拖曳以選取裁切範圍，也可以使用數值微調。", applyCrop: "裁切並覆寫",
-  maximum: "最多", fileName: "檔名", folderDepth: "資料夾層數", configuredLimits: "目前限制", fileNameTooLong: "檔名超過字數限制：", fileNameTooLongMaximum: "檔名不能超過 {maximum} 個字元。", folderNameTooLong: "資料夾名稱超過字數限制：", invalidEntryName: "名稱不能使用系統保留名、開頭點號、結尾點號或空格、控制字元，以及 < > : \" / \\ | ? *。", folderDepthReached: "已達到設定的最大資料夾層數。",
-  confirm: "確認", save: "儲存", saving: "儲存中…", overwrite: "覆寫原圖", trash: "資源回收筒", trashEmpty: "資源回收筒是空的", restore: "還原", permanentDelete: "永久刪除", expires: "到期時間", restoreConflict: "原位置已有同名項目", restoreOverwrite: "覆寫現有項目", restoreAutoRename: "自動改名還原", trashRetention: "項目會移入私有資源回收筒，並保留 30 天。", trashUsage: "資源回收筒用量", trashAutoPurged: "資源回收筒已滿，已自動清除最舊項目：", items: "個項目",
-  tagInput: "新增標籤", tagInputHint: "按 Enter 或逗號新增；輸入為空時按 Backspace 移除最後一個標籤。", tagMaximum: "最多 10 個標籤，每個 30 個字元",
-  ratio: "比例", freeRatio: "自由比例", originalRatio: "原圖比例", zoom: "縮放", undo: "復原", redo: "重做", reset: "重設", compare: "按住以比較前後差異", saveMode: "儲存方式", saveCopy: "另存副本", imageCreated: "已產生圖片", imageFormatLocked: "圖片格式固定為 {extension}，裁切不會轉換格式；儲存時會驗證檔名、MIME 類型、圖片尺寸和內容安全。", panHint: "在選取範圍外拖曳可重新框選；拖曳四角或邊線可調整大小，方向鍵每次微調一個像素。", open: "開啟", preview: "預覽", previewUnavailable: "此檔案類型暫不支援視覺預覽。", previewPreparing: "正在準備 Office 預覽…", previewFailed: "無法產生 Office 預覽。", previewRetry: "重試預覽", previewTruncated: "預覽僅顯示前 256 KiB。", calculateChecksum: "計算校驗值",
-  imageProcess: "壓縮 / 浮水印", applyImageProcess: "開始處理", processingImages: "處理中…", processingSelected: "已選取 {count} 張圖片", operation: "處理方式", optimizeImage: "壓縮與格式轉換", textWatermark: "文字浮水印", imageWatermark: "圖片浮水印", outputFormat: "輸出格式", keepFormat: "保留原格式", watermarkText: "浮水印文字", color: "顏色", watermarkResource: "浮水印所在資源", watermarkPath: "浮水印圖片路徑", position: "位置", topLeft: "左上", topRight: "右上", center: "置中", bottomLeft: "左下", bottomRight: "右下", opacity: "透明度", watermarkScale: "浮水印寬度", quality: "品質", conversionCopyHint: "格式轉換一律另存副本，以確保副檔名與 MIME 類型一致。",
-  securityStatus: "安全狀態", malwareScanningEnabled: "病毒掃描已啟用", malwareScanningDisabled: "病毒掃描未啟用", scanProvider: "掃描引擎", serviceStatus: "服務狀態", scanHistory: "病毒掃描記錄", scanPassed: "通過", scanQuarantined: "已攔截", scanFailed: "失敗", scanPending: "待掃描", recentScans: "最近掃描", noScans: "尚無病毒掃描記錄。",
+export type MessageKey = keyof typeof english;
+export type Language = "en" | "zh-cn" | "zh-tw";
+export type Messages = Record<MessageKey, string>;
+
+const loaders: Record<Language, () => Promise<{ default: Messages }>> = {
+  en: () => import("./locales/en"),
+  "zh-cn": () => import("./locales/zh-cn"),
+  "zh-tw": () => import("./locales/zh-tw"),
 };
 
-const localizedMessages = { ...messages, "zh-tw": traditionalChinese } as const;
-
-export type Language = keyof typeof localizedMessages;
-export const translator = (language: Language) => (key: MessageKey): string => localizedMessages[language][key];
+export const loadMessages = async (language: Language): Promise<Messages> => (await loaders[language]()).default;
+export const translator = (messages: Messages) => (key: MessageKey): string => messages[key];
+export const preferredLanguage = (fallback: Language): Language => {
+  const saved = localStorage.getItem("sofinder.language");
+  return saved === "en" || saved === "zh-cn" || saved === "zh-tw" ? saved : fallback;
+};

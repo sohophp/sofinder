@@ -1,5 +1,20 @@
 # Upgrading SoFinder
 
+## From 0.1.0-beta.19 to 0.1.0-beta.20
+
+Deploy the complete rebuilt `dist/` directory together; stored files require no
+migration. Quick access metadata remains backward compatible, while new clients
+also consume typed file/folder/stale descriptors. The host-level
+`features.quick_access` gate is independent from Favorites and remains
+authoritative over browser preferences.
+
+User settings now include named profiles and a separate system-default reset.
+Language packs are loaded as manifest-allowlisted chunks, so every generated
+asset must be deployed. `/live` is intentionally anonymous and minimal in the
+reference configuration; keep `/health`, `/metrics` and security status behind
+monitoring or administrator authentication. Office preview deployments should
+verify both cached and newly converted full-screen XLSX previews.
+
 ## From 0.1.0-beta.18 to 0.1.0-beta.19
 
 No files, metadata or APIs are migrated. The Symfony demo and quick-start

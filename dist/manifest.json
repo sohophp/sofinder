@@ -1,122 +1,240 @@
 {
-  "_EntryVisuals-CZ0BEx0U.js": {
-    "file": "EntryVisuals-CZ0BEx0U.js",
+  "_EntryVisuals-COz6M0oc.js": {
+    "file": "EntryVisuals-COz6M0oc.js",
     "name": "EntryVisuals",
     "imports": [
-      "_jsx-runtime-BuvfPIin.js"
+      "_jsx-runtime-CmCsaYvT.js",
+      "_react-B5TC723I.js"
     ]
   },
-  "_Modal-u0Bikd5w.js": {
-    "file": "Modal-u0Bikd5w.js",
+  "_Modal-aP8IYcPB.js": {
+    "file": "Modal-aP8IYcPB.js",
     "name": "Modal",
     "imports": [
-      "_jsx-runtime-BuvfPIin.js"
+      "_jsx-runtime-CmCsaYvT.js",
+      "_react-B5TC723I.js",
+      "_UiIcon-CeAgi5_o.js"
+    ]
+  },
+  "_UiIcon-CeAgi5_o.js": {
+    "file": "UiIcon-CeAgi5_o.js",
+    "name": "UiIcon",
+    "imports": [
+      "_jsx-runtime-CmCsaYvT.js"
     ]
   },
   "_format-GD3_dnvn.js": {
     "file": "format-GD3_dnvn.js",
     "name": "format"
   },
-  "_jsx-runtime-BuvfPIin.js": {
-    "file": "jsx-runtime-BuvfPIin.js",
+  "_jsx-runtime-CmCsaYvT.js": {
+    "file": "jsx-runtime-CmCsaYvT.js",
     "name": "jsx-runtime"
   },
   "_nameValidation-DURyMFRU.js": {
     "file": "nameValidation-DURyMFRU.js",
     "name": "nameValidation"
   },
+  "_react-B5TC723I.js": {
+    "file": "react-B5TC723I.js",
+    "name": "react",
+    "imports": [
+      "_jsx-runtime-CmCsaYvT.js"
+    ]
+  },
   "src/components/BulkRenameDialog.tsx": {
-    "file": "BulkRenameDialog-DJNXzms4.js",
+    "file": "BulkRenameDialog-Dr9MLWWP.js",
     "name": "BulkRenameDialog",
     "src": "src/components/BulkRenameDialog.tsx",
     "isDynamicEntry": true,
     "imports": [
-      "_jsx-runtime-BuvfPIin.js",
-      "_Modal-u0Bikd5w.js",
+      "_jsx-runtime-CmCsaYvT.js",
+      "_react-B5TC723I.js",
+      "_Modal-aP8IYcPB.js",
       "_nameValidation-DURyMFRU.js"
     ]
   },
+  "src/components/ContextMenu.tsx": {
+    "file": "ContextMenu-B5qP5e8D.js",
+    "name": "ContextMenu",
+    "src": "src/components/ContextMenu.tsx",
+    "isDynamicEntry": true,
+    "imports": [
+      "_jsx-runtime-CmCsaYvT.js",
+      "_react-B5TC723I.js"
+    ]
+  },
   "src/components/DestinationDialog.tsx": {
-    "file": "DestinationDialog-B4CBeZ2f.js",
+    "file": "DestinationDialog-CHfiXcOr.js",
     "name": "DestinationDialog",
     "src": "src/components/DestinationDialog.tsx",
     "isDynamicEntry": true,
     "imports": [
-      "_jsx-runtime-BuvfPIin.js",
-      "_Modal-u0Bikd5w.js",
-      "_EntryVisuals-CZ0BEx0U.js"
+      "_jsx-runtime-CmCsaYvT.js",
+      "_Modal-aP8IYcPB.js",
+      "_EntryVisuals-COz6M0oc.js"
+    ]
+  },
+  "src/components/DetailsPanel.tsx": {
+    "file": "DetailsPanel-VAkzkQQp.js",
+    "name": "DetailsPanel",
+    "src": "src/components/DetailsPanel.tsx",
+    "isDynamicEntry": true,
+    "imports": [
+      "_jsx-runtime-CmCsaYvT.js",
+      "_EntryVisuals-COz6M0oc.js",
+      "_format-GD3_dnvn.js"
     ]
   },
   "src/components/DocumentPreviewPane.tsx": {
-    "file": "DocumentPreviewPane-DU8zWCno.js",
+    "file": "DocumentPreviewPane-DhmHG-pU.js",
     "name": "DocumentPreviewPane",
     "src": "src/components/DocumentPreviewPane.tsx",
     "isDynamicEntry": true,
     "imports": [
-      "_jsx-runtime-BuvfPIin.js"
+      "_jsx-runtime-CmCsaYvT.js",
+      "_react-B5TC723I.js"
+    ]
+  },
+  "src/components/FavoritesPage.tsx": {
+    "file": "FavoritesPage-CsbtbprE.js",
+    "name": "FavoritesPage",
+    "src": "src/components/FavoritesPage.tsx",
+    "isDynamicEntry": true,
+    "imports": [
+      "_jsx-runtime-CmCsaYvT.js",
+      "_UiIcon-CeAgi5_o.js"
+    ]
+  },
+  "src/components/FolderTree.tsx": {
+    "file": "FolderTree-CmQzaPks.js",
+    "name": "FolderTree",
+    "src": "src/components/FolderTree.tsx",
+    "isDynamicEntry": true,
+    "imports": [
+      "_jsx-runtime-CmCsaYvT.js",
+      "_react-B5TC723I.js"
     ]
   },
   "src/components/ImageEditor.tsx": {
-    "file": "ImageEditor-Yul2IakG.js",
+    "file": "ImageEditor-BC9FnRNj.js",
     "name": "ImageEditor",
     "src": "src/components/ImageEditor.tsx",
     "isDynamicEntry": true,
     "imports": [
-      "_jsx-runtime-BuvfPIin.js",
-      "_Modal-u0Bikd5w.js",
+      "_jsx-runtime-CmCsaYvT.js",
+      "_react-B5TC723I.js",
+      "_Modal-aP8IYcPB.js",
       "_nameValidation-DURyMFRU.js"
     ]
   },
   "src/components/ImageProcessDialog.tsx": {
-    "file": "ImageProcessDialog-tN8NxEZQ.js",
+    "file": "ImageProcessDialog-BXXUiXNB.js",
     "name": "ImageProcessDialog",
     "src": "src/components/ImageProcessDialog.tsx",
     "isDynamicEntry": true,
     "imports": [
-      "_jsx-runtime-BuvfPIin.js",
-      "_Modal-u0Bikd5w.js"
+      "_jsx-runtime-CmCsaYvT.js",
+      "_react-B5TC723I.js",
+      "_Modal-aP8IYcPB.js"
+    ]
+  },
+  "src/components/MetadataSidebarPanels.tsx": {
+    "file": "MetadataSidebarPanels-B5JLnmbU.js",
+    "name": "MetadataSidebarPanels",
+    "src": "src/components/MetadataSidebarPanels.tsx",
+    "isDynamicEntry": true,
+    "imports": [
+      "_jsx-runtime-CmCsaYvT.js",
+      "_react-B5TC723I.js",
+      "_UiIcon-CeAgi5_o.js"
     ]
   },
   "src/components/SecurityStatusDialog.tsx": {
-    "file": "SecurityStatusDialog-BPkuBEhN.js",
+    "file": "SecurityStatusDialog-CLbhkkDo.js",
     "name": "SecurityStatusDialog",
     "src": "src/components/SecurityStatusDialog.tsx",
     "isDynamicEntry": true,
     "imports": [
-      "_jsx-runtime-BuvfPIin.js",
-      "_Modal-u0Bikd5w.js",
+      "_jsx-runtime-CmCsaYvT.js",
+      "_react-B5TC723I.js",
+      "_Modal-aP8IYcPB.js",
       "_format-GD3_dnvn.js"
     ]
   },
   "src/components/SettingsDialog.tsx": {
-    "file": "SettingsDialog-CCwVPOUO.js",
+    "file": "SettingsDialog-BhOPM_OQ.js",
     "name": "SettingsDialog",
     "src": "src/components/SettingsDialog.tsx",
     "isDynamicEntry": true,
     "imports": [
-      "_jsx-runtime-BuvfPIin.js",
-      "_Modal-u0Bikd5w.js"
+      "_jsx-runtime-CmCsaYvT.js",
+      "_react-B5TC723I.js",
+      "_Modal-aP8IYcPB.js"
+    ]
+  },
+  "src/components/ShareDialog.tsx": {
+    "file": "ShareDialog-eimnLvhx.js",
+    "name": "ShareDialog",
+    "src": "src/components/ShareDialog.tsx",
+    "isDynamicEntry": true,
+    "imports": [
+      "_jsx-runtime-CmCsaYvT.js",
+      "_react-B5TC723I.js",
+      "_Modal-aP8IYcPB.js"
     ]
   },
   "src/components/TagsDialog.tsx": {
-    "file": "TagsDialog-BtHZ84rd.js",
+    "file": "TagsDialog-C5MRKRfY.js",
     "name": "TagsDialog",
     "src": "src/components/TagsDialog.tsx",
     "isDynamicEntry": true,
     "imports": [
-      "_jsx-runtime-BuvfPIin.js",
-      "_Modal-u0Bikd5w.js"
+      "_jsx-runtime-CmCsaYvT.js",
+      "_react-B5TC723I.js",
+      "_UiIcon-CeAgi5_o.js",
+      "_Modal-aP8IYcPB.js"
     ]
   },
   "src/components/TrashDialog.tsx": {
-    "file": "TrashDialog-mzDr6crW.js",
+    "file": "TrashDialog-CRUzG7u0.js",
     "name": "TrashDialog",
     "src": "src/components/TrashDialog.tsx",
     "isDynamicEntry": true,
     "imports": [
-      "_jsx-runtime-BuvfPIin.js",
-      "_Modal-u0Bikd5w.js"
+      "_jsx-runtime-CmCsaYvT.js",
+      "_react-B5TC723I.js",
+      "_UiIcon-CeAgi5_o.js",
+      "_Modal-aP8IYcPB.js"
     ]
+  },
+  "src/components/UploadQueue.tsx": {
+    "file": "UploadQueue-DORLpY6-.js",
+    "name": "UploadQueue",
+    "src": "src/components/UploadQueue.tsx",
+    "isDynamicEntry": true,
+    "imports": [
+      "_jsx-runtime-CmCsaYvT.js",
+      "_UiIcon-CeAgi5_o.js"
+    ]
+  },
+  "src/locales/en.ts": {
+    "file": "en-DjNrcY22.js",
+    "name": "en",
+    "src": "src/locales/en.ts",
+    "isDynamicEntry": true
+  },
+  "src/locales/zh-cn.ts": {
+    "file": "zh-cn-FVLcJn9X.js",
+    "name": "zh-cn",
+    "src": "src/locales/zh-cn.ts",
+    "isDynamicEntry": true
+  },
+  "src/locales/zh-tw.ts": {
+    "file": "zh-tw-DwI_k4NE.js",
+    "name": "zh-tw",
+    "src": "src/locales/zh-tw.ts",
+    "isDynamicEntry": true
   },
   "src/main.tsx": {
     "file": "sofinder.js",
@@ -124,13 +242,18 @@
     "src": "src/main.tsx",
     "isEntry": true,
     "imports": [
-      "_jsx-runtime-BuvfPIin.js",
-      "_Modal-u0Bikd5w.js",
+      "_jsx-runtime-CmCsaYvT.js",
+      "_react-B5TC723I.js",
+      "_UiIcon-CeAgi5_o.js",
+      "_Modal-aP8IYcPB.js",
       "_nameValidation-DURyMFRU.js",
-      "_EntryVisuals-CZ0BEx0U.js",
+      "_EntryVisuals-COz6M0oc.js",
       "_format-GD3_dnvn.js"
     ],
     "dynamicImports": [
+      "src/locales/en.ts",
+      "src/locales/zh-cn.ts",
+      "src/locales/zh-tw.ts",
       "src/components/ImageEditor.tsx",
       "src/components/ImageProcessDialog.tsx",
       "src/components/SecurityStatusDialog.tsx",
@@ -139,7 +262,14 @@
       "src/components/DestinationDialog.tsx",
       "src/components/BulkRenameDialog.tsx",
       "src/components/TrashDialog.tsx",
-      "src/components/TagsDialog.tsx"
+      "src/components/TagsDialog.tsx",
+      "src/components/FolderTree.tsx",
+      "src/components/DetailsPanel.tsx",
+      "src/components/ShareDialog.tsx",
+      "src/components/FavoritesPage.tsx",
+      "src/components/MetadataSidebarPanels.tsx",
+      "src/components/ContextMenu.tsx",
+      "src/components/UploadQueue.tsx"
     ]
   },
   "src/picker.ts": {

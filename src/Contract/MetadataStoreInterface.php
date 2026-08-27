@@ -6,7 +6,7 @@ namespace SohoPHP\SoFinder\Contract;
 
 interface MetadataStoreInterface
 {
-    /** @return array{favorites:list<string>,tags:array<string,list<string>>,recent:list<array{path:string,touchedAt:int}>} */
+    /** @return array{favorites:list<string>,quickAccess?:list<string>,tags:array<string,list<string>>,recent:list<array{path:string,touchedAt:int}>} */
     public function get(string $actor, string $resource): array;
 
     public function setFavorite(string $actor, string $resource, string $path, bool $favorite): void;

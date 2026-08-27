@@ -63,7 +63,7 @@ final class ControllerFeaturePolicyTest extends TestCase
         $controller = new MetadataController(
             $this->withoutConstructor(MetadataManager::class),
             $this->withoutConstructor(CsrfGuard::class),
-            new FeaturePolicy(['recent' => false, 'favorites' => false, 'tags' => false]),
+            new FeaturePolicy(['recent' => false, 'favorites' => false, 'quick_access' => false, 'tags' => false]),
         );
 
         $this->expectDisabled(static fn () => $controller->get(Request::create('/metadata')));

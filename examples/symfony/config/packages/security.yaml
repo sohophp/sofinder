@@ -12,6 +12,7 @@ security:
       provider: demo_users
       http_basic: ~
   access_control:
+    - { path: ^/sofinder/live$, roles: PUBLIC_ACCESS }
     - { path: ^/sofinder/signed/, roles: PUBLIC_ACCESS }
     - { path: ^/sofinder, roles: ROLE_USER }
     - { path: ^/integrations, roles: ROLE_USER }

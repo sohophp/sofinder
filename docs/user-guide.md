@@ -56,13 +56,13 @@ Select one or more entries, then choose **Copy** or **Move**. Browse the destina
 
 Batch transfers use conflict-safe automatic names by default. Generated names are rechecked against the destination resource's name length and extension policy. Each item is authorized separately; the completion message shows successful and failed counts rather than hiding partial failures.
 
-## Download and copy a URL
+## Download and share
 
-For one file, use Download from the details panel, preview dialog or context menu. A private proxy resource downloads through an authenticated SoFinder URL. A public resource may expose its configured public/CDN URL.
+For one file, use Download from the details panel, preview dialog or context menu. The download opens in a new browser tab or window. A private proxy resource downloads through an authenticated SoFinder URL. A public resource may expose its configured public/CDN URL.
 
 When **Download ZIP** is enabled, select one or more files or folders and choose it from the action bar. ZIP generation is bounded by the administrator's selection, entry and byte limits. It requires ZIP support on the server.
 
-**Copy URL** opens the actual entry URL. The dialog warns when a proxy URL requires login; do not treat such a link as publicly shareable.
+The details panel presents **Download** and **Share** as two clear actions. Share groups **Copy URL** and the optional **QR Code** in one dialog. QR Code is disabled by default in each user's settings, generated entirely in the browser, and never sends the URL to an external QR service. Login requirements and signed-link expiration remain visible and still apply; sharing does not turn a private URL into a public one.
 
 ## Delete and restore
 
@@ -76,18 +76,23 @@ Open **More → Recycle bin** to search deleted entries, review expiration and u
 
 ## Search, sort and personal metadata
 
-Name search applies to the current folder and waits briefly while you type. Sort by name, size or modification date and reverse the direction from **More**. Some remote adapters do not support server-side search or sorting; those controls are disabled.
+Name search applies to the current folder and waits briefly while you type. Sort by name, size, type or modification date and reverse the direction from **More**. The same menu can filter the current page by a bounded set of file types and group it by name, type, size, date or tag. Some remote adapters do not support server-side search or sorting; those controls are disabled.
 
 The pagination bar accepts a typed page size or a common value from its suggestion list. The allowed range is 10–500 files per page; changing it returns to the first page and the browser remembers the choice.
 
 Settings can enable:
 
+The **Preference profiles** section saves the current tools, optional features, list columns, grid/list sizes, folder-navigation position, Quick access scope, interface scale and same-name upload strategy as a named profile. Up to 10 profiles are stored in the current browser; saving the same name updates it, and applying a profile changes the interface immediately. **Restore system defaults** resets the complete preference set, including panel and list-column widths; it is separate from layout presets.
+
 - **Recent**: records recently selected paths for your account.
-- **Favorites**: marks one selected item and displays a star.
+- **Favorites**: marks one selected item and lists up to eight shortcuts in the sidebar. The Favorites heading links to a dedicated, searchable page at `collection=favorites`, where every saved link can be opened or removed.
+- **Quick access**: operates independently from Favorites. Folders can always be pinned; each user can decide whether it accepts files when the host permits it. It shows links from all storage roots by default, can be limited to the current root, uses distinct file/folder icons, marks stale links, and supports opening or right-click removal. Its sidebar display remains bounded to 12 links.
 - **Tags**: assigns up to 10 tags, each 1–30 visible characters. In tag search, separate terms with `,` or `，`; every term must match at least one tag.
-- **Folder tree**, **Download ZIP** and **Recycle bin** controls.
+- **Folder navigation**, which can be placed in the left or right sidebar per user, plus **Download ZIP** and **Recycle bin** controls.
 
 Metadata is private to the authenticated actor unless the host application replaces that policy.
+
+The **Select** menu groups Select all, Clear and Invert selection. These operations apply to the currently visible, filtered page. List columns keep bounded widths, can be dragged at their separators, and auto-fit on double-click; long values are truncated without expanding the layout.
 
 ## Manager mode and picker mode
 

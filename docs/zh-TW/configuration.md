@@ -120,10 +120,15 @@ so_finder:
     folder_tree: true
     recent: true
     favorites: true
+    quick_access: true
+    quick_access_files: true
     tags: true
     archive: true
     trash: true
+    qr_code: true
 ```
+
+`quick_access` 獨立控制快速存取，不再依賴收藏功能。`quick_access_files` 是「檔案加入快速存取」的 Host 上限。啟用後，使用者仍可在設定中自行關閉；Host 關閉後會隱藏使用者開關並拒絕新增檔案快速項目，但既有項目仍可移除。
 
 ## 主題
 

@@ -5,9 +5,9 @@ declare(strict_types=1);
 namespace SohoPHP\SoFinder\State;
 
 use SohoPHP\SoFinder\Contract\AtomicStateStoreInterface;
-use SohoPHP\SoFinder\Contract\MetadataStoreInterface;
+use SohoPHP\SoFinder\Contract\QuickAccessMetadataStoreInterface;
 
-final readonly class SharedMetadataStore implements MetadataStoreInterface
+final readonly class SharedMetadataStore implements QuickAccessMetadataStoreInterface
 {
     public function __construct(private AtomicStateStoreInterface $state)
     {
@@ -19,9 +19,20 @@ final readonly class SharedMetadataStore implements MetadataStoreInterface
 
         return [
             'favorites' => array_values(array_filter((array) ($metadata['favorites'] ?? []), 'is_string')),
+            'quickAccess' => array_slice(array_values(array_filter((array) ($metadata['quickAccess'] ?? []), 'is_string')), 0, 12),
             'tags' => $this->tags((array) ($metadata['tags'] ?? [])),
             'recent' => array_values(array_filter((array) ($metadata['recent'] ?? []), static fn (mixed $item): bool => is_array($item) && is_string($item['path'] ?? null) && is_int($item['touchedAt'] ?? null))),
         ];
+    }
+
+    public function setQuickAccess(string $actor, string $resource, string $path, bool $pinned): void
+    {
+        $this->change($actor, $resource, static function (array $data) use ($path, $pinned): array {
+            $paths = array_values(array_diff(array_filter((array) ($data['quickAccess'] ?? []), 'is_string'), [$path]));
+            if ($pinned) array_unshift($paths, $path);
+            $data['quickAccess'] = array_slice($paths, 0, 12);
+            return $data;
+        });
     }
 
     public function setFavorite(string $actor, string $resource, string $path, bool $favorite): void
@@ -57,6 +68,7 @@ final readonly class SharedMetadataStore implements MetadataStoreInterface
         $this->change($actor, $resource, static function (array $data) use ($source, $destination): array {
             $replace = static fn (string $path): string => $path === $source ? $destination : (str_starts_with($path, $source . '/') ? $destination . substr($path, strlen($source)) : $path);
             $data['favorites'] = array_values(array_unique(array_map($replace, array_filter((array) ($data['favorites'] ?? []), 'is_string'))));
+            $data['quickAccess'] = array_slice(array_values(array_unique(array_map($replace, array_filter((array) ($data['quickAccess'] ?? []), 'is_string')))), 0, 12);
             $tags = [];
             foreach ((array) ($data['tags'] ?? []) as $path => $values) if (is_string($path)) $tags[$replace($path)] = $values;
             $data['tags'] = $tags;
@@ -70,6 +82,7 @@ final readonly class SharedMetadataStore implements MetadataStoreInterface
         $this->change($actor, $resource, static function (array $data) use ($path): array {
             $matches = static fn (string $candidate): bool => $candidate === $path || str_starts_with($candidate, $path . '/');
             $data['favorites'] = array_values(array_filter((array) ($data['favorites'] ?? []), static fn (mixed $item): bool => is_string($item) && !$matches($item)));
+            $data['quickAccess'] = array_values(array_filter((array) ($data['quickAccess'] ?? []), static fn (mixed $item): bool => is_string($item) && !$matches($item)));
             foreach (array_keys((array) ($data['tags'] ?? [])) as $tagPath) if (is_string($tagPath) && $matches($tagPath)) unset($data['tags'][$tagPath]);
             $data['recent'] = array_values(array_filter((array) ($data['recent'] ?? []), static fn (mixed $item): bool => is_array($item) && is_string($item['path'] ?? null) && !$matches($item['path'])));
             return $data;

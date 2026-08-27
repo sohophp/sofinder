@@ -49,11 +49,13 @@ final class SharedStateTest extends TestCase
     {
         $metadata = new SharedMetadataStore(new PdoAtomicStateStore(new \PDO('sqlite:' . $this->directory . '/metadata.sqlite')));
         $metadata->setFavorite('actor-1', 'Files', 'old/report.pdf', true);
+        $metadata->setQuickAccess('actor-1', 'Files', 'old', true);
         $metadata->setTags('actor-1', 'Files', 'old/report.pdf', ['report']);
         $metadata->touch('actor-1', 'Files', 'old/report.pdf', 123);
         $metadata->movePath('actor-1', 'Files', 'old', 'new');
 
         self::assertSame(['new/report.pdf'], $metadata->get('actor-1', 'Files')['favorites']);
+        self::assertSame(['new'], $metadata->get('actor-1', 'Files')['quickAccess']);
         self::assertSame(['report'], $metadata->get('actor-1', 'Files')['tags']['new/report.pdf']);
         self::assertSame([], $metadata->get('actor-2', 'Files')['favorites']);
     }

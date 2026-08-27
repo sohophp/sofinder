@@ -1,7 +1,9 @@
-import { n as e, t } from "./jsx-runtime-BuvfPIin.js";
-import { n, t as r } from "./Modal-u0Bikd5w.js";
+import { t as e } from "./jsx-runtime-CmCsaYvT.js";
+import { t } from "./react-B5TC723I.js";
+import { t as n } from "./UiIcon-CeAgi5_o.js";
+import { t as r } from "./Modal-aP8IYcPB.js";
 //#region src/components/TagsDialog.tsx
-var i = e(), a = t();
+var i = t(), a = e();
 function o({ initial: e, suggestions: t, labels: o, onSave: s, onClose: c }) {
 	let [l, u] = (0, i.useState)(() => e.slice(0, 10)), [d, f] = (0, i.useState)(""), p = (0, i.useMemo)(() => new Set(l.map((e) => e.toLocaleLowerCase())), [l]), m = t.filter((e) => !p.has(e.toLocaleLowerCase()) && (d.trim() === "" || e.toLocaleLowerCase().includes(d.trim().toLocaleLowerCase()))).slice(0, 8), h = (e = d) => {
 		let t = e.trim().replace(/^[,，]+|[,，]+$/gu, "");

@@ -44,6 +44,13 @@ creates an idempotent job, polls `queued`, `running`, `ready`, `failed` or
 immediate. `inline` always converts in the request; `messenger` fails container
 compilation when no bus exists. Workers run `DocumentPreviewMessageHandler`.
 
+Job responses include the effective `mode`, cache hit, creation/start/update/finish
+timestamps and conversion duration. The browser distinguishes submission, queue,
+conversion and PDF loading, and delays progress UI briefly so cache hits do not
+flash a misleading conversion message. The administrator Security status dialog
+shows the configured/effective mode, converter path and version, cache writability,
+cached PDF count, last successful conversion and bounded job counts.
+
 Multi-node async deployments must share both `AtomicStateStoreInterface` state
 and the `cache_dir/document-previews` filesystem. Set
 `cluster.shared_preview_cache: true` only after mounting that directory on every

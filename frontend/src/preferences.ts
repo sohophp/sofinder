@@ -1,11 +1,11 @@
 import type { UiScale, UploadConflictStrategy } from "./types";
-import type { EntrySize, FeaturePreferences, ListColumnName, ListColumnPreferences, ListColumnWidths, ToolPreferences, ViewSizePreferences } from "./components/SettingsDialog";
+import type { EntrySize, FeaturePreferences, FolderTreePlacement, ListColumnName, ListColumnPreferences, ListColumnWidths, QuickAccessScope, ToolPreferences, ViewSizePreferences } from "./components/SettingsDialog";
 
 export const defaultTools: ToolPreferences = { resize: false, crop: false, rotate: false, presets: false, process: false, batchRename: false };
 export const defaultViewSizes: ViewSizePreferences = { grid: "medium", list: "medium" };
-export const defaultFeatures: FeaturePreferences = { recent: false, favorites: false, tags: false, archive: false, trash: true, folderTree: false, autoCollapseUploads: true };
+export const defaultFeatures: FeaturePreferences = { recent: false, favorites: false, sidebarFavorites: true, sidebarQuickAccess: true, quickAccessFiles: true, tags: false, archive: false, trash: true, folderTree: false, qrCode: false, autoCollapseUploads: true };
 export const defaultListColumns: ListColumnPreferences = { size: true, modified: true, type: false };
-export const defaultFeatureAvailability = { recent: true, favorites: true, tags: true, archive: true, trash: true, folderTree: true, batchRename: true, imageEditing: true, imageProcessing: true, documentPreview: true, securityStatus: true, folderUpload: true, textPreview: true, checksum: true } as const;
+export const defaultFeatureAvailability = { recent: true, favorites: true, quickAccess: true, quickAccessFiles: true, tags: true, archive: true, trash: true, folderTree: true, batchRename: true, imageEditing: true, imageProcessing: true, documentPreview: true, securityStatus: true, folderUpload: true, textPreview: true, checksum: true, qrCode: true } as const;
 
 export const loadPreferences = <T extends object>(key: string, defaults: T): T => {
   try {
@@ -33,6 +33,9 @@ export const loadUploadConflictStrategy = (fallback: UploadConflictStrategy): Up
   const saved = localStorage.getItem("sofinder.uploadConflictStrategy.v1");
   return saved === "ask" || saved === "rename" || saved === "overwrite" || saved === "skip" ? saved : fallback;
 };
+
+export const loadFolderTreePlacement = (): FolderTreePlacement => localStorage.getItem("sofinder.folderNavigation.position.v1") === "right" ? "right" : "left";
+export const loadQuickAccessScope = (): QuickAccessScope => localStorage.getItem("sofinder.quickAccess.scope.v1") === "resource" ? "resource" : "all";
 
 export const columnLimits = { left: { initial: 220, min: 110, max: 330 }, right: { initial: 270, min: 135, max: 405 } } as const;
 export const listColumnLimits: Record<ListColumnName, { initial: number; min: number; max: number }> = {

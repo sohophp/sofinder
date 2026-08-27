@@ -1,7 +1,8 @@
-import { n as e, t } from "./jsx-runtime-BuvfPIin.js";
-import { t as n } from "./Modal-u0Bikd5w.js";
+import { t as e } from "./jsx-runtime-CmCsaYvT.js";
+import { t } from "./react-B5TC723I.js";
+import { t as n } from "./Modal-aP8IYcPB.js";
 //#region src/components/ImageProcessDialog.tsx
-var r = e(), i = t();
+var r = t(), i = e();
 function a({ entries: e, resource: t, formats: a, labels: o, onClose: s, onApply: c }) {
 	let [l, u] = (0, r.useState)("optimize"), [d, f] = (0, r.useState)(82), [p, m] = (0, r.useState)("original"), [h, g] = (0, r.useState)("SoFinder"), [_, v] = (0, r.useState)("#ffffff"), [y, b] = (0, r.useState)(t), [x, S] = (0, r.useState)(""), [C, w] = (0, r.useState)("bottom-right"), [T, E] = (0, r.useState)(60), [D, O] = (0, r.useState)(25), [k, A] = (0, r.useState)("copy"), [j, M] = (0, r.useState)(!1), [N, P] = (0, r.useState)(""), F = l === "optimize" && p !== "original" ? "copy" : k, I = e.length === 0 || l === "text" && h.trim() === "" || l === "image" && x.trim() === "", L = async () => {
 		let e = {

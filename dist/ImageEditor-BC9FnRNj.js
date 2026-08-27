@@ -1,8 +1,9 @@
-import { i as e, n as t, r as n, t as r } from "./jsx-runtime-BuvfPIin.js";
-import { t as i } from "./Modal-u0Bikd5w.js";
+import { n as e, r as t, t as n } from "./jsx-runtime-CmCsaYvT.js";
+import { t as r } from "./react-B5TC723I.js";
+import { t as i } from "./Modal-aP8IYcPB.js";
 import { t as a } from "./nameValidation-DURyMFRU.js";
 //#region node_modules/.pnpm/cropperjs@1.6.2/node_modules/cropperjs/dist/cropper.js
-var o = /* @__PURE__ */ n(((e, t) => {
+var o = /* @__PURE__ */ e(((e, t) => {
 	(function(n, r) {
 		typeof e == "object" && t !== void 0 ? t.exports = r() : typeof define == "function" && define.amd ? define(r) : (n = typeof globalThis < "u" ? globalThis : n || self, n.Cropper = r());
 	})(e, (function() {
@@ -1169,7 +1170,7 @@ var o = /* @__PURE__ */ n(((e, t) => {
 		}();
 		return q(gt.prototype, lt, ut, dt, ft, pt, mt), gt;
 	}));
-})), s = t(), c = /* @__PURE__ */ e(o(), 1), l = (e, t, n) => Math.max(t, Math.min(e, n));
+})), s = r(), c = /* @__PURE__ */ t(o(), 1), l = (e, t, n) => Math.max(t, Math.min(e, n));
 function u(e, t) {
 	let n = l(Math.round(e.x), 0, Math.max(0, t.width - 1)), r = l(Math.round(e.y), 0, Math.max(0, t.height - 1));
 	return {
@@ -1181,7 +1182,7 @@ function u(e, t) {
 }
 //#endregion
 //#region src/components/ImageEditor.tsx
-var d = r(), f = (e, t) => e.x === t.x && e.y === t.y && e.width === t.width && e.height === t.height, p = {
+var d = n(), f = (e, t) => e.x === t.x && e.y === t.y && e.width === t.width && e.height === t.height, p = {
 	"image/avif": ["avif"],
 	"image/bmp": ["bmp"],
 	"image/x-bmp": ["bmp"],

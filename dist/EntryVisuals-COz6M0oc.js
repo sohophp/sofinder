@@ -1,6 +1,7 @@
-import { n as e, t } from "./jsx-runtime-BuvfPIin.js";
+import { t as e } from "./jsx-runtime-CmCsaYvT.js";
+import { t } from "./react-B5TC723I.js";
 //#region src/components/EntryVisuals.tsx
-var n = e(), r = t(), i = (e) => e.includes(".") && e.split(".").pop()?.toLowerCase() || "", a = (e, t) => t.includes(e), o = (e, t = null, n = !1) => {
+var n = t(), r = e(), i = (e) => e.includes(".") && e.split(".").pop()?.toLowerCase() || "", a = (e, t) => t.includes(e), o = (e, t = null, n = !1) => {
 	if (n) return "folder";
 	let r = i(e), o = (t || "").toLowerCase();
 	return r === "pdf" || o === "application/pdf" ? "pdf" : a(r, [
@@ -307,17 +308,7 @@ var n = e(), r = t(), i = (e) => e.includes(".") && e.split(".").pop()?.toLowerC
 		stroke: "currentColor",
 		strokeWidth: "2.5"
 	})]
-})), l = () => /* @__PURE__ */ (0, r.jsx)("svg", {
-	viewBox: "0 0 24 24",
-	"aria-hidden": "true",
-	children: /* @__PURE__ */ (0, r.jsx)("path", {
-		d: "M9.5 14.5 14.5 9M7.8 17.2l-1.1 1.1a3.5 3.5 0 0 1-5-5l3.6-3.6a3.5 3.5 0 0 1 5 0M16.2 6.8l1.1-1.1a3.5 3.5 0 1 1 5 5l-3.6 3.6a3.5 3.5 0 0 1-5 0",
-		fill: "none",
-		stroke: "currentColor",
-		strokeWidth: "1.8",
-		strokeLinecap: "round"
-	})
-}), u = ({ src: e, alt: t, lazy: i = !1 }) => {
+})), l = ({ src: e, alt: t, lazy: i = !1 }) => {
 	let [a, o] = (0, n.useState)(0), [s, l] = (0, n.useState)(!1), u = (0, n.useRef)(null);
 	if ((0, n.useEffect)(() => (o(0), l(!1), () => {
 		u.current !== null && window.clearTimeout(u.current);
@@ -338,4 +329,4 @@ var n = e(), r = t(), i = (e) => e.includes(".") && e.split(".").pop()?.toLowerC
 	});
 };
 //#endregion
-export { l as n, u as r, c as t };
+export { l as n, c as t };

@@ -131,6 +131,8 @@ so_finder:
     folder_tree: true
     recent: true
     favorites: true
+    quick_access: true
+    quick_access_files: true
     tags: true
     archive: true
     trash: true
@@ -142,7 +144,10 @@ so_finder:
     folder_upload: true
     text_preview: true
     checksum: true
+    qr_code: true
 ```
+
+`quick_access` 独立控制快速访问，不再依赖收藏功能。`quick_access_files` 是“文件加入快速访问”的宿主上限。启用后，用户仍可在设置中自行关闭；宿主关闭后会隐藏用户开关并拒绝新增文件快捷项，但已有快捷项仍可移除。
 
 ## 主题
 

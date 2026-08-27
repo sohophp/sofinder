@@ -68,7 +68,7 @@ so_finder:
 
 - `GET /health` 檢查私有執行目錄、建置資源、全部 Storage 及 Plugin Check；`down`
   回傳 HTTP 503，`degraded` 仍回傳 200。
-- `GET /live` 只確認 PHP Process 與 Bundle 已初始化，不探測 Storage、Queue 或外部服務。
+- `GET /live` 只確認 PHP Process 與 Bundle 已初始化，僅回傳 `{"success":true,"data":{"status":"ready"}}`。應在 Host Firewall 中只公開此精確路徑供編排器探測；它不會洩漏版本、路徑、Storage、Queue 或外部服務資訊。
 - `GET /metrics` 輸出有界的 Prometheus Counter、Office 排隊/轉換/快取、ClamAV Timeout、
   Queue 積壓/失敗 Gauge 及 `sofinder_ready`。
 - 所有 SoFinder Response 帶有 `X-Request-ID`；安全的傳入值會保留，否則自動產生，

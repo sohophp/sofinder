@@ -32,7 +32,11 @@ test.beforeEach(async ({ page }) => {
       return;
     }
     if (url.pathname === "/sofinder/api/security/status") {
-      await route.fulfill({ json: { success: true, data: { malwareScanning: { enabled: false, provider: null, status: "disabled", message: "Malware scanning is not enabled.", counts: { passed: 0, quarantined: 0, failed: 0, pending: 0 }, recent: [] } } } });
+      await route.fulfill({ json: { success: true, data: { malwareScanning: { enabled: false, provider: null, status: "disabled", message: "Malware scanning is not enabled.", counts: { passed: 0, quarantined: 0, failed: 0, pending: 0 }, recent: [] }, documentPreview: { pdfEnabled: true, officeEnabled: true, available: true, binary: "/usr/bin/libreoffice", version: "LibreOffice 25.2", cacheWritable: true, cacheCount: 3, lastSuccessfulAt: 1, configuredMode: "auto", effectiveMode: "inline", queueAvailable: false, counts: { queued: 0, running: 0, ready: 2, failed: 0, expired: 0 } } } } });
+      return;
+    }
+    if (url.pathname === "/sofinder/api/metadata") {
+      await route.fulfill({ json: { success: true, data: { favorites: [], quickAccess: [], quickAccessEntries: [], tags: {}, recent: [] } } });
       return;
     }
     if (url.pathname === "/sofinder/api/entries") {
@@ -114,11 +118,34 @@ test("shows and copies an absolute public file URL", async ({ page }) => {
   await page.evaluate(() => Object.defineProperty(navigator, "clipboard", { configurable: true, value: { writeText: async () => undefined } }));
   await page.getByText("guide.txt").first().click();
   await expect(page.locator(".sf-details time")).toHaveAttribute("datetime", "1970-01-01T00:00:01.000Z");
-  await page.getByRole("button", { name: "复制网址" }).click();
-  const url = page.getByRole("dialog", { name: "文件网址" }).getByRole("textbox", { name: "文件网址" });
+  await page.getByRole("button", { name: "分享" }).click();
+  const dialog = page.getByRole("dialog", { name: "分享" });
+  const url = dialog.getByRole("textbox", { name: "复制网址" });
   await expect(url).toHaveValue("http://sofinder.test/uploads/editor/files/guide.txt");
-  await url.click();
-  await expect(page.getByRole("dialog", { name: "文件网址" }).getByRole("status")).toContainText("网址已复制");
+  await dialog.getByRole("button", { name: "复制网址" }).click();
+  await expect(dialog.getByRole("status")).toContainText("网址已复制");
+});
+
+test("enables a local QR Code action and keeps file delivery actions together", async ({ page }) => {
+  await page.getByRole("button", { name: "更多操作" }).click();
+  await page.getByRole("menuitem", { name: "设置" }).click();
+  const setting = page.getByRole("checkbox", { name: "文件网址 QR Code" });
+  await expect(setting).not.toBeChecked();
+  await setting.check();
+  await page.getByRole("button", { name: "完成" }).click();
+
+  await page.locator(".sf-entry", { hasText: "guide.txt" }).click();
+  const actions = page.locator(".sf-detail-actions");
+  const download = actions.getByRole("link", { name: "下载" });
+  await expect(download).toHaveAttribute("target", "_blank");
+  await expect(download).toHaveAttribute("rel", "noopener noreferrer");
+  await actions.getByRole("button", { name: "分享" }).click();
+
+  const dialog = page.getByRole("dialog", { name: "分享" });
+  await expect(dialog.getByRole("button", { name: "复制网址" })).toBeVisible();
+  await expect(dialog.locator(".sf-qr-code img")).toHaveAttribute("src", /^data:image\/png;base64,/);
+  await expect(dialog.getByRole("textbox", { name: "复制网址" })).toHaveValue("http://sofinder.test/uploads/editor/files/guide.txt");
+  await expect(dialog.getByRole("link", { name: "下载 QR Code" })).toHaveAttribute("download", "guide.txt-qr.png");
 });
 
 test("issues an expiring anonymous URL for a private resource", async ({ page }) => {
@@ -138,11 +165,11 @@ test("issues an expiring anonymous URL for a private resource", async ({ page })
   await page.addScriptTag({ path: resolve(import.meta.dirname, "../../dist/sofinder.js"), type: "module" });
   await expect(page.getByText("guide.txt").first()).toBeVisible();
   await page.locator(".sf-entry", { hasText: "guide.txt" }).click();
-  await page.getByRole("button", { name: "复制网址" }).click();
+  await page.getByRole("button", { name: "分享" }).click();
 
-  const dialog = page.getByRole("dialog", { name: "临时文件网址" });
-  await expect(dialog.getByRole("textbox", { name: "临时文件网址" })).toHaveValue("http://sofinder.test/sofinder/signed/test-token");
-  await expect(dialog.getByText("失效时间")).toBeVisible();
+  const dialog = page.getByRole("dialog", { name: "分享" });
+  await expect(dialog.getByRole("textbox", { name: "复制网址" })).toHaveValue("http://sofinder.test/sofinder/signed/test-token");
+  await expect(dialog.getByText("失效时间", { exact: true })).toBeVisible();
   await expect(dialog.getByText("需要登录")).toHaveCount(0);
   await expect(dialog.locator("time")).toHaveAttribute("datetime", "2030-01-01T00:00:00.000Z");
 });
@@ -159,9 +186,9 @@ test("prefers a configured host controller URL over a long signed URL", async ({
   await page.addScriptTag({ path: resolve(import.meta.dirname, "../../dist/sofinder.js"), type: "module" });
   await expect(page.getByText("guide.txt").first()).toBeVisible();
   await page.locator(".sf-entry", { hasText: "guide.txt" }).click();
-  await page.getByRole("button", { name: "复制网址" }).click();
+  await page.getByRole("button", { name: "分享" }).click();
 
-  await expect(page.getByRole("dialog", { name: "文件网址" }).getByRole("textbox")).toHaveValue("http://sofinder.test/uploads/editor/files/guide.txt");
+  await expect(page.getByRole("dialog", { name: "分享" }).getByRole("textbox")).toHaveValue("http://sofinder.test/uploads/editor/files/guide.txt");
   expect(signedRequests).toBe(0);
 });
 
@@ -176,6 +203,8 @@ test("shows explicit administrator malware scanning status", async ({ page }) =>
   const dialog = page.getByRole("dialog", { name: "安全状态" });
   await expect(dialog.getByText("病毒扫描未启用")).toBeVisible();
   await expect(dialog.getByText("尚无病毒扫描记录。")).toBeVisible();
+  await expect(dialog.getByText("LibreOffice 25.2")).toBeVisible();
+  await expect(dialog.getByText("inline (auto)")).toBeVisible();
 });
 
 test("opens PDF files through the registered same-origin previewer", async ({ page }) => {
@@ -185,6 +214,41 @@ test("opens PDF files through the registered same-origin previewer", async ({ pa
   const frame = page.getByRole("dialog", { name: "manual.pdf" }).locator("iframe.sf-document-preview");
   await expect(frame).not.toHaveAttribute("sandbox", /.+/);
   await expect(frame).toHaveAttribute("src", /\/sofinder\/api\/preview\/document\?resource=Files&path=manual\.pdf/);
+  await page.waitForTimeout(250);
+  await expect(page.getByText("正在提交 Office 预览…")).toHaveCount(0);
+});
+
+test("shows queued and converting Office preview phases before loading PDF", async ({ page }) => {
+  const officeConfig = { ...config, featureAvailability: { documentPreview: true }, plugins: [{ name: "document-preview", version: "1.0.0", capabilities: ["preview.office"], previewers: [{ id: "office", mimeTypes: [], extensions: ["xlsx"], url: "/sofinder/api/preview/document" }] }] };
+  await page.route("**/sofinder/api/config", route => route.fulfill({ json: { success: true, data: { apiVersion: "1.0", resources: [{ name: "Files", publicUrl: "/files", allowedExtensions: ["xlsx"], maxSize: 1000000, readOnly: false, quotaBytes: 0, usedBytes: 10, maxFileNameLength: 120, maxFolderNameLength: 50, maxFolderDepth: 5, deliveryMode: "public", storageCapabilities: { search: true, sort: true, cursorPagination: false, atomicMove: true, nativeCopy: true, recoverableDelete: true, publicUrl: true } }], plugins: officeConfig.plugins, imagePresets: {}, imageCapabilities: { driver: "", formats: [] }, featureAvailability: officeConfig.featureAvailability } } }));
+  await page.route("**/sofinder/api/entries?*", route => route.fulfill({ json: { success: true, data: { entries: [{ path: "report.xlsx", name: "report.xlsx", directory: false, size: 10, modifiedAt: 1, mimeType: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", url: "/files/report.xlsx", capabilities: { read: true } }], total: 1, path: "", offset: 0, limit: 100, nextCursor: null, sort: "name", direction: "asc", capabilities: {} } } }));
+  let polls = 0;
+  let converted = false;
+  const job = (status: "queued" | "running" | "ready") => ({ id: "a".repeat(48), status, retryAfter: status === "ready" ? 0 : 1, error: null, source: "office", key: "b".repeat(64), resource: "Files", path: "report.xlsx", previewUrl: status === "ready" ? "/sofinder/api/preview/document?resource=Files&path=report.xlsx" : null, mode: "messenger", cached: false, createdAt: 1, startedAt: status === "queued" ? null : 2, updatedAt: 2, finishedAt: status === "ready" ? 3 : null, durationMilliseconds: status === "ready" ? 1000 : null });
+  await page.route("**/sofinder/api/preview/document/jobs", route => route.fulfill({ status: converted ? 200 : 202, json: { success: true, data: job(converted ? "ready" : "queued") } }));
+  await page.route("**/sofinder/api/preview/document/jobs/*", route => { const status = polls++ === 0 ? "running" : "ready"; if (status === "ready") converted = true; return route.fulfill({ status: status === "ready" ? 200 : 202, json: { success: true, data: job(status) } }); });
+  await page.setContent(`<!doctype html><html lang="zh-CN"><body><main id="sofinder-root" data-config='${JSON.stringify(officeConfig)}'></main></body></html>`);
+  await page.addStyleTag({ path: resolve(import.meta.dirname, "../../dist/sofinder.css") });
+  await page.addScriptTag({ path: resolve(import.meta.dirname, "../../dist/sofinder.js"), type: "module" });
+  await page.locator(".sf-entry", { hasText: "report.xlsx" }).click({ button: "right" });
+  await page.getByRole("menuitem", { name: "预览" }).click();
+  await expect(page.getByText("正在等待 Office 转换服务…")).toBeVisible();
+  await expect(page.getByText("正在将 Office 文件转换为 PDF…")).toBeVisible({ timeout: 2500 });
+  const dialog = page.getByRole("dialog", { name: "report.xlsx" });
+  const frame = dialog.locator(".sf-document-preview-frame");
+  const iframe = frame.locator("iframe.sf-document-preview");
+  await expect(iframe).toBeVisible({ timeout: 3500 });
+  await dialog.getByRole("button", { name: "全屏" }).click();
+  await expect(dialog).toHaveClass(/sf-modal-fullscreen/);
+  const fullscreenSizes = await Promise.all([dialog.locator(".sf-file-preview-content"), frame, iframe].map(locator => locator.evaluate(element => ({ width: element.clientWidth, height: element.clientHeight }))));
+  expect(fullscreenSizes[1]).toEqual(fullscreenSizes[0]);
+  expect(fullscreenSizes[2]).toEqual(fullscreenSizes[0]);
+  await dialog.getByRole("button", { name: "退出全屏" }).click();
+  await dialog.locator("footer").getByRole("button", { name: "关闭" }).click();
+  await page.locator(".sf-entry", { hasText: "report.xlsx" }).click({ button: "right" });
+  await page.getByRole("menuitem", { name: "预览" }).click();
+  await page.waitForTimeout(250);
+  await expect(page.getByText("正在提交 Office 预览…")).toHaveCount(0);
 });
 
 test("uses a minimal shell and reveals manager actions contextually", async ({ page }) => {
@@ -222,6 +286,275 @@ test("closes the more-actions menu after clicking the main area", async ({ page 
 
   await expect(page.getByRole("menu")).toHaveCount(0);
   await expect(trigger).toHaveAttribute("aria-expanded", "false");
+});
+
+test("supports favorites, bounded quick access, grouped selection and type filtering", async ({ page }) => {
+  let metadata = { favorites: ["guide.txt"], quickAccess: [] as string[], tags: { "guide.txt": ["Docs"] }, recent: [] as Array<{ path: string; touchedAt: number }> };
+  await page.route("**/sofinder/api/metadata**", async route => {
+    if (route.request().method() === "PATCH") {
+      const body = route.request().postDataJSON() as { action: string; path: string; pinned?: boolean; favorite?: boolean };
+      if (body.action === "quick_access") metadata.quickAccess = body.pinned ? [body.path] : [];
+      if (body.action === "favorite") metadata.favorites = body.favorite ? [body.path] : metadata.favorites.filter(path => path !== body.path);
+    }
+    await route.fulfill({ json: { success: true, data: { ...metadata, quickAccessEntries: metadata.quickAccess.map(path => ({ path, name: path, directory: path === "manuals", mimeType: path.endsWith(".txt") ? "text/plain" : null, exists: true })) } } });
+  });
+  await page.route("**/sofinder/api/entries?*", async route => {
+    await route.fulfill({ json: { success: true, data: { entries: [
+      { path: "manuals", name: "manuals", directory: true, size: 0, modifiedAt: 4, mimeType: null, url: null, capabilities: { read: true, rename: true, copy: true, move: true, delete: true } },
+      { path: "guide.txt", name: "guide.txt", directory: false, size: 12, modifiedAt: 1, mimeType: "text/plain", url: "/guide.txt", capabilities: {} },
+      { path: "photo.png", name: "photo.png", directory: false, size: 68, modifiedAt: 2, mimeType: "image/png", url: "/photo.png", capabilities: {} },
+    ], total: 3, path: "", offset: 0, limit: 100, nextCursor: null, sort: "name", direction: "asc", capabilities: { upload: true, create_folder: true } } } });
+  });
+  await page.evaluate(() => localStorage.setItem("sofinder.features.v2", JSON.stringify({ favorites: true })));
+  await page.setContent(`<!doctype html><html lang="zh-CN"><body><main id="sofinder-root" data-config='${JSON.stringify(config)}'></main></body></html>`);
+  await page.addStyleTag({ path: resolve(import.meta.dirname, "../../dist/sofinder.css") });
+  await page.addScriptTag({ path: resolve(import.meta.dirname, "../../dist/sofinder.js"), type: "module" });
+
+  await expect(page.locator(".sf-sidebar").getByRole("button", { name: /guide\.txt/ })).toBeVisible();
+  await expect(page.locator(".sf-resource-status")).toHaveCount(0);
+  const guide = page.locator(".sf-entry", { hasText: "guide.txt" });
+  await guide.click({ button: "right" });
+  await page.getByRole("menuitem", { name: "取消收藏" }).click();
+  await expect(page.locator(".sf-sidebar").getByRole("button", { name: /guide\.txt/ })).toHaveCount(0);
+  await guide.click({ button: "right" });
+  await page.getByRole("menuitem", { name: "收藏", exact: true }).click();
+  await expect(page.locator(".sf-sidebar").getByRole("button", { name: /guide\.txt/ })).toBeVisible();
+  const quickAccessPanel = page.locator(".sf-recent-sidebar", { has: page.locator("header strong", { hasText: "快速访问" }) });
+  await guide.click({ button: "right" });
+  await page.getByRole("menuitem", { name: "加入快速访问" }).click();
+  await expect(quickAccessPanel.getByRole("button", { name: /guide\.txt/ })).toBeVisible();
+  await expect(quickAccessPanel.getByRole("button", { name: /guide\.txt/ }).locator("[data-icon=file]")).toBeVisible();
+  await guide.click({ button: "right" });
+  await page.getByRole("menuitem", { name: "从快速访问移除" }).click();
+  await expect(quickAccessPanel.getByRole("button", { name: /guide\.txt/ })).toHaveCount(0);
+  await page.getByRole("button", { name: "更多操作" }).click();
+  await page.getByRole("menuitem", { name: "设置" }).click();
+  const settings = page.getByRole("dialog", { name: "设置" });
+  await settings.getByRole("checkbox", { name: "快速访问包含文件" }).uncheck();
+  await settings.getByRole("button", { name: "完成" }).click();
+  await guide.click({ button: "right" });
+  await expect(page.getByRole("menuitem", { name: "加入快速访问" })).toHaveCount(0);
+  await page.keyboard.press("Escape");
+  const favoritesPanel = page.locator(".sf-recent-sidebar", { has: page.locator("header strong", { hasText: "收藏夹" }) });
+  const favoritesToggle = favoritesPanel.getByRole("button", { name: "收藏夹", exact: true });
+  await expect(favoritesToggle).toHaveAttribute("aria-expanded", "true");
+  await favoritesToggle.click();
+  await expect(favoritesToggle).toHaveAttribute("aria-expanded", "false");
+  await expect(favoritesPanel.getByRole("button", { name: /guide\.txt/ })).toBeHidden();
+  await favoritesToggle.click();
+  await expect(favoritesPanel.getByRole("button", { name: /guide\.txt/ })).toBeVisible();
+  await favoritesPanel.getByRole("button", { name: /guide\.txt/ }).click({ button: "right" });
+  await page.getByRole("menuitem", { name: "取消收藏" }).click();
+  await expect(favoritesPanel.getByRole("button", { name: /guide\.txt/ })).toHaveCount(0);
+  await guide.click({ button: "right" });
+  await page.getByRole("menuitem", { name: "收藏", exact: true }).click();
+  await expect(favoritesPanel.getByRole("button", { name: /guide\.txt/ })).toBeVisible();
+  await expect(favoritesPanel.locator("header").getByRole("link")).toHaveCount(0);
+  const favoritesLink = favoritesPanel.locator(".sf-sidebar-section-link");
+  await expect(favoritesLink).toHaveAccessibleName("收藏夹");
+  await expect(favoritesLink).toHaveAttribute("href", /collection=favorites/);
+  await favoritesLink.click();
+  await expect(page).toHaveURL(/collection=favorites/);
+  await expect(page.getByRole("heading", { name: "收藏夹" })).toBeVisible();
+  await expect(page.locator(".sf-favorites-links .sf-favorite-open", { hasText: "guide.txt" })).toBeVisible();
+  await page.getByRole("textbox", { name: "搜索收藏夹" }).fill("missing");
+  await expect(page.getByText("没有符合此筛选条件的项目。")).toBeVisible();
+  await page.getByRole("textbox", { name: "搜索收藏夹" }).fill("");
+  await page.goBack();
+  await expect(page).not.toHaveURL(/collection=favorites/);
+  await expect(page.locator(".sf-entry", { hasText: "manuals" })).toBeVisible();
+  await page.locator(".sf-entry", { hasText: "manuals" }).click();
+  await page.getByRole("button", { name: "加入快速访问" }).click();
+  await expect(page.locator(".sf-sidebar").getByRole("button", { name: /manuals/ })).toBeVisible();
+  await expect(page.locator(".sf-sidebar").getByRole("button", { name: /manuals/ }).locator("[data-icon=folder]")).toBeVisible();
+
+  await page.getByRole("button", { name: "选择", exact: true }).click();
+  await page.getByRole("menuitem", { name: "全部选择" }).click();
+  await expect(page.locator(".sf-entry[aria-selected=true]")).toHaveCount(3);
+  await page.getByRole("button", { name: "选择", exact: true }).click();
+  await page.getByRole("menuitem", { name: "反向选择" }).click();
+  await expect(page.locator(".sf-entry[aria-selected=true]")).toHaveCount(0);
+
+  await page.getByRole("button", { name: "更多操作" }).click();
+  await page.getByLabel("分组").selectOption("type");
+  await page.getByLabel("筛选类型").selectOption("image");
+  await expect(page.locator(".sf-entry")).toHaveCount(1);
+  await expect(page.locator(".sf-entry-group")).toContainText("图片");
+});
+
+test("lets each user place folder navigation in either sidebar", async ({ page }) => {
+  await page.getByRole("button", { name: "更多操作" }).click();
+  await page.getByRole("menuitem", { name: "设置" }).click();
+  const settings = page.getByRole("dialog", { name: "设置" });
+  await settings.getByRole("checkbox", { name: "文件夹导航" }).check();
+  await expect(settings.getByRole("radiogroup", { name: "文件夹导航位置" })).toBeVisible();
+  await settings.getByRole("radio", { name: "右侧边栏" }).check();
+  await settings.getByRole("button", { name: "完成" }).click();
+
+  await expect(page.locator(".sf-folder-navigation-right")).toBeVisible();
+  await expect(page.locator(".sf-folder-navigation-right")).toContainText("首页");
+  await expect(page.locator(".sf-sidebar .sf-folder-tree")).toHaveCount(0);
+  await expect.poll(() => page.evaluate(() => localStorage.getItem("sofinder.folderNavigation.position.v1"))).toBe("right");
+
+  await page.getByRole("button", { name: "更多操作" }).click();
+  await page.getByRole("menuitem", { name: "设置" }).click();
+  await page.getByRole("dialog", { name: "设置" }).getByRole("radio", { name: "左侧边栏" }).check();
+  await page.getByRole("dialog", { name: "设置" }).getByRole("button", { name: "完成" }).click();
+  await expect(page.locator(".sf-sidebar .sf-folder-tree")).toBeVisible();
+  await expect(page.locator(".sf-folder-navigation-right")).toHaveCount(0);
+});
+
+test("keeps cross-resource Quick access visible and unpins from its context menu", async ({ page }) => {
+  const resource = (name: string) => ({ name, publicUrl: `/uploads/${name.toLowerCase()}`, allowedExtensions: ["txt"], maxSize: 1000000, readOnly: false, quotaBytes: 0, usedBytes: 0, maxFileNameLength: 120, maxFolderNameLength: 50, maxFolderDepth: 5, deliveryMode: "public", storageCapabilities: { search: true, sort: true, cursorPagination: false, atomicMove: true, nativeCopy: true, recoverableDelete: true, publicUrl: true } });
+  const quickAccess: Record<string, string[]> = { Files: ["manuals"], Images: ["albums"], Private: ["vault"] };
+  let unpinnedResource = "";
+  await page.route("**/sofinder/api/config", route => route.fulfill({ json: { success: true, data: { apiVersion: "1.0", resources: [resource("Files"), resource("Images"), resource("Private")], plugins: [], imagePresets: {}, imageCapabilities: { driver: "", formats: [] } } } }));
+  await page.route("**/sofinder/api/metadata**", async route => {
+    const requestUrl = new URL(route.request().url());
+    const body = route.request().method() === "PATCH" ? route.request().postDataJSON() as { resource: string; action: string; path: string; pinned: boolean } : null;
+    const resourceName = body?.resource || requestUrl.searchParams.get("resource") || "Files";
+    if (body?.action === "quick_access" && body.pinned === false) { quickAccess[resourceName] = quickAccess[resourceName].filter(path => path !== body.path); unpinnedResource = resourceName; }
+    await route.fulfill({ json: { success: true, data: { favorites: [], quickAccess: quickAccess[resourceName], tags: {}, recent: [] } } });
+  });
+  await page.evaluate(() => {
+    localStorage.setItem("sofinder.features.v2", JSON.stringify({ favorites: true }));
+    localStorage.removeItem("sofinder.quickAccess.scope.v1");
+  });
+  await page.setContent(`<!doctype html><html lang="zh-CN"><body><main id="sofinder-root" data-config='${JSON.stringify(config)}'></main></body></html>`);
+  await page.addStyleTag({ path: resolve(import.meta.dirname, "../../dist/sofinder.css") });
+  await page.addScriptTag({ path: resolve(import.meta.dirname, "../../dist/sofinder.js"), type: "module" });
+
+  const panel = page.locator(".sf-recent-sidebar", { has: page.getByText("快速访问", { exact: true }) });
+  const quickLinks = panel.locator(".sf-sidebar-section-content button");
+  await expect(quickLinks).toHaveCount(3);
+  await expect(panel).toContainText("Files");
+  await expect(panel).toContainText("Images");
+  await expect(panel).toContainText("Private");
+  await page.getByRole("button", { name: "图片", exact: true }).click();
+  await expect(quickLinks).toHaveCount(3);
+
+  await page.getByRole("button", { name: "更多操作" }).click();
+  await page.getByRole("menuitem", { name: "设置" }).click();
+  const settings = page.getByRole("dialog", { name: "设置" });
+  await settings.getByRole("radio", { name: "当前根目录" }).check();
+  await settings.getByRole("button", { name: "完成" }).click();
+  await expect(quickLinks).toHaveCount(1);
+  await expect(panel).toContainText("albums");
+
+  await panel.getByRole("button", { name: /albums/ }).click({ button: "right" });
+  await page.getByRole("menuitem", { name: "从快速访问移除" }).click();
+  await expect(quickLinks).toHaveCount(0);
+  expect(unpinnedResource).toBe("Images");
+});
+
+test("keeps Quick access available when Favorites is disabled", async ({ page }) => {
+  await page.route("**/sofinder/api/metadata**", route => route.fulfill({ json: { success: true, data: { favorites: [], quickAccess: ["manuals"], quickAccessEntries: [{ path: "manuals", name: "manuals", directory: true, mimeType: null, exists: true }], tags: {}, recent: [] } } }));
+  await page.evaluate(() => localStorage.setItem("sofinder.features.v2", JSON.stringify({ favorites: false, sidebarQuickAccess: true, sidebarFavorites: true })));
+  await page.setContent(`<!doctype html><html lang="zh-CN"><body><main id="sofinder-root" data-config='${JSON.stringify(config)}'></main></body></html>`);
+  await page.addStyleTag({ path: resolve(import.meta.dirname, "../../dist/sofinder.css") });
+  await page.addScriptTag({ path: resolve(import.meta.dirname, "../../dist/sofinder.js"), type: "module" });
+
+  await expect(page.locator(".sf-recent-sidebar", { hasText: "快速访问" }).getByRole("button", { name: /manuals/ })).toBeVisible();
+  await expect(page.locator(".sf-recent-sidebar", { hasText: "收藏夹" })).toHaveCount(0);
+});
+
+test("marks and removes a stale Quick access file", async ({ page }) => {
+  let paths = ["missing.txt"];
+  await page.route("**/sofinder/api/metadata**", async route => {
+    if (route.request().method() === "PATCH") paths = [];
+    await route.fulfill({ json: { success: true, data: { favorites: [], quickAccess: paths, quickAccessEntries: paths.map(path => ({ path, name: path, directory: null, mimeType: null, exists: false })), tags: {}, recent: [] } } });
+  });
+  await page.setContent(`<!doctype html><html lang="zh-CN"><body><main id="sofinder-root" data-config='${JSON.stringify(config)}'></main></body></html>`);
+  await page.addStyleTag({ path: resolve(import.meta.dirname, "../../dist/sofinder.css") });
+  await page.addScriptTag({ path: resolve(import.meta.dirname, "../../dist/sofinder.js"), type: "module" });
+  const stale = page.locator(".sf-recent-sidebar").getByRole("button", { name: /missing\.txt/ });
+  await expect(stale.locator("[data-icon=warning]")).toBeVisible();
+  await stale.click();
+  await expect(stale).toHaveCount(0);
+  await expect(page.getByRole("alert")).toContainText("该快速访问项目已不存在");
+});
+
+test("configures Favorites sidebar sections and keeps the collection link below Recycle bin", async ({ page }) => {
+  await page.route("**/sofinder/api/metadata**", route => route.fulfill({ json: { success: true, data: { favorites: ["guide.txt"], quickAccess: ["manuals"], tags: {}, recent: [] } } }));
+  await page.evaluate(() => localStorage.setItem("sofinder.features.v2", JSON.stringify({ favorites: true })));
+  await page.setContent(`<!doctype html><html lang="zh-CN"><body><main id="sofinder-root" data-config='${JSON.stringify(config)}'></main></body></html>`);
+  await page.addStyleTag({ path: resolve(import.meta.dirname, "../../dist/sofinder.css") });
+  await page.addScriptTag({ path: resolve(import.meta.dirname, "../../dist/sofinder.js"), type: "module" });
+
+  await page.getByRole("button", { name: "更多操作" }).click();
+  await page.getByRole("menuitem", { name: "设置" }).click();
+  const settings = page.getByRole("dialog", { name: "设置" });
+  const showQuickAccess = settings.getByRole("checkbox", { name: "显示快速访问" });
+  const showFavorites = settings.getByRole("checkbox", { name: "显示收藏夹" });
+  await expect(showQuickAccess).toBeChecked();
+  await expect(showFavorites).toBeChecked();
+  await showQuickAccess.uncheck();
+  await showFavorites.uncheck();
+  await settings.getByRole("button", { name: "完成" }).click();
+  await expect(page.locator(".sf-sidebar").getByRole("button", { name: "快速访问", exact: true })).toHaveCount(0);
+  await expect(page.locator(".sf-sidebar").getByRole("button", { name: "收藏夹", exact: true })).toHaveCount(0);
+  await expect.poll(() => page.evaluate(() => JSON.parse(localStorage.getItem("sofinder.features.v2") || "{}").sidebarFavorites)).toBe(false);
+
+  await page.getByRole("button", { name: "更多操作" }).click();
+  const menuItems = await page.getByRole("menuitem").allTextContents();
+  expect(menuItems.indexOf("收藏夹")).toBe(menuItems.indexOf("回收站") + 1);
+  await page.getByRole("menuitem", { name: "收藏夹" }).click();
+  await expect(page).toHaveURL(/collection=favorites/);
+});
+
+test("saves, selects and applies named preference profiles", async ({ page }) => {
+  await page.getByRole("button", { name: "更多操作" }).click();
+  await page.getByRole("menuitem", { name: "设置" }).click();
+  const settings = page.getByRole("dialog", { name: "设置" });
+  const profileName = settings.getByRole("textbox", { name: "偏好名称" });
+  const profiles = settings.getByRole("combobox", { name: "选择偏好方案" });
+
+  await profileName.fill("标准方案");
+  await settings.getByRole("button", { name: "保存当前设置" }).click();
+  await expect(settings.getByRole("status")).toContainText("偏好方案已保存");
+
+  await settings.getByRole("radio", { name: "大（112.5%）" }).check();
+  await settings.getByRole("checkbox", { name: "文件夹导航" }).check();
+  await settings.getByRole("radio", { name: "右侧边栏" }).check();
+  await profileName.fill("大屏右栏");
+  await settings.getByRole("button", { name: "保存当前设置" }).click();
+
+  await profiles.selectOption({ label: "标准方案" });
+  await settings.getByRole("button", { name: "应用" }).click();
+  await expect(settings.getByRole("radio", { name: "标准（100%）" })).toBeChecked();
+  await expect(settings.getByRole("checkbox", { name: "文件夹导航" })).not.toBeChecked();
+
+  await profiles.selectOption({ label: "大屏右栏" });
+  await settings.getByRole("button", { name: "应用" }).click();
+  await expect(settings.getByRole("radio", { name: "大（112.5%）" })).toBeChecked();
+  await expect(settings.getByRole("radio", { name: "右侧边栏" })).toBeChecked();
+  await expect.poll(() => page.evaluate(() => JSON.parse(localStorage.getItem("sofinder.preferenceProfiles.v1") || "[]").length)).toBe(2);
+
+  await settings.getByRole("combobox", { name: "选择内置预设" }).selectOption("compact");
+  await settings.getByRole("button", { name: "恢复预设" }).click();
+  await expect(settings.getByRole("radio", { name: "紧凑（90%）" })).toBeChecked();
+  const smallSizes = settings.getByRole("radio", { name: "小", exact: true });
+  await expect(smallSizes).toHaveCount(2);
+  await expect(smallSizes.nth(0)).toBeChecked();
+  await expect(smallSizes.nth(1)).toBeChecked();
+  await expect(settings.getByRole("checkbox", { name: "显示大小" })).toBeChecked();
+  await expect(settings.getByRole("checkbox", { name: "显示修改时间" })).not.toBeChecked();
+  await expect(settings.getByRole("checkbox", { name: "显示 MIME 类型" })).not.toBeChecked();
+  await expect(settings.getByRole("status")).toContainText("已恢复内置预设");
+
+  await settings.getByRole("button", { name: "恢复系统默认" }).click();
+  await expect(settings.getByRole("radio", { name: "标准（100%）" })).toBeChecked();
+  await expect(settings.getByRole("radio", { name: "每次由我选择" })).toBeChecked();
+  await expect(settings.getByRole("checkbox", { name: "快速访问包含文件" })).toBeChecked();
+  await expect(settings.getByRole("checkbox", { name: "显示修改时间" })).toBeChecked();
+  await expect(settings.getByRole("status")).toContainText("已恢复系统默认设置");
+  await expect(settings.getByRole("heading", { name: "外观" })).toBeVisible();
+  await expect(settings.getByRole("heading", { name: "文件操作" })).toBeVisible();
+  await expect(settings.getByRole("heading", { name: "列表", exact: true })).toBeVisible();
+  await expect(settings.getByRole("heading", { name: "功能与侧边栏" })).toBeVisible();
+
+  await settings.getByRole("button", { name: "删除方案" }).click();
+  await expect.poll(() => page.evaluate(() => JSON.parse(localStorage.getItem("sofinder.preferenceProfiles.v1") || "[]").length)).toBe(1);
 });
 
 test("keeps the more-actions menu open for internal controls and closes it with Escape", async ({ page }) => {
@@ -479,6 +812,19 @@ test("keeps previous and next pagination controls on one line", async ({ page })
   }
 });
 
+test("stays bounded at Windows 100, 125 and 150 percent effective viewport scales", async ({ page }) => {
+  await page.getByRole("button", { name: "更多操作" }).click();
+  await page.getByRole("menuitem", { name: "设置" }).click();
+  await page.getByRole("dialog", { name: "设置" }).getByRole("radio", { name: "特大（125%）" }).check();
+  await page.getByRole("dialog", { name: "设置" }).getByRole("button", { name: "完成" }).click();
+  for (const width of [1280, 1024, 853]) {
+    await page.setViewportSize({ width, height: 760 });
+    const layout = await page.locator(".sf-app").evaluate(element => ({ clientWidth: element.clientWidth, scrollWidth: element.scrollWidth }));
+    expect(layout.scrollWidth, `horizontal overflow at ${width}px effective viewport`).toBeLessThanOrEqual(layout.clientWidth + 1);
+    await expect(page.locator(".sf-commandbar")).toBeVisible();
+  }
+});
+
 test("visual baseline covers dark Chinese grid, compact list, long names and mobile", async ({ page, browserName }) => {
   test.skip(browserName !== "chromium", "Pixel baselines are recorded once; functional coverage still runs in all three engines.");
   await page.setViewportSize({ width: 1280, height: 760 });
@@ -562,8 +908,8 @@ test("removes a recent entry that disappeared outside SoFinder", async ({ page }
 });
 
 test("does not let browser preferences re-enable host-disabled features", async ({ page }) => {
-  await page.evaluate(() => localStorage.setItem("sofinder.features.v2", JSON.stringify({ recent: true, tags: true, archive: true })));
-  const restricted = { ...config, featureAvailability: { folderTree: true, recent: false, favorites: true, tags: false, archive: false, trash: true } };
+  await page.evaluate(() => localStorage.setItem("sofinder.features.v2", JSON.stringify({ recent: true, tags: true, archive: true, qrCode: true, sidebarQuickAccess: true, quickAccessFiles: true })));
+  const restricted = { ...config, featureAvailability: { folderTree: true, recent: false, favorites: true, quickAccess: false, quickAccessFiles: true, tags: false, archive: false, trash: true, qrCode: false } };
   await page.setContent(`<!doctype html><html lang="zh-CN"><head><title>SoFinder</title></head><body><main id="sofinder-root" data-config='${JSON.stringify(restricted)}'></main></body></html>`);
   await page.addStyleTag({ path: resolve(import.meta.dirname, "../../dist/sofinder.css") });
   await page.addScriptTag({ path: resolve(import.meta.dirname, "../../dist/sofinder.js"), type: "module" });
@@ -574,6 +920,11 @@ test("does not let browser preferences re-enable host-disabled features", async 
   await expect(settings.getByText("最近使用", { exact: true })).toHaveCount(0);
   await expect(settings.getByText("标签", { exact: true })).toHaveCount(0);
   await expect(settings.getByText("打包下载", { exact: true })).toHaveCount(0);
+  await expect(settings.getByText("文件网址 QR Code", { exact: true })).toHaveCount(0);
+  await expect(settings.getByRole("checkbox", { name: "显示快速访问" })).toHaveCount(0);
+  await settings.getByRole("button", { name: "完成" }).click();
+  await page.locator(".sf-entry", { hasText: "guide.txt" }).click({ button: "right" });
+  await expect(page.getByRole("menuitem", { name: "加入快速访问" })).toHaveCount(0);
 });
 
 test("supports keyboard selection and keeps the picker confirmation bar compact", async ({ page }) => {
@@ -851,7 +1202,37 @@ test("right-click preview opens a preview without selecting the file", async ({ 
   await expect(page.getByRole("dialog", { name: "photo.png" })).toBeVisible();
   await expect(page.locator(".sf-file-preview-content img")).toHaveAttribute("src", /\/sofinder\/api\/images\/thumbnail\?.*path=photo\.png/);
   await expect(page.locator(".sf-file-preview-meta time")).toHaveAttribute("datetime", "1970-01-01T00:00:02.000Z");
+  const preview = page.getByRole("dialog", { name: "photo.png" });
+  await preview.getByRole("button", { name: "全屏" }).click();
+  await expect(preview).toHaveClass(/sf-modal-fullscreen/);
+  await expect(preview.getByRole("button", { name: "退出全屏" })).toBeVisible();
+  const viewport = page.viewportSize();
+  const fullscreenBox = await preview.boundingBox();
+  expect(fullscreenBox?.x).toBe(0);
+  expect(fullscreenBox?.y).toBe(0);
+  expect(fullscreenBox?.width).toBe(viewport?.width);
+  expect(fullscreenBox?.height).toBe(viewport?.height);
+  await page.keyboard.press("Escape");
+  await expect(preview).not.toHaveClass(/sf-modal-fullscreen/);
+  await expect(preview).toBeVisible();
   await expect.poll(() => page.evaluate(() => (window as Window & { selectionEvents?: number }).selectionEvents)).toBe(0);
+});
+
+test("opens context-menu downloads in a new browsing context", async ({ page }) => {
+  await page.evaluate(() => {
+    (window as Window & { openedDownload?: { url: string; target: string; features: string } }).openedDownload = undefined;
+    window.open = ((url?: string | URL, target?: string, features?: string) => {
+      (window as Window & { openedDownload?: { url: string; target: string; features: string } }).openedDownload = { url: String(url || ""), target: target || "", features: features || "" };
+      return null;
+    }) as typeof window.open;
+  });
+  await page.locator(".sf-entry", { hasText: "guide.txt" }).click({ button: "right" });
+  await page.getByRole("menuitem", { name: "下载" }).click();
+  await expect.poll(() => page.evaluate(() => (window as Window & { openedDownload?: { url: string; target: string; features: string } }).openedDownload)).toEqual({
+    url: "/uploads/editor/files/guide.txt",
+    target: "_blank",
+    features: "noopener,noreferrer",
+  });
 });
 
 test("previews bounded text and calculates a checksum", async ({ page }) => {

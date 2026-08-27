@@ -87,6 +87,7 @@ SoFinder 預設要求通過完整驗證的 Symfony 使用者。宿主應用程�
 # config/packages/security.yaml
 security:
   access_control:
+    - { path: '^/sofinder/live$', roles: PUBLIC_ACCESS }
     - { path: '^/sofinder', roles: ROLE_USER }
 ```
 

@@ -32,6 +32,8 @@ final class ConfigurationTest extends TestCase
             'folder_tree' => true,
             'recent' => true,
             'favorites' => true,
+            'quick_access' => true,
+            'quick_access_files' => true,
             'tags' => true,
             'archive' => true,
             'trash' => true,
@@ -43,6 +45,7 @@ final class ConfigurationTest extends TestCase
             'folder_upload' => true,
             'text_preview' => true,
             'checksum' => true,
+            'qr_code' => true,
         ], $config['features']);
     }
 

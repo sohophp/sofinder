@@ -1,7 +1,9 @@
-import { n as e, t } from "./jsx-runtime-BuvfPIin.js";
-import { n, t as r } from "./Modal-u0Bikd5w.js";
+import { t as e } from "./jsx-runtime-CmCsaYvT.js";
+import { t } from "./react-B5TC723I.js";
+import { t as n } from "./UiIcon-CeAgi5_o.js";
+import { t as r } from "./Modal-aP8IYcPB.js";
 //#region src/components/TrashDialog.tsx
-var i = e(), a = t();
+var i = t(), a = e();
 function o({ api: e, resource: t, locale: o, labels: s, onClose: c, onChanged: l }) {
 	let [u, d] = (0, i.useState)({
 		items: [],

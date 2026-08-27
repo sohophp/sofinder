@@ -5,6 +5,17 @@ description: 各 SoFinder 預發布版本的相容性、設定與 adapter 升級
 
 # 升級 SoFinder
 
+## 從 0.1.0-beta.19 升級至 0.1.0-beta.20
+
+請完整部署重新建置的 `dist/` 目錄；儲存檔案無需遷移。快速存取 metadata 維持向後
+相容，新版 Client 會額外使用檔案／資料夾／失效項型別描述。Host 層級
+`features.quick_access` 已與收藏功能解耦，且永遠優先於 Browser 偏好。
+
+使用者設定新增命名偏好方案與獨立的系統預設還原功能。語言包改為 Manifest Allowlist
+內的按需 Chunk，因此必須一併部署所有產生的 Asset。參考設定中的 `/live` 可匿名存取且
+只回傳最小狀態；`/health`、`/metrics` 與安全狀態仍應由監控或管理員驗證保護。Office
+預覽部署應同時驗證快取命中與重新轉換的 XLSX 全螢幕預覽。
+
 ## 從 0.1.0-beta.18 升級至 0.1.0-beta.19
 
 無需遷移檔案、metadata 或 API。Symfony 展示環境與快速開始現在使用更完整的

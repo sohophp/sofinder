@@ -13,7 +13,7 @@ final readonly class CapabilityCatalog implements \JsonSerializable
             'apiVersion' => '1.0',
             'entryOperations' => ['read', 'list', 'upload', 'overwrite', 'create_folder', 'rename', 'copy', 'move', 'delete', 'download', 'select'],
             'storageCapabilities' => ['search', 'sort', 'cursorPagination', 'atomicMove', 'nativeCopy', 'recoverableDelete', 'publicUrl'],
-            'optionalFeatures' => ['folderTree', 'recent', 'favorites', 'tags', 'archive', 'trash', 'batchRename', 'imageEditing', 'imageProcessing', 'documentPreview', 'securityStatus', 'folderUpload', 'textPreview', 'checksum'],
+            'optionalFeatures' => ['folderTree', 'recent', 'favorites', 'quickAccess', 'quickAccessFiles', 'tags', 'archive', 'trash', 'batchRename', 'imageEditing', 'imageProcessing', 'documentPreview', 'securityStatus', 'folderUpload', 'textPreview', 'checksum'],
             'pluginSlots' => ['utility', 'toolbar', 'context', 'details'],
             'pluginSelections' => ['none', 'any', 'file', 'image'],
             'pickerKinds' => ['any', 'file', 'image'],

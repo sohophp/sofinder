@@ -57,13 +57,20 @@ final class DocumentPreviewJobTest extends TestCase
         $first = $jobs->prepare('Files', 'report.docx');
         $duplicate = $jobs->prepare('Files', 'report.docx');
         self::assertSame('queued', $first['status']);
+        self::assertSame('messenger', $first['mode']);
+        self::assertIsInt($first['createdAt']);
+        self::assertNull($first['startedAt']);
         self::assertSame($first['id'], $duplicate['id']);
         self::assertCount(1, $bus->messages);
         self::assertInstanceOf(DocumentPreviewMessage::class, $bus->messages[0]);
 
         (new DocumentPreviewMessageHandler($jobs))($bus->messages[0]);
         (new DocumentPreviewMessageHandler($jobs))($bus->messages[0]);
-        self::assertSame('ready', $jobs->status($first['id'])['status']);
+        $ready = $jobs->status($first['id']);
+        self::assertSame('ready', $ready['status']);
+        self::assertIsInt($ready['startedAt']);
+        self::assertIsInt($ready['finishedAt']);
+        self::assertSame(1, $jobs->diagnostics()['counts']['ready']);
         self::assertStringStartsWith('%PDF-', (string) file_get_contents($this->previews->preview('Files', 'report.docx')['file']));
     }
 
@@ -71,7 +78,11 @@ final class DocumentPreviewJobTest extends TestCase
     {
         $jobs = $this->jobs(null, 'auto');
         self::assertFalse($jobs->asynchronous());
-        self::assertSame('ready', $jobs->prepare('Files', 'report.docx')['status']);
+        $office = $jobs->prepare('Files', 'report.docx');
+        self::assertSame('ready', $office['status']);
+        self::assertSame('inline', $office['mode']);
+        self::assertFalse($office['cached']);
+        self::assertTrue($jobs->prepare('Files', 'report.docx')['cached']);
         self::assertSame('ready', $jobs->prepare('Files', 'manual.pdf')['status']);
     }
 

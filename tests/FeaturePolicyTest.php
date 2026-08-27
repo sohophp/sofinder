@@ -28,4 +28,11 @@ final class FeaturePolicyTest extends TestCase
             self::assertSame(404, $exception->httpStatus);
         }
     }
+
+    public function testQuickAccessIsIndependentFromFavorites(): void
+    {
+        $availability = (new FeaturePolicy(['favorites' => false, 'quick_access' => true]))->browserAvailability();
+        self::assertFalse($availability['favorites']);
+        self::assertTrue($availability['quickAccess']);
+    }
 }

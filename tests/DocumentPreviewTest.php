@@ -67,6 +67,20 @@ final class DocumentPreviewTest extends TestCase
         self::assertStringStartsWith('%PDF-', (string) file_get_contents($preview['file']));
     }
 
+    public function testAdministratorDiagnosticsDescribeConverterAndCache(): void
+    {
+        $binary = __DIR__ . '/fixtures/fake-libreoffice';
+        $manager = new DocumentPreviewManager($this->files, $this->cache, officeEnabled: true, officeBinary: $binary);
+        $manager->preview('Files', 'report.docx');
+
+        $diagnostics = $manager->diagnostics();
+        self::assertTrue($diagnostics['officeEnabled']);
+        self::assertTrue($diagnostics['available']);
+        self::assertTrue($diagnostics['cacheWritable']);
+        self::assertSame(1, $diagnostics['cacheCount']);
+        self::assertNotNull($diagnostics['lastSuccessfulAt']);
+    }
+
     public function testUnicodeDocumentNameUsesAnAsciiFallbackAndUtf8Filename(): void
     {
         $controller = new DocumentPreviewController(new DocumentPreviewManager($this->files, $this->cache));

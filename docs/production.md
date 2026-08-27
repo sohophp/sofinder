@@ -87,8 +87,10 @@ exports scan count, scanned bytes and cumulative duration counters by result.
 - `GET /health` checks private runtime paths, built assets, image codecs,
   maintenance mode, every storage resource and tagged plugin checks. `down`
   returns HTTP 503; `degraded` remains HTTP 200.
-- `GET /live` only proves that PHP and the bundle initialized; it does not probe
-  storage, queues or external services.
+- `GET /live` only proves that PHP and the bundle initialized; it returns only
+  `{"success":true,"data":{"status":"ready"}}`. Allow this exact route through
+  the host firewall for orchestrator probes; it does not expose versions, paths,
+  storage, queue or external-service details.
 - `GET /metrics` exposes bounded Prometheus counters, storage latency totals and
   observations, Office queue/conversion/cache activity, ClamAV timeouts, queue
   backlog/failed gauges, upload failures, limiter rejections and `sofinder_ready`.

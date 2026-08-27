@@ -123,6 +123,24 @@ final readonly class DocumentPreviewManager
         return $removed;
     }
 
+    /** @return array{pdfEnabled:bool,officeEnabled:bool,available:bool,binary:string,version:?string,cacheWritable:bool,cacheCount:int,lastSuccessfulAt:?int} */
+    public function diagnostics(): array
+    {
+        $available = function_exists('proc_open') && is_file($this->officeBinary) && is_executable($this->officeBinary);
+        $cacheWritable = false; $cacheCount = 0; $lastSuccessfulAt = null;
+        try {
+            $directory = $this->directory();
+            $cacheWritable = is_writable($directory);
+            foreach (glob($directory . '/*.pdf') ?: [] as $file) {
+                if (!is_file($file) || filesize($file) === 0) continue;
+                ++$cacheCount;
+                $lastSuccessfulAt = max($lastSuccessfulAt ?? 0, (int) filemtime($file)) ?: $lastSuccessfulAt;
+            }
+        } catch (\Throwable) {
+        }
+        return ['pdfEnabled' => $this->pdfEnabled, 'officeEnabled' => $this->officeEnabled, 'available' => $available, 'binary' => $this->officeBinary, 'version' => $available ? $this->officeVersion() : null, 'cacheWritable' => $cacheWritable, 'cacheCount' => $cacheCount, 'lastSuccessfulAt' => $lastSuccessfulAt];
+    }
+
     private function directory(): string
     {
         $directory = rtrim($this->cacheDirectory, '/') . '/document-previews';
@@ -189,6 +207,25 @@ final readonly class DocumentPreviewManager
         }
 
         return $converted;
+    }
+
+    private function officeVersion(): ?string
+    {
+        $pipes = [];
+        $process = @proc_open([$this->officeBinary, '--version'], [0 => ['pipe', 'r'], 1 => ['pipe', 'w'], 2 => ['pipe', 'w']], $pipes, null, null, ['bypass_shell' => true]);
+        if (!is_resource($process)) return null;
+        fclose($pipes[0]); stream_set_blocking($pipes[1], false); stream_set_blocking($pipes[2], false);
+        $output = ''; $deadline = microtime(true) + 2;
+        do {
+            $output .= (string) stream_get_contents($pipes[1]);
+            $status = proc_get_status($process);
+            if (!$status['running']) break;
+            if (microtime(true) >= $deadline) { proc_terminate($process, 9); break; }
+            usleep(20_000);
+        } while (true);
+        fclose($pipes[1]); fclose($pipes[2]); proc_close($process);
+        $version = trim(strtok(trim($output), "\r\n") ?: '');
+        return $version !== '' ? mb_substr($version, 0, 120) : null;
     }
 
     private function removeDirectory(string $directory): void

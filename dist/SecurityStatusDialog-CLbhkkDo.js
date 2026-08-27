@@ -1,8 +1,9 @@
-import { n as e, t } from "./jsx-runtime-BuvfPIin.js";
-import { t as n } from "./Modal-u0Bikd5w.js";
+import { t as e } from "./jsx-runtime-CmCsaYvT.js";
+import { t } from "./react-B5TC723I.js";
+import { t as n } from "./Modal-aP8IYcPB.js";
 import { t as r } from "./format-GD3_dnvn.js";
 //#region src/components/SecurityStatusDialog.tsx
-var i = e(), a = t();
+var i = t(), a = e();
 function o({ api: e, labels: t, formatDate: o, onClose: s }) {
 	let [c, l] = (0, i.useState)(null), [u, d] = (0, i.useState)("");
 	(0, i.useEffect)(() => {
@@ -15,7 +16,7 @@ function o({ api: e, labels: t, formatDate: o, onClose: s }) {
 			t = !1;
 		};
 	}, [e]);
-	let f = c?.malwareScanning;
+	let f = c?.malwareScanning, p = c?.documentPreview;
 	return /* @__PURE__ */ (0, a.jsx)(n, {
 		title: t.title,
 		closeLabel: t.close,
@@ -57,6 +58,45 @@ function o({ api: e, labels: t, formatDate: o, onClose: s }) {
 					/* @__PURE__ */ (0, a.jsxs)("span", { children: [/* @__PURE__ */ (0, a.jsx)("b", { children: f.counts.pending }), t.pending] })
 				]
 			}),
+			p && /* @__PURE__ */ (0, a.jsxs)(a.Fragment, { children: [
+				/* @__PURE__ */ (0, a.jsx)("h3", { children: t.document }),
+				/* @__PURE__ */ (0, a.jsxs)("section", {
+					className: `sf-security-summary sf-security-${p.available && p.cacheWritable ? "ready" : "down"}`,
+					children: [
+						/* @__PURE__ */ (0, a.jsx)("span", {
+							className: "sf-security-indicator",
+							"aria-hidden": "true"
+						}),
+						/* @__PURE__ */ (0, a.jsxs)("div", { children: [/* @__PURE__ */ (0, a.jsx)("strong", { children: t.document }), /* @__PURE__ */ (0, a.jsx)("small", { children: p.officeEnabled && p.available ? t.ready : t.disabled })] }),
+						/* @__PURE__ */ (0, a.jsxs)("dl", { children: [
+							/* @__PURE__ */ (0, a.jsx)("dt", { children: t.mode }),
+							/* @__PURE__ */ (0, a.jsxs)("dd", { children: [p.effectiveMode, p.configuredMode === p.effectiveMode ? "" : ` (${p.configuredMode})`] }),
+							/* @__PURE__ */ (0, a.jsx)("dt", { children: t.converter }),
+							/* @__PURE__ */ (0, a.jsx)("dd", { children: p.binary }),
+							/* @__PURE__ */ (0, a.jsx)("dt", { children: t.version }),
+							/* @__PURE__ */ (0, a.jsx)("dd", { children: p.version ?? "—" }),
+							/* @__PURE__ */ (0, a.jsx)("dt", { children: t.cache }),
+							/* @__PURE__ */ (0, a.jsxs)("dd", { children: [
+								p.cacheCount,
+								" · ",
+								p.cacheWritable ? t.writable : t.readOnly
+							] }),
+							/* @__PURE__ */ (0, a.jsx)("dt", { children: t.lastSuccess }),
+							/* @__PURE__ */ (0, a.jsx)("dd", { children: p.lastSuccessfulAt ? o(p.lastSuccessfulAt) : t.never })
+						] })
+					]
+				}),
+				/* @__PURE__ */ (0, a.jsxs)("div", {
+					className: "sf-security-counts",
+					"aria-label": t.jobs,
+					children: [
+						/* @__PURE__ */ (0, a.jsxs)("span", { children: [/* @__PURE__ */ (0, a.jsx)("b", { children: p.counts.queued }), t.pending] }),
+						/* @__PURE__ */ (0, a.jsxs)("span", { children: [/* @__PURE__ */ (0, a.jsx)("b", { children: p.counts.running }), t.running] }),
+						/* @__PURE__ */ (0, a.jsxs)("span", { children: [/* @__PURE__ */ (0, a.jsx)("b", { children: p.counts.ready }), t.ready] }),
+						/* @__PURE__ */ (0, a.jsxs)("span", { children: [/* @__PURE__ */ (0, a.jsx)("b", { children: p.counts.failed + p.counts.expired }), t.failed] })
+					]
+				})
+			] }),
 			/* @__PURE__ */ (0, a.jsx)("h3", { children: t.recent }),
 			f.recent.length === 0 ? /* @__PURE__ */ (0, a.jsx)("div", {
 				className: "sf-state",

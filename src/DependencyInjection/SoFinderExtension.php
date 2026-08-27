@@ -343,6 +343,7 @@ final class SoFinderExtension extends Extension
                 new Reference(FileManager::class),
                 new Reference(MetadataStoreInterface::class),
                 new Reference(ActorProviderInterface::class),
+                $config['features']['quick_access_files'],
             ]));
         $container->setDefinition(Theme::class, (new Definition(Theme::class))->setArgument('$values', $config['theme']));
         $container->setDefinition(CapabilityCatalog::class, new Definition(CapabilityCatalog::class));
@@ -508,6 +509,8 @@ final class SoFinderExtension extends Extension
             new Reference(AuthorizationCheckerInterface::class),
             $malwareConfig['status_roles'],
             new Reference(FeaturePolicy::class),
+            new Reference(DocumentPreviewManager::class),
+            new Reference(DocumentPreviewJobManager::class),
         ]);
         $this->controller($container, DocumentPreviewController::class, [new Reference(DocumentPreviewManager::class), new Reference(FeaturePolicy::class), new Reference(DocumentPreviewJobManager::class)]);
         $this->controller($container, DocumentPreviewJobController::class, [new Reference(DocumentPreviewJobManager::class), new Reference(CsrfGuard::class), new Reference(RouterInterface::class), new Reference(FeaturePolicy::class)]);

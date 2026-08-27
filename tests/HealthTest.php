@@ -56,7 +56,7 @@ final class HealthTest extends TestCase
         self::assertSame(200, $response->getStatusCode());
         self::assertTrue($payload['success']);
         self::assertSame('ready', $payload['data']['status']);
-        self::assertSame('sofinder', $payload['data']['bundle']);
+        self::assertSame(['status'], array_keys($payload['data']));
     }
 
     public function testMessengerWithoutAProviderIsDegradedAndProviderResultIsUsed(): void

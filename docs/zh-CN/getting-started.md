@@ -87,6 +87,7 @@ SoFinder 默认要求通过完整验证的 Symfony 用户。宿主应用程序�
 # config/packages/security.yaml
 security:
   access_control:
+    - { path: '^/sofinder/live$', roles: PUBLIC_ACCESS }
     - { path: '^/sofinder', roles: ROLE_USER }
 ```
 

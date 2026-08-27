@@ -23,6 +23,8 @@ export interface SoFinderConfig {
     folderTree: boolean;
     recent: boolean;
     favorites: boolean;
+    quickAccess?: boolean;
+    quickAccessFiles?: boolean;
     tags: boolean;
     archive: boolean;
     trash: boolean;
@@ -34,6 +36,7 @@ export interface SoFinderConfig {
     folderUpload: boolean;
     textPreview: boolean;
     checksum: boolean;
+    qrCode: boolean;
   };
   securityStatusAvailable?: boolean;
   uiDefaults: {
@@ -100,6 +103,20 @@ export interface SecurityStatus {
     mode?: "local" | "shared";
     lastSuccessfulAt?: number | null;
   };
+  documentPreview: null | {
+    pdfEnabled: boolean;
+    officeEnabled: boolean;
+    available: boolean;
+    binary: string;
+    version: string | null;
+    cacheWritable: boolean;
+    cacheCount: number;
+    lastSuccessfulAt: number | null;
+    configuredMode: "auto" | "inline" | "messenger";
+    effectiveMode: "inline" | "messenger";
+    queueAvailable: boolean;
+    counts: { queued: number; running: number; ready: number; failed: number; expired: number };
+  };
 }
 
 export interface DocumentPreviewJob {
@@ -112,6 +129,13 @@ export interface DocumentPreviewJob {
   resource: string;
   path: string;
   previewUrl: string | null;
+  mode: "inline" | "messenger";
+  cached: boolean;
+  createdAt: number;
+  startedAt: number | null;
+  updatedAt: number;
+  finishedAt: number | null;
+  durationMilliseconds: number | null;
 }
 
 export interface ImageFormatCapability {
@@ -236,9 +260,13 @@ export interface BatchResult {
 
 export interface MetadataState {
   favorites: string[];
+  quickAccess: string[];
+  quickAccessEntries: QuickAccessEntry[];
   tags: Record<string, string[]>;
   recent: Array<{ path: string; touchedAt: number }>;
 }
+
+export interface QuickAccessEntry { path: string; name: string; directory: boolean | null; mimeType: string | null; exists: boolean }
 
 export interface ImageInfo {
   width: number;

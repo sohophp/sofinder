@@ -142,6 +142,8 @@ so_finder:
     folder_tree: true
     recent: true
     favorites: true
+    quick_access: true
+    quick_access_files: true
     tags: true
     archive: true
     trash: true
@@ -153,7 +155,10 @@ so_finder:
     folder_upload: true
     text_preview: true
     checksum: true
+    qr_code: true
 ```
+
+`quick_access` controls Quick access independently from Favorites. `quick_access_files` is the host-controlled upper bound for adding files to Quick access. When enabled, each user can still disable file additions in Settings. Disabling it at the host level hides that user preference and rejects new file shortcuts; existing shortcuts remain removable.
 
 ## Theme
 

@@ -7,6 +7,8 @@ namespace SohoPHP\SoFinder\Http;
 use SohoPHP\SoFinder\Feature\FeaturePolicy;
 use SohoPHP\SoFinder\Contract\MalwareScanStatusStoreInterface;
 use SohoPHP\SoFinder\Security\ClamAvScanner;
+use SohoPHP\SoFinder\Preview\DocumentPreviewJobManager;
+use SohoPHP\SoFinder\Preview\DocumentPreviewManager;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException;
 use Symfony\Component\Security\Core\Authorization\AuthorizationCheckerInterface;
@@ -20,6 +22,8 @@ final readonly class SecurityStatusController
         private ?AuthorizationCheckerInterface $authorization = null,
         /** @var list<string> */ private array $roles = [],
         private ?FeaturePolicy $features = null,
+        private ?DocumentPreviewManager $documentPreviews = null,
+        private ?DocumentPreviewJobManager $documentPreviewJobs = null,
     ) {
     }
 
@@ -32,6 +36,8 @@ final readonly class SecurityStatusController
         $health = $this->scanner?->check();
         $report = $this->scans->report();
 
+        $document = $this->documentPreviews?->diagnostics();
+        $jobs = $this->documentPreviewJobs?->diagnostics();
         return new JsonResponse(['success' => true, 'data' => [
             'malwareScanning' => [
                 'enabled' => $this->enabled,
@@ -43,6 +49,7 @@ final readonly class SecurityStatusController
                 'mode' => $report['mode'],
                 'lastSuccessfulAt' => $report['lastSuccessfulAt'],
             ],
+            'documentPreview' => $document === null ? null : [...$document, ...($jobs ?? [])],
         ]]);
     }
 }
