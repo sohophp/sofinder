@@ -438,12 +438,7 @@ test("resizes list columns within limits and double-clicks to fit content", asyn
   await expect.poll(async () => Number(await separator.getAttribute("aria-valuenow"))).toBeGreaterThanOrEqual(initial + 50);
   await expect.poll(() => page.evaluate(() => JSON.parse(localStorage.getItem("sofinder.listColumnWidths.v1") || "{}").name)).toBeGreaterThanOrEqual(initial + 50);
 
-  box = await separator.boundingBox();
-  expect(box).not.toBeNull();
-  await page.mouse.move(box!.x + box!.width / 2, box!.y + box!.height / 2);
-  await page.mouse.down();
-  await page.mouse.move(box!.x + box!.width / 2 + 2000, box!.y + box!.height / 2);
-  await page.mouse.up();
+  for (let index = 0; index < 40; index += 1) await separator.press("ArrowRight");
   await expect(separator).toHaveAttribute("aria-valuenow", "720");
 
   await separator.dblclick();
