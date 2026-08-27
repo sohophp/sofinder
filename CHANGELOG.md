@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- Keep optional tag chips compact and horizontally aligned at every interface scale, including bounded ellipsis for long suggestions.
 - Refine asset metadata actions with compact accessible icons and use a host-controlled language selector for localized alternative text while retaining saved locales removed from configuration.
 - Complete asset alternative-text delivery across picker/upload integrations, expose metadata editing from details, preview and context menus, and add an independent `metadata.update` write capability.
 - Bind resumable upload sessions to the trusted Workspace and add an extensible audit for writable storage roots shared across Workspaces.

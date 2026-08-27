@@ -211,6 +211,25 @@ test("enables a local QR Code action and keeps file delivery actions together", 
   await expect(dialog.getByRole("link", { name: "下载 QR Code" })).toHaveAttribute("download", "guide.txt-qr.png");
 });
 
+test("keeps optional tag chips inline at the largest interface scale", async ({ page }) => {
+  await page.setContent(`<!doctype html><html data-sofinder-scale="xlarge"><body><section class="sf-modal sf-tags-modal"><div class="sf-tag-suggestions"><button type="button"><svg class="sf-ui-icon" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg><span>花木成畦手自栽并且这是一个很长的候选标签</span></button></div></section></body></html>`);
+  await page.addStyleTag({ path: resolve(import.meta.dirname, "../../dist/sofinder.css") });
+
+  const chip = page.locator(".sf-tag-suggestions button");
+  const icon = chip.locator("svg");
+  const label = chip.locator("span");
+  await expect(chip).toHaveCSS("display", "flex");
+  await expect(chip).toHaveCSS("white-space", "nowrap");
+  await expect(label).toHaveCSS("text-overflow", "ellipsis");
+  const [chipBox, iconBox, labelBox] = await Promise.all([chip.boundingBox(), icon.boundingBox(), label.boundingBox()]);
+  expect(chipBox).not.toBeNull();
+  expect(iconBox).not.toBeNull();
+  expect(labelBox).not.toBeNull();
+  expect(Math.abs((iconBox!.y + iconBox!.height / 2) - (labelBox!.y + labelBox!.height / 2))).toBeLessThan(2);
+  expect(chipBox!.height).toBeLessThan(48);
+  expect(chipBox!.width).toBeLessThanOrEqual(260);
+});
+
 test("issues an expiring anonymous URL for a private resource", async ({ page }) => {
   await page.route("**/sofinder/api/config", async route => {
     await route.fulfill({ json: { success: true, data: { apiVersion: "1.0", resources: [{ name: "Files", publicUrl: "", allowedExtensions: ["txt"], maxSize: 1000000, readOnly: false, quotaBytes: 0, usedBytes: 80, maxFileNameLength: 120, maxFolderNameLength: 50, maxFolderDepth: 5, deliveryMode: "proxy", storageCapabilities: { search: true, sort: true, cursorPagination: false, atomicMove: true, nativeCopy: true, recoverableDelete: true, publicUrl: false } }], plugins: [], imagePresets: {}, imageCapabilities: { driver: "", formats: [] }, signedUrls: { enabled: true, defaultTtlSeconds: 300, maxTtlSeconds: 3600 } } } });
