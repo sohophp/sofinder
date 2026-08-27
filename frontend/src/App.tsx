@@ -92,6 +92,8 @@ export default function App({ config }: { config: SoFinderConfig }) {
   const uploadConflictResolver = useRef<((strategy: Exclude<UploadConflictStrategy, "ask">) => void) | null>(null);
   const longPress = useRef<number | null>(null);
   const columnDrag = useRef<{ side: "left" | "right"; startX: number; startWidth: number; currentWidth: number; element: HTMLDivElement } | null>(null);
+  const utility = useRef<HTMLDivElement>(null);
+  const utilityButton = useRef<HTMLButtonElement>(null);
 
   useEffect(() => {
     const variableNames = {
@@ -123,6 +125,25 @@ export default function App({ config }: { config: SoFinderConfig }) {
     localStorage.setItem("sofinder.language", language);
     document.documentElement.lang = language === "zh-cn" ? "zh-CN" : language === "zh-tw" ? "zh-TW" : "en";
   }, [language]);
+
+  useEffect(() => {
+    if (!utilityOpen) return;
+    const closeOutside = (event: PointerEvent) => {
+      if (event.target instanceof Node && !utility.current?.contains(event.target)) setUtilityOpen(false);
+    };
+    const closeWithKeyboard = (event: KeyboardEvent) => {
+      if (event.key !== "Escape") return;
+      event.preventDefault();
+      setUtilityOpen(false);
+      utilityButton.current?.focus();
+    };
+    document.addEventListener("pointerdown", closeOutside);
+    document.addEventListener("keydown", closeWithKeyboard);
+    return () => {
+      document.removeEventListener("pointerdown", closeOutside);
+      document.removeEventListener("keydown", closeWithKeyboard);
+    };
+  }, [utilityOpen]);
 
   const report = useCallback((error: unknown) => setNotice(error instanceof Error ? error.message : t("error")), [t]);
   const ask = useCallback((state: ConfirmState) => new Promise<boolean>(resolve => {
@@ -752,8 +773,8 @@ export default function App({ config }: { config: SoFinderConfig }) {
         <button className={view === "grid" ? "active" : ""} onClick={() => setViewMode("grid")} title={t("grid")} aria-label={t("grid")}><UiIcon name="grid"/></button>
         <button className={view === "list" ? "active" : ""} onClick={() => setViewMode("list")} title={t("list")} aria-label={t("list")}><UiIcon name="list"/></button>
       </div>}
-      <div className="sf-utility">
-        <button className="sf-icon-only" onClick={() => setUtilityOpen(open => !open)} aria-expanded={utilityOpen} title={t("moreActions")} aria-label={t("moreActions")}><UiIcon name="more"/></button>
+      <div ref={utility} className="sf-utility">
+        <button ref={utilityButton} className="sf-icon-only" onClick={() => setUtilityOpen(open => !open)} aria-expanded={utilityOpen} title={t("moreActions")} aria-label={t("moreActions")}><UiIcon name="more"/></button>
         {utilityOpen && <div className="sf-utility-menu" role="menu">
           {config.uiDefaults.languageSwitcher !== false && <label><span>{t("language")}</span><select value={language} onChange={event => setLanguage(event.target.value as Language)} aria-label={t("language")}><option value="zh-cn">简中</option><option value="zh-tw">繁中</option><option value="en">EN</option></select></label>}
           <label><span>{t("sort")}</span><select value={sort} disabled={currentResource?.storageCapabilities?.sort === false} onChange={event => { const next = event.target.value as SortMode; setSort(next); setCursorHistory([]); void load(resource, path, search, 0, next, direction, searchMode, null); }}><option value="name">{t("name")}</option><option value="size">{t("size")}</option><option value="modified">{t("modified")}</option></select></label>

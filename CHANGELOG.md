@@ -1,5 +1,11 @@
 # Changelog
 
+## Unreleased
+
+- Close the top-right utility menu when the user clicks outside it, preserve
+  interaction with controls inside the menu and support Escape with focus
+  restoration.
+
 ## 0.1.0-beta.19 - 2026-08-27
 
 - Expand the Symfony demo and quick-start file-resource allowlists to include

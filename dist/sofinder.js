@@ -1284,7 +1284,7 @@ var u = /* @__PURE__ */ t(((e) => {
 	}, On = En(Dn), kn = h({}, Dn, {
 		view: 0,
 		detail: 0
-	}), M = En(kn), An, jn, Mn, Nn = h({}, kn, {
+	}), An = En(kn), jn, M, Mn, Nn = h({}, kn, {
 		screenX: 0,
 		screenY: 0,
 		clientX: 0,
@@ -1302,12 +1302,12 @@ var u = /* @__PURE__ */ t(((e) => {
 			return e.relatedTarget === void 0 ? e.fromElement === e.srcElement ? e.toElement : e.fromElement : e.relatedTarget;
 		},
 		movementX: function(e) {
-			return "movementX" in e ? e.movementX : (e !== Mn && (Mn && e.type === "mousemove" ? (An = e.screenX - Mn.screenX, jn = e.screenY - Mn.screenY) : jn = An = 0, Mn = e), An);
+			return "movementX" in e ? e.movementX : (e !== Mn && (Mn && e.type === "mousemove" ? (jn = e.screenX - Mn.screenX, M = e.screenY - Mn.screenY) : M = jn = 0, Mn = e), jn);
 		},
 		movementY: function(e) {
-			return "movementY" in e ? e.movementY : jn;
+			return "movementY" in e ? e.movementY : M;
 		}
-	}), N = En(Nn), P = En(h({}, Nn, { dataTransfer: 0 })), Pn = En(h({}, kn, { relatedTarget: 0 })), Fn = En(h({}, Dn, {
+	}), Pn = En(Nn), Fn = En(h({}, Nn, { dataTransfer: 0 })), N = En(h({}, kn, { relatedTarget: 0 })), P = En(h({}, Dn, {
 		animationName: 0,
 		elapsedTime: 0,
 		pseudoElement: 0
@@ -1445,8 +1445,8 @@ var u = /* @__PURE__ */ t(((e) => {
 		32
 	], Xn = gn && "CompositionEvent" in window, Zn = null;
 	gn && "documentMode" in document && (Zn = document.documentMode);
-	var Qn = gn && "TextEvent" in window && !Zn, $n = gn && (!Xn || Zn && 8 < Zn && 11 >= Zn), F = " ", I = !1;
-	function er(e, t) {
+	var Qn = gn && "TextEvent" in window && !Zn, $n = gn && (!Xn || Zn && 8 < Zn && 11 >= Zn), er = " ", tr = !1;
+	function F(e, t) {
 		switch (e) {
 			case "keyup": return Yn.indexOf(t.keyCode) !== -1;
 			case "keydown": return t.keyCode !== 229;
@@ -1456,20 +1456,20 @@ var u = /* @__PURE__ */ t(((e) => {
 			default: return !1;
 		}
 	}
-	function tr(e) {
+	function I(e) {
 		return e = e.detail, typeof e == "object" && "data" in e ? e.data : null;
 	}
 	var nr = !1;
 	function rr(e, t) {
 		switch (e) {
-			case "compositionend": return tr(t);
-			case "keypress": return t.which === 32 ? (I = !0, F) : null;
-			case "textInput": return e = t.data, e === F && I ? null : e;
+			case "compositionend": return I(t);
+			case "keypress": return t.which === 32 ? (tr = !0, er) : null;
+			case "textInput": return e = t.data, e === er && tr ? null : e;
 			default: return null;
 		}
 	}
 	function ir(e, t) {
-		if (nr) return e === "compositionend" || !Xn && er(e, t) ? (e = Sn(), xn = bn = yn = null, nr = !1, e) : null;
+		if (nr) return e === "compositionend" || !Xn && F(e, t) ? (e = Sn(), xn = bn = yn = null, nr = !1, e) : null;
 		switch (e) {
 			case "paste": return null;
 			case "keypress":
@@ -1654,12 +1654,12 @@ var u = /* @__PURE__ */ t(((e) => {
 		for (n in t) if (t.hasOwnProperty(n) && n in Br) return zr[e] = t[n];
 		return e;
 	}
-	var Hr = Vr("animationend"), Ur = Vr("animationiteration"), Wr = Vr("animationstart"), Gr = Vr("transitionrun"), Kr = Vr("transitionstart"), qr = Vr("transitioncancel"), Jr = Vr("transitionend"), Yr = /* @__PURE__ */ new Map(), L = "abort auxClick beforeToggle cancel canPlay canPlayThrough click close contextMenu copy cut drag dragEnd dragEnter dragExit dragLeave dragOver dragStart drop durationChange emptied encrypted ended error gotPointerCapture input invalid keyDown keyPress keyUp load loadedData loadedMetadata loadStart lostPointerCapture mouseDown mouseMove mouseOut mouseOver mouseUp paste pause play playing pointerCancel pointerDown pointerMove pointerOut pointerOver pointerUp progress rateChange reset resize seeked seeking stalled submit suspend timeUpdate touchCancel touchEnd touchStart volumeChange scroll toggle touchMove waiting wheel".split(" ");
-	L.push("scrollEnd");
-	function Xr(e, t) {
+	var Hr = Vr("animationend"), Ur = Vr("animationiteration"), Wr = Vr("animationstart"), Gr = Vr("transitionrun"), Kr = Vr("transitionstart"), qr = Vr("transitioncancel"), Jr = Vr("transitionend"), Yr = /* @__PURE__ */ new Map(), Xr = "abort auxClick beforeToggle cancel canPlay canPlayThrough click close contextMenu copy cut drag dragEnd dragEnter dragExit dragLeave dragOver dragStart drop durationChange emptied encrypted ended error gotPointerCapture input invalid keyDown keyPress keyUp load loadedData loadedMetadata loadStart lostPointerCapture mouseDown mouseMove mouseOut mouseOver mouseUp paste pause play playing pointerCancel pointerDown pointerMove pointerOut pointerOver pointerUp progress rateChange reset resize seeked seeking stalled submit suspend timeUpdate touchCancel touchEnd touchStart volumeChange scroll toggle touchMove waiting wheel".split(" ");
+	Xr.push("scrollEnd");
+	function Zr(e, t) {
 		Yr.set(e, t), At(t, [e]);
 	}
-	var Zr = typeof reportError == "function" ? reportError : function(e) {
+	var L = typeof reportError == "function" ? reportError : function(e) {
 		if (typeof window == "object" && typeof window.ErrorEvent == "function") {
 			var t = new window.ErrorEvent("error", {
 				bubbles: !0,
@@ -3448,13 +3448,13 @@ var u = /* @__PURE__ */ t(((e) => {
 		return n;
 	}
 	function Js(e) {
-		Zr(e);
+		L(e);
 	}
 	function Ys(e) {
 		console.error(e);
 	}
 	function Xs(e) {
-		Zr(e);
+		L(e);
 	}
 	function Zs(e, t) {
 		try {
@@ -5863,11 +5863,11 @@ var u = /* @__PURE__ */ t(((e) => {
 			});
 		}
 	}
-	for (var hd = 0; hd < L.length; hd++) {
-		var gd = L[hd];
-		Xr(gd.toLowerCase(), "on" + (gd[0].toUpperCase() + gd.slice(1)));
+	for (var hd = 0; hd < Xr.length; hd++) {
+		var gd = Xr[hd];
+		Zr(gd.toLowerCase(), "on" + (gd[0].toUpperCase() + gd.slice(1)));
 	}
-	Xr(Hr, "onAnimationEnd"), Xr(Ur, "onAnimationIteration"), Xr(Wr, "onAnimationStart"), Xr("dblclick", "onDoubleClick"), Xr("focusin", "onFocus"), Xr("focusout", "onBlur"), Xr(Gr, "onTransitionRun"), Xr(Kr, "onTransitionStart"), Xr(qr, "onTransitionCancel"), Xr(Jr, "onTransitionEnd"), jt("onMouseEnter", ["mouseout", "mouseover"]), jt("onMouseLeave", ["mouseout", "mouseover"]), jt("onPointerEnter", ["pointerout", "pointerover"]), jt("onPointerLeave", ["pointerout", "pointerover"]), At("onChange", "change click focusin focusout input keydown keyup selectionchange".split(" ")), At("onSelect", "focusout contextmenu dragend focusin keydown keyup mousedown mouseup selectionchange".split(" ")), At("onBeforeInput", [
+	Zr(Hr, "onAnimationEnd"), Zr(Ur, "onAnimationIteration"), Zr(Wr, "onAnimationStart"), Zr("dblclick", "onDoubleClick"), Zr("focusin", "onFocus"), Zr("focusout", "onBlur"), Zr(Gr, "onTransitionRun"), Zr(Kr, "onTransitionStart"), Zr(qr, "onTransitionCancel"), Zr(Jr, "onTransitionEnd"), jt("onMouseEnter", ["mouseout", "mouseover"]), jt("onMouseLeave", ["mouseout", "mouseover"]), jt("onPointerEnter", ["pointerout", "pointerover"]), jt("onPointerLeave", ["pointerout", "pointerover"]), At("onChange", "change click focusin focusout input keydown keyup selectionchange".split(" ")), At("onSelect", "focusout contextmenu dragend focusin keydown keyup mousedown mouseup selectionchange".split(" ")), At("onBeforeInput", [
 		"compositionend",
 		"keypress",
 		"textInput",
@@ -5888,7 +5888,7 @@ var u = /* @__PURE__ */ t(((e) => {
 					try {
 						a(i);
 					} catch (e) {
-						Zr(e);
+						L(e);
 					}
 					i.currentTarget = null, a = c;
 				}
@@ -5898,7 +5898,7 @@ var u = /* @__PURE__ */ t(((e) => {
 					try {
 						a(i);
 					} catch (e) {
-						Zr(e);
+						L(e);
 					}
 					i.currentTarget = null, a = c;
 				}
@@ -5977,14 +5977,14 @@ var u = /* @__PURE__ */ t(((e) => {
 							l = Un;
 							break;
 						case "focusin":
-							u = "focus", l = Pn;
+							u = "focus", l = N;
 							break;
 						case "focusout":
-							u = "blur", l = Pn;
+							u = "blur", l = N;
 							break;
 						case "beforeblur":
 						case "afterblur":
-							l = Pn;
+							l = N;
 							break;
 						case "click": if (n.button === 2) break a;
 						case "auxclick":
@@ -5995,7 +5995,7 @@ var u = /* @__PURE__ */ t(((e) => {
 						case "mouseout":
 						case "mouseover":
 						case "contextmenu":
-							l = N;
+							l = Pn;
 							break;
 						case "drag":
 						case "dragend":
@@ -6005,7 +6005,7 @@ var u = /* @__PURE__ */ t(((e) => {
 						case "dragover":
 						case "dragstart":
 						case "drop":
-							l = P;
+							l = Fn;
 							break;
 						case "touchcancel":
 						case "touchend":
@@ -6016,14 +6016,14 @@ var u = /* @__PURE__ */ t(((e) => {
 						case Hr:
 						case Ur:
 						case Wr:
-							l = Fn;
+							l = P;
 							break;
 						case Jr:
 							l = Kn;
 							break;
 						case "scroll":
 						case "scrollend":
-							l = M;
+							l = An;
 							break;
 						case "wheel":
 							l = qn;
@@ -6063,7 +6063,7 @@ var u = /* @__PURE__ */ t(((e) => {
 				a: {
 					if (c = e === "mouseover" || e === "pointerover", l = e === "mouseout" || e === "pointerout", c && n !== cn && (u = n.relatedTarget || n.fromElement) && (wt(u) || u[_t])) break a;
 					if ((l || c) && (c = i.window === i ? i : (c = i.ownerDocument) ? c.defaultView || c.parentWindow : window, l ? (u = n.relatedTarget || n.toElement, l = r, u = u ? wt(u) : null, u !== null && (f = s(u), d = u.tag, u !== f || d !== 5 && d !== 27 && d !== 6) && (u = null)) : (l = null, u = r), l !== u)) {
-						if (d = N, g = "onMouseLeave", p = "onMouseEnter", m = "mouse", (e === "pointerout" || e === "pointerover") && (d = Wn, g = "onPointerLeave", p = "onPointerEnter", m = "pointer"), f = l == null ? c : Tt(l), h = u == null ? c : Tt(u), c = new d(g, m + "leave", l, n, i), c.target = f, c.relatedTarget = h, g = null, wt(i) === r && (d = new d(p, m + "enter", u, n, i), d.target = h, d.relatedTarget = f, g = d), f = g, l && u) b: {
+						if (d = Pn, g = "onMouseLeave", p = "onMouseEnter", m = "mouse", (e === "pointerout" || e === "pointerover") && (d = Wn, g = "onPointerLeave", p = "onPointerEnter", m = "pointer"), f = l == null ? c : Tt(l), h = u == null ? c : Tt(u), c = new d(g, m + "leave", l, n, i), c.target = f, c.relatedTarget = h, g = null, wt(i) === r && (d = new d(p, m + "enter", u, n, i), d.target = h, d.relatedTarget = f, g = d), f = g, l && u) b: {
 							for (d = Dd, p = l, m = u, h = 0, g = p; g; g = d(g)) h++;
 							g = 0;
 							for (var _ = m; _; _ = d(_)) g++;
@@ -6131,11 +6131,11 @@ var u = /* @__PURE__ */ t(((e) => {
 					}
 					x = void 0;
 				}
-				else nr ? er(e, n) && (x = "onCompositionEnd") : e === "keydown" && n.keyCode === 229 && (x = "onCompositionStart");
+				else nr ? F(e, n) && (x = "onCompositionEnd") : e === "keydown" && n.keyCode === 229 && (x = "onCompositionStart");
 				x && ($n && n.locale !== "ko" && (nr || x !== "onCompositionStart" ? x === "onCompositionEnd" && nr && (b = Sn()) : (yn = i, bn = "value" in yn ? yn.value : yn.textContent, nr = !0)), y = Ed(r, x), 0 < y.length && (x = new Ln(x, e, null, n, i), o.push({
 					event: x,
 					listeners: y
-				}), b ? x.data = b : (b = tr(n), b !== null && (x.data = b)))), (b = Qn ? rr(e, n) : ir(e, n)) && (x = Ed(r, "onBeforeInput"), 0 < x.length && (y = new Ln("onBeforeInput", "beforeinput", null, n, i), o.push({
+				}), b ? x.data = b : (b = I(n), b !== null && (x.data = b)))), (b = Qn ? rr(e, n) : ir(e, n)) && (x = Ed(r, "onBeforeInput"), 0 < x.length && (y = new Ln("onBeforeInput", "beforeinput", null, n, i), o.push({
 					event: y,
 					listeners: x
 				}), y.data = b)), md(o, e, r, n, i);
@@ -9786,7 +9786,7 @@ function He({ config: e }) {
 		enabled: !1,
 		defaultTtlSeconds: 300,
 		maxTtlSeconds: 3600
-	}), [Sn, Cn] = (0, g.useState)(() => we("left")), [wn, Tn] = (0, g.useState)(() => we("right")), En = (0, g.useRef)(null), Dn = (0, g.useRef)(null), On = (0, g.useRef)(null), kn = (0, g.useRef)(null);
+	}), [Sn, Cn] = (0, g.useState)(() => we("left")), [wn, Tn] = (0, g.useState)(() => we("right")), En = (0, g.useRef)(null), Dn = (0, g.useRef)(null), On = (0, g.useRef)(null), kn = (0, g.useRef)(null), An = (0, g.useRef)(null), jn = (0, g.useRef)(null);
 	(0, g.useEffect)(() => {
 		let t = {
 			accent: "--sf-accent",
@@ -9804,15 +9804,25 @@ function He({ config: e }) {
 		localStorage.setItem("sofinder.uploadConflictStrategy.v1", Rt);
 	}, [Rt]), (0, g.useEffect)(() => {
 		localStorage.setItem("sofinder.language", d), document.documentElement.lang = d === "zh-cn" ? "zh-CN" : d === "zh-tw" ? "zh-TW" : "en";
-	}, [d]);
-	let M = (0, g.useCallback)((e) => pt(e instanceof Error ? e.message : p("error")), [p]), An = (0, g.useCallback)((e) => new Promise((t) => {
+	}, [d]), (0, g.useEffect)(() => {
+		if (!Pt) return;
+		let e = (e) => {
+			e.target instanceof Node && !An.current?.contains(e.target) && Ft(!1);
+		}, t = (e) => {
+			e.key === "Escape" && (e.preventDefault(), Ft(!1), jn.current?.focus());
+		};
+		return document.addEventListener("pointerdown", e), document.addEventListener("keydown", t), () => {
+			document.removeEventListener("pointerdown", e), document.removeEventListener("keydown", t);
+		};
+	}, [Pt]);
+	let M = (0, g.useCallback)((e) => pt(e instanceof Error ? e.message : p("error")), [p]), Mn = (0, g.useCallback)((e) => new Promise((t) => {
 		En.current?.(!1), En.current = t, Zt(e);
-	}), []), jn = (e) => {
+	}), []), Nn = (e) => {
 		let t = En.current;
 		En.current = null, Zt(null), t?.(e);
-	}, Mn = (0, g.useCallback)((e) => new Promise((t) => {
+	}, Pn = (0, g.useCallback)((e) => new Promise((t) => {
 		Dn.current?.("skip"), Dn.current = t, $t(e);
-	}), []), Nn = (e) => {
+	}), []), Fn = (e) => {
 		let t = Dn.current;
 		Dn.current = null, $t(null), t?.(e);
 	}, N = (0, g.useCallback)(async (e = v, t = b, r = de, i = qe, a = We, o = O, s = Ce, c = Ze) => {
@@ -9822,18 +9832,18 @@ function He({ config: e }) {
 		try {
 			let u = await n.list(e, t, r, a, o, i, st.current, s, c);
 			if (l !== k.current) return;
-			re(u.entries), x(u.path), ne(u.path), Je(u.offset), Xe(u.total), Qe(c), et(u.nextCursor ?? null), ht(u.capabilities || {}), Zn(/* @__PURE__ */ new Set()), $n(null);
+			re(u.entries), x(u.path), ne(u.path), Je(u.offset), Xe(u.total), Qe(c), et(u.nextCursor ?? null), ht(u.capabilities || {}), $n(/* @__PURE__ */ new Set()), tr(null);
 		} catch (r) {
 			if (l !== k.current) return;
 			if (r instanceof S && r.code === "not_found" && t !== "") try {
 				let t = await n.list(e, "", "", a, o, 0, st.current, "name", null);
 				if (l !== k.current) return;
-				re(t.entries), x(t.path), ne(t.path), Je(t.offset), Xe(t.total), Qe(null), et(t.nextCursor ?? null), ht(t.capabilities || {}), Zn(/* @__PURE__ */ new Set()), $n(null), nt([]), pt(p("missingPathFallback"));
+				re(t.entries), x(t.path), ne(t.path), Je(t.offset), Xe(t.total), Qe(null), et(t.nextCursor ?? null), ht(t.capabilities || {}), $n(/* @__PURE__ */ new Set()), tr(null), nt([]), pt(p("missingPathFallback"));
 				return;
 			} catch (e) {
 				r = e;
 			}
-			re([]), x(t), Je(i), Xe(null), Qe(c), et(null), ht({}), Zn(/* @__PURE__ */ new Set()), $n(null), M(r);
+			re([]), x(t), Je(i), Xe(null), Qe(c), et(null), ht({}), $n(/* @__PURE__ */ new Set()), tr(null), M(r);
 		} finally {
 			l === k.current && dt(!1);
 		}
@@ -9849,17 +9859,17 @@ function He({ config: e }) {
 		Ce,
 		We,
 		p
-	]), P = h.find((e) => e.name === v), Pn = b === "" ? 0 : b.split("/").length, { uploads: Fn, uploadsCollapsed: In, setUploadsCollapsed: Ln, uploadInput: Rn, directoryUploadInput: zn, upload: Bn, uploadTo: Vn, uploadDirectory: Hn, cancelUpload: Un, cancelAllUploads: Wn, removeUploadTask: Gn, retryUpload: Kn, clearFinishedUploads: qn } = Oe({
+	]), P = h.find((e) => e.name === v), In = b === "" ? 0 : b.split("/").length, { uploads: Ln, uploadsCollapsed: Rn, setUploadsCollapsed: zn, uploadInput: Bn, directoryUploadInput: Vn, upload: Hn, uploadTo: Un, uploadDirectory: Wn, cancelUpload: Gn, cancelAllUploads: Kn, removeUploadTask: qn, retryUpload: Jn, clearFinishedUploads: Yn } = Oe({
 		api: n,
 		resource: v,
 		path: b,
 		currentResource: P,
-		currentDepth: Pn,
+		currentDepth: In,
 		autoCollapse: A.autoCollapseUploads,
 		conflictStrategy: Rt,
 		t: p,
-		ask: An,
-		chooseConflict: Mn,
+		ask: Mn,
+		chooseConflict: Pn,
 		reload: async () => {
 			await N();
 		},
@@ -9940,18 +9950,18 @@ function He({ config: e }) {
 	]), (0, g.useEffect)(() => {
 		let e = (e) => {
 			let t = Array.from(e.clipboardData?.files || []);
-			t.length > 0 && !P?.readOnly && mt.upload !== !1 && (e.preventDefault(), Bn(t));
+			t.length > 0 && !P?.readOnly && mt.upload !== !1 && (e.preventDefault(), Hn(t));
 		};
 		return window.addEventListener("paste", e), () => window.removeEventListener("paste", e);
 	});
-	let Jn = (0, g.useMemo)(() => b === "" ? [] : b.split("/"), [b]), Yn = (0, g.useCallback)((e) => {
+	let Xn = (0, g.useMemo)(() => b === "" ? [] : b.split("/"), [b]), Zn = (0, g.useCallback)((e) => {
 		A.recent && n.updateMetadata(v, e.path, "touch").then(bt).catch(M);
 	}, [
 		n,
 		A.recent,
 		M,
 		v
-	]), { selectedPaths: Xn, setSelectedPaths: Zn, selectionAnchor: Qn, setSelectionAnchor: $n, selectedEntries: F, selected: I, selectEntry: er } = Te(C, a === "picker", Yn), tr = (e) => gn.formats.find((t) => e.mimeType !== null && t.mimes.includes(e.mimeType.toLowerCase())), nr = (e) => !!(e && tr(e)?.thumbnail), rr = (e) => !!(e && tr(e)?.edit), ir = F.filter((e) => rr(e)), ar = (t) => !!(t && !t.directory && t.url && (e.selectionKind !== "image" || tr(t)?.webEmbeddable)), or = async (e) => {
+	]), { selectedPaths: Qn, setSelectedPaths: $n, selectionAnchor: er, setSelectionAnchor: tr, selectedEntries: F, selected: I, selectEntry: nr } = Te(C, a === "picker", Zn), rr = (e) => gn.formats.find((t) => e.mimeType !== null && t.mimes.includes(e.mimeType.toLowerCase())), ir = (e) => !!(e && rr(e)?.thumbnail), ar = (e) => !!(e && rr(e)?.edit), or = F.filter((e) => ar(e)), sr = (t) => !!(t && !t.directory && t.url && (e.selectionKind !== "image" || rr(t)?.webEmbeddable)), cr = async (e) => {
 		if (!e.directory) {
 			if (P?.entryUrlConfigured && e.url) {
 				pn({
@@ -9978,19 +9988,19 @@ function He({ config: e }) {
 				loginRequired: !e.url
 			});
 		}
-	}, sr = (e) => F.length > 0 && F.every((t) => t.capabilities?.[e] !== !1), cr = (0, g.useMemo)(() => vn.flatMap((e) => (e.uiActions || []).map((t) => ({
+	}, lr = (e) => F.length > 0 && F.every((t) => t.capabilities?.[e] !== !1), ur = (0, g.useMemo)(() => vn.flatMap((e) => (e.uiActions || []).map((t) => ({
 		...t,
 		plugin: e.name
-	}))), [vn]), lr = (0, g.useMemo)(() => vn.flatMap((e) => (e.previewers || []).map((t) => ({
+	}))), [vn]), dr = (0, g.useMemo)(() => vn.flatMap((e) => (e.previewers || []).map((t) => ({
 		...t,
 		plugin: e.name
-	}))), [vn]), ur = (e, t) => {
+	}))), [vn]), fr = (e, t) => {
 		if (!Me(e, t)) return;
 		let n = new URL(e.url, document.baseURI);
 		n.searchParams.set("resource", v), n.searchParams.set("directory", b), t && n.searchParams.set("path", t.path), window.open(n, "_blank", "noopener");
 	};
 	(0, g.useEffect)(() => {
-		if (St(null), !I || !tr(I)?.read) return;
+		if (St(null), !I || !rr(I)?.read) return;
 		let e = !0;
 		return n.imageInfo(v, I.path).then((t) => {
 			e && St(t);
@@ -10027,9 +10037,9 @@ function He({ config: e }) {
 		M,
 		v
 	]);
-	let dr = (e) => {
-		e.directory ? (nt([]), N(v, e.path, de, 0, We, O, Ce, null)) : vr(e);
-	}, fr = async () => {
+	let pr = (e) => {
+		e.directory ? (nt([]), N(v, e.path, de, 0, We, O, Ce, null)) : br(e);
+	}, mr = async () => {
 		P && Yt({
 			kind: "folder",
 			title: p("newFolder"),
@@ -10037,7 +10047,7 @@ function He({ config: e }) {
 			initial: "",
 			maximum: P.maxFolderNameLength
 		});
-	}, pr = async () => {
+	}, hr = async () => {
 		if (!I || !P) return;
 		let e = I.directory ? -1 : I.name.lastIndexOf("."), t = e > 0 ? I.name.slice(e) : "", n = t ? I.name.slice(0, e) : I.name, r = I.directory ? P.maxFolderNameLength : P.maxFileNameLength;
 		Yt({
@@ -10048,8 +10058,8 @@ function He({ config: e }) {
 			maximum: r,
 			extension: t
 		});
-	}, mr = async () => {
-		if (!(F.length === 0 || !await An({
+	}, gr = async () => {
+		if (!(F.length === 0 || !await Mn({
 			title: p("remove"),
 			message: F.length === 1 ? p("confirmDelete") : `${p("confirmDeleteMany")} ${F.length}`,
 			detail: P?.storageCapabilities?.recoverableDelete === !1 ? p("permanentDeleteWarning") : p("trashRetention"),
@@ -10060,7 +10070,7 @@ function He({ config: e }) {
 		} catch (e) {
 			M(e);
 		}
-	}, hr = async (e) => {
+	}, _r = async (e) => {
 		Ut(!1);
 		try {
 			let t = await n.batchRename(v, e);
@@ -10068,14 +10078,14 @@ function He({ config: e }) {
 		} catch (e) {
 			M(e);
 		}
-	}, gr = async (e, t) => {
+	}, vr = async (e, t) => {
 		try {
 			let r = await n.batch(e, v, F.map((e) => e.path), t);
 			Vt(null), await N(), pt(r.failed === 0 ? `${r.succeeded} ${p("completed")}` : `${r.succeeded} ${p("completed")}, ${r.failed} ${p("failed")}`);
 		} catch (e) {
 			M(e);
 		}
-	}, _r = async (e, t) => {
+	}, yr = async (e, t) => {
 		Vt({
 			operation: e,
 			path: t,
@@ -10108,14 +10118,14 @@ function He({ config: e }) {
 				loading: !1
 			} : null), M(r);
 		}
-	}, vr = async (t = I) => {
-		if (!ar(t)) {
+	}, br = async (t = I) => {
+		if (!sr(t)) {
 			t && e.selectionKind === "image" && pt(p("webImageUnsupported"));
 			return;
 		}
 		if (!t?.url) return;
 		let r = t === I ? xt : null;
-		if (tr(t)?.read && r === null) try {
+		if (rr(t)?.read && r === null) try {
 			r = await n.imageInfo(v, t.path);
 		} catch {
 			r = null;
@@ -10141,10 +10151,10 @@ function He({ config: e }) {
 			return;
 		}
 		window.dispatchEvent(new CustomEvent("sofinder:select", { detail: i }));
-	}, yr = () => {
-		Zn((e) => e.size === C.length ? /* @__PURE__ */ new Set() : new Set(C.map((e) => e.path))), $n(null);
-	}, br = async (e, t = 0, r = 0) => {
-		if (!(!I || !rr(I))) {
+	}, xr = () => {
+		$n((e) => e.size === C.length ? /* @__PURE__ */ new Set() : new Set(C.map((e) => e.path))), tr(null);
+	}, Sr = async (e, t = 0, r = 0) => {
+		if (!(!I || !ar(I))) {
 			dt(!0);
 			try {
 				let i = e === 0 ? [{
@@ -10160,7 +10170,7 @@ function He({ config: e }) {
 				M(e), dt(!1);
 			}
 		}
-	}, xr = () => {
+	}, Cr = () => {
 		I && Yt({
 			kind: "resize",
 			title: p("resize"),
@@ -10168,9 +10178,9 @@ function He({ config: e }) {
 			initial: "1200x1200",
 			maximum: 9
 		});
-	}, Sr = () => {
+	}, wr = () => {
 		!I || !xt || Gt(!0);
-	}, Cr = (e, t) => {
+	}, Tr = (e, t) => {
 		wt((n) => {
 			let r = {
 				...n,
@@ -10178,7 +10188,7 @@ function He({ config: e }) {
 			};
 			return localStorage.setItem("sofinder.tools.v3", JSON.stringify(r)), r;
 		});
-	}, wr = (e, t) => {
+	}, Er = (e, t) => {
 		(e === "autoCollapseUploads" || u[e] !== !1) && Tt((n) => {
 			let r = {
 				...n,
@@ -10186,7 +10196,7 @@ function He({ config: e }) {
 			};
 			return localStorage.setItem("sofinder.features.v2", JSON.stringify(r)), r;
 		});
-	}, Tr = (e, t) => {
+	}, Dr = (e, t) => {
 		Dt((n) => {
 			let r = {
 				...n,
@@ -10194,7 +10204,7 @@ function He({ config: e }) {
 			};
 			return localStorage.setItem("sofinder.listColumns.v1", JSON.stringify(r)), r;
 		});
-	}, Er = (e, t) => {
+	}, Or = (e, t) => {
 		kt((n) => {
 			let r = {
 				...n,
@@ -10202,22 +10212,22 @@ function He({ config: e }) {
 			};
 			return localStorage.setItem("sofinder.viewSizes.v1", JSON.stringify(r)), r;
 		});
-	}, Dr = async () => {
+	}, kr = async () => {
 		if (F.length !== 0) try {
 			let e = await n.downloadArchive(v, F.map((e) => e.path)), t = URL.createObjectURL(e), r = document.createElement("a");
 			r.href = t, r.download = "sofinder-download.zip", r.click(), window.setTimeout(() => URL.revokeObjectURL(t), 1e3);
 		} catch (e) {
 			M(e);
 		}
-	}, Or = async () => {
+	}, Ar = async () => {
 		if (I) try {
 			bt(await n.updateMetadata(v, I.path, "favorite", { favorite: !yt.favorites.includes(I.path) }));
 		} catch (e) {
 			M(e);
 		}
-	}, kr = async () => {
+	}, jr = async () => {
 		I && rn(!0);
-	}, Ar = async (e) => {
+	}, Mr = async (e) => {
 		let t = Jt;
 		if (Yt(null), t) try {
 			if (t.kind === "folder") await n.createFolder(v, b, e);
@@ -10228,20 +10238,20 @@ function He({ config: e }) {
 					pt(p("invalidDimensions"));
 					return;
 				}
-				await br(0, Number(t[1]), Number(t[2]));
+				await Sr(0, Number(t[1]), Number(t[2]));
 			}
 			(t.kind === "folder" || t.kind === "rename") && await N();
 		} catch (e) {
 			M(e);
 		}
-	}, jr = async (e) => {
+	}, Nr = async (e) => {
 		let t = e.includes("/") ? e.slice(0, e.lastIndexOf("/")) : "", r = e.split("/").pop() || e;
 		try {
 			if (!(await n.list(v, t, r, "name", "asc", 0, 500)).entries.some((t) => t.path === e)) {
 				bt(await n.updateMetadata(v, e, "forget")), pt(p("recentMissing"));
 				return;
 			}
-			await N(v, t, "", 0), Zn(/* @__PURE__ */ new Set([e]));
+			await N(v, t, "", 0), $n(/* @__PURE__ */ new Set([e]));
 		} catch (t) {
 			if (t instanceof S && t.code === "not_found") {
 				try {
@@ -10255,17 +10265,17 @@ function He({ config: e }) {
 			}
 			M(t);
 		}
-	}, Mr = (e) => {
+	}, Pr = (e) => {
 		lt(e), localStorage.setItem("sofinder.view", e);
-	}, Nr = (e) => {
+	}, Fr = (e) => {
 		let t = an?.entry ?? null;
 		if (on(null), e.startsWith("plugin:")) {
-			let n = cr.find((t) => `plugin:${t.plugin}:${t.id}` === e);
-			n && ur(n, t);
+			let n = ur.find((t) => `plugin:${t.plugin}:${t.id}` === e);
+			n && fr(n, t);
 			return;
 		}
-		e === "open" && t?.directory ? dr(t) : e === "preview" && t && !t.directory ? sn(t) : e === "select" && t ? vr(t) : e === "rename" ? pr() : e === "copy" ? _r("copy", b) : e === "move" ? _r("move", b) : e === "delete" ? mr() : e === "download" && t && !t.directory && window.location.assign(t.url || n.downloadUrl(v, t.path));
-	}, Pr = async (e) => {
+		e === "open" && t?.directory ? pr(t) : e === "preview" && t && !t.directory ? sn(t) : e === "select" && t ? br(t) : e === "rename" ? hr() : e === "copy" ? yr("copy", b) : e === "move" ? yr("move", b) : e === "delete" ? gr() : e === "download" && t && !t.directory && window.location.assign(t.url || n.downloadUrl(v, t.path));
+	}, Ir = async (e) => {
 		if (I) try {
 			let t = await n.applyImageActions(v, I.path, [{
 				type: "preset",
@@ -10275,14 +10285,14 @@ function He({ config: e }) {
 		} catch (e) {
 			M(e);
 		}
-	}, Fr = (e) => {
+	}, Lr = (e) => {
 		window.requestAnimationFrame(() => {
 			document.querySelector(`button.sf-entry[data-entry-index="${e}"]`)?.focus();
 		});
-	}, Ir = (e, t, n = !1) => {
+	}, Rr = (e, t, n = !1) => {
 		let r = be[e], i = Math.round(Math.max(r.min, Math.min(r.max, t)));
 		e === "left" ? Cn(i) : Tn(i), n && localStorage.setItem(`sofinder.column.${e}`, String(i));
-	}, Lr = (e, t) => {
+	}, zr = (e, t) => {
 		t.preventDefault(), t.currentTarget.setPointerCapture(t.pointerId), t.currentTarget.classList.add("is-resizing");
 		let n = e === "left" ? Sn : wn;
 		kn.current = {
@@ -10292,18 +10302,18 @@ function He({ config: e }) {
 			currentWidth: n,
 			element: t.currentTarget
 		};
-	}, Rr = (e) => {
+	}, Br = (e) => {
 		let t = kn.current;
 		if (!t) return;
 		let n = e.clientX - t.startX, r = be[t.side];
-		t.currentWidth = Math.round(Math.max(r.min, Math.min(r.max, t.startWidth + (t.side === "left" ? n : -n)))), Ir(t.side, t.currentWidth);
-	}, zr = () => {
+		t.currentWidth = Math.round(Math.max(r.min, Math.min(r.max, t.startWidth + (t.side === "left" ? n : -n)))), Rr(t.side, t.currentWidth);
+	}, Vr = () => {
 		let e = kn.current;
-		kn.current = null, e && (e.element.classList.remove("is-resizing"), Ir(e.side, e.currentWidth, !0));
-	}, Br = (e, t) => {
+		kn.current = null, e && (e.element.classList.remove("is-resizing"), Rr(e.side, e.currentWidth, !0));
+	}, Hr = (e, t) => {
 		let n = t.key === "ArrowLeft" ? -1 : +(t.key === "ArrowRight");
-		n !== 0 && (t.preventDefault(), Ir(e, (e === "left" ? Sn : wn) + (e === "left" ? n : -n) * 10, !0));
-	}, Vr = (e) => {
+		n !== 0 && (t.preventDefault(), Rr(e, (e === "left" ? Sn : wn) + (e === "left" ? n : -n) * 10, !0));
+	}, Ur = (e) => {
 		let t = e.target, n = t.matches("button.sf-entry");
 		if (t.isContentEditable || [
 			"INPUT",
@@ -10313,56 +10323,56 @@ function He({ config: e }) {
 			"A"
 		].includes(t.tagName) && !n) return;
 		if (a === "manager" && (e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "a") {
-			e.preventDefault(), yr();
+			e.preventDefault(), xr();
 			return;
 		}
 		if (e.key === "Escape") {
-			e.preventDefault(), Zn(/* @__PURE__ */ new Set()), $n(null);
+			e.preventDefault(), $n(/* @__PURE__ */ new Set()), tr(null);
 			return;
 		}
-		if (a === "manager" && e.key === "Delete" && sr("delete") && !P?.readOnly) {
-			e.preventDefault(), mr();
+		if (a === "manager" && e.key === "Delete" && lr("delete") && !P?.readOnly) {
+			e.preventDefault(), gr();
 			return;
 		}
-		if (a === "manager" && e.key === "F2" && F.length === 1 && sr("rename") && !P?.readOnly) {
-			e.preventDefault(), pr();
+		if (a === "manager" && e.key === "F2" && F.length === 1 && lr("rename") && !P?.readOnly) {
+			e.preventDefault(), hr();
 			return;
 		}
 		if (e.key === "Enter" && F.length === 1) {
-			e.preventDefault(), dr(F[0]);
+			e.preventDefault(), pr(F[0]);
 			return;
 		}
 		let r = e.key === "ArrowLeft" || e.key === "ArrowUp" ? -1 : +(e.key === "ArrowRight" || e.key === "ArrowDown");
 		if (r !== 0 && C.length > 0) {
 			e.preventDefault();
-			let t = Qn || F[0]?.path, n = t ? C.findIndex((e) => e.path === t) : r > 0 ? -1 : C.length, i = Math.max(0, Math.min(C.length - 1, n + r)), a = C[i];
-			Zn(/* @__PURE__ */ new Set([a.path])), $n(a.path), Fr(i);
+			let t = er || F[0]?.path, n = t ? C.findIndex((e) => e.path === t) : r > 0 ? -1 : C.length, i = Math.max(0, Math.min(C.length - 1, n + r)), a = C[i];
+			$n(/* @__PURE__ */ new Set([a.path])), tr(a.path), Lr(i);
 		}
-	}, Hr = Bt !== null && F.some((e) => {
+	}, Wr = Bt !== null && F.some((e) => {
 		let t = e.path.includes("/") ? e.path.slice(0, e.path.lastIndexOf("/")) : "", n = Bt.path === "" ? 0 : Bt.path.split("/").length;
 		return Bt.operation === "move" && Bt.path === t || e.directory && P !== void 0 && n >= P.maxFolderDepth || e.directory && (Bt.path === e.path || Bt.path.startsWith(`${e.path}/`));
-	}), Ur = Fn.some((e) => e.status === "queued" || e.status === "uploading"), Wr = e.uiDefaults.fullTools === !0, Gr = e.uiDefaults.logo !== !1, Kr = P?.storageCapabilities?.recoverableDelete !== !1, qr = h.length > 1 || A.folderTree || A.recent || !!(P?.readOnly || P?.quotaBytes), Jr = (e) => A.recent ? /* @__PURE__ */ (0, w.jsxs)("div", {
+	}), Gr = Ln.some((e) => e.status === "queued" || e.status === "uploading"), Kr = e.uiDefaults.fullTools === !0, qr = e.uiDefaults.logo !== !1, Jr = P?.storageCapabilities?.recoverableDelete !== !1, Yr = h.length > 1 || A.folderTree || A.recent || !!(P?.readOnly || P?.quotaBytes), Xr = (e) => A.recent ? /* @__PURE__ */ (0, w.jsxs)("div", {
 		className: `sf-recent sf-recent-${e}`,
 		children: [/* @__PURE__ */ (0, w.jsxs)("header", { children: [/* @__PURE__ */ (0, w.jsx)("strong", { children: p("recent") }), /* @__PURE__ */ (0, w.jsx)("span", { children: yt.recent.length })] }), yt.recent.length === 0 ? /* @__PURE__ */ (0, w.jsx)("p", {
 			className: "sf-recent-empty",
 			children: p("recentEmpty")
 		}) : yt.recent.slice(0, 8).map((e) => /* @__PURE__ */ (0, w.jsxs)("button", {
 			title: e.path,
-			onClick: () => void jr(e.path),
+			onClick: () => void Nr(e.path),
 			children: [/* @__PURE__ */ (0, w.jsx)("span", {
 				className: "sf-recent-icon",
 				children: /* @__PURE__ */ (0, w.jsx)(r, { name: "history" })
 			}), /* @__PURE__ */ (0, w.jsxs)("span", { children: [/* @__PURE__ */ (0, w.jsx)("b", { children: e.path.split("/").pop() }), /* @__PURE__ */ (0, w.jsx)("small", { children: e.path.includes("/") ? e.path.slice(0, e.path.lastIndexOf("/")) : p("home") })] })]
 		}, e.path))]
-	}) : null, Yr = (a === "manager" || Wr) && F.length > 0, L = (e, t) => /* @__PURE__ */ (0, w.jsxs)(w.Fragment, { children: [/* @__PURE__ */ (0, w.jsx)(r, { name: e }), /* @__PURE__ */ (0, w.jsx)("span", { children: t })] }), Xr = (e, t, n = de) => {
+	}) : null, Zr = (a === "manager" || Kr) && F.length > 0, L = (e, t) => /* @__PURE__ */ (0, w.jsxs)(w.Fragment, { children: [/* @__PURE__ */ (0, w.jsx)(r, { name: e }), /* @__PURE__ */ (0, w.jsx)("span", { children: t })] }), Qr = (e, t, n = de) => {
 		nt([]), N(e, t, n, 0, We, O, Ce, null);
-	}, Zr = () => {
+	}, $r = () => {
 		if (tt.length === 0) return;
 		let e = tt.slice(0, -1), t = tt[tt.length - 1] ?? null;
 		nt(e), N(v, b, de, Math.max(0, qe - rt), We, O, Ce, t);
-	}, Qr = () => {
+	}, ei = () => {
 		$e !== null && (nt((e) => [...e, Ze]), N(v, b, de, qe + rt, We, O, Ce, $e));
-	}, $r = () => {
+	}, ti = () => {
 		let e = Number(at);
 		if (!Number.isFinite(e) || e <= 0) {
 			ot(String(rt));
@@ -10372,17 +10382,17 @@ function He({ config: e }) {
 		ot(String(t)), t !== rt && (st.current = t, it(t), localStorage.setItem("sofinder.pageSize.v1", String(t)), nt([]), N(v, b, de, 0, We, O, Ce, null));
 	};
 	return /* @__PURE__ */ (0, w.jsxs)("main", {
-		className: `sf-app sf-mode-${a}${qr ? "" : " sf-no-sidebar"}${Yr ? "" : " sf-no-details"}${(a === "manager" || Wr) && F.length > 0 ? " sf-has-selection-actions" : ""}`,
-		onKeyDown: Vr,
+		className: `sf-app sf-mode-${a}${Yr ? "" : " sf-no-sidebar"}${Zr ? "" : " sf-no-details"}${(a === "manager" || Kr) && F.length > 0 ? " sf-has-selection-actions" : ""}`,
+		onKeyDown: Ur,
 		onDragOver: (e) => e.preventDefault(),
 		onDrop: (e) => {
-			e.preventDefault(), e.dataTransfer.files.length && Bn(e.dataTransfer.files);
+			e.preventDefault(), e.dataTransfer.files.length && Hn(e.dataTransfer.files);
 		},
 		children: [
 			/* @__PURE__ */ (0, w.jsxs)("div", {
-				className: `sf-commandbar ${Gr ? "sf-has-brand" : "sf-no-brand"}`,
+				className: `sf-commandbar ${qr ? "sf-has-brand" : "sf-no-brand"}`,
 				children: [
-					Gr ? /* @__PURE__ */ (0, w.jsxs)("div", {
+					qr ? /* @__PURE__ */ (0, w.jsxs)("div", {
 						className: "sf-brand",
 						title: "SoFinder",
 						children: [/* @__PURE__ */ (0, w.jsx)("span", {
@@ -10397,10 +10407,10 @@ function He({ config: e }) {
 						className: "sf-breadcrumb sf-command-breadcrumb",
 						"aria-label": "Breadcrumb",
 						children: [/* @__PURE__ */ (0, w.jsx)("button", {
-							onClick: () => Xr(v, ""),
+							onClick: () => Qr(v, ""),
 							children: p("home")
-						}), Jn.map((e, t) => /* @__PURE__ */ (0, w.jsxs)("span", { children: ["› ", /* @__PURE__ */ (0, w.jsx)("button", {
-							onClick: () => Xr(v, Jn.slice(0, t + 1).join("/")),
+						}), Xn.map((e, t) => /* @__PURE__ */ (0, w.jsxs)("span", { children: ["› ", /* @__PURE__ */ (0, w.jsx)("button", {
+							onClick: () => Qr(v, Xn.slice(0, t + 1).join("/")),
 							children: e
 						})] }, `${e}-${t}`))]
 					}),
@@ -10441,20 +10451,22 @@ function He({ config: e }) {
 							"aria-label": `${p("grid")} / ${p("list")}`,
 							children: [/* @__PURE__ */ (0, w.jsx)("button", {
 								className: ct === "grid" ? "active" : "",
-								onClick: () => Mr("grid"),
+								onClick: () => Pr("grid"),
 								title: p("grid"),
 								"aria-label": p("grid"),
 								children: /* @__PURE__ */ (0, w.jsx)(r, { name: "grid" })
 							}), /* @__PURE__ */ (0, w.jsx)("button", {
 								className: ct === "list" ? "active" : "",
-								onClick: () => Mr("list"),
+								onClick: () => Pr("list"),
 								title: p("list"),
 								"aria-label": p("list"),
 								children: /* @__PURE__ */ (0, w.jsx)(r, { name: "list" })
 							})]
 						}), /* @__PURE__ */ (0, w.jsxs)("div", {
+							ref: An,
 							className: "sf-utility",
 							children: [/* @__PURE__ */ (0, w.jsx)("button", {
+								ref: jn,
 								className: "sf-icon-only",
 								onClick: () => Ft((e) => !e),
 								"aria-expanded": Pt,
@@ -10529,24 +10541,24 @@ function He({ config: e }) {
 										},
 										children: L("settings", p("settings"))
 									}),
-									(a === "manager" || Wr) && e.securityStatusAvailable !== !1 && /* @__PURE__ */ (0, w.jsx)("button", {
+									(a === "manager" || Kr) && e.securityStatusAvailable !== !1 && /* @__PURE__ */ (0, w.jsx)("button", {
 										role: "menuitem",
 										onClick: () => {
 											Ft(!1), Nt(!0);
 										},
 										children: L("security", p("securityStatus"))
 									}),
-									(a === "manager" || Wr) && A.trash && Kr && /* @__PURE__ */ (0, w.jsx)("button", {
+									(a === "manager" || Kr) && A.trash && Jr && /* @__PURE__ */ (0, w.jsx)("button", {
 										role: "menuitem",
 										onClick: () => {
 											Ft(!1), tn(!0);
 										},
 										children: L("trash", p("trash"))
 									}),
-									(a === "manager" || Wr) && cr.filter((e) => e.slot === "utility" && Me(e, null)).map((e) => /* @__PURE__ */ (0, w.jsx)("button", {
+									(a === "manager" || Kr) && ur.filter((e) => e.slot === "utility" && Me(e, null)).map((e) => /* @__PURE__ */ (0, w.jsx)("button", {
 										role: "menuitem",
 										onClick: () => {
-											Ft(!1), ur(e, null);
+											Ft(!1), fr(e, null);
 										},
 										children: ke(e, d)
 									}, `${e.plugin}:${e.id}`))
@@ -10563,122 +10575,122 @@ function He({ config: e }) {
 				title: p("keyboardHelp"),
 				children: [
 					/* @__PURE__ */ (0, w.jsx)("button", {
-						onClick: fr,
-						disabled: P?.readOnly || mt.create_folder === !1 || P !== void 0 && Pn >= P.maxFolderDepth,
-						title: P && Pn >= P.maxFolderDepth ? p("folderDepthReached") : void 0,
+						onClick: mr,
+						disabled: P?.readOnly || mt.create_folder === !1 || P !== void 0 && In >= P.maxFolderDepth,
+						title: P && In >= P.maxFolderDepth ? p("folderDepthReached") : void 0,
 						children: L("add-folder", p("newFolder"))
 					}),
 					/* @__PURE__ */ (0, w.jsx)("button", {
-						className: `primary sf-upload-trigger${Ur ? " is-active" : ""}`,
-						"aria-busy": Ur,
-						onClick: () => Rn.current?.click(),
+						className: `primary sf-upload-trigger${Gr ? " is-active" : ""}`,
+						"aria-busy": Gr,
+						onClick: () => Bn.current?.click(),
 						disabled: P?.readOnly || mt.upload === !1,
-						children: L("upload", `${p("upload")}${Ur ? ` (${Fn.filter((e) => e.status === "queued" || e.status === "uploading").length})` : ""}`)
+						children: L("upload", `${p("upload")}${Gr ? ` (${Ln.filter((e) => e.status === "queued" || e.status === "uploading").length})` : ""}`)
 					}),
 					/* @__PURE__ */ (0, w.jsx)("input", {
-						ref: Rn,
-						type: "file",
-						multiple: !0,
-						hidden: !0,
-						onChange: (e) => {
-							e.target.files && Bn(e.target.files), e.target.value = "";
-						}
-					}),
-					u.folderUpload !== !1 && /* @__PURE__ */ (0, w.jsxs)(w.Fragment, { children: [/* @__PURE__ */ (0, w.jsx)("button", {
-						onClick: () => zn.current?.click(),
-						disabled: P?.readOnly || mt.upload === !1,
-						children: L("add-folder", p("uploadFolder"))
-					}), /* @__PURE__ */ (0, w.jsx)("input", {
-						ref: (e) => {
-							zn.current = e, e?.setAttribute("webkitdirectory", "");
-						},
+						ref: Bn,
 						type: "file",
 						multiple: !0,
 						hidden: !0,
 						onChange: (e) => {
 							e.target.files && Hn(e.target.files), e.target.value = "";
 						}
+					}),
+					u.folderUpload !== !1 && /* @__PURE__ */ (0, w.jsxs)(w.Fragment, { children: [/* @__PURE__ */ (0, w.jsx)("button", {
+						onClick: () => Vn.current?.click(),
+						disabled: P?.readOnly || mt.upload === !1,
+						children: L("add-folder", p("uploadFolder"))
+					}), /* @__PURE__ */ (0, w.jsx)("input", {
+						ref: (e) => {
+							Vn.current = e, e?.setAttribute("webkitdirectory", "");
+						},
+						type: "file",
+						multiple: !0,
+						hidden: !0,
+						onChange: (e) => {
+							e.target.files && Wn(e.target.files), e.target.value = "";
+						}
 					})] }),
-					(a === "manager" || Wr) && F.length > 0 && /* @__PURE__ */ (0, w.jsxs)(w.Fragment, { children: [/* @__PURE__ */ (0, w.jsx)("span", { className: "sf-separator" }), /* @__PURE__ */ (0, w.jsxs)("div", {
+					(a === "manager" || Kr) && F.length > 0 && /* @__PURE__ */ (0, w.jsxs)(w.Fragment, { children: [/* @__PURE__ */ (0, w.jsx)("span", { className: "sf-separator" }), /* @__PURE__ */ (0, w.jsxs)("div", {
 						className: "sf-context-actions",
 						children: [
 							/* @__PURE__ */ (0, w.jsx)("button", {
-								onClick: yr,
+								onClick: xr,
 								disabled: C.length === 0,
-								children: L("select", Xn.size === C.length && C.length > 0 ? p("clearSelection") : p("selectAll"))
+								children: L("select", Qn.size === C.length && C.length > 0 ? p("clearSelection") : p("selectAll"))
 							}),
 							/* @__PURE__ */ (0, w.jsx)("button", {
-								onClick: pr,
-								disabled: F.length !== 1 || !sr("rename") || P?.readOnly,
+								onClick: hr,
+								disabled: F.length !== 1 || !lr("rename") || P?.readOnly,
 								children: L("rename", p("rename"))
 							}),
 							u.batchRename !== !1 && Ct.batchRename && /* @__PURE__ */ (0, w.jsx)("button", {
 								onClick: () => Ut(!0),
-								disabled: F.length < 2 || !sr("rename") || P?.readOnly,
+								disabled: F.length < 2 || !lr("rename") || P?.readOnly,
 								children: L("rename", p("batchRename"))
 							}),
 							/* @__PURE__ */ (0, w.jsx)("button", {
-								onClick: () => void _r("copy", b),
-								disabled: !sr("copy") || P?.readOnly,
+								onClick: () => void yr("copy", b),
+								disabled: !lr("copy") || P?.readOnly,
 								children: L("copy", p("copy"))
 							}),
 							/* @__PURE__ */ (0, w.jsx)("button", {
-								onClick: () => void _r("move", b),
-								disabled: !sr("move") || P?.readOnly,
+								onClick: () => void yr("move", b),
+								disabled: !lr("move") || P?.readOnly,
 								children: L("move", p("move"))
 							}),
 							A.archive && /* @__PURE__ */ (0, w.jsx)("button", {
-								onClick: () => void Dr(),
+								onClick: () => void kr(),
 								children: L("archive", p("downloadZip"))
 							}),
 							A.favorites && /* @__PURE__ */ (0, w.jsx)("button", {
-								onClick: () => void Or(),
+								onClick: () => void Ar(),
 								disabled: !I,
 								children: L("favorite", p("favorite"))
 							}),
 							A.tags && /* @__PURE__ */ (0, w.jsx)("button", {
-								onClick: () => void kr(),
+								onClick: () => void jr(),
 								disabled: !I,
 								children: L("tags", p("tags"))
 							}),
 							/* @__PURE__ */ (0, w.jsx)("button", {
 								className: "danger",
-								onClick: mr,
-								disabled: !sr("delete") || P?.readOnly,
+								onClick: gr,
+								disabled: !lr("delete") || P?.readOnly,
 								children: L("delete", `${p("remove")}${F.length > 1 ? ` (${F.length})` : ""}`)
 							}),
 							u.imageEditing !== !1 && Ct.rotate && /* @__PURE__ */ (0, w.jsxs)(w.Fragment, { children: [/* @__PURE__ */ (0, w.jsx)("button", {
-								onClick: () => void br(270),
-								disabled: !rr(I) || P?.readOnly,
+								onClick: () => void Sr(270),
+								disabled: !ar(I) || P?.readOnly,
 								children: L("rotate-left", p("rotateLeft"))
 							}), /* @__PURE__ */ (0, w.jsx)("button", {
-								onClick: () => void br(90),
-								disabled: !rr(I) || P?.readOnly,
+								onClick: () => void Sr(90),
+								disabled: !ar(I) || P?.readOnly,
 								children: L("rotate-right", p("rotateRight"))
 							})] }),
 							u.imageEditing !== !1 && Ct.resize && /* @__PURE__ */ (0, w.jsx)("button", {
-								onClick: xr,
-								disabled: !rr(I) || P?.readOnly,
+								onClick: Cr,
+								disabled: !ar(I) || P?.readOnly,
 								children: L("resize", p("resize"))
 							}),
 							u.imageEditing !== !1 && Ct.crop && /* @__PURE__ */ (0, w.jsx)("button", {
-								onClick: Sr,
-								disabled: !rr(I) || !xt || P?.readOnly,
+								onClick: wr,
+								disabled: !ar(I) || !xt || P?.readOnly,
 								children: L("crop", p("crop"))
 							}),
 							u.imageProcessing !== !1 && Ct.process && /* @__PURE__ */ (0, w.jsx)("button", {
 								onClick: () => qt(!0),
-								disabled: ir.length === 0 || ir.length !== F.length || P?.readOnly,
+								disabled: or.length === 0 || or.length !== F.length || P?.readOnly,
 								children: L("resize", p("imageProcess"))
 							}),
 							u.imageEditing !== !1 && Ct.presets && /* @__PURE__ */ (0, w.jsxs)("label", {
 								className: "sf-sort",
 								children: [p("preset"), /* @__PURE__ */ (0, w.jsxs)("select", {
 									value: "",
-									disabled: !rr(I) || P?.readOnly || Object.keys(mn).length === 0,
+									disabled: !ar(I) || P?.readOnly || Object.keys(mn).length === 0,
 									onChange: (e) => {
 										let t = e.target.value;
-										e.target.value = "", t && Pr(t);
+										e.target.value = "", t && Ir(t);
 									},
 									children: [/* @__PURE__ */ (0, w.jsx)("option", {
 										value: "",
@@ -10696,8 +10708,8 @@ function He({ config: e }) {
 									}, e))]
 								})]
 							}),
-							I && cr.filter((e) => e.slot === "toolbar" && Me(e, I)).map((e) => /* @__PURE__ */ (0, w.jsx)("button", {
-								onClick: () => ur(e, I),
+							I && ur.filter((e) => e.slot === "toolbar" && Me(e, I)).map((e) => /* @__PURE__ */ (0, w.jsx)("button", {
+								onClick: () => fr(e, I),
 								children: ke(e, d)
 							}, `${e.plugin}:${e.id}`))
 						]
@@ -10714,8 +10726,8 @@ function He({ config: e }) {
 				})]
 			}),
 			/* @__PURE__ */ (0, w.jsx)(T, {
-				tasks: Fn,
-				collapsed: In,
+				tasks: Ln,
+				collapsed: Rn,
 				labels: {
 					title: p("uploadQueue"),
 					expand: p("expand"),
@@ -10727,12 +10739,12 @@ function He({ config: e }) {
 					remove: p("removeUploadTask"),
 					status: (e) => p(e)
 				},
-				onToggle: () => Ln((e) => !e),
-				onCancel: Un,
-				onCancelAll: Wn,
-				onClearFinished: qn,
-				onRetry: Kn,
-				onRemove: Gn
+				onToggle: () => zn((e) => !e),
+				onCancel: Gn,
+				onCancelAll: Kn,
+				onClearFinished: Yn,
+				onRetry: Jn,
+				onRemove: qn
 			}),
 			/* @__PURE__ */ (0, w.jsxs)("div", {
 				className: "sf-layout",
@@ -10741,14 +10753,14 @@ function He({ config: e }) {
 					"--sf-details-width": `${wn}px`
 				},
 				children: [
-					qr && /* @__PURE__ */ (0, w.jsxs)("aside", {
+					Yr && /* @__PURE__ */ (0, w.jsxs)("aside", {
 						className: "sf-sidebar",
 						"aria-label": "Resources",
 						children: [
 							h.map((e) => /* @__PURE__ */ (0, w.jsxs)("button", {
 								className: e.name === v ? "active" : "",
 								onClick: () => {
-									y(e.name), fe(""), He("name"), e.storageCapabilities?.sort === !1 ? (Ge("name"), Ke("asc"), nt([]), N(e.name, "", "", 0, "name", "asc", "name", null)) : Xr(e.name, "", "");
+									y(e.name), fe(""), He("name"), e.storageCapabilities?.sort === !1 ? (Ge("name"), Ke("asc"), nt([]), N(e.name, "", "", 0, "name", "asc", "name", null)) : Qr(e.name, "", "");
 								},
 								children: [/* @__PURE__ */ (0, w.jsx)("span", {
 									className: "sf-resource-icon",
@@ -10760,7 +10772,7 @@ function He({ config: e }) {
 								resource: v,
 								currentPath: ee,
 								rootLabel: p("home"),
-								onNavigate: (e) => Xr(v, e, "")
+								onNavigate: (e) => Qr(v, e, "")
 							}),
 							P && /* @__PURE__ */ (0, w.jsxs)("div", {
 								className: "sf-resource-status",
@@ -10775,10 +10787,10 @@ function He({ config: e }) {
 									value: Math.min(P.usedBytes, P.quotaBytes)
 								})] })]
 							}),
-							Jr("sidebar")
+							Xr("sidebar")
 						]
 					}),
-					qr && /* @__PURE__ */ (0, w.jsx)("div", {
+					Yr && /* @__PURE__ */ (0, w.jsx)("div", {
 						className: "sf-column-resizer left",
 						role: "separator",
 						tabIndex: 0,
@@ -10787,25 +10799,25 @@ function He({ config: e }) {
 						"aria-valuemin": be.left.min,
 						"aria-valuemax": be.left.max,
 						"aria-valuenow": Sn,
-						onPointerDown: (e) => Lr("left", e),
-						onPointerMove: Rr,
-						onPointerUp: zr,
-						onPointerCancel: zr,
-						onKeyDown: (e) => Br("left", e),
-						onDoubleClick: () => Ir("left", be.left.initial, !0)
+						onPointerDown: (e) => zr("left", e),
+						onPointerMove: Br,
+						onPointerUp: Vr,
+						onPointerCancel: Vr,
+						onKeyDown: (e) => Hr("left", e),
+						onDoubleClick: () => Rr("left", be.left.initial, !0)
 					}),
 					/* @__PURE__ */ (0, w.jsxs)("section", {
 						className: "sf-content",
 						children: [
-							Jr("mobile"),
-							Gr && /* @__PURE__ */ (0, w.jsxs)("nav", {
+							Xr("mobile"),
+							qr && /* @__PURE__ */ (0, w.jsxs)("nav", {
 								className: "sf-breadcrumb",
 								"aria-label": "Breadcrumb",
 								children: [/* @__PURE__ */ (0, w.jsx)("button", {
-									onClick: () => Xr(v, ""),
+									onClick: () => Qr(v, ""),
 									children: p("home")
-								}), Jn.map((e, t) => /* @__PURE__ */ (0, w.jsxs)("span", { children: ["› ", /* @__PURE__ */ (0, w.jsx)("button", {
-									onClick: () => Xr(v, Jn.slice(0, t + 1).join("/")),
+								}), Xn.map((e, t) => /* @__PURE__ */ (0, w.jsxs)("span", { children: ["› ", /* @__PURE__ */ (0, w.jsx)("button", {
+									onClick: () => Qr(v, Xn.slice(0, t + 1).join("/")),
 									children: e
 								})] }, `${e}-${t}`))]
 							}),
@@ -10846,17 +10858,17 @@ function He({ config: e }) {
 										})
 									]
 								}), C.map((e, t) => {
-									let i = !e.directory && nr(e);
+									let i = !e.directory && ir(e);
 									return /* @__PURE__ */ (0, w.jsxs)("button", {
 										"data-entry-index": t,
 										role: "option",
-										"aria-selected": Xn.has(e.path),
+										"aria-selected": Qn.has(e.path),
 										"aria-label": `${e.name}, ${e.directory ? p("folder") : l(e.size)}`,
-										className: `sf-entry ${Xn.has(e.path) ? "selected" : ""}`,
-										onClick: (t) => er(e, t),
-										onDoubleClick: () => dr(e),
+										className: `sf-entry ${Qn.has(e.path) ? "selected" : ""}`,
+										onClick: (t) => nr(e, t),
+										onDoubleClick: () => pr(e),
 										onContextMenu: (t) => {
-											t.preventDefault(), Zn(/* @__PURE__ */ new Set([e.path])), $n(e.path), on({
+											t.preventDefault(), $n(/* @__PURE__ */ new Set([e.path])), tr(e.path), on({
 												x: t.clientX,
 												y: t.clientY,
 												entry: e
@@ -10864,7 +10876,7 @@ function He({ config: e }) {
 										},
 										onPointerDown: (t) => {
 											t.pointerType === "touch" && (On.current = window.setTimeout(() => {
-												Zn(/* @__PURE__ */ new Set([e.path])), $n(e.path), on({
+												$n(/* @__PURE__ */ new Set([e.path])), tr(e.path), on({
 													x: t.clientX,
 													y: t.clientY,
 													entry: e
@@ -10881,7 +10893,7 @@ function He({ config: e }) {
 											e.directory && t.preventDefault();
 										},
 										onDrop: (t) => {
-											e.directory && t.dataTransfer.files.length && (t.preventDefault(), Vn(e.path, t.dataTransfer.files));
+											e.directory && t.dataTransfer.files.length && (t.preventDefault(), Un(e.path, t.dataTransfer.files));
 										},
 										children: [
 											/* @__PURE__ */ (0, w.jsx)("span", {
@@ -10930,7 +10942,7 @@ function He({ config: e }) {
 										children: [
 											/* @__PURE__ */ (0, w.jsxs)("button", {
 												disabled: tt.length === 0,
-												onClick: Zr,
+												onClick: $r,
 												children: [
 													/* @__PURE__ */ (0, w.jsx)(r, { name: "chevron-left" }),
 													" ",
@@ -10945,7 +10957,7 @@ function He({ config: e }) {
 											] }),
 											/* @__PURE__ */ (0, w.jsxs)("button", {
 												disabled: $e === null,
-												onClick: Qr,
+												onClick: ei,
 												children: [
 													p("next"),
 													" ",
@@ -10971,7 +10983,7 @@ function He({ config: e }) {
 											list: t,
 											value: at,
 											onChange: (e) => ot(e.target.value),
-											onBlur: $r,
+											onBlur: ti,
 											onKeyDown: (e) => {
 												e.key === "Enter" && e.currentTarget.blur();
 											}
@@ -10991,7 +11003,7 @@ function He({ config: e }) {
 							})
 						]
 					}),
-					Yr && /* @__PURE__ */ (0, w.jsxs)(w.Fragment, { children: [/* @__PURE__ */ (0, w.jsx)("div", {
+					Zr && /* @__PURE__ */ (0, w.jsxs)(w.Fragment, { children: [/* @__PURE__ */ (0, w.jsx)("div", {
 						className: "sf-column-resizer right",
 						role: "separator",
 						tabIndex: 0,
@@ -11000,12 +11012,12 @@ function He({ config: e }) {
 						"aria-valuemin": be.right.min,
 						"aria-valuemax": be.right.max,
 						"aria-valuenow": wn,
-						onPointerDown: (e) => Lr("right", e),
-						onPointerMove: Rr,
-						onPointerUp: zr,
-						onPointerCancel: zr,
-						onKeyDown: (e) => Br("right", e),
-						onDoubleClick: () => Ir("right", be.right.initial, !0)
+						onPointerDown: (e) => zr("right", e),
+						onPointerMove: Br,
+						onPointerUp: Vr,
+						onPointerCancel: Vr,
+						onKeyDown: (e) => Hr("right", e),
+						onDoubleClick: () => Rr("right", be.right.initial, !0)
 					}), /* @__PURE__ */ (0, w.jsx)(E, {
 						api: n,
 						resource: v,
@@ -11014,9 +11026,9 @@ function He({ config: e }) {
 						imageInfo: xt,
 						metadata: yt,
 						showTags: A.tags,
-						previewImage: nr(I),
+						previewImage: ir(I),
 						selectMode: !1,
-						selectAllowed: ar(I),
+						selectAllowed: sr(I),
 						labels: {
 							details: p("details"),
 							selected: p("selectedCount"),
@@ -11033,10 +11045,10 @@ function He({ config: e }) {
 							unsupportedWebImage: p("webImageUnsupported")
 						},
 						formatDate: (e) => m.format(e * 1e3),
-						onChoose: vr,
-						onOpenUrl: or,
-						pluginActions: I && cr.filter((e) => e.slot === "details" && Me(e, I)).map((e) => /* @__PURE__ */ (0, w.jsx)("button", {
-							onClick: () => ur(e, I),
+						onChoose: br,
+						onOpenUrl: cr,
+						pluginActions: I && ur.filter((e) => e.slot === "details" && Me(e, I)).map((e) => /* @__PURE__ */ (0, w.jsx)("button", {
+							onClick: () => fr(e, I),
 							children: ke(e, d)
 						}, `${e.plugin}:${e.id}`))
 					})] })
@@ -11046,14 +11058,14 @@ function He({ config: e }) {
 				className: "sf-picker-bar",
 				children: [
 					/* @__PURE__ */ (0, w.jsxs)("div", { children: [/* @__PURE__ */ (0, w.jsx)("strong", { children: I.name }), /* @__PURE__ */ (0, w.jsx)("small", { children: l(I.size) })] }),
-					!ar(I) && /* @__PURE__ */ (0, w.jsx)("span", {
+					!sr(I) && /* @__PURE__ */ (0, w.jsx)("span", {
 						role: "status",
 						children: p("webImageUnsupported")
 					}),
 					/* @__PURE__ */ (0, w.jsx)("button", {
 						className: "primary",
-						disabled: !ar(I),
-						onClick: () => void vr(),
+						disabled: !sr(I),
+						onClick: () => void br(),
 						children: p("select")
 					})
 				]
@@ -11073,10 +11085,10 @@ function He({ config: e }) {
 					scale: It,
 					uploadConflictStrategy: Rt,
 					translate: p,
-					onToolChange: Cr,
-					onFeatureChange: wr,
-					onColumnChange: Tr,
-					onViewSizeChange: Er,
+					onToolChange: Tr,
+					onFeatureChange: Er,
+					onColumnChange: Dr,
+					onViewSizeChange: Or,
 					onScaleChange: Lt,
 					onUploadConflictStrategyChange: zt,
 					onClose: () => jt(!1)
@@ -11116,10 +11128,10 @@ function He({ config: e }) {
 				}),
 				children: /* @__PURE__ */ (0, w.jsx)(Re, {
 					state: Bt,
-					unsafe: Hr,
+					unsafe: Wr,
 					translate: p,
-					onBrowse: (e, t) => void _r(e, t),
-					onConfirm: (e, t) => void gr(e, t),
+					onBrowse: (e, t) => void yr(e, t),
+					onConfirm: (e, t) => void vr(e, t),
 					onClose: () => Vt(null)
 				})
 			}),
@@ -11144,7 +11156,7 @@ function He({ config: e }) {
 						close: p("close")
 					},
 					onClose: () => Ut(!1),
-					onSave: (e) => void hr(e)
+					onSave: (e) => void _r(e)
 				})
 			}),
 			Jt && /* @__PURE__ */ (0, w.jsx)(ae, {
@@ -11157,7 +11169,7 @@ function He({ config: e }) {
 				confirmLabel: p("confirm"),
 				cancelLabel: p("cancel"),
 				closeLabel: p("close"),
-				onConfirm: (e) => void Ar(e),
+				onConfirm: (e) => void Mr(e),
 				onClose: () => Yt(null)
 			}),
 			Xt && /* @__PURE__ */ (0, w.jsx)(oe, {
@@ -11165,8 +11177,8 @@ function He({ config: e }) {
 				confirmLabel: p("confirm"),
 				cancelLabel: p("cancel"),
 				closeLabel: p("close"),
-				onConfirm: () => jn(!0),
-				onClose: () => jn(!1)
+				onConfirm: () => Nn(!0),
+				onClose: () => Nn(!1)
 			}),
 			Qt && /* @__PURE__ */ (0, w.jsx)(se, {
 				fileName: Qt,
@@ -11175,7 +11187,7 @@ function He({ config: e }) {
 				overwriteLabel: p("uploadConflictOverwrite"),
 				skipLabel: p("uploadConflictSkip"),
 				closeLabel: p("close"),
-				onChoose: Nn
+				onChoose: Fn
 			}),
 			en && /* @__PURE__ */ (0, w.jsx)(g.Suspense, {
 				fallback: /* @__PURE__ */ (0, w.jsx)("div", {
@@ -11239,7 +11251,7 @@ function He({ config: e }) {
 					/* @__PURE__ */ (0, w.jsx)("button", {
 						type: "button",
 						className: "sf-icon-button",
-						onClick: () => or(j),
+						onClick: () => cr(j),
 						title: p("copyUrl"),
 						"aria-label": p("copyUrl"),
 						children: /* @__PURE__ */ (0, w.jsx)(o, {})
@@ -11259,7 +11271,7 @@ function He({ config: e }) {
 					className: "sf-file-preview-body",
 					children: [/* @__PURE__ */ (0, w.jsx)("div", {
 						className: "sf-file-preview-content",
-						children: nr(j) ? /* @__PURE__ */ (0, w.jsx)(s, {
+						children: ir(j) ? /* @__PURE__ */ (0, w.jsx)(s, {
 							src: n.thumbnailUrl(v, j, 512, 512),
 							alt: j.name
 						}) : u.textPreview !== !1 && cn?.path === j.path ? /* @__PURE__ */ (0, w.jsxs)(w.Fragment, { children: [/* @__PURE__ */ (0, w.jsx)("pre", {
@@ -11268,7 +11280,7 @@ function He({ config: e }) {
 						}), cn.truncated && /* @__PURE__ */ (0, w.jsx)("p", {
 							className: "sf-warning",
 							children: p("previewTruncated")
-						})] }) : Ae(j, lr)?.plugin === "document-preview" ? /* @__PURE__ */ (0, w.jsx)(g.Suspense, {
+						})] }) : Ae(j, dr)?.plugin === "document-preview" ? /* @__PURE__ */ (0, w.jsx)(g.Suspense, {
 							fallback: /* @__PURE__ */ (0, w.jsx)("div", {
 								className: "sf-state",
 								children: p("previewPreparing")
@@ -11283,9 +11295,9 @@ function He({ config: e }) {
 									retry: p("previewRetry")
 								}
 							})
-						}) : je(j, lr, v) ? /* @__PURE__ */ (0, w.jsx)("iframe", {
+						}) : je(j, dr, v) ? /* @__PURE__ */ (0, w.jsx)("iframe", {
 							className: "sf-document-preview",
-							src: je(j, lr, v) || void 0,
+							src: je(j, dr, v) || void 0,
 							title: j.name
 						}) : /* @__PURE__ */ (0, w.jsxs)("div", {
 							className: "sf-file-preview-fallback",
@@ -11334,13 +11346,13 @@ function He({ config: e }) {
 				},
 				onClose: () => pn(null)
 			}),
-			Kt && u.imageProcessing !== !1 && ir.length > 0 && /* @__PURE__ */ (0, w.jsx)(g.Suspense, {
+			Kt && u.imageProcessing !== !1 && or.length > 0 && /* @__PURE__ */ (0, w.jsx)(g.Suspense, {
 				fallback: /* @__PURE__ */ (0, w.jsx)("div", {
 					className: "sf-state",
 					children: p("loading")
 				}),
 				children: /* @__PURE__ */ (0, w.jsx)(Pe, {
-					entries: ir,
+					entries: or,
 					resource: v,
 					formats: gn.formats.filter((e) => e.edit && [
 						"jpeg",
@@ -11382,9 +11394,9 @@ function He({ config: e }) {
 					},
 					onClose: () => qt(!1),
 					onApply: async (e, t) => {
-						if (ir.length === 1) await n.applyImageActions(v, ir[0].path, e, t), pt(`${p("completed")}: 1`);
+						if (or.length === 1) await n.applyImageActions(v, or[0].path, e, t), pt(`${p("completed")}: 1`);
 						else {
-							let r = await n.applyImageBatch(v, ir.map((e) => e.path), e, t);
+							let r = await n.applyImageBatch(v, or.map((e) => e.path), e, t);
 							pt(`${p("completed")}: ${r.succeeded} · ${p("failed")}: ${r.failed}`);
 						}
 						qt(!1), await N();
@@ -11440,7 +11452,7 @@ function He({ config: e }) {
 				x: an.x,
 				y: an.y,
 				onClose: () => on(null),
-				onSelect: Nr,
+				onSelect: Fr,
 				items: [
 					{
 						id: an.entry.directory ? "open" : "preview",
@@ -11449,7 +11461,7 @@ function He({ config: e }) {
 					...a === "picker" && !an.entry.directory ? [{
 						id: "select",
 						label: p("select"),
-						disabled: !ar(an.entry)
+						disabled: !sr(an.entry)
 					}] : [],
 					{
 						id: "download",
@@ -11478,7 +11490,7 @@ function He({ config: e }) {
 							disabled: an.entry.capabilities?.delete === !1,
 							danger: !0
 						},
-						...cr.filter((e) => e.slot === "context").map((e) => ({
+						...ur.filter((e) => e.slot === "context").map((e) => ({
 							id: `plugin:${e.plugin}:${e.id}`,
 							label: ke(e, d),
 							disabled: !Me(e, an.entry)

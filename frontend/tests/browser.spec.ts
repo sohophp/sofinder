@@ -213,6 +213,29 @@ test("uses a minimal shell and reveals manager actions contextually", async ({ p
   await expect(page.getByLabel("语言")).toBeVisible();
 });
 
+test("closes the more-actions menu after clicking the main area", async ({ page }) => {
+  const trigger = page.getByRole("button", { name: "更多操作" });
+  await trigger.click();
+  await expect(page.getByRole("menu")).toBeVisible();
+
+  await page.locator(".sf-content").click({ position: { x: 12, y: 260 } });
+
+  await expect(page.getByRole("menu")).toHaveCount(0);
+  await expect(trigger).toHaveAttribute("aria-expanded", "false");
+});
+
+test("keeps the more-actions menu open for internal controls and closes it with Escape", async ({ page }) => {
+  const trigger = page.getByRole("button", { name: "更多操作" });
+  await trigger.click();
+  await page.getByLabel("语言").selectOption("zh-tw");
+  await expect(page.getByRole("menu")).toBeVisible();
+
+  await page.keyboard.press("Escape");
+
+  await expect(page.getByRole("menu")).toHaveCount(0);
+  await expect(trigger).toBeFocused();
+});
+
 test("uses the logo slot for breadcrumbs and shifts search right when the logo is disabled", async ({ page }) => {
   const noLogoConfig = { ...config, uiDefaults: { ...config.uiDefaults, logo: false } };
   await page.setContent(`<!doctype html><html lang="zh-CN"><head><title>SoFinder</title></head><body><main id="sofinder-root" data-config='${JSON.stringify(noLogoConfig)}'></main></body></html>`);
