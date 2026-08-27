@@ -1,6 +1,6 @@
 import { n as e, r as t, t as n } from "./jsx-runtime-CmCsaYvT.js";
 import { t as r } from "./react-B5TC723I.js";
-import { t as i } from "./Modal-Fr6Afibb.js";
+import { t as i } from "./Modal-Dw1vVt5K.js";
 import { t as a } from "./nameValidation-DURyMFRU.js";
 //#region node_modules/.pnpm/cropperjs@1.6.2/node_modules/cropperjs/dist/cropper.js
 var o = /* @__PURE__ */ e(((e, t) => {

@@ -72,6 +72,17 @@ Normalizes the local JSON metadata shape and removes references to missing
 resources or entries. Dry-run acquires the same lock but never writes. Hosts
 using a shared metadata service must use provider-specific repair tooling.
 
+## Stable asset migration
+
+```bash
+bin/console sofinder:assets:migrate --dry-run --json
+bin/console sofinder:assets:migrate Files --workspace=main --json
+```
+
+Recursively previews or registers existing files in the optional asset catalog.
+It is bounded by `--limit`, idempotent, never rewrites file content and emits a
+path-to-ID report suitable for a separate host content migration.
+
 ## Cache cleanup
 
 ```bash

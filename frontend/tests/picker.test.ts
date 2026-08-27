@@ -48,14 +48,16 @@ describe("picker SDK", () => {
   it("provides editor and form adapters over the same picker protocol", async () => {
     const popup = { closed: false } as Window;
     vi.spyOn(window, "open").mockReturnValue(popup);
-    const editor = { execute: vi.fn(), editing: { view: { focus: vi.fn() } } };
+    const selectedElement = {}; const setAttribute = vi.fn();
+    const editor = { execute: vi.fn(), editing: { view: { focus: vi.fn() } }, model: { document: { selection: { getSelectedElement: () => selectedElement } }, change: (callback: (writer: { setAttribute: typeof setAttribute }) => void) => callback({ setAttribute }) } };
     const promise = selectForCkeditor5(editor, { baseUrl: "/sofinder/browser" });
     const opened = new URL(String(vi.mocked(window.open).mock.calls.at(-1)?.[0]), window.location.href);
-    const entry = { resource: "Images", path: "photo.png", name: "photo.png", directory: false, size: 12, modifiedAt: 1, mimeType: "image/png", url: "/files/photo.png", width: 320, height: 180, capabilities: {} };
+    const entry = { resource: "Images", path: "photo.png", name: "photo.png", directory: false, size: 12, modifiedAt: 1, mimeType: "image/png", url: "/files/photo.png", width: 320, height: 180, assetId: "00000000-0000-4000-8000-000000000001", capabilities: {} };
     window.dispatchEvent(new MessageEvent("message", { source: popup, origin: window.location.origin, data: { type: "sofinder:select", version: "1.0", requestId: opened.searchParams.get("pickerRequestId"), entry } }));
     await promise;
     expect(editor.execute).toHaveBeenCalledWith("insertImage", { source: entry.url });
     expect(editor.execute).toHaveBeenCalledWith("imageTextAlternative", { newValue: "photo" });
+    expect(setAttribute).toHaveBeenCalledWith("sofinderAssetId", entry.assetId, selectedElement);
 
     const input = document.createElement("input");
     const changed = vi.fn();

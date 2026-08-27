@@ -48,7 +48,7 @@ export declare const pickerUrl: (options: PickerOptions, id?: string) => URL;
 export declare const openPicker: (options: PickerOptions) => Promise<PickerEntry>;
 type EditorPickerOptions = Omit<PickerOptions, "kind">;
 /** Select an image and insert it through CKEditor 5's public command API. */
-export declare const selectForCkeditor5: (editor: {
+interface Ckeditor5PickerEditor {
     execute(command: string, options: Record<string, unknown>): void;
     commands?: {
         get(name: string): unknown;
@@ -58,7 +58,20 @@ export declare const selectForCkeditor5: (editor: {
             focus?: () => void;
         };
     };
-}, options: EditorPickerOptions) => Promise<PickerEntry>;
+    model?: {
+        document: {
+            selection: {
+                getSelectedElement(): unknown;
+            };
+        };
+        change(callback: (writer: {
+            setAttribute(name: string, value: unknown, item: unknown): void;
+        }) => void): void;
+    };
+}
+export declare const selectForCkeditor5: (editor: Ckeditor5PickerEditor, options: EditorPickerOptions) => Promise<PickerEntry>;
+/** Replace the selected CKEditor 5 image while preserving a stable SoFinder relationship. */
+export declare const replaceSelectedForCkeditor5: (editor: Ckeditor5PickerEditor, options: EditorPickerOptions) => Promise<PickerEntry>;
 /** Register a `sofinder` toolbar button and menu item in TinyMCE. */
 export declare const registerTinyMce: (tinymce: {
     PluginManager: {

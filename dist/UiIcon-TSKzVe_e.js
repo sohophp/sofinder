@@ -141,6 +141,7 @@ var t = e(), n = {
 		cy: "10.5",
 		r: "6.5"
 	}), /* @__PURE__ */ (0, t.jsx)("path", { d: "m16 16 4 4" })] }),
+	filter: /* @__PURE__ */ (0, t.jsx)("path", { d: "M4 5h16l-6 7v6l-4 2v-8z" }),
 	close: /* @__PURE__ */ (0, t.jsx)("path", { d: "m6 6 12 12M18 6 6 18" }),
 	add: /* @__PURE__ */ (0, t.jsx)("path", { d: "M12 5v14M5 12h14" }),
 	history: /* @__PURE__ */ (0, t.jsxs)(t.Fragment, { children: [

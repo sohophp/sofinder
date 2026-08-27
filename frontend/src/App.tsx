@@ -36,6 +36,7 @@ const ContextMenu = lazy(() => import("./components/ContextMenu").then(module =>
 const UploadQueue = lazy(() => import("./components/UploadQueue").then(module => ({ default: module.UploadQueue })));
 const ImagePreviewPane = lazy(() => import("./components/ImagePreviewPane"));
 const AssetMetadataDialog = lazy(() => import("./components/AssetMetadataDialog").then(module => ({ default: module.AssetMetadataDialog })));
+const AssetSearchDialog = lazy(() => import("./components/AssetSearchDialog").then(module => ({ default: module.AssetSearchDialog })));
 
 interface TextDialogState { kind: "folder" | "rename" | "resize"; title: string; label: string; initial: string; maximum: number; extension?: string }
 interface ConfirmState { title: string; message: string; detail?: string; danger?: boolean }
@@ -109,6 +110,9 @@ export default function App({ config, initialMessages }: { config: SoFinderConfi
   const [signedUrls, setSignedUrls] = useState({ enabled: false, defaultTtlSeconds: 300, maxTtlSeconds: 3600 });
   const [assetCatalogEnabled, setAssetCatalogEnabled] = useState(false);
   const [assetAltLocales, setAssetAltLocales] = useState(["en", "zh-cn", "zh-tw"]);
+  const [assetSearchEnabled, setAssetSearchEnabled] = useState(false);
+  const [assetUsageEnabled, setAssetUsageEnabled] = useState(false);
+  const [assetSearchOpen, setAssetSearchOpen] = useState(() => new URL(window.location.href).searchParams.has("asset_q"));
   const [assetMetadataDialog, setAssetMetadataDialog] = useState<{ asset: AssetReference; metadata: AssetMetadata } | null>(null);
   const [leftWidth, setLeftWidth] = useState(() => loadColumnWidth("left"));
   const [rightWidth, setRightWidth] = useState(() => loadColumnWidth("right"));
@@ -320,11 +324,13 @@ export default function App({ config, initialMessages }: { config: SoFinderConfi
   });
 
   useEffect(() => {
-    api.configData().then(({ resources: available, plugins: activePlugins, imagePresets: presets, imageCapabilities: capabilities, signedUrls: signedUrlCapabilities, assetCatalog }) => {
+    api.configData().then(({ resources: available, plugins: activePlugins, imagePresets: presets, imageCapabilities: capabilities, signedUrls: signedUrlCapabilities, assetCatalog, assetSearch, assetUsage }) => {
       setResources(available);
       setPlugins(activePlugins || []);
       setAssetCatalogEnabled(assetCatalog?.enabled === true);
       setAssetAltLocales(assetCatalog?.altLocales?.length ? assetCatalog.altLocales : ["en", "zh-cn", "zh-tw"]);
+      setAssetSearchEnabled(assetSearch?.enabled === true);
+      setAssetUsageEnabled(assetUsage?.enabled === true);
       setImagePresets(presets || {});
       setImageCapabilities(capabilities || { driver: "", formats: [] });
       setSignedUrls(signedUrlCapabilities || { enabled: false, defaultTtlSeconds: 300, maxTtlSeconds: 3600 });
@@ -514,7 +520,17 @@ export default function App({ config, initialMessages }: { config: SoFinderConfi
   };
 
   const remove = async () => {
-    if (selectedEntries.length === 0 || !await ask({ title: t("remove"), message: selectedEntries.length === 1 ? t("confirmDelete") : `${t("confirmDeleteMany")} ${selectedEntries.length}`, detail: currentResource?.storageCapabilities?.recoverableDelete === false ? t("permanentDeleteWarning") : t("trashRetention"), danger: true })) return;
+    if (selectedEntries.length === 0) return;
+    let usageDetail = "";
+    if (assetUsageEnabled) {
+      try {
+        const check = await api.checkAssetDeletion(resource, selectedEntries.map(entry => entry.path));
+        if (check.complete === false) usageDetail = t("assetDeleteCheckIncomplete");
+        else if (!check.safe) usageDetail = `${t("assetUsedWarning").replace("{count}", String(check.total))} ${check.assets.flatMap(asset => asset.usages.slice(0, 3).map(usage => usage.label)).slice(0, 3).join("、")}`;
+      } catch (error) { report(error); return; }
+    }
+    const retentionDetail = currentResource?.storageCapabilities?.recoverableDelete === false ? t("permanentDeleteWarning") : t("trashRetention");
+    if (!await ask({ title: t("remove"), message: selectedEntries.length === 1 ? t("confirmDelete") : `${t("confirmDeleteMany")} ${selectedEntries.length}`, detail: usageDetail ? `${usageDetail}\n${retentionDetail}` : retentionDetail, danger: true })) return;
     try {
       const result = await api.batch("delete", resource, selectedEntries.map(entry => entry.path));
       const summary = result.failed === 0 ? `${result.succeeded} ${t("completed")}` : `${result.succeeded} ${t("completed")}, ${result.failed} ${t("failed")}`;
@@ -952,6 +968,12 @@ export default function App({ config, initialMessages }: { config: SoFinderConfi
     setCursorHistory([]);
     void load(nextResource, nextPath, term, 0, sort, direction, searchMode, null);
   };
+  const openAssetSearchResult = async (nextResource: string, targetPath: string) => {
+    const parent = targetPath.includes("/") ? targetPath.slice(0, targetPath.lastIndexOf("/")) : "";
+    setAssetSearchOpen(false); setSearch(""); setSearchMode("name"); setResource(nextResource); setPath(parent); setCursorHistory([]);
+    await load(nextResource, parent, "", 0, sort, direction, "name", null);
+    setSelectedPaths(new Set([targetPath])); setSelectionAnchor(targetPath);
+  };
   const openFavorites = () => {
     setSelectedPaths(new Set());
     setSelectionAnchor(null);
@@ -1056,7 +1078,7 @@ export default function App({ config, initialMessages }: { config: SoFinderConfi
         <button onClick={() => resetAndLoad(resource, "")}>{t("home")}</button>
         {collectionView === "favorites" ? <span>› <strong>{t("favorites")}</strong></span> : crumbs.map((crumb, index) => <span key={`${crumb}-${index}`}>› <button onClick={() => resetAndLoad(resource, crumbs.slice(0, index + 1).join("/"))}>{crumb}</button></span>)}
       </nav>}
-      {config.uiDefaults.search !== false && <div className="sf-search"><UiIcon name="search"/><select value={searchMode} disabled={collectionView !== null} onChange={event => { const next = event.target.value as "name" | "tags"; setSearchMode(next); setOffset(0); }} aria-label={t("searchScope")}><option value="name" disabled={currentResource?.storageCapabilities?.search === false}>{t("name")}</option><option value="tags">{t("tags")}</option></select><input disabled={collectionView === null && searchMode === "name" && currentResource?.storageCapabilities?.search === false} value={search} onChange={e => setSearch(e.target.value)} placeholder={collectionView === "favorites" ? t("searchFavorites") : searchMode === "tags" ? t("searchTags") : t("search")} aria-label={collectionView === "favorites" ? t("searchFavorites") : searchMode === "tags" ? t("searchTags") : t("search")}/></div>}
+      {config.uiDefaults.search !== false && <div className="sf-search"><UiIcon name="search"/><select value={searchMode} disabled={collectionView !== null} onChange={event => { const next = event.target.value as "name" | "tags"; setSearchMode(next); setOffset(0); }} aria-label={t("searchScope")}><option value="name" disabled={currentResource?.storageCapabilities?.search === false}>{t("name")}</option><option value="tags">{t("tags")}</option></select><input disabled={collectionView === null && searchMode === "name" && currentResource?.storageCapabilities?.search === false} value={search} onChange={e => setSearch(e.target.value)} placeholder={collectionView === "favorites" ? t("searchFavorites") : searchMode === "tags" ? t("searchTags") : t("search")} aria-label={collectionView === "favorites" ? t("searchFavorites") : searchMode === "tags" ? t("searchTags") : t("search")}/>{assetSearchEnabled && <button className="sf-advanced-search-trigger" type="button" onClick={() => setAssetSearchOpen(true)} title={t("advancedSearch")} aria-label={t("advancedSearch")}><UiIcon name="filter"/></button>}</div>}
       <div className="sf-command-actions">
       {(config.workspace?.options?.length ?? 0) > 1 && <label className="sf-workspace-switcher"><span className="sf-sr-only">{t("workspace")}</span><select aria-label={t("workspace")} value={config.workspace?.id} disabled={uploadActive} title={uploadActive ? t("workspaceUploadBlocked") : t("workspace")} onChange={event => { const option = config.workspace?.options?.find(item => item.id === event.target.value); if (option) window.location.assign(option.url); }}>{config.workspace?.options?.map(option => <option key={option.id} value={option.id}>{option.label}</option>)}</select></label>}
       {config.uiDefaults.viewSwitcher !== false && <div className="sf-view-toggle" role="group" aria-label={`${t("grid")} / ${t("list")}`}>
@@ -1167,7 +1189,7 @@ export default function App({ config, initialMessages }: { config: SoFinderConfi
         <div className="sf-column-resizer right" role="separator" tabIndex={0} aria-label={t("resizeRightPanel")} aria-orientation="vertical" aria-valuemin={columnLimits.right.min} aria-valuemax={columnLimits.right.max} aria-valuenow={rightWidth} onPointerDown={event => beginColumnResize("right", event)} onPointerMove={moveColumnResize} onPointerUp={endColumnResize} onPointerCancel={endColumnResize} onKeyDown={event => resizeColumnWithKeyboard("right", event)} onDoubleClick={() => setColumnWidth("right", columnLimits.right.initial, true)}/>
         <aside className="sf-right-panel" aria-label={t("rightSidebar")}>
           {folderNavigationRight && resource && <section className="sf-folder-navigation-right"><h2>{t("folderNavigation")}</h2><Suspense fallback={<div className="sf-state">{t("loading")}</div>}><FolderTree api={api} resource={resource} currentPath={resolvedPath} rootLabel={t("home")} onNavigate={next => resetAndLoad(resource, next, "")}/></Suspense></section>}
-          {showDetails && <Suspense fallback={<div className="sf-state">{t("loading")}</div>}><DetailsPanel api={api} resource={resource} selectedEntries={selectedEntries} selected={selected} imageInfo={imageInfo} metadata={metadata} showTags={features.tags} previewImage={canPreviewImage(selected)} selectMode={false} selectAllowed={canChooseEntry(selected)} assetMetadataEnabled={assetCatalogEnabled} labels={{ details: t("details"), selected: t("selectedCount"), type: t("type"), folder: t("folder"), file: t("file"), size: t("size"), dimensions: t("dimensions"), modified: t("modified"), location: t("location"), select: t("select"), download: t("download"), share: t("share"), assetMetadata: t("assetMetadata"), unsupportedWebImage: t("webImageUnsupported") }} formatDate={timestamp => dateFormatter.format(timestamp * 1000)} onChoose={choose} onShare={openShare} onAssetMetadata={entry => void openAssetMetadata(entry)} pluginActions={selected && pluginActions.filter(action => action.slot === "details" && pluginActionAvailable(action, selected)).map(action => <button key={`${action.plugin}:${action.id}`} onClick={() => openPluginAction(action, selected)}>{pluginLabel(action, language)}</button>)}/></Suspense>}
+          {showDetails && <Suspense fallback={<div className="sf-state">{t("loading")}</div>}><DetailsPanel api={api} resource={resource} selectedEntries={selectedEntries} selected={selected} imageInfo={imageInfo} metadata={metadata} showTags={features.tags} previewImage={canPreviewImage(selected)} selectMode={false} selectAllowed={canChooseEntry(selected)} assetMetadataEnabled={assetCatalogEnabled} assetAltLocales={assetAltLocales.map(code => ({ code, label: ({ en: t("languageEnglish"), "zh-cn": t("languageZhCn"), "zh-tw": t("languageZhTw") } as Record<string, string>)[code] ?? code }))} labels={{ details: t("details"), information: t("information"), selected: t("selectedCount"), type: t("type"), folder: t("folder"), file: t("file"), size: t("size"), dimensions: t("dimensions"), modified: t("modified"), location: t("location"), select: t("select"), download: t("download"), share: t("share"), assetMetadata: t("assetMetadata"), assetAlt: t("assetAlt"), translatedAlt: t("translatedAlt"), language: t("languageCode"), addLanguage: t("addLanguage"), assetTitle: t("assetTitle"), tags: t("tags"), decorative: t("decorativeImage"), unsetAlt: t("assetAltUnset"), inheritAlt: t("inheritAlt"), save: t("save"), loading: t("loading"), saved: t("assetMetadataSaved"), unsaved: t("unsavedChanges"), conflict: t("assetMetadataConflict"), metadataError: t("assetMetadataError"), unsupportedWebImage: t("webImageUnsupported") }} formatDate={timestamp => dateFormatter.format(timestamp * 1000)} onChoose={choose} onShare={openShare} onAssetMetadata={entry => void openAssetMetadata(entry)} pluginActions={selected && pluginActions.filter(action => action.slot === "details" && pluginActionAvailable(action, selected)).map(action => <button key={`${action.plugin}:${action.id}`} onClick={() => openPluginAction(action, selected)}>{pluginLabel(action, language)}</button>)}/></Suspense>}
         </aside>
       </>}
     </div>
@@ -1199,6 +1221,7 @@ export default function App({ config, initialMessages }: { config: SoFinderConfi
       onClose={() => setTagsOpen(false)}
       onSave={tags => { setTagsOpen(false); void mutateMetadata(resource, selected.path, "tags", { tags }).catch(report); }}
     /></Suspense>}
+    {assetSearchOpen && assetSearchEnabled && <Suspense fallback={<div className="sf-state">{t("loading")}</div>}><AssetSearchDialog api={api} resources={resources.map(item => item.name)} currentResource={resource} currentPath={path} formatDate={timestamp => dateFormatter.format(timestamp * 1000)} labels={{ advancedSearch: t("advancedSearch"), close: t("close"), keywords: t("keywords"), searchAssets: t("searchAssets"), scope: t("searchScope"), currentDirectory: t("currentDirectory"), currentResource: t("currentResource"), allResources: t("allResources"), type: t("type"), allTypes: t("allTypes"), image: t("images"), document: t("documents"), audio: t("audio"), video: t("video"), archive: t("archives"), other: t("other"), tags: t("tags"), extensions: t("extensions"), commaSeparated: t("commaSeparated"), minimumSize: t("minimumSizeMb"), maximumSize: t("maximumSizeMb"), modifiedAfter: t("modifiedAfter"), modifiedBefore: t("modifiedBefore"), searchFields: t("searchFields"), name: t("name"), title: t("assetTitle"), alt: t("assetAlt"), searching: t("searching"), search: t("search"), recentSearches: t("recentSearches"), filteredAssets: t("filteredAssets"), searchFailed: t("searchFailed"), results: t("searchResultCount"), scanned: t("searchScannedCount"), truncated: t("searchTruncated"), noResults: t("filterEmpty"), previous: t("previous"), next: t("next") }} onOpen={(nextResource, targetPath) => void openAssetSearchResult(nextResource, targetPath)} onClose={() => setAssetSearchOpen(false)}/></Suspense>}
     {assetMetadataDialog && <Suspense fallback={<div className="sf-state">{t("loading")}</div>}><AssetMetadataDialog asset={assetMetadataDialog.asset} metadata={assetMetadataDialog.metadata} locales={assetAltLocales.map(code => ({ code, label: ({ en: t("languageEnglish"), "zh-cn": t("languageZhCn"), "zh-tw": t("languageZhTw") } as Record<string, string>)[code] ?? code }))} labels={{ title: t("assetMetadata"), alt: t("assetAlt"), translatedAlt: t("translatedAlt"), translatedAltHelp: t("translatedAltHelp"), language: t("languageCode"), addLanguage: t("addLanguage"), assetTitle: t("assetTitle"), tags: t("tags"), decorative: t("decorativeImage"), unsetAlt: t("assetAltUnset"), inheritAlt: t("inheritAlt"), save: t("save"), cancel: t("cancel") }} onClose={() => setAssetMetadataDialog(null)} onSave={async value => { await api.updateAssetMetadata(assetMetadataDialog.asset.assetId || "", value); setAssetMetadataDialog(null); setNotice(t("assetMetadataSaved")); }}/></Suspense>}
     {previewEntry && <Modal
       title={previewEntry.name}

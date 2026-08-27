@@ -1,6 +1,6 @@
 import { t as e } from "./jsx-runtime-CmCsaYvT.js";
 import { t } from "./react-B5TC723I.js";
-import { t as n } from "./UiIcon-ClFQjiWf.js";
+import { t as n } from "./UiIcon-TSKzVe_e.js";
 //#region src/components/Modal.tsx
 var r = t(), i = e();
 function a({ title: e, closeLabel: t, onClose: a, children: o, footer: s, className: c = "", maximizable: l = !1 }) {

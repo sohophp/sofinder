@@ -1,5 +1,5 @@
 import { t as e } from "./jsx-runtime-CmCsaYvT.js";
-import { t } from "./Modal-Fr6Afibb.js";
+import { t } from "./Modal-Dw1vVt5K.js";
 import { t as n } from "./EntryVisuals-COz6M0oc.js";
 //#region src/components/DestinationDialog.tsx
 var r = e();

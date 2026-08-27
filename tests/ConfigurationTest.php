@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace SohoPHP\SoFinder\Tests;
 
 use PHPUnit\Framework\TestCase;
+use Symfony\Component\Config\Definition\Exception\InvalidConfigurationException;
 use SohoPHP\SoFinder\DependencyInjection\Configuration;
 use Symfony\Component\Config\Definition\Processor;
 
@@ -25,6 +26,12 @@ final class ConfigurationTest extends TestCase
         self::assertTrue($config['uploads']['naming']['lowercase_extensions']);
         self::assertFalse($config['ckeditor4']['overwrite_on_upload']);
         self::assertSame(['en', 'zh-cn', 'zh-tw'], $config['asset_catalog']['alt_locales']);
+        self::assertTrue($config['asset_search']['enabled']);
+        self::assertNull($config['asset_search']['provider_service']);
+        self::assertSame(10000, $config['asset_search']['max_scanned_entries']);
+        self::assertFalse($config['asset_usage']['enabled']);
+        self::assertFalse($config['asset_access_sessions']['enabled']);
+        self::assertSame(3600, $config['asset_access_sessions']['default_ttl_seconds']);
         self::assertFalse($config['malware_scanning']['enabled']);
         self::assertSame('tcp://127.0.0.1:3310', $config['malware_scanning']['endpoint']);
         self::assertTrue($config['document_preview']['pdf']);
@@ -60,6 +67,16 @@ final class ConfigurationTest extends TestCase
         ]]);
 
         self::assertSame(['en', 'de', 'fr-ca'], $config['asset_catalog']['alt_locales']);
+    }
+
+    public function testAssetAccessSessionStoreServiceMustBeANonEmptyServiceId(): void
+    {
+        $this->expectException(InvalidConfigurationException::class);
+
+        (new Processor())->processConfiguration(new Configuration(), [[
+            'asset_access_sessions' => ['store_service' => '  '],
+            'resources' => ['Files' => ['root' => '/tmp/sofinder']],
+        ]]);
     }
 
     public function testUploadConflictDefaultCanBeConfigured(): void

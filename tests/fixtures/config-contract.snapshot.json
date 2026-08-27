@@ -1,6 +1,6 @@
 {
   "envelope": ["success", "data"],
-  "data": ["apiVersion", "resources", "plugins", "imagePresets", "imageCapabilities", "uiDefaults", "featureAvailability", "signedUrls", "assetCatalog", "imageVariants"],
+  "data": ["apiVersion", "resources", "plugins", "imagePresets", "imageCapabilities", "uiDefaults", "featureAvailability", "signedUrls", "assetCatalog", "assetSearch", "assetUsage", "assetAccessSessions", "imageVariants"],
   "resource": ["name", "publicUrl", "allowedExtensions", "allowedMimeTypes", "maxSize", "readOnly", "quotaBytes", "maxFileNameLength", "maxFolderNameLength", "maxFolderDepth", "maxImagePixels", "deliveryMode", "entryUrlConfigured", "maxBatchItems", "maxRecursiveItems", "maxArchiveItems", "maxArchiveBytes", "maxImageWidth", "maxImageHeight", "animatedImagePolicy", "usedBytes", "storageCapabilities"],
   "storageCapabilities": ["search", "sort", "cursorPagination", "atomicMove", "nativeCopy", "recoverableDelete", "publicUrl"],
   "featureAvailability": ["folderTree", "recent", "favorites", "quickAccess", "quickAccessFiles", "tags", "archive", "trash", "batchRename", "imageEditing", "imageProcessing", "documentPreview", "securityStatus", "folderUpload", "textPreview", "checksum", "qrCode"],

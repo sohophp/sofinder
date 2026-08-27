@@ -68,6 +68,19 @@ HTTP Status 是最终依据；`429` 包含 `Retry-After: 2`。批量请求可能
 
 ## 发现与列表
 
+### `GET /api/assets/search`
+
+在已授权资源及子目录中按文件名、资产标题、默认/多语言替代文本和共享标签搜索；可按资源、路径范围、类型、扩展名、大小及修改日期筛选。响应包含分页、聚合、扫描数量和 `truncated`，避免把受限扫描误认为完整索引。
+
+### 资产使用与删除预检
+
+- `GET /api/assets/{id}/usages` 列出授权范围内的宿主引用；`PUT/DELETE /api/assets/{id}/usages/{referenceId}` 幂等登记或移除 `{label,url,context}`。
+- `POST /api/assets/delete-check` 接收 `{resource,paths}`，返回 `safe`、引用总数和受影响资产。它只提示风险，不会绕过用户明确的删除决定。
+
+### 私有资产访问会话
+
+`POST /api/assets/access-sessions` 接收私有 Proxy 资产 ID 和可选 `ttl`，返回绑定文件版本的内联 URL 与过期时间；`DELETE /api/assets/access-sessions/{id}` 撤销整组会话。文件变化、过期、撤销或未列入会话的资产均无法读取。
+
 ### `GET /api/config`
 
 返回 `apiVersion`、当前用户可见的 `resources`、Plugin Descriptor、图片预设、有效图片 Capability 和 UI Default。当前 API Version 为 `1.0`。

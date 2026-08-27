@@ -13,10 +13,15 @@ var n = (e, t) => {
 		alt: r(e, t)
 	};
 	return e.assetId && (n["data-sofinder-asset-id"] = e.assetId), e.width && (n.width = String(e.width)), e.height && (n.height = String(e.height)), e.variants?.length && (n.srcset = e.variants.map((e) => `${e.url} ${e.width}w`).join(", "), n.sizes = typeof t.sizes == "function" ? t.sizes(e) : t.sizes ?? (e.width ? `(max-width: ${e.width}px) 100vw, ${e.width}px` : "100vw")), n;
-}, a = (e) => e.replace(/&/g, "&amp;").replace(/"/g, "&quot;").replace(/</g, "&lt;").replace(/>/g, "&gt;"), o = (e, t = {}) => `<img ${Object.entries(i(e, t)).map(([e, t]) => `${e}="${a(t)}"`).join(" ")}>`, s = (e) => typeof e.path == "function" ? e.path() : e.path ?? "", c = (n, r, i = "input") => {
+}, a = (e) => e.replace(/&/g, "&amp;").replace(/"/g, "&quot;").replace(/</g, "&lt;").replace(/>/g, "&gt;"), o = (e, t = {}) => `<img ${Object.entries(i(e, t)).map(([e, t]) => `${e}="${a(t)}"`).join(" ")}>`, s = (e) => typeof e.path == "function" ? e.path() : e.path ?? "", c = (e, t) => {
+	let n = t.resourceRouter?.(e).trim();
+	if (n) return n;
+	let r = e.type.toLowerCase(), i = e.name.includes(".") ? e.name.split(".").pop()?.toLowerCase() ?? "" : "";
+	return t.resourceRoutes?.find((e) => e.mimeTypes?.some((e) => e.toLowerCase() === r) || e.extensions?.some((e) => e.replace(/^\./, "").toLowerCase() === i))?.resource ?? t.resource;
+}, l = (n, r, i = "input") => {
 	let a = t(r).upload({
 		file: n,
-		resource: r.resource,
+		resource: c(n, r),
 		path: s(r),
 		source: i,
 		conflictStrategy: r.conflictStrategy ?? "ask"
@@ -24,19 +29,19 @@ var n = (e, t) => {
 	return r.onTaskChange && a.subscribe(r.onTaskChange), a.completion.then((e) => r.onAssetReady?.(e)).catch(() => void 0), a.completion.catch((t) => {
 		t instanceof e && r.onError?.(t);
 	}), a;
-}, l = (e, t) => r(e, t), u = (t) => {
+}, u = (e, t) => r(e, t), d = (t) => {
 	if (!t.capabilities.embeddable || t.url === "") throw new e("asset_not_embeddable", "This resource does not provide a stable embeddable URL.", 422, !1);
 	return t;
-}, d = (e, t) => i(e, t), f = (e, t) => o(e, t), p = (e, t) => {
+}, f = (e, t) => i(e, t), p = (e, t) => o(e, t), m = (e, t) => {
 	let n = { default: e.url };
 	e.width && (n[String(e.width)] = e.url);
 	for (let t of e.variants) n[String(t.width)] = t.url;
 	let r = {
 		urls: n,
-		sofinderAlt: l(e, t)
+		sofinderAlt: u(e, t)
 	};
 	return e.assetId && (r.sofinderAssetId = e.assetId), e.width && (r.sofinderWidth = e.width), e.height && (r.sofinderHeight = e.height), r;
-}, m = (e) => (t) => {
+}, h = (e) => (t) => {
 	let n = t.plugins.get("FileRepository"), r = [
 		"sofinderAssetId",
 		"sofinderWidth",
@@ -62,61 +67,61 @@ var n = (e, t) => {
 		let n = null;
 		return {
 			async upload() {
-				return n = c(await t.file, {
+				return n = l(await t.file, {
 					...e,
 					onTaskChange: (n) => {
 						t.uploaded = n.progress, t.uploadTotal = 100, e.onTaskChange?.(n);
 					}
-				}), p(u(await n.completion), e);
+				}), m(d(await n.completion), e);
 			},
 			abort() {
 				n?.cancel();
 			}
 		};
 	};
-}, h = (e) => async (t, n) => {
+}, g = (e) => async (t, n) => {
 	let r = t.blob();
-	return u(await c(r instanceof File ? r : new File([r], t.filename(), { type: r.type }), {
+	return d(await l(r instanceof File ? r : new File([r], t.filename(), { type: r.type }), {
 		...e,
 		onTaskChange: (t) => {
 			n(t.progress), e.onTaskChange?.(t);
 		}
 	}, "paste").completion).url;
-}, g = (e, t) => {
+}, _ = (e, t) => {
 	let n = /* @__PURE__ */ new Map();
 	return e.on("NodeChange", (r) => {
 		let i = r.element instanceof HTMLImageElement ? [r.element] : Array.from(r.element?.querySelectorAll("img") ?? []);
 		for (let r of i) {
 			let i = n.get(e.dom.getAttrib(r, "src"));
 			if (i) {
-				for (let [n, a] of Object.entries(d(i, t))) e.dom.setAttrib(r, n, a);
+				for (let [n, a] of Object.entries(f(i, t))) e.dom.setAttrib(r, n, a);
 				n.delete(i.url);
 			}
 		}
-	}), h({
+	}), g({
 		...t,
 		onAssetReady: (e) => {
 			n.set(e.url, e), t.onAssetReady?.(e);
 		}
 	});
-}, _ = async (e, t, n, r = "input") => {
-	let i = u(await c(t, n, r).completion);
-	return e.chain().focus().setImage(d(i, n)).run(), i;
-}, v = (e, t) => {
+}, v = async (e, t, n, r = "input") => {
+	let i = d(await l(t, n, r).completion);
+	return e.chain().focus().setImage(f(i, n)).run(), i;
+}, y = (e, t) => {
 	let n = (n) => {
 		let r = Array.from(n.clipboardData?.files ?? []).find((e) => e.type.startsWith("image/"));
-		r && (n.preventDefault(), _(e, r, t, "paste"));
+		r && (n.preventDefault(), v(e, r, t, "paste"));
 	}, r = (n) => {
 		let r = Array.from(n.dataTransfer?.files ?? []).find((e) => e.type.startsWith("image/"));
-		r && (n.preventDefault(), _(e, r, t, "drop"));
+		r && (n.preventDefault(), v(e, r, t, "drop"));
 	};
 	return e.view.dom.addEventListener("paste", n), e.view.dom.addEventListener("drop", r), () => {
 		e.view.dom.removeEventListener("paste", n), e.view.dom.removeEventListener("drop", r);
 	};
-}, y = (e, t) => {
+}, b = (e, t) => {
 	let n = async (n, r) => {
-		let i = u(await c(n, t, r).completion), a = e.getSelection(!0)?.index ?? 0;
-		e.clipboard ? e.clipboard.dangerouslyPasteHTML(a, f(i, t), "user") : e.insertEmbed(a, "image", i.url, "user");
+		let i = d(await l(n, t, r).completion), a = e.getSelection(!0)?.index ?? 0;
+		e.clipboard ? e.clipboard.dangerouslyPasteHTML(a, p(i, t), "user") : e.insertEmbed(a, "image", i.url, "user");
 	};
 	t.toolbarUpload !== !1 && e.getModule("toolbar").addHandler("image", () => {
 		let e = document.createElement("input");
@@ -135,9 +140,9 @@ var n = (e, t) => {
 	return e.root.addEventListener("paste", r), e.root.addEventListener("drop", i), () => {
 		e.root.removeEventListener("paste", r), e.root.removeEventListener("drop", i);
 	};
-}, b = (e, t) => {
+}, x = (e, t) => {
 	let n = async (n, r) => {
-		let i = u(await c(n, t, r).completion), a = `![${l(i, t).replace(/([\\\[\]])/g, "\\$1")}](<${i.url.replace(/</g, "%3C").replace(/>/g, "%3E")}>)`;
+		let i = d(await l(n, t, r).completion), a = `![${u(i, t).replace(/([\\\[\]])/g, "\\$1")}](<${i.url.replace(/</g, "%3C").replace(/>/g, "%3E")}>)`;
 		e.setRangeText(a, e.selectionStart, e.selectionEnd, "end"), e.dispatchEvent(new Event("input", { bubbles: !0 }));
 	}, r = (e) => {
 		let t = Array.from(e.clipboardData?.files ?? []).find((e) => e.type.startsWith("image/"));
@@ -149,14 +154,14 @@ var n = (e, t) => {
 	return e.addEventListener("paste", r), e.addEventListener("drop", i), () => {
 		e.removeEventListener("paste", r), e.removeEventListener("drop", i);
 	};
-}, x = (e, t, n, r = "url") => {
+}, S = (e, t, n, r = "url") => {
 	let i = async () => {
 		let i = e.files?.[0];
 		if (!i) return;
-		let a = await c(i, n).completion;
-		t.value = r === "json" ? JSON.stringify(a) : u(a).url, t.dispatchEvent(new Event("input", { bubbles: !0 })), t.dispatchEvent(new Event("change", { bubbles: !0 }));
+		let a = await l(i, n).completion;
+		t.value = r === "json" ? JSON.stringify(a) : d(a).url, t.dispatchEvent(new Event("input", { bubbles: !0 })), t.dispatchEvent(new Event("change", { bubbles: !0 }));
 	};
 	return e.addEventListener("change", i), () => e.removeEventListener("change", i);
 };
 //#endregion
-export { g as a, v as c, _ as d, m as i, h as l, x as n, f as o, b as r, y as s, d as t, c as u };
+export { _ as a, y as c, v as d, h as i, g as l, S as n, p as o, x as r, b as s, f as t, l as u };

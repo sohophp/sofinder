@@ -1,4 +1,4 @@
-import type { ApiResponse, AssetMetadata, AssetReference, BatchResult, DocumentPreviewJob, Entry, ImageAction, ImageBatchResult, ImageCapabilities, ImageEditResult, ImagePreset, ImageInfo, MetadataState, PluginDescriptor, ResourceType, SecurityStatus, SoFinderConfig, TrashPage } from "./types";
+import type { ApiResponse, AssetDeleteCheck, AssetMetadata, AssetReference, AssetSearchOptions, AssetSearchResult, AssetUsage, BatchResult, DocumentPreviewJob, Entry, ImageAction, ImageBatchResult, ImageCapabilities, ImageEditResult, ImagePreset, ImageInfo, MetadataState, PluginDescriptor, ResourceType, SecurityStatus, SoFinderConfig, TrashPage } from "./types";
 
 export const isApiVersionSupported = (version: string): boolean => /^1(?:\.|$)/.test(version);
 
@@ -39,7 +39,7 @@ export class Api {
   }
 
   async configData() {
-    const data = await this.request<{ apiVersion: string; resources: ResourceType[]; plugins: PluginDescriptor[]; imagePresets: Record<string, ImagePreset>; imageCapabilities?: ImageCapabilities; featureAvailability?: SoFinderConfig["featureAvailability"]; uiDefaults?: SoFinderConfig["uiDefaults"]; signedUrls?: { enabled: boolean; defaultTtlSeconds: number; maxTtlSeconds: number }; assetCatalog?: { enabled: boolean; altLocales?: string[] }; imageVariants?: { enabled: boolean } }>("/config");
+    const data = await this.request<{ apiVersion: string; resources: ResourceType[]; plugins: PluginDescriptor[]; imagePresets: Record<string, ImagePreset>; imageCapabilities?: ImageCapabilities; featureAvailability?: SoFinderConfig["featureAvailability"]; uiDefaults?: SoFinderConfig["uiDefaults"]; signedUrls?: { enabled: boolean; defaultTtlSeconds: number; maxTtlSeconds: number }; assetCatalog?: { enabled: boolean; altLocales?: string[] }; assetSearch?: { enabled: boolean }; assetUsage?: { enabled: boolean }; assetAccessSessions?: { enabled: boolean }; imageVariants?: { enabled: boolean } }>("/config");
     if (!isApiVersionSupported(data.apiVersion)) {
       throw new ApiError(`SoFinder UI requires API 1.x; server reported ${data.apiVersion || "an unknown version"}.`, "incompatible_api_version", 426);
     }
@@ -56,6 +56,31 @@ export class Api {
   updateAssetMetadata(id: string, metadata: Pick<AssetMetadata, "alt" | "altTranslations" | "title" | "tags" | "version">) {
     return this.request<{ metadata: AssetMetadata }>(`/assets/${encodeURIComponent(id)}/metadata`, { method: "PATCH", body: JSON.stringify(metadata) });
   }
+
+  searchAssets(options: AssetSearchOptions) {
+    const query = new URLSearchParams();
+    if (options.keyword) query.set("q", options.keyword);
+    if (options.resources?.length) query.set("resources", options.resources.join(","));
+    if (options.path) query.set("path", options.path);
+    if (options.fields?.length) query.set("fields", options.fields.join(","));
+    if (options.tags?.length) query.set("tags", options.tags.join(","));
+    if (options.extensions?.length) query.set("extensions", options.extensions.join(","));
+    if (options.type && options.type !== "all") query.set("type", options.type);
+    if (options.minimumSize !== undefined) query.set("minSize", String(options.minimumSize));
+    if (options.maximumSize !== undefined) query.set("maxSize", String(options.maximumSize));
+    if (options.modifiedAfter !== undefined) query.set("modifiedAfter", String(options.modifiedAfter));
+    if (options.modifiedBefore !== undefined) query.set("modifiedBefore", String(options.modifiedBefore));
+    query.set("offset", String(options.offset ?? 0));
+    query.set("limit", String(options.limit ?? 50));
+    return this.request<AssetSearchResult>(`/assets/search?${query}`);
+  }
+
+  assetUsages(id: string) { return this.request<{ items: AssetUsage[]; total: number }>(`/assets/${encodeURIComponent(id)}/usages`); }
+  registerAssetUsage(id: string, referenceId: string, value: Pick<AssetUsage, "label" | "url" | "context">) { return this.request<{ usage: AssetUsage }>(`/assets/${encodeURIComponent(id)}/usages/${encodeURIComponent(referenceId)}`, { method: "PUT", body: JSON.stringify(value) }); }
+  removeAssetUsage(id: string, referenceId: string) { return this.request<Record<string, never>>(`/assets/${encodeURIComponent(id)}/usages/${encodeURIComponent(referenceId)}`, { method: "DELETE" }); }
+  checkAssetDeletion(resource: string, paths: string[]) { return this.request<AssetDeleteCheck>("/assets/delete-check", { method: "POST", body: JSON.stringify({ resource, paths }) }); }
+  createAssetAccessSession(assetIds: string[], ttl?: number) { return this.request<{ id: string; expiresAt: number; assets: Array<{ assetId: string; resource: string; path: string; url: string }> }>("/assets/access-sessions", { method: "POST", body: JSON.stringify({ assetIds, ttl }) }); }
+  revokeAssetAccessSession(id: string) { return this.request<Record<string, never>>(`/assets/access-sessions/${encodeURIComponent(id)}`, { method: "DELETE" }); }
 
   prepareDocumentPreview(resource: string, path: string, retry = false) {
     return this.request<DocumentPreviewJob>("/preview/document/jobs", { method: "POST", body: JSON.stringify({ resource, path, retry }) });

@@ -7,28 +7,35 @@
       "_react-B5TC723I.js"
     ]
   },
-  "_Modal-Fr6Afibb.js": {
-    "file": "Modal-Fr6Afibb.js",
+  "_Modal-Dw1vVt5K.js": {
+    "file": "Modal-Dw1vVt5K.js",
     "name": "Modal",
     "imports": [
       "_jsx-runtime-CmCsaYvT.js",
       "_react-B5TC723I.js",
-      "_UiIcon-ClFQjiWf.js"
+      "_UiIcon-TSKzVe_e.js"
     ]
   },
-  "_UiIcon-ClFQjiWf.js": {
-    "file": "UiIcon-ClFQjiWf.js",
+  "_UiIcon-TSKzVe_e.js": {
+    "file": "UiIcon-TSKzVe_e.js",
     "name": "UiIcon",
     "imports": [
       "_jsx-runtime-CmCsaYvT.js"
+    ]
+  },
+  "_api-Cq-FmALq.js": {
+    "file": "api-Cq-FmALq.js",
+    "name": "api",
+    "imports": [
+      "_defineProperty-B_lfzbVN.js"
     ]
   },
   "_defineProperty-B_lfzbVN.js": {
     "file": "defineProperty-B_lfzbVN.js",
     "name": "defineProperty"
   },
-  "_editorAdapters-DDdfmP7S.js": {
-    "file": "editorAdapters-DDdfmP7S.js",
+  "_editorAdapters-C-p7BLZ5.js": {
+    "file": "editorAdapters-C-p7BLZ5.js",
     "name": "editorAdapters",
     "imports": [
       "src/sdk.ts"
@@ -59,29 +66,43 @@
     "src": "src/ckeditor5.ts",
     "isEntry": true,
     "imports": [
-      "_editorAdapters-DDdfmP7S.js"
+      "_editorAdapters-C-p7BLZ5.js"
     ]
   },
   "src/components/AssetMetadataDialog.tsx": {
-    "file": "AssetMetadataDialog-DyQpAmp1.js",
+    "file": "AssetMetadataDialog-wkAYeZuw.js",
     "name": "AssetMetadataDialog",
     "src": "src/components/AssetMetadataDialog.tsx",
     "isDynamicEntry": true,
     "imports": [
       "_jsx-runtime-CmCsaYvT.js",
       "_react-B5TC723I.js",
-      "_Modal-Fr6Afibb.js"
+      "_Modal-Dw1vVt5K.js"
+    ]
+  },
+  "src/components/AssetSearchDialog.tsx": {
+    "file": "AssetSearchDialog-CxxqLz9Z.js",
+    "name": "AssetSearchDialog",
+    "src": "src/components/AssetSearchDialog.tsx",
+    "isDynamicEntry": true,
+    "imports": [
+      "_jsx-runtime-CmCsaYvT.js",
+      "_react-B5TC723I.js",
+      "_UiIcon-TSKzVe_e.js",
+      "_Modal-Dw1vVt5K.js",
+      "_EntryVisuals-COz6M0oc.js",
+      "_format-GD3_dnvn.js"
     ]
   },
   "src/components/BulkRenameDialog.tsx": {
-    "file": "BulkRenameDialog-CyN0IBjp.js",
+    "file": "BulkRenameDialog-Bx8Hb2MI.js",
     "name": "BulkRenameDialog",
     "src": "src/components/BulkRenameDialog.tsx",
     "isDynamicEntry": true,
     "imports": [
       "_jsx-runtime-CmCsaYvT.js",
       "_react-B5TC723I.js",
-      "_Modal-Fr6Afibb.js",
+      "_Modal-Dw1vVt5K.js",
       "_nameValidation-DURyMFRU.js"
     ]
   },
@@ -96,24 +117,26 @@
     ]
   },
   "src/components/DestinationDialog.tsx": {
-    "file": "DestinationDialog-BHVkDHLP.js",
+    "file": "DestinationDialog-BC3UD7vL.js",
     "name": "DestinationDialog",
     "src": "src/components/DestinationDialog.tsx",
     "isDynamicEntry": true,
     "imports": [
       "_jsx-runtime-CmCsaYvT.js",
-      "_Modal-Fr6Afibb.js",
+      "_Modal-Dw1vVt5K.js",
       "_EntryVisuals-COz6M0oc.js"
     ]
   },
   "src/components/DetailsPanel.tsx": {
-    "file": "DetailsPanel-D6h8EgXg.js",
+    "file": "DetailsPanel-LX8ATWBT.js",
     "name": "DetailsPanel",
     "src": "src/components/DetailsPanel.tsx",
     "isDynamicEntry": true,
     "imports": [
       "_jsx-runtime-CmCsaYvT.js",
-      "_UiIcon-ClFQjiWf.js",
+      "_react-B5TC723I.js",
+      "_api-Cq-FmALq.js",
+      "_UiIcon-TSKzVe_e.js",
       "_EntryVisuals-COz6M0oc.js",
       "_format-GD3_dnvn.js"
     ]
@@ -129,13 +152,13 @@
     ]
   },
   "src/components/FavoritesPage.tsx": {
-    "file": "FavoritesPage-DOAEEtVv.js",
+    "file": "FavoritesPage-BL417AVy.js",
     "name": "FavoritesPage",
     "src": "src/components/FavoritesPage.tsx",
     "isDynamicEntry": true,
     "imports": [
       "_jsx-runtime-CmCsaYvT.js",
-      "_UiIcon-ClFQjiWf.js"
+      "_UiIcon-TSKzVe_e.js"
     ]
   },
   "src/components/FolderTree.tsx": {
@@ -149,14 +172,14 @@
     ]
   },
   "src/components/ImageEditor.tsx": {
-    "file": "ImageEditor-UI78vCJ4.js",
+    "file": "ImageEditor-T7MAuQhB.js",
     "name": "ImageEditor",
     "src": "src/components/ImageEditor.tsx",
     "isDynamicEntry": true,
     "imports": [
       "_jsx-runtime-CmCsaYvT.js",
       "_react-B5TC723I.js",
-      "_Modal-Fr6Afibb.js",
+      "_Modal-Dw1vVt5K.js",
       "_nameValidation-DURyMFRU.js"
     ]
   },
@@ -172,93 +195,93 @@
     ]
   },
   "src/components/ImageProcessDialog.tsx": {
-    "file": "ImageProcessDialog-Aq1ZM9V6.js",
+    "file": "ImageProcessDialog-ByV6TZGF.js",
     "name": "ImageProcessDialog",
     "src": "src/components/ImageProcessDialog.tsx",
     "isDynamicEntry": true,
     "imports": [
       "_jsx-runtime-CmCsaYvT.js",
       "_react-B5TC723I.js",
-      "_Modal-Fr6Afibb.js"
+      "_Modal-Dw1vVt5K.js"
     ]
   },
   "src/components/MetadataSidebarPanels.tsx": {
-    "file": "MetadataSidebarPanels-CZ_bAocx.js",
+    "file": "MetadataSidebarPanels-BNaJcrUA.js",
     "name": "MetadataSidebarPanels",
     "src": "src/components/MetadataSidebarPanels.tsx",
     "isDynamicEntry": true,
     "imports": [
       "_jsx-runtime-CmCsaYvT.js",
       "_react-B5TC723I.js",
-      "_UiIcon-ClFQjiWf.js"
+      "_UiIcon-TSKzVe_e.js"
     ]
   },
   "src/components/SecurityStatusDialog.tsx": {
-    "file": "SecurityStatusDialog-DVX5Nztn.js",
+    "file": "SecurityStatusDialog-CNbwUQga.js",
     "name": "SecurityStatusDialog",
     "src": "src/components/SecurityStatusDialog.tsx",
     "isDynamicEntry": true,
     "imports": [
       "_jsx-runtime-CmCsaYvT.js",
       "_react-B5TC723I.js",
-      "_Modal-Fr6Afibb.js",
+      "_Modal-Dw1vVt5K.js",
       "_format-GD3_dnvn.js"
     ]
   },
   "src/components/SettingsDialog.tsx": {
-    "file": "SettingsDialog-Bg5uGPeC.js",
+    "file": "SettingsDialog-_VxGvabA.js",
     "name": "SettingsDialog",
     "src": "src/components/SettingsDialog.tsx",
     "isDynamicEntry": true,
     "imports": [
       "_jsx-runtime-CmCsaYvT.js",
       "_react-B5TC723I.js",
-      "_Modal-Fr6Afibb.js"
+      "_Modal-Dw1vVt5K.js"
     ]
   },
   "src/components/ShareDialog.tsx": {
-    "file": "ShareDialog-CB4j2Ekj.js",
+    "file": "ShareDialog-FoI0WjES.js",
     "name": "ShareDialog",
     "src": "src/components/ShareDialog.tsx",
     "isDynamicEntry": true,
     "imports": [
       "_jsx-runtime-CmCsaYvT.js",
       "_react-B5TC723I.js",
-      "_Modal-Fr6Afibb.js"
+      "_Modal-Dw1vVt5K.js"
     ]
   },
   "src/components/TagsDialog.tsx": {
-    "file": "TagsDialog-dsgKeVRS.js",
+    "file": "TagsDialog-B7FTK_S8.js",
     "name": "TagsDialog",
     "src": "src/components/TagsDialog.tsx",
     "isDynamicEntry": true,
     "imports": [
       "_jsx-runtime-CmCsaYvT.js",
       "_react-B5TC723I.js",
-      "_UiIcon-ClFQjiWf.js",
-      "_Modal-Fr6Afibb.js"
+      "_UiIcon-TSKzVe_e.js",
+      "_Modal-Dw1vVt5K.js"
     ]
   },
   "src/components/TrashDialog.tsx": {
-    "file": "TrashDialog-HQDbFSwF.js",
+    "file": "TrashDialog-eMGhXaNY.js",
     "name": "TrashDialog",
     "src": "src/components/TrashDialog.tsx",
     "isDynamicEntry": true,
     "imports": [
       "_jsx-runtime-CmCsaYvT.js",
       "_react-B5TC723I.js",
-      "_UiIcon-ClFQjiWf.js",
-      "_Modal-Fr6Afibb.js"
+      "_UiIcon-TSKzVe_e.js",
+      "_Modal-Dw1vVt5K.js"
     ]
   },
   "src/components/UploadQueue.tsx": {
-    "file": "UploadQueue-EzYhnrud.js",
+    "file": "UploadQueue-Bo09-tJD.js",
     "name": "UploadQueue",
     "src": "src/components/UploadQueue.tsx",
     "isDynamicEntry": true,
     "imports": [
       "_jsx-runtime-CmCsaYvT.js",
-      "_UiIcon-ClFQjiWf.js"
+      "_UiIcon-TSKzVe_e.js"
     ]
   },
   "src/editors.ts": {
@@ -267,23 +290,23 @@
     "src": "src/editors.ts",
     "isEntry": true,
     "imports": [
-      "_editorAdapters-DDdfmP7S.js"
+      "_editorAdapters-C-p7BLZ5.js"
     ]
   },
   "src/locales/en.ts": {
-    "file": "en-C_HF2M7I.js",
+    "file": "en-Ckj0f1kO.js",
     "name": "en",
     "src": "src/locales/en.ts",
     "isDynamicEntry": true
   },
   "src/locales/zh-cn.ts": {
-    "file": "zh-cn-ChnTMfqI.js",
+    "file": "zh-cn-Ddn2KMNe.js",
     "name": "zh-cn",
     "src": "src/locales/zh-cn.ts",
     "isDynamicEntry": true
   },
   "src/locales/zh-tw.ts": {
-    "file": "zh-tw-UihVQ5GS.js",
+    "file": "zh-tw-BeVNT9Ae.js",
     "name": "zh-tw",
     "src": "src/locales/zh-tw.ts",
     "isDynamicEntry": true
@@ -296,9 +319,9 @@
     "imports": [
       "_jsx-runtime-CmCsaYvT.js",
       "_react-B5TC723I.js",
-      "_defineProperty-B_lfzbVN.js",
-      "_UiIcon-ClFQjiWf.js",
-      "_Modal-Fr6Afibb.js",
+      "_api-Cq-FmALq.js",
+      "_UiIcon-TSKzVe_e.js",
+      "_Modal-Dw1vVt5K.js",
       "_nameValidation-DURyMFRU.js",
       "_EntryVisuals-COz6M0oc.js",
       "_format-GD3_dnvn.js"
@@ -324,7 +347,8 @@
       "src/components/ContextMenu.tsx",
       "src/components/UploadQueue.tsx",
       "src/components/ImagePreviewPane.tsx",
-      "src/components/AssetMetadataDialog.tsx"
+      "src/components/AssetMetadataDialog.tsx",
+      "src/components/AssetSearchDialog.tsx"
     ]
   },
   "src/picker.ts": {
@@ -339,7 +363,7 @@
     "src": "src/quill.ts",
     "isEntry": true,
     "imports": [
-      "_editorAdapters-DDdfmP7S.js"
+      "_editorAdapters-C-p7BLZ5.js"
     ]
   },
   "src/sdk.ts": {
@@ -357,7 +381,7 @@
     "src": "src/tinymce.ts",
     "isEntry": true,
     "imports": [
-      "_editorAdapters-DDdfmP7S.js"
+      "_editorAdapters-C-p7BLZ5.js"
     ]
   },
   "src/tiptap.ts": {
@@ -366,7 +390,7 @@
     "src": "src/tiptap.ts",
     "isEntry": true,
     "imports": [
-      "_editorAdapters-DDdfmP7S.js"
+      "_editorAdapters-C-p7BLZ5.js"
     ]
   },
   "style.css": {

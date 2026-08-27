@@ -62,6 +62,9 @@ Secret 至少 32 Byte。签名 URL 绑定文件版本且只适用于 `proxy` 资
 
 ```yaml
 so_finder:
+  asset_search: { enabled: true, provider_service: null, max_scanned_entries: 10000 }
+  asset_usage: { enabled: false, store_service: null }
+  asset_access_sessions: { enabled: false, store_service: null, default_ttl_seconds: 3600, max_ttl_seconds: 86400, max_assets: 50 }
   asset_catalog: { enabled: false, store_service: null, register_existing: lazy, alt_locales: [en, zh-cn, zh-tw] }
   image_variants:
     enabled: false
@@ -73,6 +76,10 @@ so_finder:
     cache_ttl_seconds: 2592000
   workspaces: { enabled: false, default: main, resolver_service: null, option_provider_service: null }
 ```
+
+内置 `asset_search` 只递归扫描当前 Workspace 已授权资源，并在 `max_scanned_entries` 停止；大型或已建立索引的部署可通过 `provider_service` 替换搜索实现，但返回结果前仍必须执行授权。浏览器只在当前用户的本地浏览器存储中保留最近 5 个搜索条件。
+
+`asset_usage` 在宿主内容系统接入稳定资产 ID 的使用登记前保持关闭；开启后，删除预检会提示引用该资产的页面或记录。集群模式默认改用共享状态。`asset_access_sessions` 为私有 Proxy 资产生成短期、可撤销且绑定文件版本的成组交付 URL。需要免登录读取时，宿主防火墙只能放行 `/sofinder/asset-session/`；随机会话 URL 本身就是授权，不能作为永久公开网址保存。
 
 `asset_catalog.alt_locales` 由宿主限定可添加的替代文本语言；用户只能从下拉列表选择，不能输入任意语言代码。配置中移除语言后，已保存的该语言文本仍会保留并可编辑。
 

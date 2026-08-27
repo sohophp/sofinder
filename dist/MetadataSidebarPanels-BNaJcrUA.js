@@ -1,6 +1,6 @@
 import { t as e } from "./jsx-runtime-CmCsaYvT.js";
 import { t } from "./react-B5TC723I.js";
-import { t as n } from "./UiIcon-ClFQjiWf.js";
+import { t as n } from "./UiIcon-TSKzVe_e.js";
 //#region src/components/MetadataSidebarPanels.tsx
 var r = t(), i = e();
 function a({ variant: e, items: t, labels: a, onOpen: o }) {

@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+- Add bounded cross-folder/workspace asset search with field/type/tag/extension/size/date filters, URL state, recent searches and an editable asset-properties sidebar.
+- Add optional local/shared asset usage tracking, authorized usage APIs and recursive deletion preflight warnings, plus CKEditor stable-ID replacement support and configurable upload resource routing.
+- Add opt-in revocable, revision-bound private asset access sessions and the idempotent `sofinder:assets:migrate` dry-run/JSON migration command.
+- Publish opt-in `AssetVersionProviderInterface` and suggestion-only `AssetEnrichmentProviderInterface` contracts without enabling version retention or AI processing in core.
 - Keep optional tag chips compact and horizontally aligned at every interface scale, including bounded ellipsis for long suggestions.
 - Refine asset metadata actions with compact accessible icons and use a host-controlled language selector for localized alternative text while retaining saved locales removed from configuration.
 - Complete asset alternative-text delivery across picker/upload integrations, expose metadata editing from details, preview and context menus, and add an independent `metadata.update` write capability.

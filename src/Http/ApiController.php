@@ -43,6 +43,9 @@ final readonly class ApiController
         private bool $imageVariantsEnabled = false,
         /** @var list<string> */
         private array $assetAltLocales = ['en', 'zh-cn', 'zh-tw'],
+        private bool $assetSearchEnabled = true,
+        private bool $assetUsageEnabled = false,
+        private bool $assetAccessSessionsEnabled = false,
     ) {
     }
 
@@ -75,6 +78,9 @@ final readonly class ApiController
                 'maxTtlSeconds' => $this->signedUrlMaxTtl,
             ],
             'assetCatalog' => ['enabled' => $this->assetCatalogEnabled, 'altLocales' => $this->assetAltLocales],
+            'assetSearch' => ['enabled' => $this->assetSearchEnabled],
+            'assetUsage' => ['enabled' => $this->assetUsageEnabled],
+            'assetAccessSessions' => ['enabled' => $this->assetAccessSessionsEnabled],
             'imageVariants' => ['enabled' => $this->imageVariantsEnabled],
         ]);
     }

@@ -68,6 +68,19 @@ HTTP Status 是最終依據；`429` 包含 `Retry-After: 2`。批次請求可能
 
 ## 發現與列表
 
+### `GET /api/assets/search`
+
+在已授權資源及子目錄中依檔名、資產標題、預設/多語言替代文字和共享標籤搜尋；可依資源、路徑範圍、類型、副檔名、大小及修改日期篩選。回應包含分頁、彙總、掃描數量和 `truncated`，避免將受限掃描誤認為完整索引。
+
+### 資產使用與刪除預檢
+
+- `GET /api/assets/{id}/usages` 列出授權範圍內的 Host 引用；`PUT/DELETE /api/assets/{id}/usages/{referenceId}` 冪等登記或移除 `{label,url,context}`。
+- `POST /api/assets/delete-check` 接受 `{resource,paths}`，回傳 `safe`、引用總數和受影響資產。它只提示風險，不會繞過使用者明確的刪除決定。
+
+### 私有資產存取工作階段
+
+`POST /api/assets/access-sessions` 接受私有 Proxy 資產 ID 和可選 `ttl`，回傳綁定檔案版本的內聯 URL 與到期時間；`DELETE /api/assets/access-sessions/{id}` 撤銷整組工作階段。檔案變更、到期、撤銷或未列入工作階段的資產均無法讀取。
+
 ### `GET /api/config`
 
 返回 `apiVersion`、目前使用者可見的 `resources`、Plugin Descriptor、圖片預設、有效圖片 Capability 和 UI Default。目前 API Version 為 `1.0`。

@@ -243,6 +243,57 @@ export interface AssetMetadata {
     version: number;
     updatedAt: number;
 }
+export interface AssetSearchOptions {
+    keyword?: string;
+    resources?: string[];
+    path?: string;
+    fields?: Array<"name" | "title" | "alt" | "tags">;
+    tags?: string[];
+    extensions?: string[];
+    type?: "all" | "image" | "document" | "audio" | "video" | "archive" | "other";
+    minimumSize?: number;
+    maximumSize?: number;
+    modifiedAfter?: number;
+    modifiedBefore?: number;
+    offset?: number;
+    limit?: number;
+}
+export interface AssetSearchResult {
+    items: Array<{
+        resource: string;
+        entry: Entry;
+        assetId: string | null;
+        metadata: AssetMetadata;
+    }>;
+    total: number;
+    offset: number;
+    limit: number;
+    scanned: number;
+    truncated: boolean;
+    facets: {
+        resources: Record<string, number>;
+        types: Record<string, number>;
+        extensions: Record<string, number>;
+    };
+}
+export interface AssetUsage {
+    referenceId: string;
+    label: string;
+    url: string | null;
+    context: string | null;
+    updatedAt: number;
+}
+export interface AssetDeleteCheck {
+    safe: boolean;
+    complete?: boolean;
+    total: number;
+    assets: Array<{
+        assetId: string;
+        path: string;
+        usages: AssetUsage[];
+        total: number;
+    }>;
+}
 export interface TrashItem {
     id: string;
     resource: string;

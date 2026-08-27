@@ -51,6 +51,9 @@ Secret 至少 32 Byte。簽章 URL 綁定檔案版本且僅適用於 `proxy` 資
 
 ```yaml
 so_finder:
+  asset_search: { enabled: true, provider_service: null, max_scanned_entries: 10000 }
+  asset_usage: { enabled: false, store_service: null }
+  asset_access_sessions: { enabled: false, store_service: null, default_ttl_seconds: 3600, max_ttl_seconds: 86400, max_assets: 50 }
   asset_catalog: { enabled: false, store_service: null, register_existing: lazy, alt_locales: [en, zh-cn, zh-tw] }
   image_variants:
     enabled: false
@@ -62,6 +65,10 @@ so_finder:
     cache_ttl_seconds: 2592000
   workspaces: { enabled: false, default: main, resolver_service: null, option_provider_service: null }
 ```
+
+內建 `asset_search` 只遞迴掃描目前 Workspace 已授權的資源，並在 `max_scanned_entries` 停止；大型或已有索引的部署可透過 `provider_service` 替換搜尋實作，但回傳結果前仍必須執行授權。瀏覽器只在目前使用者的本機瀏覽器儲存中保留最近 5 個搜尋條件。
+
+`asset_usage` 在 Host 內容系統接入穩定資產 ID 的使用登記前維持關閉；啟用後，刪除預檢會提示引用該資產的頁面或記錄。叢集模式預設改用共享狀態。`asset_access_sessions` 為私有 Proxy 資產產生短期、可撤銷且綁定檔案版本的成組交付 URL。需要免登入讀取時，Host 防火牆只能放行 `/sofinder/asset-session/`；隨機工作階段 URL 本身就是授權，不能當成永久公開網址儲存。
 
 `asset_catalog.alt_locales` 由宿主限制可新增的替代文字語言；使用者只能從下拉清單選擇，不能輸入任意語言代碼。設定中移除語言後，已儲存的該語言文字仍會保留並可編輯。
 

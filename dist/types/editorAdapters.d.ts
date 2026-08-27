@@ -2,6 +2,12 @@ import { SoFinderSdkError, type SoFinderClientOptions, type UploadTask, type Upl
 import type { AssetReference, UploadConflictStrategy } from "./types";
 export interface EditorAdapterOptions extends Omit<SoFinderClientOptions, "onConflict"> {
     resource: string;
+    resourceRoutes?: Array<{
+        resource: string;
+        mimeTypes?: string[];
+        extensions?: string[];
+    }>;
+    resourceRouter?: (file: File) => string;
     path?: string | (() => string);
     conflictStrategy?: UploadConflictStrategy;
     defaultAlt?: (asset: AssetReference) => string;
@@ -13,6 +19,7 @@ export interface EditorAdapterOptions extends Omit<SoFinderClientOptions, "onCon
     onError?: (error: SoFinderSdkError) => void;
     toolbarUpload?: boolean;
 }
+export declare const resourceForUpload: (file: File, options: EditorAdapterOptions) => string;
 export declare const uploadForEditor: (file: File, options: EditorAdapterOptions, source?: "input" | "paste" | "drop") => UploadTask;
 export declare const altFor: (asset: AssetReference, options: EditorAdapterOptions) => string;
 export declare const attributesFor: (asset: AssetReference, options: EditorAdapterOptions) => Record<string, string>;

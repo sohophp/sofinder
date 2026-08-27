@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
-import { attributesFor, ckeditorUploadResult, createCkeditor5UploadPlugin, imageHtml } from "../src/editorAdapters";
+import { attributesFor, ckeditorUploadResult, createCkeditor5UploadPlugin, imageHtml, resourceForUpload } from "../src/editorAdapters";
 import { altForAsset, attributesForAsset, imageHtmlForAsset } from "../src/assetPresentation";
 import type { AssetReference } from "../src/types";
 
@@ -36,5 +36,12 @@ describe("editor adapters", () => {
       urls: { default: "/images/photo.jpg", "1200": "/images/photo.jpg", "320": "/variant/320", "640": "/variant/640" }, sofinderAlt: "A photo",
       sofinderAssetId: asset.assetId, sofinderWidth: 1200, sofinderHeight: 800,
     });
+  });
+
+  it("routes direct editor uploads by inspected MIME or extension with a safe fallback", () => {
+    const options = { apiBase: "/api", csrfToken: "token", resource: "Files", resourceRoutes: [{ resource: "Images", mimeTypes: ["image/png"] }, { resource: "Documents", extensions: ["pdf"] }] };
+    expect(resourceForUpload(new File(["x"], "photo.bin", { type: "image/png" }), options)).toBe("Images");
+    expect(resourceForUpload(new File(["x"], "manual.PDF"), options)).toBe("Documents");
+    expect(resourceForUpload(new File(["x"], "archive.zip"), options)).toBe("Files");
   });
 });

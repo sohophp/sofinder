@@ -71,6 +71,15 @@ bin/console sofinder:metadata:repair
 正規化本機 JSON Metadata，並移除不存在的資源或項目參照。Dry-run 使用同一把鎖但絕不寫入；
 共享 Metadata Service 應使用 Provider 自己的修復工具。
 
+## 穩定資產移轉
+
+```bash
+bin/console sofinder:assets:migrate --dry-run --json
+bin/console sofinder:assets:migrate Files --workspace=main --json
+```
+
+遞迴預覽或將既有檔案登記到選用資產目錄。命令受 `--limit` 限制、可重複執行、不改寫檔案內容，並輸出路徑到 ID 的對應，供 Host 另行移轉內容記錄。
+
 ## 快取清理
 
 ```bash

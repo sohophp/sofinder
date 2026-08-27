@@ -7,6 +7,10 @@ description: SoFinder 每個公開版本的重要變更。
 
 ## 尚未發佈
 
+- 新增有掃描上限的跨目錄/Workspace 資產搜尋、欄位及類型等篩選、URL 狀態、最近搜尋和可編輯資產屬性側欄。
+- 新增預設關閉的本機/共享資產使用追蹤、授權 API、遞迴刪除預檢警告，以及 CKEditor 穩定 ID 取代和可設定上傳資源路由。
+- 新增可撤銷、綁定檔案版本的私有資產存取工作階段，以及冪等、支援 Dry-run/JSON 的 `sofinder:assets:migrate` 移轉命令。
+- 發佈選用 `AssetVersionProviderInterface` 和僅提供建議的 `AssetEnrichmentProviderInterface`，核心不啟用版本保存或 AI 處理。
 - 改善資產中繼資料視窗版面，新增有數量限制的多語言替代文字及編輯器語言回退，並維持原資產目錄介面相容。
 - 補齊 Picker／上傳編輯器整合中的圖片替代文字，詳細資料、預覽及右鍵均可編輯資產中繼資料，並新增獨立的 `metadata.update` 寫入權限。
 - 將續傳 Session 綁定可信 Workspace，新增可擴充的跨 Workspace 可寫儲存目錄安全稽核。

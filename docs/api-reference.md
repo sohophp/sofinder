@@ -80,6 +80,30 @@ same workspace-scoped record. `PATCH /api/assets/{id}/metadata` updates `alt`,
 
 ## Discovery and listing
 
+### `GET /api/assets/search`
+
+Searches across authorized resources and nested folders by file name, asset title,
+localized/default alternative text and shared tags. Optional filters cover resource,
+path scope, type, extension, size and modification date. The response includes
+pagination, facets, scanned count and a `truncated` flag so callers never mistake a
+bounded scan for a complete index.
+
+### Asset usage and deletion preflight
+
+- `GET /api/assets/{id}/usages` lists authorized host references.
+- `PUT /api/assets/{id}/usages/{referenceId}` idempotently registers a bounded
+  `{label,url,context}` reference; `DELETE` removes it.
+- `POST /api/assets/delete-check` accepts `{resource,paths}` and returns `safe`,
+  the total reference count and affected assets. It reports risk; it does not
+  silently override the actor's explicit delete decision.
+
+### Private asset access sessions
+
+`POST /api/assets/access-sessions` accepts private proxy `assetIds` and optional
+`ttl`, then returns version-bound inline URLs and an expiry. `DELETE
+/api/assets/access-sessions/{id}` revokes the entire session. Changed, expired,
+revoked or unlisted assets cannot be consumed through the bearer URL.
+
 ### `GET /api/config`
 
 Returns `apiVersion`, visible `resources`, plugin descriptors, image presets, effective image capabilities and UI defaults. The current API version is `1.0`.

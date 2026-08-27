@@ -59,6 +59,12 @@ sofinder_api_asset_resolve:
   methods: [GET]
   defaults: { _sofinder: true }
 
+sofinder_api_asset_search:
+  path: /api/assets/search
+  controller: SohoPHP\SoFinder\Http\AssetSearchController
+  methods: [GET]
+  defaults: { _sofinder: true }
+
 sofinder_api_asset_get:
   path: /api/assets/{id}
   controller: SohoPHP\SoFinder\Http\AssetApiController::get
@@ -71,6 +77,53 @@ sofinder_api_asset_update:
   controller: SohoPHP\SoFinder\Http\AssetApiController::update
   methods: [PATCH]
   requirements: { id: '[a-f0-9-]{36}' }
+  defaults: { _sofinder: true }
+
+sofinder_api_asset_usage_list:
+  path: /api/assets/{id}/usages
+  controller: SohoPHP\SoFinder\Http\AssetUsageController::list
+  methods: [GET]
+  requirements: { id: '[a-f0-9-]{36}' }
+  defaults: { _sofinder: true }
+
+sofinder_api_asset_usage_put:
+  path: /api/assets/{id}/usages/{referenceId}
+  controller: SohoPHP\SoFinder\Http\AssetUsageController::put
+  methods: [PUT]
+  requirements: { id: '[a-f0-9-]{36}', referenceId: '[A-Za-z0-9._:-]{1,160}' }
+  defaults: { _sofinder: true }
+
+sofinder_api_asset_usage_remove:
+  path: /api/assets/{id}/usages/{referenceId}
+  controller: SohoPHP\SoFinder\Http\AssetUsageController::remove
+  methods: [DELETE]
+  requirements: { id: '[a-f0-9-]{36}', referenceId: '[A-Za-z0-9._:-]{1,160}' }
+  defaults: { _sofinder: true }
+
+sofinder_api_asset_delete_check:
+  path: /api/assets/delete-check
+  controller: SohoPHP\SoFinder\Http\AssetUsageController::deleteCheck
+  methods: [POST]
+  defaults: { _sofinder: true }
+
+sofinder_api_asset_session_create:
+  path: /api/assets/access-sessions
+  controller: SohoPHP\SoFinder\Http\AssetAccessSessionController::create
+  methods: [POST]
+  defaults: { _sofinder: true }
+
+sofinder_api_asset_session_revoke:
+  path: /api/assets/access-sessions/{id}
+  controller: SohoPHP\SoFinder\Http\AssetAccessSessionController::revoke
+  methods: [DELETE]
+  requirements: { id: '[a-f0-9]{32}' }
+  defaults: { _sofinder: true }
+
+sofinder_asset_session_content:
+  path: /asset-session/{token}/{assetId}
+  controller: SohoPHP\SoFinder\Http\AssetAccessSessionController::consume
+  methods: [GET]
+  requirements: { token: '[A-Za-z0-9._-]{76}', assetId: '[a-f0-9-]{36}' }
   defaults: { _sofinder: true }
 
 sofinder_api_folder:

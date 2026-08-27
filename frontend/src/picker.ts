@@ -132,12 +132,39 @@ const pickerImageHtml = (entry: PickerEntry, options: PickerOptions): string => 
 };
 
 /** Select an image and insert it through CKEditor 5's public command API. */
-export const selectForCkeditor5 = async (editor: { execute(command: string, options: Record<string, unknown>): void; commands?: { get(name: string): unknown }; editing?: { view?: { focus?: () => void } } }, options: EditorPickerOptions): Promise<PickerEntry> => {
+interface Ckeditor5PickerEditor {
+  execute(command: string, options: Record<string, unknown>): void;
+  commands?: { get(name: string): unknown };
+  editing?: { view?: { focus?: () => void } };
+  model?: { document: { selection: { getSelectedElement(): unknown } }; change(callback: (writer: { setAttribute(name: string, value: unknown, item: unknown): void }) => void): void };
+}
+
+const applyCkeditorAsset = (editor: Ckeditor5PickerEditor, entry: PickerEntry): void => {
+  const element = editor.model?.document.selection.getSelectedElement(); if (!element || !editor.model) return;
+  editor.model.change(writer => {
+    writer.setAttribute("url", entry.url, element);
+    if (entry.assetId) writer.setAttribute("sofinderAssetId", entry.assetId, element);
+    if (entry.width) writer.setAttribute("sofinderWidth", entry.width, element);
+    if (entry.height) writer.setAttribute("sofinderHeight", entry.height, element);
+  });
+};
+
+export const selectForCkeditor5 = async (editor: Ckeditor5PickerEditor, options: EditorPickerOptions): Promise<PickerEntry> => {
   const entry = await openPicker({ ...options, kind: "image" });
   editor.execute("insertImage", { source: entry.url });
+  applyCkeditorAsset(editor, entry);
   if (!editor.commands || editor.commands.get("imageTextAlternative")) editor.execute("imageTextAlternative", { newValue: pickerAlt(entry, options) });
   editor.editing?.view?.focus?.();
   return entry;
+};
+
+/** Replace the selected CKEditor 5 image while preserving a stable SoFinder relationship. */
+export const replaceSelectedForCkeditor5 = async (editor: Ckeditor5PickerEditor, options: EditorPickerOptions): Promise<PickerEntry> => {
+  const entry = await openPicker({ ...options, kind: "image" });
+  const selected = editor.model?.document.selection.getSelectedElement();
+  if (selected && editor.model) applyCkeditorAsset(editor, entry); else editor.execute("insertImage", { source: entry.url });
+  if (!editor.commands || editor.commands.get("imageTextAlternative")) editor.execute("imageTextAlternative", { newValue: pickerAlt(entry, options) });
+  editor.editing?.view?.focus?.(); return entry;
 };
 
 /** Register a `sofinder` toolbar button and menu item in TinyMCE. */

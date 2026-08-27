@@ -31,4 +31,6 @@ Remote Adapter 也可实现 `StorageAuditProviderInterface`，向安全审计返
 
 新版 `AssetOperationEvent` 会并行派发，包含稳定操作 ID、固定操作与阶段、Workspace、逻辑路径、可选资产 ID 和安全可序列化属性；公开格式见 [Event Schema](/schema/asset-operation-event.schema.json)。
 
+`AssetUsageStoreInterface` 供宿主登记引用稳定资产 ID 的内容记录，并驱动使用位置与删除预检。可选 Plugin 可实现 `AssetVersionProviderInterface` 或 `AssetEnrichmentProviderInterface`。核心不保存文件版本，也不会自动写入 AI 生成的替代文本、标题或标签；这些结果始终只是需要宿主或用户确认的建议。`/api/capabilities` 会公布这两个可选契约。
+
 公开 Value Object 不可变。1.x 可新建可选 Field 或 Capability Flag；Consumer 必须忽略不认识的值。在 1.x 期间，Method 不会被移除，Parameter 的意义也不会改变。

@@ -1,5 +1,5 @@
 import { t as e } from "./jsx-runtime-CmCsaYvT.js";
-import { t } from "./UiIcon-ClFQjiWf.js";
+import { t } from "./UiIcon-TSKzVe_e.js";
 //#region src/components/FavoritesPage.tsx
 var n = e();
 function r({ paths: e, search: r, locale: i, labels: a, onOpen: o, onRemove: s }) {

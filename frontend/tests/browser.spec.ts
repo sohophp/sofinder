@@ -126,15 +126,51 @@ test("shows and copies an absolute public file URL", async ({ page }) => {
   await expect(dialog.getByRole("status")).toContainText("网址已复制");
 });
 
+test("searches authorized assets across folders and reopens a result", async ({ page }) => {
+  await page.route("**/sofinder/api/config", route => route.fulfill({ json: { success: true, data: { apiVersion: "1.0", resources: [{ name: "Files", publicUrl: "/files", allowedExtensions: ["jpg", "pdf"], maxSize: 1000000, readOnly: false, quotaBytes: 0, usedBytes: 100, maxFileNameLength: 120, maxFolderNameLength: 50, maxFolderDepth: 5, deliveryMode: "public", storageCapabilities: { search: true, sort: true, cursorPagination: false, atomicMove: true, nativeCopy: true, recoverableDelete: true, publicUrl: true } }], plugins: [], imagePresets: {}, imageCapabilities: { driver: "", formats: [] }, assetSearch: { enabled: true } } } }));
+  await page.route("**/sofinder/api/assets/search?*", route => route.fulfill({ json: { success: true, data: { items: [{ resource: "Files", entry: { path: "campaign/sunset.jpg", name: "sunset.jpg", directory: false, size: 512, modifiedAt: 20, mimeType: "image/jpeg", url: "/files/campaign/sunset.jpg", capabilities: { read: true } }, assetId: null, metadata: { alt: "Golden sunset", altTranslations: { "zh-cn": "金色日落" }, title: "Autumn campaign", tags: ["campaign"], version: 1, updatedAt: 20 } }], total: 1, offset: 0, limit: 50, scanned: 12, truncated: false, facets: { resources: { Files: 1 }, types: { image: 1 }, extensions: { jpg: 1 } } } } }));
+  await page.route("**/sofinder/api/entries?*", route => {
+    const url = new URL(route.request().url());
+    if (url.searchParams.get("path") !== "campaign") return route.fallback();
+    return route.fulfill({ json: { success: true, data: { entries: [{ path: "campaign/sunset.jpg", name: "sunset.jpg", directory: false, size: 512, modifiedAt: 20, mimeType: "image/jpeg", url: "/files/campaign/sunset.jpg", capabilities: { read: true } }], total: 1, path: "campaign", offset: 0, limit: 100, nextCursor: null, sort: "name", direction: "asc", capabilities: { upload: true, create_folder: true } } } });
+  });
+  await page.setContent(`<!doctype html><html lang="zh-CN"><body><main id="sofinder-root" data-config='${JSON.stringify(config)}'></main></body></html>`);
+  await page.addStyleTag({ path: resolve(import.meta.dirname, "../../dist/sofinder.css") });
+  await page.addScriptTag({ path: resolve(import.meta.dirname, "../../dist/sofinder.js"), type: "module" });
+
+  await page.getByRole("button", { name: "高级资产搜索" }).click();
+  const dialog = page.getByRole("dialog", { name: "高级资产搜索" });
+  await dialog.getByRole("textbox", { name: "关键词" }).fill("金色日落");
+  await dialog.getByRole("button", { name: "搜索文件", exact: true }).click();
+  await expect(dialog.getByRole("button", { name: /sunset\.jpg/ })).toBeVisible();
+  await expect(dialog.getByText(/已检查 12/)).toBeVisible();
+  await dialog.getByRole("button", { name: /sunset\.jpg/ }).click();
+  await expect(page).toHaveURL(/path=campaign/);
+  await expect.poll(() => page.evaluate(() => JSON.parse(localStorage.getItem("sofinder.assetSearch.recent.v1") || "[]").length)).toBe(1);
+});
+
+test("warns before deleting an asset that has registered usages", async ({ page }) => {
+  await page.route("**/sofinder/api/config", route => route.fulfill({ json: { success: true, data: { apiVersion: "1.0", resources: [{ name: "Files", publicUrl: "/uploads/editor/files", allowedExtensions: ["txt", "png"], maxSize: 1000000, readOnly: false, quotaBytes: 0, usedBytes: 80, maxFileNameLength: 120, maxFolderNameLength: 50, maxFolderDepth: 5, deliveryMode: "public", storageCapabilities: { search: true, sort: true, cursorPagination: false, atomicMove: true, nativeCopy: true, recoverableDelete: true, publicUrl: true } }], plugins: [], imagePresets: {}, imageCapabilities: { driver: "", formats: [] }, assetUsage: { enabled: true } } } }));
+  await page.route("**/sofinder/api/assets/delete-check", route => route.fulfill({ json: { success: true, data: { safe: false, total: 2, assets: [{ assetId: "00000000-0000-4000-8000-000000000001", path: "guide.txt", total: 2, usages: [{ referenceId: "article:1", label: "首页文章", url: "/admin/article/1", context: "body", updatedAt: 1 }, { referenceId: "article:2", label: "帮助页面", url: null, context: null, updatedAt: 1 }] }] } } }));
+  await page.setContent(`<!doctype html><html lang="zh-CN"><body><main id="sofinder-root" data-config='${JSON.stringify(config)}'></main></body></html>`);
+  await page.addStyleTag({ path: resolve(import.meta.dirname, "../../dist/sofinder.css") });
+  await page.addScriptTag({ path: resolve(import.meta.dirname, "../../dist/sofinder.js"), type: "module" });
+  const guide = page.locator(".sf-entry", { hasText: "guide.txt" }); await guide.click(); await guide.click({ button: "right" });
+  await page.getByRole("menuitem", { name: "删除" }).click();
+  const dialog = page.getByRole("dialog", { name: "删除" });
+  await expect(dialog).toContainText("2 条使用记录"); await expect(dialog).toContainText("首页文章");
+});
+
 test("edits image alternative text from the context, details and preview surfaces", async ({ page }) => {
   const assetId = "00000000-0000-4000-8000-000000000001";
   let savedAlt: string | null = null;
   let savedTranslations: Record<string, string> = {};
-  await page.route("**/sofinder/api/config", route => route.fulfill({ json: { success: true, data: { apiVersion: "1.0", resources: [{ name: "Files", publicUrl: "/files", allowedExtensions: ["png"], maxSize: 1000000, readOnly: false, quotaBytes: 0, usedBytes: 68, maxFileNameLength: 120, maxFolderNameLength: 50, maxFolderDepth: 5, deliveryMode: "public", storageCapabilities: { search: true, sort: true, cursorPagination: false, atomicMove: true, nativeCopy: true, recoverableDelete: true, publicUrl: true } }], plugins: [], imagePresets: {}, imageCapabilities: { driver: "gd", formats: [{ format: "png", extensions: ["png"], mimes: ["image/png"], processor: "gd", read: true, edit: true, thumbnail: true, webEmbeddable: true }] }, assetCatalog: { enabled: true, altLocales: ["en", "zh-cn", "zh-tw", "fr-ca"] }, imageVariants: { enabled: true } } } }));
+  await page.route("**/sofinder/api/config", route => route.fulfill({ json: { success: true, data: { apiVersion: "1.0", resources: [{ name: "Files", publicUrl: "/files", allowedExtensions: ["png"], maxSize: 1000000, readOnly: false, quotaBytes: 0, usedBytes: 68, maxFileNameLength: 120, maxFolderNameLength: 50, maxFolderDepth: 5, deliveryMode: "public", storageCapabilities: { search: true, sort: true, cursorPagination: false, atomicMove: true, nativeCopy: true, recoverableDelete: true, publicUrl: true } }], plugins: [], imagePresets: {}, imageCapabilities: { driver: "gd", formats: [{ format: "png", extensions: ["png"], mimes: ["image/png"], processor: "gd", read: true, edit: true, thumbnail: true, webEmbeddable: true }] }, assetCatalog: { enabled: true, altLocales: ["en", "zh-cn", "zh-tw", "fr-ca"] }, assetUsage: { enabled: true }, imageVariants: { enabled: true } } } }));
   await page.route("**/sofinder/api/entries?*", route => route.fulfill({ json: { success: true, data: { entries: [{ path: "photo.png", name: "photo.png", directory: false, size: 68, modifiedAt: 2, mimeType: "image/png", url: "/files/photo.png", capabilities: { read: true, "metadata.update": true } }], total: 1, path: "", offset: 0, limit: 100, nextCursor: null, sort: "name", direction: "asc", capabilities: {} } } }));
   const asset = { schemaVersion: "1.0", assetId, resource: "Files", path: "photo.png", name: "photo.png", directory: false, mimeType: "image/png", size: 68, modifiedAt: 2, version: "2-68", url: "/files/photo.png", downloadUrl: "/sofinder/api/download?resource=Files&path=photo.png", width: 1200, height: 400, alt: "A campaign photo", variants: [{ width: 320, height: 107, url: "/sofinder/api/images/variant?width=320", mimeType: "image/webp" }], capabilities: { embeddable: true, responsiveImages: true, assetMetadata: true, "metadata.update": true } };
   await page.route("**/sofinder/api/assets/resolve?*", route => route.fulfill({ json: { success: true, data: { asset } } }));
   await page.route(`**/sofinder/api/assets/${assetId}**`, async route => {
+    if (new URL(route.request().url()).pathname.endsWith("/usages")) { await route.fulfill({ json: { success: true, data: { items: [{ referenceId: "article:42", label: "首页文章", url: "/admin/articles/42", context: "hero", updatedAt: 3 }], total: 1 } } }); return; }
     if (route.request().method() === "PATCH") {
       const body = route.request().postDataJSON() as { alt: string | null; altTranslations: Record<string, string> };
       savedAlt = body.alt;
@@ -151,7 +187,11 @@ test("edits image alternative text from the context, details and preview surface
   const photo = page.locator(".sf-entry", { hasText: "photo.png" });
   await expect(photo).toBeVisible();
   await photo.click();
-  await expect(page.locator(".sf-details").getByRole("button", { name: "资产元数据" })).toBeVisible();
+  await expect(page.locator(".sf-details-tabs").getByRole("button", { name: "资产元数据" })).toBeVisible();
+  await page.locator(".sf-details-tabs").getByRole("button", { name: "资产元数据" }).click();
+  await expect(page.locator(".sf-asset-properties").getByRole("textbox", { name: "默认替代文本" })).toHaveValue("A campaign photo");
+  await expect(page.locator(".sf-property-usages")).toContainText("首页文章");
+  await page.locator(".sf-details-tabs").getByRole("button", { name: "信息" }).click();
   await photo.click({ button: "right" });
   await page.getByRole("menuitem", { name: "资产元数据" }).click();
   const dialog = page.getByRole("dialog", { name: "资产元数据" });

@@ -1,4 +1,4 @@
-export type UiIconName = "file" | "folder" | "warning" | "add-folder" | "upload" | "download" | "share" | "asset-metadata" | "select" | "rename" | "copy" | "move" | "delete" | "trash" | "refresh" | "settings" | "security" | "grid" | "list" | "more" | "archive" | "favorite" | "tags" | "rotate-left" | "rotate-right" | "resize" | "crop" | "sort" | "sort-asc" | "sort-desc" | "search" | "close" | "add" | "history" | "fullscreen" | "fullscreen-exit" | "chevron-left" | "chevron-right" | "chevron-down";
+export type UiIconName = "file" | "folder" | "warning" | "add-folder" | "upload" | "download" | "share" | "asset-metadata" | "select" | "rename" | "copy" | "move" | "delete" | "trash" | "refresh" | "settings" | "security" | "grid" | "list" | "more" | "archive" | "favorite" | "tags" | "rotate-left" | "rotate-right" | "resize" | "crop" | "sort" | "sort-asc" | "sort-desc" | "search" | "filter" | "close" | "add" | "history" | "fullscreen" | "fullscreen-exit" | "chevron-left" | "chevron-right" | "chevron-down";
 
 const paths: Record<UiIconName, React.ReactNode> = {
   file: <><path d="M6 3h8l4 4v14H6z"/><path d="M14 3v5h5"/></>,
@@ -32,6 +32,7 @@ const paths: Record<UiIconName, React.ReactNode> = {
   "sort-asc": <><path d="M7 19V5M3.5 8.5 7 5l3.5 3.5"/><path d="M14 7h7M14 12h5M14 17h3"/></>,
   "sort-desc": <><path d="M7 5v14M3.5 15.5 7 19l3.5-3.5"/><path d="M14 7h3M14 12h5M14 17h7"/></>,
   search: <><circle cx="10.5" cy="10.5" r="6.5"/><path d="m16 16 4 4"/></>,
+  filter: <path d="M4 5h16l-6 7v6l-4 2v-8z"/>,
   close: <path d="m6 6 12 12M18 6 6 18"/>,
   add: <path d="M12 5v14M5 12h14"/>,
   history: <><path d="M5 7H2V4"/><path d="M3 7a9 9 0 1 1 0 10"/><path d="M12 7v5l3 2"/></>,

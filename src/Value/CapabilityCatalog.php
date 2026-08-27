@@ -17,6 +17,7 @@ final readonly class CapabilityCatalog implements \JsonSerializable
             'pluginSlots' => ['utility', 'toolbar', 'context', 'details'],
             'pluginSelections' => ['none', 'any', 'file', 'image'],
             'pickerKinds' => ['any', 'file', 'image'],
+            'optionalPluginContracts' => ['assetVersions', 'assetEnrichment'],
         ];
     }
 }

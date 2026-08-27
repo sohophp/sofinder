@@ -15,12 +15,16 @@ use SohoPHP\SoFinder\Command\MaintenanceStatusCommand;
 use SohoPHP\SoFinder\Command\CacheCleanupCommand;
 use SohoPHP\SoFinder\Command\MetadataRepairCommand;
 use SohoPHP\SoFinder\Command\PluginValidateCommand;
+use SohoPHP\SoFinder\Command\AssetMigrateCommand;
 use SohoPHP\SoFinder\Archive\ArchiveManager;
 use SohoPHP\SoFinder\Contract\AuthorizationInterface;
 use SohoPHP\SoFinder\Contract\AtomicStateStoreInterface;
 use SohoPHP\SoFinder\Contract\ChunkUploadStoreInterface;
 use SohoPHP\SoFinder\Contract\ActorProviderInterface;
 use SohoPHP\SoFinder\Contract\AssetCatalogInterface;
+use SohoPHP\SoFinder\Contract\AssetSearchProviderInterface;
+use SohoPHP\SoFinder\Contract\AssetUsageStoreInterface;
+use SohoPHP\SoFinder\Contract\AssetAccessSessionStoreInterface;
 use SohoPHP\SoFinder\Contract\WorkspaceResolverInterface;
 use SohoPHP\SoFinder\Contract\WorkspaceStorageAuditProviderInterface;
 use SohoPHP\SoFinder\Contract\WorkspaceOptionProviderInterface;
@@ -49,6 +53,9 @@ use SohoPHP\SoFinder\Http\CapabilityController;
 use SohoPHP\SoFinder\Http\ArchiveController;
 use SohoPHP\SoFinder\Http\AssetController;
 use SohoPHP\SoFinder\Http\AssetApiController;
+use SohoPHP\SoFinder\Http\AssetSearchController;
+use SohoPHP\SoFinder\Http\AssetUsageController;
+use SohoPHP\SoFinder\Http\AssetAccessSessionController;
 use SohoPHP\SoFinder\Http\BrowserController;
 use SohoPHP\SoFinder\Http\ChunkUploadController;
 use SohoPHP\SoFinder\Http\ContentController;
@@ -128,6 +135,12 @@ use SohoPHP\SoFinder\Asset\JsonAssetCatalog;
 use SohoPHP\SoFinder\Asset\SharedAssetCatalog;
 use SohoPHP\SoFinder\Asset\AssetReferenceFactory;
 use SohoPHP\SoFinder\Asset\AssetOperationPublisher;
+use SohoPHP\SoFinder\Asset\BoundedAssetSearchProvider;
+use SohoPHP\SoFinder\Asset\JsonAssetUsageStore;
+use SohoPHP\SoFinder\Asset\SharedAssetUsageStore;
+use SohoPHP\SoFinder\Asset\JsonAssetAccessSessionStore;
+use SohoPHP\SoFinder\Asset\SharedAssetAccessSessionStore;
+use SohoPHP\SoFinder\Asset\AssetAccessSessionManager;
 use SohoPHP\SoFinder\Workspace\WorkspaceProvider;
 use SohoPHP\SoFinder\Value\Theme;
 use SohoPHP\SoFinder\Value\ImageProcessingLimits;
@@ -183,6 +196,9 @@ final class SoFinderExtension extends Extension
         $sharedState = $clusterConfig['state_service'] === null ? null : new Reference((string) $clusterConfig['state_service']);
         $signedUrlConfig = $config['signed_urls'];
         $assetCatalogConfig = $config['asset_catalog'];
+        $assetSearchConfig = $config['asset_search'];
+        $assetUsageConfig = $config['asset_usage'];
+        $assetAccessConfig = $config['asset_access_sessions'];
         $workspaceConfig = $config['workspaces'];
         $variantConfig = $config['image_variants'];
         if ($maintenanceConfig['mode'] === 'messenger' && !interface_exists('Symfony\\Component\\Messenger\\MessageBusInterface')) {
@@ -207,6 +223,16 @@ final class SoFinderExtension extends Extension
         $container->setParameter('so_finder.asset_version', substr(hash_final($assetFingerprint), 0, 12));
 
         $container->setDefinition(PathGuard::class, new Definition(PathGuard::class));
+        $container->setDefinition(BoundedAssetSearchProvider::class, (new Definition(BoundedAssetSearchProvider::class))
+            ->setArguments([new Reference(FileManager::class), new Reference(AssetCatalogInterface::class), $assetSearchConfig['max_scanned_entries']]));
+        $container->setAlias(AssetSearchProviderInterface::class, new Alias(
+            $assetSearchConfig['provider_service'] !== null ? (string) $assetSearchConfig['provider_service'] : BoundedAssetSearchProvider::class,
+        ));
+        $container->setDefinition(JsonAssetUsageStore::class, (new Definition(JsonAssetUsageStore::class))
+            ->setArgument('$file', rtrim((string) $config['cache_dir'], '/') . '/asset-usages.json'));
+        $container->setAlias(AssetUsageStoreInterface::class, new Alias(JsonAssetUsageStore::class));
+        $container->setDefinition(JsonAssetAccessSessionStore::class, (new Definition(JsonAssetAccessSessionStore::class))->setArgument('$directory', rtrim((string) $config['cache_dir'], '/') . '/asset-access-sessions'));
+        $container->setAlias(AssetAccessSessionStoreInterface::class, new Alias(JsonAssetAccessSessionStore::class));
         $container->setDefinition(UploadNamePolicy::class, new Definition(UploadNamePolicy::class, [$lowercaseUploadExtensions]));
         $container->setDefinition(LocalStorageAdapterFactory::class, (new Definition(LocalStorageAdapterFactory::class))
             ->setArgument('$pathGuard', new Reference(PathGuard::class))
@@ -529,6 +555,9 @@ final class SoFinderExtension extends Extension
             $assetCatalogConfig['enabled'],
             $variantConfig['enabled'],
             $assetCatalogConfig['alt_locales'],
+            $assetSearchConfig['enabled'],
+            $assetUsageConfig['enabled'],
+            $assetAccessConfig['enabled'],
         ]);
         $this->controller($container, CapabilityController::class, [new Reference(CapabilityCatalog::class)]);
         $this->controller($container, ContentController::class, [
@@ -598,6 +627,23 @@ final class SoFinderExtension extends Extension
             $assetCatalogConfig['enabled'],
             new Reference(AssetOperationPublisher::class),
         ]);
+        $this->controller($container, AssetSearchController::class, [
+            new Reference(AssetSearchProviderInterface::class),
+            new Reference(WorkspaceProvider::class),
+            $assetSearchConfig['enabled'],
+        ]);
+        $this->controller($container, AssetUsageController::class, [
+            new Reference(AssetCatalogInterface::class),
+            new Reference(AssetUsageStoreInterface::class),
+            new Reference(WorkspaceProvider::class),
+            new Reference(FileManager::class),
+            new Reference(CsrfGuard::class),
+            $assetUsageConfig['enabled'],
+        ]);
+        $container->setDefinition(AssetAccessSessionManager::class, (new Definition(AssetAccessSessionManager::class))->setArguments([
+            new Reference(AssetCatalogInterface::class), new Reference(AssetAccessSessionStoreInterface::class), new Reference(WorkspaceProvider::class), new Reference(FileManager::class), new Reference(ResourceRegistry::class), $assetAccessConfig['enabled'], $assetAccessConfig['default_ttl_seconds'], $assetAccessConfig['max_ttl_seconds'], $assetAccessConfig['max_assets'],
+        ]));
+        $this->controller($container, AssetAccessSessionController::class, [new Reference(AssetAccessSessionManager::class), new Reference(CsrfGuard::class), new Reference(RouterInterface::class), new Reference(ContentController::class)]);
 
         $container->setDefinition(ExceptionSubscriber::class, (new Definition(ExceptionSubscriber::class))
             ->addTag('kernel.event_subscriber'));
@@ -637,6 +683,14 @@ final class SoFinderExtension extends Extension
             if ($assetCatalogConfig['store_service'] === null) {
                 $container->setAlias(AssetCatalogInterface::class, new Alias(SharedAssetCatalog::class));
             }
+            if ($assetUsageConfig['store_service'] === null) {
+                $container->setDefinition(SharedAssetUsageStore::class, (new Definition(SharedAssetUsageStore::class))->setArgument('$state', new Reference(AtomicStateStoreInterface::class)));
+                $container->setAlias(AssetUsageStoreInterface::class, new Alias(SharedAssetUsageStore::class));
+            }
+            if ($assetAccessConfig['store_service'] === null) {
+                $container->setDefinition(SharedAssetAccessSessionStore::class, (new Definition(SharedAssetAccessSessionStore::class))->setArgument('$state', new Reference(AtomicStateStoreInterface::class)));
+                $container->setAlias(AssetAccessSessionStoreInterface::class, new Alias(SharedAssetAccessSessionStore::class));
+            }
             if ($clusterConfig['chunk_upload_store_service'] === null) {
                 $container->setAlias(ChunkUploadStoreInterface::class, new Alias(SharedChunkUploadStore::class));
             }
@@ -646,6 +700,12 @@ final class SoFinderExtension extends Extension
         }
         if ($assetCatalogConfig['store_service'] !== null) {
             $container->setAlias(AssetCatalogInterface::class, new Alias((string) $assetCatalogConfig['store_service']));
+        }
+        if ($assetUsageConfig['store_service'] !== null) {
+            $container->setAlias(AssetUsageStoreInterface::class, new Alias((string) $assetUsageConfig['store_service']));
+        }
+        if ($assetAccessConfig['store_service'] !== null) {
+            $container->setAlias(AssetAccessSessionStoreInterface::class, new Alias((string) $assetAccessConfig['store_service']));
         }
         if ($clusterConfig['chunk_upload_store_service'] !== null) {
             $container->setAlias(ChunkUploadStoreInterface::class, new Alias((string) $clusterConfig['chunk_upload_store_service']));
@@ -685,6 +745,7 @@ final class SoFinderExtension extends Extension
         $container->setDefinition(PluginValidateCommand::class, (new Definition(PluginValidateCommand::class))
             ->setArgument('$plugins', new Reference(PluginRegistry::class))
             ->addTag('console.command'));
+        $container->setDefinition(AssetMigrateCommand::class, (new Definition(AssetMigrateCommand::class))->setArguments([new Reference(ResourceRegistry::class), new Reference(AssetCatalogInterface::class)])->addTag('console.command'));
         $container->setDefinition(TrashCleanupCommand::class, (new Definition(TrashCleanupCommand::class))
             ->setArgument('$runner', new Reference(MaintenanceRunner::class))
             ->addTag('console.command'));

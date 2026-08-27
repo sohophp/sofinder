@@ -70,6 +70,13 @@ parallel. It carries a stable operation ID, fixed operation and phase, workspace
 resource, logical paths, optional asset ID and safe serializable attributes. Its
 published JSON shape is documented by [the event Schema](/schema/asset-operation-event.schema.json).
 
+`AssetUsageStoreInterface` lets a host register content records that reference a
+stable asset ID; it powers usage display and deletion preflight. Optional plugins
+may implement `AssetVersionProviderInterface` or `AssetEnrichmentProviderInterface`.
+Core does not retain versions and never persists generated alt text, titles or
+tags automatically: enrichment results are suggestions that require a host/user
+decision. `/api/capabilities` advertises both optional contracts.
+
 Public value objects are immutable. New optional fields or capability flags may
 be added in 1.x; consumers must ignore values they do not recognize. Methods
 will not be removed or have their parameter meaning changed during 1.x.

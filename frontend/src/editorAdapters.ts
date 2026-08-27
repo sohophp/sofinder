@@ -4,6 +4,8 @@ import type { AssetReference, UploadConflictStrategy } from "./types";
 
 export interface EditorAdapterOptions extends Omit<SoFinderClientOptions, "onConflict"> {
   resource: string;
+  resourceRoutes?: Array<{ resource: string; mimeTypes?: string[]; extensions?: string[] }>;
+  resourceRouter?: (file: File) => string;
   path?: string | (() => string);
   conflictStrategy?: UploadConflictStrategy;
   defaultAlt?: (asset: AssetReference) => string;
@@ -18,9 +20,15 @@ export interface EditorAdapterOptions extends Omit<SoFinderClientOptions, "onCon
 
 const path = (options: EditorAdapterOptions): string => typeof options.path === "function" ? options.path() : options.path ?? "";
 
+export const resourceForUpload = (file: File, options: EditorAdapterOptions): string => {
+  const custom = options.resourceRouter?.(file).trim(); if (custom) return custom;
+  const mime = file.type.toLowerCase(); const extension = file.name.includes(".") ? file.name.split(".").pop()?.toLowerCase() ?? "" : "";
+  return options.resourceRoutes?.find(route => route.mimeTypes?.some(value => value.toLowerCase() === mime) || route.extensions?.some(value => value.replace(/^\./, "").toLowerCase() === extension))?.resource ?? options.resource;
+};
+
 export const uploadForEditor = (file: File, options: EditorAdapterOptions, source: "input" | "paste" | "drop" = "input"): UploadTask => {
   const client = createSoFinderClient(options);
-  const task = client.upload({ file, resource: options.resource, path: path(options), source, conflictStrategy: options.conflictStrategy ?? "ask" });
+  const task = client.upload({ file, resource: resourceForUpload(file, options), path: path(options), source, conflictStrategy: options.conflictStrategy ?? "ask" });
   if (options.onTaskChange) task.subscribe(options.onTaskChange);
   void task.completion.then(asset => options.onAssetReady?.(asset)).catch(() => undefined);
   void task.completion.catch(error => { if (error instanceof SoFinderSdkError) options.onError?.(error); });

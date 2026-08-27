@@ -31,13 +31,24 @@ var e = "1.0", t = () => typeof crypto < "u" && typeof crypto.randomUUID == "fun
 }, s = (e, t) => {
 	let n = (e) => e.replace(/&/g, "&amp;").replace(/"/g, "&quot;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
 	return `<img ${Object.entries(o(e, t)).map(([e, t]) => `${e}="${n(t)}"`).join(" ")}>`;
-}, c = async (e, t) => {
+}, c = (e, t) => {
+	let n = e.model?.document.selection.getSelectedElement();
+	!n || !e.model || e.model.change((e) => {
+		e.setAttribute("url", t.url, n), t.assetId && e.setAttribute("sofinderAssetId", t.assetId, n), t.width && e.setAttribute("sofinderWidth", t.width, n), t.height && e.setAttribute("sofinderHeight", t.height, n);
+	});
+}, l = async (e, t) => {
 	let n = await r({
 		...t,
 		kind: "image"
 	});
-	return e.execute("insertImage", { source: n.url }), (!e.commands || e.commands.get("imageTextAlternative")) && e.execute("imageTextAlternative", { newValue: a(n, t) }), e.editing?.view?.focus?.(), n;
-}, l = (e, t) => {
+	return e.execute("insertImage", { source: n.url }), c(e, n), (!e.commands || e.commands.get("imageTextAlternative")) && e.execute("imageTextAlternative", { newValue: a(n, t) }), e.editing?.view?.focus?.(), n;
+}, u = async (e, t) => {
+	let n = await r({
+		...t,
+		kind: "image"
+	});
+	return e.model?.document.selection.getSelectedElement() && e.model ? c(e, n) : e.execute("insertImage", { source: n.url }), (!e.commands || e.commands.get("imageTextAlternative")) && e.execute("imageTextAlternative", { newValue: a(n, t) }), e.editing?.view?.focus?.(), n;
+}, d = (e, t) => {
 	e.PluginManager.add("sofinder", (e) => {
 		let n = async () => {
 			let n = await r({
@@ -58,13 +69,13 @@ var e = "1.0", t = () => typeof crypto < "u" && typeof crypto.randomUUID == "fun
 			url: "https://sofinder.sohophp.app/"
 		}) };
 	});
-}, u = async (e, t) => {
+}, f = async (e, t) => {
 	let n = await r({
 		...t,
 		kind: "image"
 	});
 	return e.chain().focus().setImage(o(n, t)).run(), n;
-}, d = (e, t) => {
+}, p = (e, t) => {
 	e.getModule("toolbar").addHandler("image", () => {
 		r({
 			...t,
@@ -74,12 +85,12 @@ var e = "1.0", t = () => typeof crypto < "u" && typeof crypto.randomUUID == "fun
 			e.clipboard ? e.clipboard.dangerouslyPasteHTML(r?.index ?? 0, s(n, t), "user") : e.insertEmbed(r?.index ?? 0, "image", n.url, "user");
 		});
 	});
-}, f = async (e, t) => {
+}, m = async (e, t) => {
 	let n = await r(t);
 	return e.value = n.url, e.dispatchEvent(new Event("input", { bubbles: !0 })), e.dispatchEvent(new Event("change", { bubbles: !0 })), n;
-}, p = async (e, t) => {
+}, h = async (e, t) => {
 	let n = await r(t), i = t.kind === "image" || n.mimeType?.startsWith("image/") === !0, o = (i ? a(n, t) : n.name).replace(/([\\\[\]])/g, "\\$1"), s = n.url.replace(/</g, "%3C").replace(/>/g, "%3E"), c = `${i ? "!" : ""}[${o}](<${s}>)`, l = e.selectionStart ?? e.value.length, u = e.selectionEnd ?? l;
 	return e.setRangeText(c, l, u, "end"), e.dispatchEvent(new Event("input", { bubbles: !0 })), e.dispatchEvent(new Event("change", { bubbles: !0 })), e.focus(), n;
 };
 //#endregion
-export { e as PICKER_PROTOCOL_VERSION, r as openPicker, n as pickerUrl, d as registerQuill, l as registerTinyMce, c as selectForCkeditor5, f as selectForInput, p as selectForMarkdown, u as selectForTiptap };
+export { e as PICKER_PROTOCOL_VERSION, r as openPicker, n as pickerUrl, p as registerQuill, d as registerTinyMce, u as replaceSelectedForCkeditor5, l as selectForCkeditor5, m as selectForInput, h as selectForMarkdown, f as selectForTiptap };

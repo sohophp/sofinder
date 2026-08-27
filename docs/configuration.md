@@ -68,6 +68,19 @@ single-workspace behavior:
 
 ```yaml
 so_finder:
+  asset_search:
+    enabled: true
+    provider_service: null
+    max_scanned_entries: 10000
+  asset_usage:
+    enabled: false
+    store_service: null
+  asset_access_sessions:
+    enabled: false
+    store_service: null
+    default_ttl_seconds: 3600
+    max_ttl_seconds: 86400
+    max_assets: 50
   asset_catalog:
     enabled: false
     store_service: null
@@ -87,6 +100,23 @@ so_finder:
     resolver_service: null
     option_provider_service: null
 ```
+
+The built-in `asset_search` provider recursively scans only resources authorized
+for the current workspace and stops at `max_scanned_entries`. Large or indexed
+installations can replace it with `provider_service`; authorization must still be
+applied before results are returned. The browser stores only the five most recent
+query definitions in the current user's local browser storage.
+
+`asset_usage` is intentionally disabled until the host content system registers
+where stable asset IDs are used. Once enabled, deletion preflight warns about
+registered pages or records. Cluster mode automatically uses shared state unless
+`store_service` provides another shared implementation.
+
+`asset_access_sessions` groups private proxy assets into short-lived, revocable,
+revision-bound delivery URLs. If the content must be readable without a login,
+allow only `/sofinder/asset-session/` through the host firewall, just as for signed
+content; possession of the random session URL is the authorization. Never use a
+session URL as a permanent public asset URL.
 
 `asset_catalog.alt_locales` is the host-controlled list shown when an editor adds
 localized alternative text. Users choose from this list and cannot enter arbitrary
