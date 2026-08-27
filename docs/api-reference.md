@@ -92,7 +92,8 @@ bounded scan for a complete index.
 
 - `GET /api/assets/{id}/usages` lists authorized host references.
 - `PUT /api/assets/{id}/usages/{referenceId}` idempotently registers a bounded
-  `{label,url,context}` reference; `DELETE` removes it.
+  `{label,url,context}` reference.
+- `DELETE /api/assets/{id}/usages/{referenceId}` removes the registered reference.
 - `POST /api/assets/delete-check` accepts `{resource,paths}` and returns `safe`,
   the total reference count and affected assets. It reports risk; it does not
   silently override the actor's explicit delete decision.
@@ -100,9 +101,9 @@ bounded scan for a complete index.
 ### Private asset access sessions
 
 `POST /api/assets/access-sessions` accepts private proxy `assetIds` and optional
-`ttl`, then returns version-bound inline URLs and an expiry. `DELETE
-/api/assets/access-sessions/{id}` revokes the entire session. Changed, expired,
-revoked or unlisted assets cannot be consumed through the bearer URL.
+`ttl`, then returns version-bound inline URLs and an expiry.
+`DELETE /api/assets/access-sessions/{id}` revokes the entire session. Changed,
+expired, revoked or unlisted assets cannot be consumed through the bearer URL.
 
 ### `GET /api/config`
 

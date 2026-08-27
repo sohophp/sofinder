@@ -26,13 +26,13 @@ features:
   - title: Secure by design
     details: Sandboxed paths, private quarantine, CSRF protection, inherited ACLs, operation gates and bounded archive and image processing.
   - title: Productive file browser
-    details: Search, grid and list views, uploads, folders, copy and move, recycle bin, metadata, image editing and CKEditor integration.
+    details: Cross-folder asset search, grid and list views, uploads, folders, recycle bin, localized metadata, image editing and editor integration.
   - title: Flexible storage
     details: Use local storage or the optional S3 adapter with AWS S3, Cloudflare R2, MinIO and compatible providers.
   - title: Framework-friendly core
     details: Public PHP contracts, tagged storage and UI plugins, PSR-3 audit events and a Symfony 6.4/7.4 bundle.
   - title: Ready for real applications
-    details: Responsive React interface, English, Simplified and Traditional Chinese UI, picker mode and public or authenticated delivery.
+    details: Stable asset IDs, usage-aware deletion, private access sessions, responsive React UI, picker mode and public or authenticated delivery.
   - title: Operationally bounded
     details: Quotas, pagination, request and concurrency limits, scheduled maintenance commands and deploy-time security audits.
 ---

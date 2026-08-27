@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## 0.1.0-beta.24 - 2026-08-28
+
 - Add bounded cross-folder/workspace asset search with field/type/tag/extension/size/date filters, URL state, recent searches and an editable asset-properties sidebar.
 - Add optional local/shared asset usage tracking, authorized usage APIs and recursive deletion preflight warnings, plus CKEditor stable-ID replacement support and configurable upload resource routing.
 - Add opt-in revocable, revision-bound private asset access sessions and the idempotent `sofinder:assets:migrate` dry-run/JSON migration command.

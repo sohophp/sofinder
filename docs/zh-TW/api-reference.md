@@ -74,7 +74,9 @@ HTTP Status 是最終依據；`429` 包含 `Retry-After: 2`。批次請求可能
 
 ### 資產使用與刪除預檢
 
-- `GET /api/assets/{id}/usages` 列出授權範圍內的 Host 引用；`PUT/DELETE /api/assets/{id}/usages/{referenceId}` 冪等登記或移除 `{label,url,context}`。
+- `GET /api/assets/{id}/usages` 列出授權範圍內的 Host 引用。
+- `PUT /api/assets/{id}/usages/{referenceId}` 冪等登記 `{label,url,context}`。
+- `DELETE /api/assets/{id}/usages/{referenceId}` 移除已登記的引用。
 - `POST /api/assets/delete-check` 接受 `{resource,paths}`，回傳 `safe`、引用總數和受影響資產。它只提示風險，不會繞過使用者明確的刪除決定。
 
 ### 私有資產存取工作階段

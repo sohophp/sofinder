@@ -70,7 +70,7 @@ jobs:
         with:
           php-version: '8.5'
           coverage: none
-      - run: ../../scripts/composer.sh config repositories.sofinder '{"type":"path","url":"../..","options":{"versions":{"sohophp/sofinder":"0.1.0-beta.23"}}}'
+      - run: ../../scripts/composer.sh config repositories.sofinder '{"type":"path","url":"../..","options":{"versions":{"sohophp/sofinder":"0.1.0-beta.24"}}}'
         working-directory: packages/sofinder-s3
       - run: ../../scripts/composer.sh install --no-interaction --prefer-dist
         working-directory: packages/sofinder-s3

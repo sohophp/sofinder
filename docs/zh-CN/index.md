@@ -26,11 +26,11 @@ features:
   - title: 以安全为设计核心
     details: 路径沙箱、私有隔离区、CSRF 保护、继承式 ACL、操作门禁及有界图片与压缩文件处理。
   - title: 完整文件浏览器
-    details: 搜索、上传、文件夹、复制移动、回收站、图片编辑及 CKEditor 整合。
+    details: 跨目录资产搜索、上传、文件夹、复制移动、回收站、多语言资产元数据、图片编辑及主流编辑器整合。
   - title: 弹性存储
     details: 使用本机存储，或通过可选软件包连接 AWS S3、Cloudflare R2、MinIO 等兼容服务。
   - title: 适合正式环境
-    details: 配额、分页、请求限制、调度维护命令、部署安全审计及 public/proxy delivery。
+    details: 稳定资产 ID、使用关系删除预检、私有访问会话、配额、调度维护、部署安全审计及 public/proxy delivery。
 ---
 
 ## 安装

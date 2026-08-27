@@ -1,5 +1,22 @@
 # Upgrading SoFinder
 
+## From 0.1.0-beta.23 to 0.1.0-beta.24
+
+- Deploy the complete rebuilt `dist/` directory. Existing stored files remain
+  compatible and no eager scan is performed.
+- `asset_search` is enabled by default and uses a bounded authorized scan. Large
+  installations should provide an indexed `AssetSearchProviderInterface`.
+- `asset_usage` and `asset_access_sessions` remain disabled until explicitly
+  configured. Multi-node deployments automatically use shared atomic state, or
+  may provide their own shared stores.
+- Existing asset catalogs may be populated incrementally, or explicitly with
+  `sofinder:assets:migrate --dry-run` followed by the same command without
+  `--dry-run` after reviewing the result.
+- Private access-session URLs are short-lived bearer credentials. They must not
+  be stored as permanent editor content or logged by the host application.
+- Hosts that register asset usage should run deletion preflight and still apply
+  their own business authorization before confirming deletion.
+
 ## From beta.20 to beta.21–beta.23
 
 - Existing Picker 1.0 messages and upload `entry` responses remain valid. New

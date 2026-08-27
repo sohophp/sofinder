@@ -37,6 +37,10 @@ Resources may define byte quotas, required Symfony roles and operation-specific
 role overrides. Completed mutations emit structured PSR-3 audit log entries.
 Per-user favorites, tags, and 50 recent entries are stored atomically through a
 replaceable metadata store interface.
+The optional asset catalog adds stable IDs, localized alternative text, titles,
+shared tags and responsive variants. Beta.24 adds bounded cross-folder asset
+search, editable asset properties, host-registered usage references with delete
+preflight, revocable private access sessions and an explicit migration command.
 The Symfony integration also includes a validated theme configuration, a
 tagged plugin descriptor registry, keyboard file navigation, visible focus,
 and screen-reader selection announcements. See `docs/plugins.md` for the
@@ -80,9 +84,9 @@ ZIP downloads accept at most 100 selected roots, 1,000 total entries and 512 MB.
 ## Development
 
 ```bash
-composer install
-vendor/bin/phpunit
-composer phpstan
+./scripts/composer.sh install
+./scripts/php-bin.sh vendor/bin/phpunit
+./scripts/composer.sh phpstan
 cd frontend
 corepack pnpm install
 corepack pnpm build

@@ -5,6 +5,16 @@ description: 各 SoFinder 预发布版本的兼容性、配置与 adapter 升级
 
 # 升级 SoFinder
 
+## 从 0.1.0-beta.23 升级至 0.1.0-beta.24
+
+请完整部署重新构建的 `dist/`；既有文件保持兼容，也不会自动扫描整个存储。资产搜索默认
+启用并执行有数量上限的授权扫描，大型项目应接入索引式 `AssetSearchProviderInterface`。
+`asset_usage` 与 `asset_access_sessions` 继续默认关闭；多节点启用后会使用共享原子状态，
+也可配置自定义共享 Store。已有资产可继续懒注册，或先运行
+`sofinder:assets:migrate --dry-run`，确认后再执行正式迁移。私有访问会话 URL 是短期
+Bearer 凭据，不能永久写入编辑器内容或宿主日志。启用使用关系登记的宿主应在删除前执行
+预检，同时继续应用自身业务授权。
+
 ## 从 0.1.0-beta.20 升级至 beta.21–beta.23
 
 Picker 1.0 与上传响应原有 `entry` 保持兼容；新版可读取增加的 `asset`，并按需加载独立上传 SDK 与编辑器 Adapter。`asset_catalog`、`image_variants`、`workspaces` 均默认关闭。集群启用资产目录时必须使用共享原子状态或自定义共享 Store；Workspace Resolver 必须从可信登录上下文解析，不能直接信任查询参数。Plugin Descriptor 统一为 1.0，部署前运行 `./scripts/php-bin.sh bin/console sofinder:plugin:validate --json`。旧操作事件继续派发，新集成使用 `AssetOperationEvent`。

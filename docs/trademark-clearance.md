@@ -104,3 +104,17 @@ No new package-identity conflict was identified in this release delta check, so 
 No blocking software/file-management conflict was identified by this engineering
 recheck, so beta.16 retains the name. Dynamic registry interfaces and ordinary
 indexing are incomplete; this is not a legal clearance opinion.
+
+## 2026-08-28 beta.24 engineering delta check
+
+- This release extends asset discovery, metadata, usage tracking and private
+  delivery without changing the project name, package identities, positioning or
+  visual branding.
+- GitHub continues to identify the canonical public repository as
+  `sohophp/sofinder`; Packagist lists this same repository through beta.23.
+- The `@sohophp/sofinder-ui` npm registry endpoint returned HTTP 404 immediately
+  before publication and is not published by this release.
+
+No new package-identity conflict was identified in this release delta check, so
+beta.24 retains the name. The limitations and non-legal nature of the earlier
+engineering rechecks remain unchanged.

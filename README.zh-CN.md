@@ -16,6 +16,8 @@ SoFinder 是原创、采 MIT 授权的网页文件管理器，支持 PHP 8.2 至
 
 资源可配置 byte 配额、必要 Symfony roles 及各操作专用 roles。成功变更会产生结构化 PSR-3 audit log。每位用户的收藏、标签及最近 50 笔记录会通过可替换的 metadata store 原子化保存。
 
+可选资产目录提供稳定 ID、多语言替代文本、标题、共享标签及响应式变体。beta.24 新增有界跨目录资产搜索、可编辑资产属性、由宿主登记的使用关系与删除预检、可撤销私有访问会话及明确的资产迁移命令。
+
 Symfony 整合亦提供经验证的主题配置、tagged plugin descriptor registry、键盘文件导览、可见焦点及屏幕阅读器选取提示。公开扩充契约请见 `docs/plugins.md`。
 
 生产环境可添加同源 plugin UI Action 与 tagged 上传扫描器。可选 PDO／Redis 原子状态、readiness、Prometheus、请求 ID 与 JSON 安全审计支持多节点部署，详见 `docs/production.md` 与 `docs/public/openapi.json`。
@@ -31,9 +33,9 @@ Symfony 整合亦提供经验证的主题配置、tagged plugin descriptor regis
 ## 开发
 
 ```bash
-composer install
-vendor/bin/phpunit
-composer phpstan
+./scripts/composer.sh install
+./scripts/php-bin.sh vendor/bin/phpunit
+./scripts/composer.sh phpstan
 cd frontend
 corepack pnpm install
 corepack pnpm build

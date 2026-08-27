@@ -26,11 +26,11 @@ features:
   - title: 以安全為設計核心
     details: 路徑沙箱、私有隔離區、CSRF 保護、繼承式 ACL、操作門禁及有界圖片與壓縮檔處理。
   - title: 完整檔案瀏覽器
-    details: 搜尋、上傳、資料夾、複製移動、回收站、圖片編輯及 CKEditor 整合。
+    details: 跨目錄資產搜尋、上傳、資料夾、複製移動、回收站、多語言資產中繼資料、圖片編輯及主流編輯器整合。
   - title: 彈性儲存
     details: 使用本機儲存，或透過選用套件連接 AWS S3、Cloudflare R2、MinIO 等相容服務。
   - title: 適合正式環境
-    details: 配額、分頁、請求限制、排程維護命令、部署安全稽核及 public/proxy delivery。
+    details: 穩定資產 ID、使用關係刪除預檢、私有存取工作階段、配額、排程維護、部署安全稽核及 public/proxy delivery。
 ---
 
 ## 安裝
