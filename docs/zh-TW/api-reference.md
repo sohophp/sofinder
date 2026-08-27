@@ -51,6 +51,10 @@ HTTP Status 是最終依據；`429` 包含 `Retry-After: 2`。批次請求可能
 
 `url` 可以為 null；非空值可能是公開地址、認證 proxy 或宿主 Route。Capability 只是提示，伺服器會重新授權。
 
+### Asset Reference 1.0
+
+上傳與 Picker 回應可以新增 `asset`，格式請見 [Schema](/schema/asset-reference.schema.json)，原有 `entry` 保留。啟用資產目錄後，`GET /api/assets/resolve` 依資源／路徑解析或懶註冊；`GET /api/assets/{id}` 讀取目前 Workspace 記錄；`PATCH /api/assets/{id}/metadata` 修改 `alt`、`title`、共享 `tags`，並透過 `metadataVersion` 樂觀並行控制。
+
 ### Resource
 
 `GET /api/config` 返回 `name`、`publicUrl`、副檔名／MIME、`maxSize`、`readOnly`、`quotaBytes`、`usedBytes`、名稱／深度／圖片／批次／壓縮限制、`deliveryMode`、`animatedImagePolicy`，以及：
@@ -187,6 +191,7 @@ Trash ID 是按 Actor 隔離的 32 位十六進位制字串。覆蓋恢復需要
 
 - `GET /api/images/thumbnail?resource=Images&path=photo.jpg&width=240&height=180` 返回私有快取縮圖和 ETag。
 - `GET /api/images/info?resource=Images&path=photo.jpg` 返回解碼後的 `width`、`height`。
+- `GET /api/images/variant?resource=Images&path=photo.jpg&width=640&format=webp&v=...` 啟用後回傳繼承授權且受白名單限制的響應式變體。
 - `PATCH /api/images/edit` 執行 1–10 個有序 Action。
 - `PATCH /api/images/batch` 對 1–100 個路徑執行同一組 Action，並回傳逐項成功／錯誤。
 

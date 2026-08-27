@@ -4,7 +4,7 @@
   "title": "SoFinder API discovery data",
   "type": "object",
   "additionalProperties": false,
-  "required": ["apiVersion", "resources", "plugins", "imagePresets", "imageCapabilities", "uiDefaults", "featureAvailability", "signedUrls"],
+  "required": ["apiVersion", "resources", "plugins", "imagePresets", "imageCapabilities", "uiDefaults", "featureAvailability", "signedUrls", "assetCatalog", "imageVariants"],
   "properties": {
     "apiVersion": {"type": "string", "pattern": "^1\\."},
     "resources": {"type": "array", "items": {"$ref": "#/$defs/resource"}},
@@ -13,7 +13,9 @@
     "imageCapabilities": {"type": "object", "required": ["driver", "formats"], "properties": {"driver": {"enum": ["", "auto", "gd", "imagick"]}, "formats": {"type": "array", "items": {"$ref": "#/$defs/imageFormat"}}}},
     "uiDefaults": {"type": "object", "additionalProperties": false, "required": ["scale"], "properties": {"scale": {"enum": ["compact", "standard", "large", "xlarge"]}, "mode": {"enum": ["manager", "picker"]}, "header": {"type": "boolean"}, "logo": {"type": "boolean"}, "search": {"type": "boolean"}, "languageSwitcher": {"type": "boolean"}, "viewSwitcher": {"type": "boolean"}, "fullTools": {"type": "boolean"}, "uploadConflictStrategy": {"enum": ["ask", "rename", "overwrite", "skip"]}, "lowercaseUploadExtensions": {"type": "boolean"}}},
     "featureAvailability": {"type": "object", "additionalProperties": false, "required": ["folderTree", "recent", "favorites", "quickAccess", "quickAccessFiles", "tags", "archive", "trash", "batchRename", "imageEditing", "imageProcessing", "documentPreview", "securityStatus", "folderUpload", "textPreview", "checksum", "qrCode"], "properties": {"folderTree": {"type": "boolean"}, "recent": {"type": "boolean"}, "favorites": {"type": "boolean"}, "quickAccess": {"type": "boolean"}, "quickAccessFiles": {"type": "boolean"}, "tags": {"type": "boolean"}, "archive": {"type": "boolean"}, "trash": {"type": "boolean"}, "batchRename": {"type": "boolean"}, "imageEditing": {"type": "boolean"}, "imageProcessing": {"type": "boolean"}, "documentPreview": {"type": "boolean"}, "securityStatus": {"type": "boolean"}, "folderUpload": {"type": "boolean"}, "textPreview": {"type": "boolean"}, "checksum": {"type": "boolean"}, "qrCode": {"type": "boolean"}}},
-    "signedUrls": {"type": "object", "additionalProperties": false, "required": ["enabled", "defaultTtlSeconds", "maxTtlSeconds"], "properties": {"enabled": {"type": "boolean"}, "defaultTtlSeconds": {"type": "integer", "minimum": 30, "maximum": 86400}, "maxTtlSeconds": {"type": "integer", "minimum": 30, "maximum": 86400}}}
+    "signedUrls": {"type": "object", "additionalProperties": false, "required": ["enabled", "defaultTtlSeconds", "maxTtlSeconds"], "properties": {"enabled": {"type": "boolean"}, "defaultTtlSeconds": {"type": "integer", "minimum": 30, "maximum": 86400}, "maxTtlSeconds": {"type": "integer", "minimum": 30, "maximum": 86400}}},
+    "assetCatalog": {"type": "object", "additionalProperties": false, "required": ["enabled"], "properties": {"enabled": {"type": "boolean"}}},
+    "imageVariants": {"type": "object", "additionalProperties": false, "required": ["enabled"], "properties": {"enabled": {"type": "boolean"}}}
   },
   "$defs": {
     "entryCapabilities": {"type": "object", "description": "Authorization hints only; every operation is re-authorized by the server.", "additionalProperties": {"type": "boolean"}},

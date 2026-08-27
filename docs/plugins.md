@@ -16,6 +16,7 @@ final class VirusScanPlugin implements \SohoPHP\SoFinder\Contract\PluginInterfac
     public function descriptor(): array
     {
         return [
+            'descriptorVersion' => '1.0',
             'name' => 'acme-virus-scan',
             'version' => '1.0.0',
             'capabilities' => ['virus-scan'],
@@ -40,12 +41,34 @@ Descriptors may declare `resourceTypes` (`any`, `file`, `image`, `directory`),
 `requiredOperations` and non-secret `configurationKeys`. They never publish
 configuration values or credentials.
 
+The normative descriptor is [Plugin Descriptor Schema
+1.0](/schema/plugin-descriptor.schema.json). Unknown top-level fields are
+rejected except `extensions`; action IDs are unique; URLs must be same-origin
+absolute paths without encoded traversal, remote protocols, inline script or
+data URLs. Validate every installed plugin in CI:
+
+```bash
+./scripts/php-bin.sh bin/console sofinder:plugin:validate --json
+```
+
+Third-party PHPUnit suites can also use `PluginContractValidator` to validate a
+single descriptor, a preview `Response` (CSP, `nosniff` and referrer policy) and
+the safe serialized shape of an `AssetOperationEvent`. The host remains
+responsible for exercising each route with unauthorized workspace/resource/path
+fixtures because only the host knows its authentication model.
+
 Plugin behaviour should be implemented by subscribing to `OperationEvent` or
 by replacing one of the public contracts such as `AuthorizationInterface`,
 `ImageProcessorInterface`, or `MetadataStoreInterface`. Storage integrations
 implement `StorageAdapterInterface` and should run the common storage contract
 test suite before release. Plugins must not depend on SoFinder internals or
 copy assets or implementation details from third-party file managers.
+
+New plugins should consume `AssetOperationEvent` schema 1.0. It has fixed
+operation and phase vocabularies, and one logical operation keeps one opaque
+operation ID. Attributes are JSON-serializable and never contain file bytes,
+credentials, absolute storage paths or exception traces. The legacy
+`OperationEvent` is dispatched in parallel through the compatibility period.
 
 `uiActions` are optional declaration-only extension slots. `slot` is `utility`,
 `toolbar`, `context` or `details`; selection is `none`, `any`, `file` or `image`. SoFinder

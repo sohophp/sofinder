@@ -20,6 +20,9 @@ use SohoPHP\SoFinder\State\SharedUsageTracker;
 use SohoPHP\SoFinder\Observability\SharedMetricsStore;
 use SohoPHP\SoFinder\Upload\SharedChunkUploadStore;
 use SohoPHP\SoFinder\Upload\UploadNamePolicy;
+use SohoPHP\SoFinder\Asset\SharedAssetCatalog;
+use SohoPHP\SoFinder\Contract\AssetCatalogInterface;
+use SohoPHP\SoFinder\Contract\WorkspaceResolverInterface;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
 
 final class DependencyInjectionTest extends TestCase
@@ -86,6 +89,23 @@ final class DependencyInjectionTest extends TestCase
         ]], $container);
 
         self::assertSame(SharedChunkUploadStore::class, (string) $container->getAlias(ChunkUploadStoreInterface::class));
+        self::assertSame(SharedAssetCatalog::class, (string) $container->getAlias(AssetCatalogInterface::class));
+    }
+
+    public function testOptionalAssetWorkspaceAndVariantServicesUseConfiguredContracts(): void
+    {
+        $container = new ContainerBuilder();
+        (new SoFinderExtension())->load([[
+            'asset_catalog' => ['enabled' => true, 'store_service' => 'app.asset_catalog'],
+            'workspaces' => ['enabled' => true, 'default' => 'main', 'resolver_service' => 'app.workspace_resolver'],
+            'image_variants' => ['enabled' => true, 'widths' => [320, 640], 'formats' => ['original'], 'quality' => 80],
+            'resources' => ['Images' => ['root' => sys_get_temp_dir() . '/sofinder-di-images']],
+        ]], $container);
+
+        self::assertSame('app.asset_catalog', (string) $container->getAlias(AssetCatalogInterface::class));
+        self::assertSame('app.workspace_resolver', (string) $container->getAlias(WorkspaceResolverInterface::class));
+        self::assertTrue($container->getDefinition(\SohoPHP\SoFinder\Image\ImageManager::class)->getArgument(7));
+        self::assertSame([320, 640], $container->getDefinition(\SohoPHP\SoFinder\Image\ImageManager::class)->getArgument(8));
     }
 
     public function testUploadNamingPolicyIsSharedByEveryUploadController(): void

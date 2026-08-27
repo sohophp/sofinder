@@ -30,6 +30,18 @@ resource and return the callback's exact byte delta atomically.
 Remote adapters may additionally implement `StorageAuditProviderInterface` to
 return secret-safe `warning` or `critical` findings to the security audit.
 
+`AssetCatalogInterface` is the optional stable identity layer. It resolves by
+workspace/resource/path, finds opaque IDs and records upload, move, delete and
+file or directory-tree restore identity transitions. The bundled JSON implementation is single-node;
+the shared implementation uses `AtomicStateStoreInterface`. Asset metadata uses
+optimistic versions and reports stale writes as `asset_metadata_conflict`.
+
+`WorkspaceResolverInterface` resolves a trusted immutable `WorkspaceContext`
+from the current request. The context contains the opaque workspace ID, actor
+and allowed resources. Resolvers must derive it from authenticated host context;
+they must not trust a browser query parameter. Storage isolation remains the
+host adapter/resource mapping's responsibility.
+
 `EntryUrlContextProviderInterface` may add host-owned scalar values to a
 resource's configured `entry_url` route templates. It is autoconfigured with
 the `sofinder.entry_url_context_provider` tag. Providers should return an empty
@@ -52,6 +64,11 @@ Implement `PluginInterface` for browser-safe descriptors and use the
 an operation by throwing; after handlers must assume storage has already
 changed and should make secondary work idempotent. Event context is an
 extensible map, so subscribers must ignore unknown keys.
+
+`AssetOperationEvent` is the schema-versioned successor and is dispatched in
+parallel. It carries a stable operation ID, fixed operation and phase, workspace,
+resource, logical paths, optional asset ID and safe serializable attributes. Its
+published JSON shape is documented by [the event Schema](/schema/asset-operation-event.schema.json).
 
 Public value objects are immutable. New optional fields or capability flags may
 be added in 1.x; consumers must ignore values they do not recognize. Methods

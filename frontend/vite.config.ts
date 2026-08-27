@@ -19,6 +19,12 @@ export default defineConfig({
       entry: {
         sofinder: resolve(currentDirectory, "src/main.tsx"),
         "sofinder-picker": resolve(currentDirectory, "src/picker.ts"),
+        "sofinder-sdk": resolve(currentDirectory, "src/sdk.ts"),
+        "sofinder-editors": resolve(currentDirectory, "src/editors.ts"),
+        "sofinder-ckeditor5": resolve(currentDirectory, "src/ckeditor5.ts"),
+        "sofinder-tinymce": resolve(currentDirectory, "src/tinymce.ts"),
+        "sofinder-tiptap": resolve(currentDirectory, "src/tiptap.ts"),
+        "sofinder-quill": resolve(currentDirectory, "src/quill.ts"),
       },
       formats: ["es"],
       fileName: (_format, entryName) => `${entryName}.js`,

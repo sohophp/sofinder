@@ -35,6 +35,7 @@ final class BuildArtifactTest extends TestCase
         $controller = new AssetController($package);
 
         self::assertSame(200, $controller($chunk)->getStatusCode());
+        self::assertSame(200, $controller('sofinder.js')->getStatusCode());
         self::assertSame(404, $controller('../sofinder.js')->getStatusCode());
         self::assertSame(404, $controller('manifest.json')->getStatusCode());
     }

@@ -1,0 +1,21 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "noEmit": false,
+    "declaration": true,
+    "emitDeclarationOnly": true,
+    "declarationMap": false,
+    "outDir": "../dist/types"
+  },
+  "include": [
+    "src/types.ts",
+    "src/picker.ts",
+    "src/sdk.ts",
+    "src/editorAdapters.ts",
+    "src/editors.ts",
+    "src/ckeditor5.ts",
+    "src/tinymce.ts",
+    "src/tiptap.ts",
+    "src/quill.ts"
+  ]
+}

@@ -1,5 +1,11 @@
 //#region src/locales/en.ts
 var e = {
+	assetMetadata: "Asset metadata",
+	assetAlt: "Default alternative text",
+	assetTitle: "Asset title",
+	decorativeImage: "Decorative image (empty alternative text)",
+	assetAltUnset: "Leave blank to use the file name",
+	assetMetadataSaved: "Asset metadata saved",
 	files: "Files",
 	images: "Images",
 	newFolder: "New folder",

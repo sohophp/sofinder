@@ -2,6 +2,24 @@
 
 ## Unreleased
 
+## 0.1.0-beta.23 - 2026-08-27
+
+- Add optional host-resolved Workspace contexts and enforce their resource boundary throughout file, asset and user-metadata operations.
+- Add schema-versioned asset operation events alongside the legacy event, including safe failure events with operation IDs and error codes.
+- Freeze plugin descriptors at schema 1.0, reject unknown fields and traversal URLs, and add `sofinder:plugin:validate --json`.
+
+## 0.1.0-beta.22 - 2026-08-27
+
+- Add an opt-in lazy asset catalog with local and shared-state stores, stable UUIDs across overwrite/move/restore, and optimistic shared metadata updates.
+- Add default alternative text, asset titles and shared tags with a lazy details-panel editor that distinguishes unset and decorative alternative text.
+- Add bounded, authorization-preserving responsive image variants with configured widths/formats, atomic cache generation and cache maintenance.
+
+## 0.1.0-beta.21 - 2026-08-27
+
+- Add the additive Asset Reference 1.0 response contract while retaining legacy Entry and Picker 1.0 messages.
+- Add a framework-independent upload task SDK with progress, cancellation, retry, resumable chunks and all four conflict strategies.
+- Add separate CKEditor 5, TinyMCE, TipTap, Quill and generic editor upload modules, declarations, size gates and an expanded integration demo.
+
 - Add a lazy original-image preview with fit, 25/50/100/200% zoom, centering,
   keyboard and Ctrl/Command-wheel controls, retry states and large-image memory
   confirmation while retaining a lightweight thumbnail by default.

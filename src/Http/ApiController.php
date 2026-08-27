@@ -13,6 +13,7 @@ use SohoPHP\SoFinder\Plugin\PluginRegistry;
 use SohoPHP\SoFinder\Symfony\CsrfGuard;
 use SohoPHP\SoFinder\Value\OperationResult;
 use SohoPHP\SoFinder\Upload\UploadNamePolicy;
+use SohoPHP\SoFinder\Asset\AssetReferenceFactory;
 use Symfony\Component\HttpFoundation\File\UploadedFile;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
@@ -37,6 +38,9 @@ final readonly class ApiController
         private int $signedUrlDefaultTtl = 300,
         private int $signedUrlMaxTtl = 3600,
         private UploadNamePolicy $uploadNames = new UploadNamePolicy(),
+        private ?AssetReferenceFactory $assetReferences = null,
+        private bool $assetCatalogEnabled = false,
+        private bool $imageVariantsEnabled = false,
     ) {
     }
 
@@ -68,6 +72,8 @@ final readonly class ApiController
                 'defaultTtlSeconds' => $this->signedUrlDefaultTtl,
                 'maxTtlSeconds' => $this->signedUrlMaxTtl,
             ],
+            'assetCatalog' => ['enabled' => $this->assetCatalogEnabled],
+            'imageVariants' => ['enabled' => $this->imageVariantsEnabled],
         ]);
     }
 
@@ -160,7 +166,7 @@ final readonly class ApiController
             fclose($stream);
         }
 
-        return $this->success(['entry' => $entry], 201);
+        return $this->success(['entry' => $entry, 'asset' => $this->assetReferences?->create($this->resource($request), $entry)], 201);
     }
 
     public function rename(Request $request): JsonResponse

@@ -1,5 +1,8 @@
 name: CI
 
+env:
+  PHP_BIN: php
+
 on:
   workflow_dispatch:
   push:
@@ -21,17 +24,17 @@ jobs:
           php-version: ${{ matrix.php }}
           coverage: none
           extensions: gd, imagick
-      - run: composer validate --strict
+      - run: ./scripts/composer.sh validate --strict
       - run: |
-          composer require --no-update \
+          ./scripts/composer.sh require --no-update \
             symfony/config:${{ matrix.symfony }} symfony/console:${{ matrix.symfony }} \
             symfony/dependency-injection:${{ matrix.symfony }} symfony/event-dispatcher:${{ matrix.symfony }} \
             symfony/filesystem:${{ matrix.symfony }} symfony/http-foundation:${{ matrix.symfony }} \
             symfony/http-kernel:${{ matrix.symfony }} symfony/routing:${{ matrix.symfony }} \
             symfony/security-core:${{ matrix.symfony }} symfony/security-csrf:${{ matrix.symfony }}
-          composer update --no-interaction --prefer-dist
-      - run: vendor/bin/phpunit
-      - run: composer audit
+          ./scripts/composer.sh update --no-interaction --prefer-dist
+      - run: ./scripts/php-bin.sh vendor/bin/phpunit
+      - run: ./scripts/composer.sh audit
 
   frontend:
     runs-on: ubuntu-latest
@@ -67,13 +70,13 @@ jobs:
         with:
           php-version: '8.5'
           coverage: none
-      - run: composer config repositories.sofinder '{"type":"path","url":"../..","options":{"versions":{"sohophp/sofinder":"0.1.0-beta.20"}}}'
+      - run: ../../scripts/composer.sh config repositories.sofinder '{"type":"path","url":"../..","options":{"versions":{"sohophp/sofinder":"0.1.0-beta.23"}}}'
         working-directory: packages/sofinder-s3
-      - run: composer install --no-interaction --prefer-dist
+      - run: ../../scripts/composer.sh install --no-interaction --prefer-dist
         working-directory: packages/sofinder-s3
       - run: docker run -d --name sofinder-minio -p 9000:9000 -e MINIO_ROOT_USER=minioadmin -e MINIO_ROOT_PASSWORD=minioadmin minio/minio@sha256:d249d1fb6966de4d8ad26c04754b545205ff15a62e4fd19ebd0f26fa5baacbc0 server /data
       - run: for attempt in {1..30}; do curl --fail --silent http://127.0.0.1:9000/minio/health/ready && exit 0; sleep 1; done; exit 1
-      - run: vendor/bin/phpunit
+      - run: ../../scripts/php-bin.sh vendor/bin/phpunit
         working-directory: packages/sofinder-s3
         env:
           SOFINDER_S3_ENDPOINT: http://127.0.0.1:9000
@@ -100,16 +103,28 @@ jobs:
           php-version: '8.5'
           coverage: pcov
           extensions: gd, imagick, pcntl, pdo_sqlite, redis
-      - run: composer install --no-interaction --prefer-dist
-      - run: composer phpstan
-      - run: vendor/bin/phpunit --coverage-clover var/coverage.xml
+      - run: ./scripts/composer.sh install --no-interaction --prefer-dist
+      - run: ./scripts/composer.sh phpstan
+      - run: ./scripts/php-bin.sh vendor/bin/phpunit --coverage-clover var/coverage.xml
       - run: >-
-          php scripts/check-coverage.php var/coverage.xml 72
+          ./scripts/php-bin.sh scripts/check-coverage.php var/coverage.xml 72
           src/Preview/DocumentPreviewJobManager.php:85
           src/Preview/DocumentPreviewManager.php:85
           src/Security/MalwareScanStatusStore.php:85
           src/Security/SharedMalwareScanStatusStore.php:85
           src/Http/AssetController.php:85
+          src/Asset/AssetReferenceFactory.php:85
+          src/Asset/AssetOperationPublisher.php:85
+          src/Asset/JsonAssetCatalog.php:85
+          src/Asset/SharedAssetCatalog.php:85
+          src/Http/AssetApiController.php:85
+          src/Event/AssetOperationEvent.php:85
+          src/Symfony/AssetCatalogSubscriber.php:85
+          src/Symfony/VersionedOperationSubscriber.php:85
+          src/Symfony/DefaultWorkspaceResolver.php:85
+          src/Workspace/WorkspaceProvider.php:85
+          src/Plugin/PluginRegistry.php:85
+          src/Plugin/PluginContractValidator.php:85
 
   pdo-state:
     runs-on: ubuntu-latest
@@ -156,8 +171,8 @@ jobs:
           php-version: '8.5'
           coverage: none
           extensions: pcntl, pdo_${{ matrix.driver }}
-      - run: composer install --no-interaction --prefer-dist
-      - run: vendor/bin/phpunit tests/PdoSharedStateDatabaseTest.php
+      - run: ./scripts/composer.sh install --no-interaction --prefer-dist
+      - run: ./scripts/php-bin.sh vendor/bin/phpunit tests/PdoSharedStateDatabaseTest.php
         env:
           SOFINDER_STATE_DSN: ${{ matrix.dsn }}
           SOFINDER_STATE_USER: sofinder
@@ -171,17 +186,17 @@ jobs:
         with:
           php-version: '8.5'
           coverage: none
-      - run: composer install --no-interaction --prefer-dist
+      - run: ./scripts/composer.sh install --no-interaction --prefer-dist
       - run: docker run -d --name sofinder-clamav -p 3310:3310 clamav/clamav@sha256:75fb5fd95fcbe1d7e6d240c369c1572b686ee2c95949d1042b5148de8eddebb4
       - name: Wait for ClamAV daemon
         run: |
           for attempt in {1..60}; do
-            if php -r 'require "vendor/autoload.php"; exit((new SohoPHP\SoFinder\Security\ClamAvScanner("tcp://127.0.0.1:3310", 2.0))->check()->status === "ready" ? 0 : 1);'; then exit 0; fi
+            if ./scripts/php-bin.sh -r 'require "vendor/autoload.php"; exit((new SohoPHP\SoFinder\Security\ClamAvScanner("tcp://127.0.0.1:3310", 2.0))->check()->status === "ready" ? 0 : 1);'; then exit 0; fi
             sleep 5
           done
           docker logs sofinder-clamav
           exit 1
-      - run: vendor/bin/phpunit tests/ClamAvLiveTest.php
+      - run: ./scripts/php-bin.sh vendor/bin/phpunit tests/ClamAvLiveTest.php
         env:
           SOFINDER_CLAMAV_ENDPOINT: tcp://127.0.0.1:3310
 
@@ -194,9 +209,9 @@ jobs:
           php-version: '8.5'
           coverage: none
           extensions: gd, zip
-      - run: composer install --no-interaction --prefer-dist
+      - run: ./scripts/composer.sh install --no-interaction --prefer-dist
       - run: sudo apt-get update && sudo apt-get install -y --no-install-recommends libreoffice-writer
-      - run: vendor/bin/phpunit tests/DocumentPreviewTest.php --filter RealLibreOffice
+      - run: ./scripts/php-bin.sh vendor/bin/phpunit tests/DocumentPreviewTest.php --filter RealLibreOffice
         env:
           SOFINDER_LIBREOFFICE_BINARY: /usr/bin/libreoffice
 
@@ -218,26 +233,26 @@ jobs:
           extensions: gd, imagick
       - run: cp ${{ matrix.manifest }} composer.json
         working-directory: examples/symfony
-      - run: composer install --no-interaction --prefer-dist
+      - run: ../../scripts/composer.sh install --no-interaction --prefer-dist
         working-directory: examples/symfony
-      - run: php bin/console cache:warmup --env=prod --no-interaction
+      - run: ../../scripts/php-bin.sh bin/console cache:warmup --env=prod --no-interaction
         working-directory: examples/symfony
         env: { APP_ENV: prod, APP_DEBUG: 0 }
       - name: Verify the reference inspector is available only in the dev demo
         run: |
-          php bin/console debug:router --env=dev | grep -F '/integrations/plugin-inspector'
-          php bin/console debug:container --tag=sofinder.plugin --env=dev | grep -F 'App\Plugin\FileInspectorPlugin'
-          if php bin/console debug:router --env=prod | grep -F '/integrations/plugin-inspector'; then exit 1; fi
-          if php bin/console debug:container --tag=sofinder.plugin --env=prod | grep -F 'App\Plugin\FileInspectorPlugin'; then exit 1; fi
+          ../../scripts/php-bin.sh bin/console debug:router --env=dev | grep -F '/integrations/plugin-inspector'
+          ../../scripts/php-bin.sh bin/console debug:container --tag=sofinder.plugin --env=dev | grep -F 'App\Plugin\FileInspectorPlugin'
+          if ../../scripts/php-bin.sh bin/console debug:router --env=prod | grep -F '/integrations/plugin-inspector'; then exit 1; fi
+          if ../../scripts/php-bin.sh bin/console debug:container --tag=sofinder.plugin --env=prod | grep -F 'App\Plugin\FileInspectorPlugin'; then exit 1; fi
         working-directory: examples/symfony
-      - run: php bin/console sofinder:image:capabilities --env=prod --json
+      - run: ../../scripts/php-bin.sh bin/console sofinder:image:capabilities --env=prod --json
         working-directory: examples/symfony
         env: { APP_ENV: prod, APP_DEBUG: 0 }
-      - run: php bin/console sofinder:security:audit --env=prod
+      - run: ../../scripts/php-bin.sh bin/console sofinder:security:audit --env=prod
         working-directory: examples/symfony
         env: { APP_ENV: prod, APP_DEBUG: 0 }
       - name: Warm the single-provider S3 demo without optional provider 2 variables
-        run: php bin/console cache:warmup --env=s3 --no-interaction
+        run: ../../scripts/php-bin.sh bin/console cache:warmup --env=s3 --no-interaction
         working-directory: examples/symfony
         env:
           APP_ENV: s3

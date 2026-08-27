@@ -5,9 +5,12 @@ declare(strict_types=1);
 namespace App\Controller;
 
 use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\Security\Csrf\CsrfTokenManagerInterface;
 
 final readonly class IntegrationDemoController
 {
+    public function __construct(private CsrfTokenManagerInterface $csrf) {}
+
     public function __invoke(): Response
     {
         $html = <<<'HTML'
@@ -31,16 +34,22 @@ final readonly class IntegrationDemoController
   <section class="hero"><h1>SoFinder 编辑器集成演示</h1><p>同一个安全 Picker SDK 连接 CKEditor 5、TinyMCE、TipTap、Quill 和普通表单。先用 <strong>demo / demo</strong> 登录。</p></section>
   <nav class="tabs" aria-label="编辑器"><button class="active" data-pane="plain">普通表单</button><button data-pane="ckeditor">CKEditor 5</button><button data-pane="tinymce">TinyMCE 8</button><button data-pane="tiptap">TipTap</button><button data-pane="quill">Quill 2</button></nav>
   <section class="card">
-    <div class="pane active" id="plain"><h2>普通 URL 字段</h2><div class="toolbar"><button class="action" id="plain-choose">选择文件</button></div><input class="field" id="file-url" aria-label="文件 URL" placeholder="选择结果会写入这里"><p class="status" id="plain-status"></p></div>
-    <div class="pane" id="ckeditor"><h2>CKEditor 5</h2><div class="toolbar"><button class="action" id="ckeditor-choose">从 SoFinder 插入图片</button></div><div id="ckeditor-editor"><p>在这里编辑内容，然后从 SoFinder 插入图片。</p></div><p class="status" id="ckeditor-status"></p><p class="note">演示固定使用 CKEditor 5 的官方经典版 CDN；正式项目请按所选版本的授权条款部署。</p></div>
+    <div class="pane active" id="plain"><h2>普通 URL 字段</h2><div class="toolbar"><button class="action" id="plain-choose">选择文件</button><label class="action">上传文件<input hidden type="file" id="plain-upload"></label></div><input class="field" id="file-url" aria-label="文件 URL" placeholder="选择或上传结果会写入这里"><p class="status" id="plain-status"></p></div>
+    <div class="pane" id="ckeditor"><h2>CKEditor 5</h2><div class="toolbar"><button class="action" id="ckeditor-choose">从 SoFinder 插入图片</button></div><div id="ckeditor-editor"><p>可从 SoFinder 选择，也可以粘贴、拖入或使用图片上传按钮。</p></div><p class="status" id="ckeditor-status"></p><p class="note">演示固定使用 CKEditor 5 的官方经典版 CDN；正式项目请按所选版本的授权条款部署。</p></div>
     <div class="pane" id="tinymce"><h2>TinyMCE 8</h2><textarea id="tinymce-editor">在这里编辑内容，然后点击工具栏中的 Files。</textarea><p class="status" id="tinymce-status"></p><p class="note">演示从 jsDelivr 加载 GPL 自托管发行包，不依赖 Tiny Cloud API key。</p></div>
-    <div class="pane" id="tiptap"><h2>TipTap</h2><div class="toolbar"><button class="action" id="tiptap-choose">从 SoFinder 插入图片</button></div><div id="tiptap-editor"></div><p class="status" id="tiptap-status"></p></div>
+    <div class="pane" id="tiptap"><h2>TipTap</h2><div class="toolbar"><button class="action" id="tiptap-choose">从 SoFinder 插入图片</button><label class="action">上传图片<input hidden type="file" accept="image/*" id="tiptap-upload"></label></div><div id="tiptap-editor"></div><p class="status" id="tiptap-status"></p></div>
     <div class="pane" id="quill"><h2>Quill 2</h2><div id="quill-editor"><p>点击 Quill 工具栏的图片按钮选择 SoFinder 图片。</p></div><p class="status" id="quill-status"></p></div>
   </section>
 </main>
 <script type="module">
   import { registerQuill, registerTinyMce, selectForCkeditor5, selectForInput, selectForTiptap } from '/sofinder/assets/sofinder-picker.js';
+  import { bindAssetInput } from '/sofinder/assets/sofinder-editors.js';
+  import { createCkeditor5UploadPlugin } from '/sofinder/assets/sofinder-ckeditor5.js';
+  import { tinyMceImagesUploadHandler } from '/sofinder/assets/sofinder-tinymce.js';
+  import { installTiptapUploads, uploadForTiptap } from '/sofinder/assets/sofinder-tiptap.js';
+  import { installQuillUploads } from '/sofinder/assets/sofinder-quill.js';
   const baseUrl = '/sofinder/browser';
+  const editorOptions = { apiBase: '/sofinder/api', csrfToken: __CSRF_TOKEN__, resource: 'Files', conflictStrategy: 'ask', onTaskChange: task => task.status !== 'ready' && console.info('SoFinder upload', task.status, task.progress) };
   const imageOptions = { baseUrl, resource: 'Files', tools: 'common' };
   const status = (id, value) => document.getElementById(id).textContent = value ? `已选择：${value.name}` : '';
   document.querySelectorAll('[data-pane]').forEach(button => button.addEventListener('click', () => {
@@ -48,26 +57,31 @@ final readonly class IntegrationDemoController
     document.querySelectorAll('.pane').forEach(pane => pane.classList.toggle('active', pane.id === button.dataset.pane));
   }));
   document.getElementById('plain-choose').addEventListener('click', async () => status('plain-status', await selectForInput(document.getElementById('file-url'), { baseUrl, kind: 'file', resource: 'Files' })));
+  bindAssetInput(document.getElementById('plain-upload'), document.getElementById('file-url'), editorOptions);
 
   let ckeditor;
   try {
-    ckeditor = await window.ClassicEditor.create(document.getElementById('ckeditor-editor'), { toolbar: ['undo', 'redo', '|', 'bold', 'italic', 'link'] });
+    ckeditor = await window.ClassicEditor.create(document.getElementById('ckeditor-editor'), { extraPlugins: [createCkeditor5UploadPlugin(editorOptions)], toolbar: ['undo', 'redo', '|', 'bold', 'italic', 'link', 'uploadImage'] });
     document.getElementById('ckeditor-choose').addEventListener('click', async () => status('ckeditor-status', await selectForCkeditor5(ckeditor, imageOptions)));
   } catch (error) { document.getElementById('ckeditor-status').textContent = `CKEditor 初始化失败：${error.message}`; }
 
   registerTinyMce(window.tinymce, imageOptions);
-  window.tinymce.init({ selector: '#tinymce-editor', height: 280, base_url: 'https://cdn.jsdelivr.net/npm/tinymce@8.0.2', suffix: '.min', license_key: 'gpl', plugins: 'sofinder link lists image', toolbar: 'undo redo | bold italic | link image sofinder', promotion: false });
+  window.tinymce.init({ selector: '#tinymce-editor', height: 280, base_url: 'https://cdn.jsdelivr.net/npm/tinymce@8.0.2', suffix: '.min', license_key: 'gpl', plugins: 'sofinder link lists image', toolbar: 'undo redo | bold italic | link image sofinder', images_upload_handler: tinyMceImagesUploadHandler(editorOptions), automatic_uploads: true, paste_data_images: true, promotion: false });
 
   const [{ Editor }, { default: StarterKit }, { default: Image }] = await Promise.all([import('https://esm.sh/@tiptap/core'), import('https://esm.sh/@tiptap/starter-kit'), import('https://esm.sh/@tiptap/extension-image')]);
   const tiptap = new Editor({ element: document.getElementById('tiptap-editor'), extensions: [StarterKit, Image], content: '<p>在这里编辑内容，然后从 SoFinder 插入图片。</p>' });
+  installTiptapUploads(tiptap, editorOptions);
   document.getElementById('tiptap-choose').addEventListener('click', async () => status('tiptap-status', await selectForTiptap(tiptap, imageOptions)));
+  document.getElementById('tiptap-upload').addEventListener('change', async event => { const file = event.target.files?.[0]; if (file) status('tiptap-status', await uploadForTiptap(tiptap, file, editorOptions)); });
 
   const quill = new window.Quill('#quill-editor', { theme: 'snow', modules: { toolbar: [['bold', 'italic'], ['link', 'image']] } });
   registerQuill(quill, imageOptions);
+  installQuillUploads(quill, { ...editorOptions, toolbarUpload: false });
 </script>
 </body>
 </html>
 HTML;
+        $html = str_replace('__CSRF_TOKEN__', json_encode($this->csrf->getToken('sofinder')->getValue(), JSON_THROW_ON_ERROR), $html);
 
         return new Response($html, headers: [
             'Content-Type' => 'text/html; charset=UTF-8',

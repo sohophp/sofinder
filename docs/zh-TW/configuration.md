@@ -45,6 +45,26 @@ so_finder:
 Secret 至少 32 Byte。簽章 URL 綁定檔案版本且僅適用於 `proxy` 資源。需要匿名存取時，
 在通用 SoFinder Firewall 規則前為 `/sofinder/signed/` 設定嚴格範圍的 `PUBLIC_ACCESS`。
 
+## 資產目錄、圖片變體與 Workspace
+
+三項能力預設關閉，既有專案維持路徑資產與單一空間行為：
+
+```yaml
+so_finder:
+  asset_catalog: { enabled: false, store_service: null, register_existing: lazy }
+  image_variants:
+    enabled: false
+    widths: [320, 640, 960, 1280, 1920]
+    formats: [original, webp]
+    quality: 82
+    mode: on_demand
+    max_variants_per_asset: 10
+    cache_ttl_seconds: 2592000
+  workspaces: { enabled: false, default: main, resolver_service: null }
+```
+
+資產使用懶註冊隨機 UUID；重新命名、移動、覆寫和資源回收筒還原保留 ID，上傳及複製建立新 ID。啟用叢集狀態後會自動使用共享目錄。圖片變體只接受白名單尺寸與格式、不放大，並繼承資源授權。Workspace 必須由宿主可信的 `WorkspaceResolverInterface` 從登入上下文解析，不能直接信任查詢參數；實際儲存隔離仍由宿主資源映射負責。
+
 ## 檔案系統權限
 
 ```yaml

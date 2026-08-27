@@ -53,6 +53,26 @@ sofinder_api_entries:
   methods: [GET]
   defaults: { _sofinder: true }
 
+sofinder_api_asset_resolve:
+  path: /api/assets/resolve
+  controller: SohoPHP\SoFinder\Http\AssetApiController::resolve
+  methods: [GET]
+  defaults: { _sofinder: true }
+
+sofinder_api_asset_get:
+  path: /api/assets/{id}
+  controller: SohoPHP\SoFinder\Http\AssetApiController::get
+  methods: [GET]
+  requirements: { id: '[a-f0-9-]{36}' }
+  defaults: { _sofinder: true }
+
+sofinder_api_asset_update:
+  path: /api/assets/{id}/metadata
+  controller: SohoPHP\SoFinder\Http\AssetApiController::update
+  methods: [PATCH]
+  requirements: { id: '[a-f0-9-]{36}' }
+  defaults: { _sofinder: true }
+
 sofinder_api_folder:
   path: /api/folders
   controller: SohoPHP\SoFinder\Http\ApiController::createFolder
@@ -206,6 +226,12 @@ sofinder_image_thumbnail:
 sofinder_image_info:
   path: /api/images/info
   controller: SohoPHP\SoFinder\Http\ImageController::info
+  methods: [GET]
+  defaults: { _sofinder: true }
+
+sofinder_image_variant:
+  path: /api/images/variant
+  controller: SohoPHP\SoFinder\Http\ImageController::variant
   methods: [GET]
   defaults: { _sofinder: true }
 

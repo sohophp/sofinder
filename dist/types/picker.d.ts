@@ -1,0 +1,91 @@
+export declare const PICKER_PROTOCOL_VERSION: "1.0";
+export interface PickerEntry {
+    resource: string;
+    path: string;
+    name: string;
+    directory: boolean;
+    size: number;
+    modifiedAt: number;
+    mimeType: string | null;
+    url: string;
+    width: number | null;
+    height: number | null;
+    capabilities: Record<string, boolean>;
+    schemaVersion?: "1.0";
+    assetId?: string | null;
+    version?: string;
+    downloadUrl?: string | null;
+    alt?: string | null;
+    variants?: Array<{
+        width: number;
+        height: number;
+        url: string;
+        mimeType: string;
+    }>;
+}
+export interface PickerOptions {
+    baseUrl: string;
+    kind?: "any" | "file" | "image";
+    resource?: string;
+    path?: string;
+    language?: "en" | "zh-cn" | "zh-tw";
+    tools?: "common" | "full";
+    width?: number;
+    height?: number;
+    windowName?: string;
+}
+export interface PickerMessage {
+    type: "sofinder:select";
+    version: typeof PICKER_PROTOCOL_VERSION;
+    requestId: string;
+    entry: PickerEntry;
+}
+export declare const pickerUrl: (options: PickerOptions, id?: string) => URL;
+/** Open a SoFinder picker and resolve with the selected entry after strict source, origin and request validation. */
+export declare const openPicker: (options: PickerOptions) => Promise<PickerEntry>;
+type EditorPickerOptions = Omit<PickerOptions, "kind">;
+/** Select an image and insert it through CKEditor 5's public command API. */
+export declare const selectForCkeditor5: (editor: {
+    execute(command: string, options: {
+        source: string;
+    }): void;
+    editing?: {
+        view?: {
+            focus?: () => void;
+        };
+    };
+}, options: EditorPickerOptions) => Promise<PickerEntry>;
+/** Register a `sofinder` toolbar button and menu item in TinyMCE. */
+export declare const registerTinyMce: (tinymce: {
+    PluginManager: {
+        add(name: string, setup: (editor: any) => object): void;
+    };
+}, options: EditorPickerOptions) => void;
+/** Select an image and insert it through TipTap's Image extension. */
+export declare const selectForTiptap: (editor: {
+    chain(): {
+        focus(): {
+            setImage(options: {
+                src: string;
+                alt: string;
+            }): {
+                run(): unknown;
+            };
+        };
+    };
+}, options: EditorPickerOptions) => Promise<PickerEntry>;
+/** Install a SoFinder image handler on a Quill toolbar. */
+export declare const registerQuill: (quill: {
+    getModule(name: "toolbar"): {
+        addHandler(name: string, handler: () => void): void;
+    };
+    getSelection(focus?: boolean): {
+        index: number;
+    } | null;
+    insertEmbed(index: number, type: string, value: string, source: string): void;
+}, options: EditorPickerOptions) => void;
+/** Bind a picker result to a plain URL input and emit normal input/change events. */
+export declare const selectForInput: (input: HTMLInputElement, options: PickerOptions) => Promise<PickerEntry>;
+/** Insert a Markdown image or link at the current textarea selection. */
+export declare const selectForMarkdown: (input: HTMLTextAreaElement, options: PickerOptions) => Promise<PickerEntry>;
+export {};

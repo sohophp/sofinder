@@ -10,6 +10,8 @@ Picker URL 和带版本的返回对象，不依赖 React 内部实现。
 
 返回对象遵循公开的 [Picker Entry JSON Schema](/schema/picker-entry.schema.json)，固定包含 `resource`、`path`、`name`、`url`、`mimeType`、`size`、`modifiedAt`、`width`、`height` 和 `capabilities`。非图片尺寸为 `null`；Consumer 必须忽略 1.x 新增字段。消息 Envelope 另见 [JSON Schema](/schema/picker-message.schema.json)。
 
+上传响应和新版 Picker 也会返回兼容增加的 [Asset Reference 1.0](/schema/asset-reference.schema.json)：包含版本指纹、下载 URL、可选稳定资产 ID、替代文本、响应式变体和 `embeddable` 能力；原 `entry` 不删除。
+
 ```js
 import { openPicker } from '/sofinder/assets/sofinder-picker.js'
 
@@ -41,6 +43,18 @@ button.addEventListener('click', () => selectForCkeditor5(editor, {
 适配器调用 CKEditor 5 公开的 `insertImage` Command。安装及授权要求请查看
 [CKEditor 官方指南](https://ckeditor.com/docs/ckeditor5/latest/getting-started/installation/cloud/quick-start.html)。
 原有 CKEditor 4 Callback 和 Quick Upload 接口继续保留。
+
+本地选择、粘贴和桌面拖入使用独立官方上传 Adapter，不会把 CKEditor 打入 SoFinder 主包：
+
+```js
+import { createCkeditor5UploadPlugin } from '/sofinder/assets/sofinder-ckeditor5.js'
+
+ClassicEditor.create(element, {
+  extraPlugins: [createCkeditor5UploadPlugin({ apiBase: '/sofinder/api', csrfToken, resource: 'Images' })]
+})
+```
+
+它与 TinyMCE、TipTap、Quill、Markdown 和普通表单入口共用 `sofinder-sdk.js` 上传任务，统一处理进度、取消、重试、分块恢复及同名文件选择。Private 资源没有稳定鉴权交付 URL 时会拒绝持久插入，临时签名 URL 不会被当成可嵌入地址。
 
 ## TinyMCE
 

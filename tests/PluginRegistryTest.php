@@ -8,6 +8,10 @@ use PHPUnit\Framework\TestCase;
 use SohoPHP\SoFinder\Contract\PluginInterface;
 use SohoPHP\SoFinder\Plugin\PluginRegistry;
 use SohoPHP\SoFinder\Plugin\PluginContractValidator;
+use SohoPHP\SoFinder\Event\AssetOperationEvent;
+use SohoPHP\SoFinder\Value\ResourceType;
+use SohoPHP\SoFinder\Value\WorkspaceContext;
+use Symfony\Component\HttpFoundation\Response;
 
 final class PluginRegistryTest extends TestCase
 {
@@ -19,8 +23,8 @@ final class PluginRegistryTest extends TestCase
         ]);
 
         self::assertSame([
-            ['name' => 'alpha-plugin', 'version' => '1.0.0', 'capabilities' => ['virus-scan']],
-            ['name' => 'zeta-plugin', 'version' => '2.0.0', 'capabilities' => ['audit']],
+            ['descriptorVersion' => '1.0', 'name' => 'alpha-plugin', 'version' => '1.0.0', 'capabilities' => ['virus-scan']],
+            ['descriptorVersion' => '1.0', 'name' => 'zeta-plugin', 'version' => '2.0.0', 'capabilities' => ['audit']],
         ], $registry->descriptors());
     }
 
@@ -107,6 +111,49 @@ final class PluginRegistryTest extends TestCase
         new PluginRegistry([$plugin]);
     }
 
+    public function testRejectsEncodedPathTraversalAndUnknownDescriptorFields(): void
+    {
+        foreach ([
+            ['name' => 'unsafe-path', 'version' => '1.0.0', 'capabilities' => [], 'previewers' => [['id' => 'pdf', 'extensions' => ['pdf'], 'url' => '/preview/%2e%2e/secret']]],
+            ['name' => 'unknown-field', 'version' => '1.0.0', 'capabilities' => [], 'script' => '/plugin.js'],
+        ] as $descriptor) {
+            $plugin = new class($descriptor) implements PluginInterface {
+                /** @param array<string,mixed> $descriptor */
+                public function __construct(private readonly array $descriptor) {}
+                public function descriptor(): array { return $this->descriptor; }
+            };
+            try {
+                new PluginRegistry([$plugin]);
+                self::fail('An unsafe plugin descriptor must be rejected.');
+            } catch (\InvalidArgumentException) {
+                self::addToAssertionCount(1);
+            }
+        }
+    }
+
+    public function testRejectsDuplicateUiActionIds(): void
+    {
+        $this->expectException(\InvalidArgumentException::class);
+        $action = ['id' => 'inspect', 'label' => ['en' => 'Inspect'], 'slot' => 'context', 'url' => '/inspect'];
+        $plugin = new class($action) implements PluginInterface {
+            /** @param array<string,mixed> $action */
+            public function __construct(private readonly array $action) {}
+            public function descriptor(): array { return ['name' => 'duplicate-action', 'version' => '1.0.0', 'capabilities' => [], 'uiActions' => [$this->action, $this->action]]; }
+        };
+        new PluginRegistry([$plugin]);
+    }
+
+    public function testRejectsUnknownNestedDescriptorFields(): void
+    {
+        $this->expectException(\InvalidArgumentException::class);
+        $plugin = new class implements PluginInterface {
+            public function descriptor(): array { return ['name' => 'nested-field', 'version' => '1.0.0', 'capabilities' => [], 'uiActions' => [[
+                'id' => 'inspect', 'label' => ['en' => 'Inspect'], 'slot' => 'context', 'url' => '/inspect', 'javascript' => 'alert(1)',
+            ]]]; }
+        };
+        new PluginRegistry([$plugin]);
+    }
+
     public function testNormalizesPluginRequirementsWithoutPublishingConfigurationValues(): void
     {
         $plugin = new class implements PluginInterface {
@@ -137,6 +184,27 @@ final class PluginRegistryTest extends TestCase
         $descriptor = (new PluginContractValidator())->validate($plugin);
         self::assertSame('third-party-preview', $descriptor['name']);
         self::assertSame('/plugin/preview', $descriptor['previewers'][0]['url']);
+    }
+
+    public function testPublishedContractValidatorChecksPreviewHeadersAndEvents(): void
+    {
+        $validator = new PluginContractValidator();
+        $response = new Response('preview', headers: [
+            'Content-Security-Policy' => "default-src 'none'; frame-ancestors 'self'",
+            'X-Content-Type-Options' => 'nosniff',
+            'Referrer-Policy' => 'no-referrer',
+        ]);
+        $validator->validatePreviewResponse($response);
+        $event = new AssetOperationEvent(str_repeat('a', 32), 'upload', 'after', new WorkspaceContext('main', 'actor'), new ResourceType('Files', '/files', '/files'), 'a.txt', null, null);
+        self::assertSame('1.0', $validator->validateEvent($event)['schemaVersion']);
+        foreach ([
+            [],
+            ['Content-Security-Policy' => "default-src 'none'; frame-ancestors 'self'"],
+            ['Content-Security-Policy' => "default-src 'none'; frame-ancestors 'self'", 'X-Content-Type-Options' => 'nosniff'],
+        ] as $headers) {
+            try { $validator->validatePreviewResponse(new Response('unsafe', headers: $headers)); self::fail('Incomplete preview security headers must be rejected.'); }
+            catch (\InvalidArgumentException) { self::addToAssertionCount(1); }
+        }
     }
 
     /** @param list<string> $capabilities */

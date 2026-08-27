@@ -1,5 +1,8 @@
 name: Release
 
+env:
+  PHP_BIN: php
+
 on:
   push:
     tags: ['v*']
@@ -26,7 +29,7 @@ jobs:
         with:
           node-version: '22'
       - run: corepack enable
-      - run: composer install --no-interaction --prefer-dist
+      - run: ./scripts/composer.sh install --no-interaction --prefer-dist
       - run: pnpm install --frozen-lockfile
         working-directory: frontend
       - run: pnpm build && pnpm check:size && pnpm test:unit
@@ -35,7 +38,7 @@ jobs:
         working-directory: frontend
       - run: pnpm test:e2e
         working-directory: frontend
-      - run: vendor/bin/phpunit && vendor/bin/phpstan analyse --no-progress
+      - run: ./scripts/php-bin.sh vendor/bin/phpunit && ./scripts/php-bin.sh vendor/bin/phpstan analyse --no-progress
       - run: git diff --exit-code -- dist
       - name: Create immutable source archive and checksum
         run: |

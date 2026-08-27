@@ -1,7 +1,7 @@
 import { lazy, Suspense, useCallback, useEffect, useId, useMemo, useRef, useState } from "react";
 import { Api, ApiError } from "./api";
 import { loadMessages, translator, type Language, type Messages } from "./i18n";
-import type { Entry, ImageCapabilities, ImageInfo, ImagePreset, MetadataState, PluginDescriptor, PluginUiAction, QuickAccessEntry, ResourceType, SoFinderConfig, UiScale, UploadConflictStrategy } from "./types";
+import type { AssetMetadata, AssetReference, Entry, ImageCapabilities, ImageInfo, ImagePreset, MetadataState, PluginDescriptor, PluginUiAction, QuickAccessEntry, ResourceType, SoFinderConfig, UiScale, UploadConflictStrategy } from "./types";
 import { ConfirmDialog, TextDialog, UploadConflictDialog } from "./components/Dialogs";
 import { Modal } from "./components/Modal";
 import { EntryIcon as Icon, ThumbnailImage } from "./components/EntryVisuals";
@@ -35,6 +35,7 @@ const RecentPanel = lazy(() => import("./components/MetadataSidebarPanels").then
 const ContextMenu = lazy(() => import("./components/ContextMenu").then(module => ({ default: module.ContextMenu })));
 const UploadQueue = lazy(() => import("./components/UploadQueue").then(module => ({ default: module.UploadQueue })));
 const ImagePreviewPane = lazy(() => import("./components/ImagePreviewPane"));
+const AssetMetadataDialog = lazy(() => import("./components/AssetMetadataDialog").then(module => ({ default: module.AssetMetadataDialog })));
 
 interface TextDialogState { kind: "folder" | "rename" | "resize"; title: string; label: string; initial: string; maximum: number; extension?: string }
 interface ConfirmState { title: string; message: string; detail?: string; danger?: boolean }
@@ -106,6 +107,8 @@ export default function App({ config, initialMessages }: { config: SoFinderConfi
   const [imageCapabilities, setImageCapabilities] = useState<ImageCapabilities>({ driver: "", formats: [] });
   const [plugins, setPlugins] = useState<PluginDescriptor[]>([]);
   const [signedUrls, setSignedUrls] = useState({ enabled: false, defaultTtlSeconds: 300, maxTtlSeconds: 3600 });
+  const [assetCatalogEnabled, setAssetCatalogEnabled] = useState(false);
+  const [assetMetadataDialog, setAssetMetadataDialog] = useState<{ asset: AssetReference; metadata: AssetMetadata } | null>(null);
   const [leftWidth, setLeftWidth] = useState(() => loadColumnWidth("left"));
   const [rightWidth, setRightWidth] = useState(() => loadColumnWidth("right"));
   const confirmResolver = useRef<((answer: boolean) => void) | null>(null);
@@ -316,9 +319,10 @@ export default function App({ config, initialMessages }: { config: SoFinderConfi
   });
 
   useEffect(() => {
-    api.configData().then(({ resources: available, plugins: activePlugins, imagePresets: presets, imageCapabilities: capabilities, signedUrls: signedUrlCapabilities }) => {
+    api.configData().then(({ resources: available, plugins: activePlugins, imagePresets: presets, imageCapabilities: capabilities, signedUrls: signedUrlCapabilities, assetCatalog }) => {
       setResources(available);
       setPlugins(activePlugins || []);
+      setAssetCatalogEnabled(assetCatalog?.enabled === true);
       setImagePresets(presets || {});
       setImageCapabilities(capabilities || { driver: "", formats: [] });
       setSignedUrls(signedUrlCapabilities || { enabled: false, defaultTtlSeconds: 300, maxTtlSeconds: 3600 });
@@ -448,6 +452,13 @@ export default function App({ config, initialMessages }: { config: SoFinderConfi
     try { const value = await resolveEntryUrl(entry); if (value) setShareDialog({ ...value, fileName: entry.name }); }
     catch (error) { report(error); }
   };
+  const openAssetMetadata = async (entry: Entry) => {
+    try {
+      const resolved = await api.resolveAsset(resource, entry.path);
+      if (!resolved.asset.assetId) return;
+      setAssetMetadataDialog(await api.asset(resolved.asset.assetId));
+    } catch (error) { report(error); }
+  };
   const canSelected = (operation: string) => selectedEntries.length > 0 && selectedEntries.every(entry => entry.capabilities?.[operation] !== false);
   const quickAccessFiles = features.quickAccessFiles;
   const canQuickAccess = (entry: Entry | null) => Boolean(entry && (entry.directory || metadata.quickAccess.includes(entry.path) || quickAccessFiles));
@@ -560,7 +571,11 @@ export default function App({ config, initialMessages }: { config: SoFinderConfi
       try { dimensions = await api.imageInfo(resource, entry.path); }
       catch { dimensions = null; }
     }
-    const pickerEntry = { ...entry, resource, url: entry.url, width: dimensions?.width ?? null, height: dimensions?.height ?? null };
+    let pickerEntry = { ...entry, resource, url: entry.url, width: dimensions?.width ?? null, height: dimensions?.height ?? null };
+    if (assetCatalogEnabled) {
+      try { pickerEntry = { ...pickerEntry, ...(await api.resolveAsset(resource, entry.path)).asset }; }
+      catch { /* The legacy picker result remains usable if optional asset metadata is unavailable. */ }
+    }
     if (config.ckeditorFunction > 0) {
       const target = window.opener || window.parent;
       const ckeditor = (target as Window & { CKEDITOR?: { tools?: { callFunction?: (id: number, url: string) => void } } }).CKEDITOR;
@@ -1148,7 +1163,7 @@ export default function App({ config, initialMessages }: { config: SoFinderConfi
         <div className="sf-column-resizer right" role="separator" tabIndex={0} aria-label={t("resizeRightPanel")} aria-orientation="vertical" aria-valuemin={columnLimits.right.min} aria-valuemax={columnLimits.right.max} aria-valuenow={rightWidth} onPointerDown={event => beginColumnResize("right", event)} onPointerMove={moveColumnResize} onPointerUp={endColumnResize} onPointerCancel={endColumnResize} onKeyDown={event => resizeColumnWithKeyboard("right", event)} onDoubleClick={() => setColumnWidth("right", columnLimits.right.initial, true)}/>
         <aside className="sf-right-panel" aria-label={t("rightSidebar")}>
           {folderNavigationRight && resource && <section className="sf-folder-navigation-right"><h2>{t("folderNavigation")}</h2><Suspense fallback={<div className="sf-state">{t("loading")}</div>}><FolderTree api={api} resource={resource} currentPath={resolvedPath} rootLabel={t("home")} onNavigate={next => resetAndLoad(resource, next, "")}/></Suspense></section>}
-          {showDetails && <Suspense fallback={<div className="sf-state">{t("loading")}</div>}><DetailsPanel api={api} resource={resource} selectedEntries={selectedEntries} selected={selected} imageInfo={imageInfo} metadata={metadata} showTags={features.tags} previewImage={canPreviewImage(selected)} selectMode={false} selectAllowed={canChooseEntry(selected)} labels={{ details: t("details"), selected: t("selectedCount"), type: t("type"), folder: t("folder"), file: t("file"), size: t("size"), dimensions: t("dimensions"), modified: t("modified"), location: t("location"), select: t("select"), download: t("download"), share: t("share"), unsupportedWebImage: t("webImageUnsupported") }} formatDate={timestamp => dateFormatter.format(timestamp * 1000)} onChoose={choose} onShare={openShare} pluginActions={selected && pluginActions.filter(action => action.slot === "details" && pluginActionAvailable(action, selected)).map(action => <button key={`${action.plugin}:${action.id}`} onClick={() => openPluginAction(action, selected)}>{pluginLabel(action, language)}</button>)}/></Suspense>}
+          {showDetails && <Suspense fallback={<div className="sf-state">{t("loading")}</div>}><DetailsPanel api={api} resource={resource} selectedEntries={selectedEntries} selected={selected} imageInfo={imageInfo} metadata={metadata} showTags={features.tags} previewImage={canPreviewImage(selected)} selectMode={false} selectAllowed={canChooseEntry(selected)} assetMetadataEnabled={assetCatalogEnabled} labels={{ details: t("details"), selected: t("selectedCount"), type: t("type"), folder: t("folder"), file: t("file"), size: t("size"), dimensions: t("dimensions"), modified: t("modified"), location: t("location"), select: t("select"), download: t("download"), share: t("share"), assetMetadata: t("assetMetadata"), unsupportedWebImage: t("webImageUnsupported") }} formatDate={timestamp => dateFormatter.format(timestamp * 1000)} onChoose={choose} onShare={openShare} onAssetMetadata={entry => void openAssetMetadata(entry)} pluginActions={selected && pluginActions.filter(action => action.slot === "details" && pluginActionAvailable(action, selected)).map(action => <button key={`${action.plugin}:${action.id}`} onClick={() => openPluginAction(action, selected)}>{pluginLabel(action, language)}</button>)}/></Suspense>}
         </aside>
       </>}
     </div>
@@ -1180,6 +1195,7 @@ export default function App({ config, initialMessages }: { config: SoFinderConfi
       onClose={() => setTagsOpen(false)}
       onSave={tags => { setTagsOpen(false); void mutateMetadata(resource, selected.path, "tags", { tags }).catch(report); }}
     /></Suspense>}
+    {assetMetadataDialog && <Suspense fallback={<div className="sf-state">{t("loading")}</div>}><AssetMetadataDialog asset={assetMetadataDialog.asset} metadata={assetMetadataDialog.metadata} labels={{ title: t("assetMetadata"), alt: t("assetAlt"), assetTitle: t("assetTitle"), tags: t("tags"), decorative: t("decorativeImage"), unsetAlt: t("assetAltUnset"), save: t("save"), cancel: t("cancel") }} onClose={() => setAssetMetadataDialog(null)} onSave={async value => { const result = await api.updateAssetMetadata(assetMetadataDialog.asset.assetId || "", value); setAssetMetadataDialog(current => current ? { ...current, metadata: result.metadata, asset: { ...current.asset, alt: result.metadata.alt } } : null); setNotice(t("assetMetadataSaved")); }}/></Suspense>}
     {previewEntry && <Modal
       title={previewEntry.name}
       closeLabel={t("close")}

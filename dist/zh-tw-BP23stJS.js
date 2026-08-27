@@ -1,5 +1,11 @@
 //#region src/locales/zh-tw.ts
 var e = {
+	assetMetadata: "資產中繼資料",
+	assetAlt: "預設替代文字",
+	assetTitle: "資產標題",
+	decorativeImage: "裝飾性圖片（空替代文字）",
+	assetAltUnset: "留空時使用檔案名稱",
+	assetMetadataSaved: "資產中繼資料已儲存",
 	files: "檔案",
 	images: "圖片",
 	newFolder: "新增資料夾",

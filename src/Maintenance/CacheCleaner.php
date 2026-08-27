@@ -19,7 +19,7 @@ final readonly class CacheCleaner
         $cutoff = time() - $olderThanSeconds;
         $matched = $removed = $bytes = 0;
         $errors = [];
-        foreach (['thumbnails' => ['png'], 'document-previews' => ['pdf']] as $directory => $extensions) {
+        foreach (['thumbnails' => ['png'], 'variants' => ['jpg', 'jpeg', 'png', 'gif', 'webp', 'avif', 'bmp'], 'document-previews' => ['pdf']] as $directory => $extensions) {
             $path = rtrim($this->cacheDirectory, '/') . '/' . $directory;
             if (!is_dir($path)) continue;
             foreach (new \FilesystemIterator($path, \FilesystemIterator::SKIP_DOTS | \FilesystemIterator::CURRENT_AS_FILEINFO) as $file) {

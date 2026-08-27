@@ -1,0 +1,27 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://sofinder.sohophp.app/schema/asset-reference.schema.json",
+  "title": "SoFinder editor asset reference",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "assetId", "resource", "path", "name", "directory", "mimeType", "size", "modifiedAt", "version", "url", "downloadUrl", "width", "height", "alt", "variants", "capabilities"],
+  "properties": {
+    "schemaVersion": { "const": "1.0" },
+    "assetId": { "type": ["string", "null"], "pattern": "^[a-f0-9-]{36}$" },
+    "resource": { "type": "string", "minLength": 1 },
+    "path": { "type": "string" },
+    "name": { "type": "string" },
+    "directory": { "const": false },
+    "mimeType": { "type": ["string", "null"] },
+    "size": { "type": "integer", "minimum": 0 },
+    "modifiedAt": { "type": "integer", "minimum": 0 },
+    "version": { "type": "string", "minLength": 1 },
+    "url": { "type": "string" },
+    "downloadUrl": { "type": ["string", "null"] },
+    "width": { "type": ["integer", "null"], "minimum": 1 },
+    "height": { "type": ["integer", "null"], "minimum": 1 },
+    "alt": { "type": ["string", "null"], "maxLength": 1000 },
+    "variants": { "type": "array", "maxItems": 20, "items": { "type": "object", "additionalProperties": false, "required": ["width", "height", "url", "mimeType"], "properties": { "width": { "type": "integer", "minimum": 1 }, "height": { "type": "integer", "minimum": 1 }, "url": { "type": "string" }, "mimeType": { "type": "string" } } } },
+    "capabilities": { "type": "object", "additionalProperties": { "type": "boolean" } }
+  }
+}

@@ -12,6 +12,12 @@ export interface PickerEntry {
   width: number | null;
   height: number | null;
   capabilities: Record<string, boolean>;
+  schemaVersion?: "1.0";
+  assetId?: string | null;
+  version?: string;
+  downloadUrl?: string | null;
+  alt?: string | null;
+  variants?: Array<{ width: number; height: number; url: string; mimeType: string }>;
 }
 
 export interface PickerOptions {

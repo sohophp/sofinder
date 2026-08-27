@@ -32,7 +32,7 @@ final class OpenApiContractTest extends TestCase
             $schemas[basename($file)] = $schema;
         }
         self::assertSame([
-            'capability-catalog.schema.json', 'config-data.schema.json', 'error-envelope.schema.json', 'image-actions.schema.json', 'picker-entry.schema.json', 'picker-message.schema.json', 'plugin-descriptor.schema.json',
+            'asset-operation-event.schema.json', 'asset-reference.schema.json', 'capability-catalog.schema.json', 'config-data.schema.json', 'error-envelope.schema.json', 'image-actions.schema.json', 'picker-entry.schema.json', 'picker-message.schema.json', 'plugin-descriptor.schema.json',
         ], array_keys($schemas));
         self::assertSame(
             ['resource', 'path', 'name', 'directory', 'size', 'modifiedAt', 'mimeType', 'url', 'width', 'height', 'capabilities'],

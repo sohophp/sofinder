@@ -11,6 +11,11 @@ object; editor-specific code never calls private React APIs.
 
 The resolved object follows the published [picker entry JSON Schema](/schema/picker-entry.schema.json) and always includes `resource`, `path`, `name`, `url`, `mimeType`, `size`, `modifiedAt`, `width`, `height` and `capabilities`. Dimensions are `null` for non-images. Consumers must ignore additional 1.x fields. The message envelope has its own [JSON Schema](/schema/picker-message.schema.json).
 
+Upload responses and new picker consumers can use the additive [Asset Reference
+1.0 Schema](/schema/asset-reference.schema.json). It adds a version fingerprint,
+download URL, optional stable asset ID, alternative text, responsive variants
+and explicit `embeddable` capability without removing the legacy `entry`.
+
 ```js
 import { openPicker } from '/sofinder/assets/sofinder-picker.js'
 
@@ -46,6 +51,26 @@ The adapter executes CKEditor 5's public `insertImage` command. Configure its
 Image plugin and follow the [official installation and licensing guide](https://ckeditor.com/docs/ckeditor5/latest/getting-started/installation/cloud/quick-start.html).
 The legacy CKEditor 4 callback and quick-upload endpoints remain available.
 
+For local selection, paste and desktop drop uploads, install the official
+adapter without bundling CKEditor into SoFinder:
+
+```js
+import { createCkeditor5UploadPlugin } from '/sofinder/assets/sofinder-ckeditor5.js'
+
+ClassicEditor.create(element, {
+  extraPlugins: [createCkeditor5UploadPlugin({
+    apiBase: '/sofinder/api', csrfToken, resource: 'Images'
+  })]
+})
+```
+
+The adapter uses the public CKEditor UploadAdapter contract and the shared
+`sofinder-sdk.js` upload task. Upload progress, abort, retry, whole/chunked
+transfer and `ask|rename|overwrite|skip` conflicts therefore behave the same in
+every editor. A Private resource is rejected unless it has a stable,
+authorization-preserving delivery URL; a temporary signed URL is never treated
+as embeddable content.
+
 ## TinyMCE
 
 Register the SoFinder plugin before `tinymce.init()` and add `sofinder` to the
@@ -69,6 +94,17 @@ tinymce.init({
 The adapter inserts an encoded `<img>` element through TinyMCE's public API.
 See the [TinyMCE deployment guide](https://www.tiny.cloud/docs/tinymce/latest/editor-and-features/)
 for CDN keys or self-hosting.
+
+Direct upload adapters are separate ESM entries:
+
+```js
+import { createTinyMceUploadHandler } from '/sofinder/assets/sofinder-tinymce.js'
+// TipTap: sofinder-tiptap.js; Quill: sofinder-quill.js
+```
+
+All accept `apiBase`, `csrfToken`, `resource`, optional dynamic `path`, conflict
+strategy, default-alt callback, task observer and error callback. The generic
+Markdown and form bindings are exported by `sofinder-editors.js`.
 
 ## TipTap and Quill
 

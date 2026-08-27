@@ -23,6 +23,17 @@
       "_jsx-runtime-CmCsaYvT.js"
     ]
   },
+  "_defineProperty-B_lfzbVN.js": {
+    "file": "defineProperty-B_lfzbVN.js",
+    "name": "defineProperty"
+  },
+  "_editorAdapters-CirZlFhV.js": {
+    "file": "editorAdapters-CirZlFhV.js",
+    "name": "editorAdapters",
+    "imports": [
+      "src/sdk.ts"
+    ]
+  },
   "_format-GD3_dnvn.js": {
     "file": "format-GD3_dnvn.js",
     "name": "format"
@@ -40,6 +51,26 @@
     "name": "react",
     "imports": [
       "_jsx-runtime-CmCsaYvT.js"
+    ]
+  },
+  "src/ckeditor5.ts": {
+    "file": "sofinder-ckeditor5.js",
+    "name": "sofinder-ckeditor5",
+    "src": "src/ckeditor5.ts",
+    "isEntry": true,
+    "imports": [
+      "_editorAdapters-CirZlFhV.js"
+    ]
+  },
+  "src/components/AssetMetadataDialog.tsx": {
+    "file": "AssetMetadataDialog-DNmujGaU.js",
+    "name": "AssetMetadataDialog",
+    "src": "src/components/AssetMetadataDialog.tsx",
+    "isDynamicEntry": true,
+    "imports": [
+      "_jsx-runtime-CmCsaYvT.js",
+      "_react-B5TC723I.js",
+      "_Modal-aP8IYcPB.js"
     ]
   },
   "src/components/BulkRenameDialog.tsx": {
@@ -76,7 +107,7 @@
     ]
   },
   "src/components/DetailsPanel.tsx": {
-    "file": "DetailsPanel-VAkzkQQp.js",
+    "file": "DetailsPanel-DOaLAuvT.js",
     "name": "DetailsPanel",
     "src": "src/components/DetailsPanel.tsx",
     "isDynamicEntry": true,
@@ -229,20 +260,29 @@
       "_UiIcon-CeAgi5_o.js"
     ]
   },
+  "src/editors.ts": {
+    "file": "sofinder-editors.js",
+    "name": "sofinder-editors",
+    "src": "src/editors.ts",
+    "isEntry": true,
+    "imports": [
+      "_editorAdapters-CirZlFhV.js"
+    ]
+  },
   "src/locales/en.ts": {
-    "file": "en-C9IYgA52.js",
+    "file": "en-5z6hVc9z.js",
     "name": "en",
     "src": "src/locales/en.ts",
     "isDynamicEntry": true
   },
   "src/locales/zh-cn.ts": {
-    "file": "zh-cn-BKI-ICDG.js",
+    "file": "zh-cn-CsQlSxpw.js",
     "name": "zh-cn",
     "src": "src/locales/zh-cn.ts",
     "isDynamicEntry": true
   },
   "src/locales/zh-tw.ts": {
-    "file": "zh-tw-D7YgC_eW.js",
+    "file": "zh-tw-BP23stJS.js",
     "name": "zh-tw",
     "src": "src/locales/zh-tw.ts",
     "isDynamicEntry": true
@@ -255,6 +295,7 @@
     "imports": [
       "_jsx-runtime-CmCsaYvT.js",
       "_react-B5TC723I.js",
+      "_defineProperty-B_lfzbVN.js",
       "_UiIcon-CeAgi5_o.js",
       "_Modal-aP8IYcPB.js",
       "_nameValidation-DURyMFRU.js",
@@ -281,7 +322,8 @@
       "src/components/MetadataSidebarPanels.tsx",
       "src/components/ContextMenu.tsx",
       "src/components/UploadQueue.tsx",
-      "src/components/ImagePreviewPane.tsx"
+      "src/components/ImagePreviewPane.tsx",
+      "src/components/AssetMetadataDialog.tsx"
     ]
   },
   "src/picker.ts": {
@@ -289,6 +331,42 @@
     "name": "sofinder-picker",
     "src": "src/picker.ts",
     "isEntry": true
+  },
+  "src/quill.ts": {
+    "file": "sofinder-quill.js",
+    "name": "sofinder-quill",
+    "src": "src/quill.ts",
+    "isEntry": true,
+    "imports": [
+      "_editorAdapters-CirZlFhV.js"
+    ]
+  },
+  "src/sdk.ts": {
+    "file": "sofinder-sdk.js",
+    "name": "sofinder-sdk",
+    "src": "src/sdk.ts",
+    "isEntry": true,
+    "imports": [
+      "_defineProperty-B_lfzbVN.js"
+    ]
+  },
+  "src/tinymce.ts": {
+    "file": "sofinder-tinymce.js",
+    "name": "sofinder-tinymce",
+    "src": "src/tinymce.ts",
+    "isEntry": true,
+    "imports": [
+      "_editorAdapters-CirZlFhV.js"
+    ]
+  },
+  "src/tiptap.ts": {
+    "file": "sofinder-tiptap.js",
+    "name": "sofinder-tiptap",
+    "src": "src/tiptap.ts",
+    "isEntry": true,
+    "imports": [
+      "_editorAdapters-CirZlFhV.js"
+    ]
   },
   "style.css": {
     "file": "sofinder.css",

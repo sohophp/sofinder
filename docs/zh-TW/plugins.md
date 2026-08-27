@@ -13,6 +13,7 @@ final class VirusScanPlugin implements \SohoPHP\SoFinder\Contract\PluginInterfac
     public function descriptor(): array
     {
         return [
+            'descriptorVersion' => '1.0',
             'name' => 'acme-virus-scan',
             'version' => '1.0.0',
             'capabilities' => ['virus-scan'],
@@ -28,6 +29,14 @@ final class VirusScanPlugin implements \SohoPHP\SoFinder\Contract\PluginInterfac
     }
 }
 ```
+
+正式契約請見 [Plugin Descriptor Schema 1.0](/schema/plugin-descriptor.schema.json)。除 `extensions` 外會拒絕未知欄位；動作 ID 不可重複；URL 必須是沒有編碼路徑穿越的同源絕對路徑。CI 應執行：
+
+```bash
+./scripts/php-bin.sh bin/console sofinder:plugin:validate --json
+```
+
+新 Plugin 應訂閱帶版本的 `AssetOperationEvent`；它提供固定操作/階段、同一操作 ID、Workspace 與不含憑證、絕對路徑或例外堆疊的安全屬性。相容期間舊 `OperationEvent` 仍會同步派發。
 
 Descriptor 只能包含 Browser-safe Metadata。名稱在全域範圍內必須唯一，而且 Symfony 建立 Service Container 時會驗證所有 Field。公開 Config Endpoint 會列出啟用的 Descriptor，讓宿主應用程式在不暴露 Service Configuration 的前提下診斷安裝狀態。
 

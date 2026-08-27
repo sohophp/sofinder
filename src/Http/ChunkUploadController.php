@@ -15,6 +15,7 @@ use Symfony\Component\HttpFoundation\File\UploadedFile;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use SohoPHP\SoFinder\Upload\UploadNamePolicy;
+use SohoPHP\SoFinder\Asset\AssetReferenceFactory;
 
 final readonly class ChunkUploadController
 {
@@ -24,6 +25,7 @@ final readonly class ChunkUploadController
         private CsrfGuard $csrf,
         private ?MaintenanceCoordinator $maintenance = null,
         private UploadNamePolicy $uploadNames = new UploadNamePolicy(),
+        private ?AssetReferenceFactory $assetReferences = null,
     )
     {
     }
@@ -82,7 +84,7 @@ final readonly class ChunkUploadController
         }
         $this->maintenance?->trigger(MaintenanceTask::Uploads);
 
-        return new JsonResponse(OperationResult::success(['complete' => true, 'entry' => $entry]), 201);
+        return new JsonResponse(OperationResult::success(['complete' => true, 'entry' => $entry, 'asset' => $this->assetReferences?->create($session['resource'], $entry)]), 201);
     }
 
     public function cancel(Request $request, string $id): JsonResponse

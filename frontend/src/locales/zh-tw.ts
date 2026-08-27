@@ -1,4 +1,5 @@
 const messages = {
+  assetMetadata: "資產中繼資料", assetAlt: "預設替代文字", assetTitle: "資產標題", decorativeImage: "裝飾性圖片（空替代文字）", assetAltUnset: "留空時使用檔案名稱", assetMetadataSaved: "資產中繼資料已儲存",
   files: "檔案", images: "圖片", newFolder: "新增資料夾", upload: "上傳", uploadFolder: "上傳資料夾", folderUploadTooMany: "單次資料夾上傳最多 500 個檔案。", folderUploadPreview: "頂層資料夾", refresh: "重新整理",
   search: "搜尋檔案", searchTags: "搜尋標籤（多個標籤以逗號分隔）", searchScope: "搜尋範圍", searchTrash: "搜尋已刪除的檔案", name: "名稱", size: "大小", modified: "修改時間", empty: "此資料夾是空的",
   select: "選取", rename: "重新命名", batchRename: "批次重新命名", renamePattern: "名稱規則", renamePatternHint: "使用 {name} 表示原主檔名、{n} 表示序號、{ext} 表示鎖定的副檔名。", oldName: "原名稱", duplicateRename: "預覽中有重複名稱。", remove: "刪除", download: "下載", copy: "複製", move: "移動", webImageUnsupported: "此圖片格式不能直接用於網頁內容。",

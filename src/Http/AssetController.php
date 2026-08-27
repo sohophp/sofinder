@@ -15,11 +15,7 @@ final readonly class AssetController
 
     public function __invoke(string $file): Response
     {
-        $allowed = [
-            'sofinder.js' => 'text/javascript; charset=UTF-8',
-            'sofinder-picker.js' => 'text/javascript; charset=UTF-8',
-            'sofinder.css' => 'text/css; charset=UTF-8',
-        ];
+        $allowed = [];
         foreach ($this->manifestAssets() as $asset) {
             $allowed[$asset] = str_ends_with($asset, '.css') ? 'text/css; charset=UTF-8' : 'text/javascript; charset=UTF-8';
         }

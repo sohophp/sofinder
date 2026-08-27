@@ -9,6 +9,7 @@ export interface SoFinderConfig {
   ckeditorFunction: number;
   pickerRequestId: string;
   pickerOrigin: string;
+  workspace?: { id: string; resources: string[] } | null;
   theme: {
     accent: string;
     background: string;
@@ -191,6 +192,36 @@ export interface Entry {
   url: string | null;
   capabilities: Record<string, boolean>;
 }
+
+export interface ImageVariant {
+  width: number;
+  height: number;
+  url: string;
+  mimeType: string;
+}
+
+/** Stable, editor-facing representation returned alongside legacy Entry payloads. */
+export interface AssetReference {
+  schemaVersion: "1.0";
+  assetId: string | null;
+  resource: string;
+  path: string;
+  name: string;
+  directory: false;
+  mimeType: string | null;
+  size: number;
+  modifiedAt: number;
+  version: string;
+  url: string;
+  downloadUrl: string | null;
+  width: number | null;
+  height: number | null;
+  alt: string | null;
+  variants: ImageVariant[];
+  capabilities: Record<string, boolean>;
+}
+
+export interface AssetMetadata { alt: string | null; title: string | null; tags: string[]; version: number; updatedAt: number }
 
 export interface TrashItem {
   id: string;

@@ -1,4 +1,4 @@
-import type { ApiResponse, BatchResult, DocumentPreviewJob, Entry, ImageAction, ImageBatchResult, ImageCapabilities, ImageEditResult, ImagePreset, ImageInfo, MetadataState, PluginDescriptor, ResourceType, SecurityStatus, SoFinderConfig, TrashPage } from "./types";
+import type { ApiResponse, AssetMetadata, AssetReference, BatchResult, DocumentPreviewJob, Entry, ImageAction, ImageBatchResult, ImageCapabilities, ImageEditResult, ImagePreset, ImageInfo, MetadataState, PluginDescriptor, ResourceType, SecurityStatus, SoFinderConfig, TrashPage } from "./types";
 
 export const isApiVersionSupported = (version: string): boolean => /^1(?:\.|$)/.test(version);
 
@@ -39,7 +39,7 @@ export class Api {
   }
 
   async configData() {
-    const data = await this.request<{ apiVersion: string; resources: ResourceType[]; plugins: PluginDescriptor[]; imagePresets: Record<string, ImagePreset>; imageCapabilities?: ImageCapabilities; featureAvailability?: SoFinderConfig["featureAvailability"]; uiDefaults?: SoFinderConfig["uiDefaults"]; signedUrls?: { enabled: boolean; defaultTtlSeconds: number; maxTtlSeconds: number } }>("/config");
+    const data = await this.request<{ apiVersion: string; resources: ResourceType[]; plugins: PluginDescriptor[]; imagePresets: Record<string, ImagePreset>; imageCapabilities?: ImageCapabilities; featureAvailability?: SoFinderConfig["featureAvailability"]; uiDefaults?: SoFinderConfig["uiDefaults"]; signedUrls?: { enabled: boolean; defaultTtlSeconds: number; maxTtlSeconds: number }; assetCatalog?: { enabled: boolean }; imageVariants?: { enabled: boolean } }>("/config");
     if (!isApiVersionSupported(data.apiVersion)) {
       throw new ApiError(`SoFinder UI requires API 1.x; server reported ${data.apiVersion || "an unknown version"}.`, "incompatible_api_version", 426);
     }
@@ -47,6 +47,15 @@ export class Api {
   }
 
   securityStatus() { return this.request<SecurityStatus>("/security/status"); }
+
+  resolveAsset(resource: string, path: string) {
+    return this.request<{ asset: AssetReference }>(`/assets/resolve?${new URLSearchParams({ resource, path })}`);
+  }
+
+  asset(id: string) { return this.request<{ asset: AssetReference; metadata: AssetMetadata }>(`/assets/${encodeURIComponent(id)}`); }
+  updateAssetMetadata(id: string, metadata: Pick<AssetMetadata, "alt" | "title" | "tags" | "version">) {
+    return this.request<{ metadata: AssetMetadata }>(`/assets/${encodeURIComponent(id)}/metadata`, { method: "PATCH", body: JSON.stringify(metadata) });
+  }
 
   prepareDocumentPreview(resource: string, path: string, retry = false) {
     return this.request<DocumentPreviewJob>("/preview/document/jobs", { method: "POST", body: JSON.stringify({ resource, path, retry }) });

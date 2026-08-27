@@ -22,7 +22,58 @@ final readonly class ImageManager
         private ImageFormatRegistry $formats = new ImageFormatRegistry(),
         private int $directoryMode = 0775,
         private int $fileMode = 0664,
+        private bool $variantsEnabled = false,
+        /** @var list<int> */ private array $variantWidths = [320, 640, 960, 1280, 1920],
+        /** @var list<string> */ private array $variantFormats = ['original', 'webp'],
+        private int $variantQuality = 82,
+        private int $variantCacheTtl = 2_592_000,
     ) {
+    }
+
+    /** @return array{path:string,mimeType:string,width:int,height:int} */
+    public function variant(string $resource, string $path, int $width, string $format = 'original'): array
+    {
+        if (!$this->variantsEnabled) throw new SoFinderException('Responsive image variants are disabled.', 'image_variants_disabled', 404);
+        if (!in_array($width, $this->variantWidths, true) || !in_array($format, $this->variantFormats, true)) throw new SoFinderException('The requested image variant is not allowed.', 'invalid_image_variant', 422);
+        $entry = $this->imageEntry($resource, $path); $dimensions = $this->info($resource, $path);
+        if ($width > $dimensions['width']) throw new SoFinderException('Image variants cannot enlarge the original image.', 'image_variant_upscale', 422);
+        $height = max(1, (int) round($dimensions['height'] * ($width / $dimensions['width'])));
+        $mimeType = $format === 'original' ? ($entry->mimeType ?? 'image/jpeg') : $this->formats->canonicalMime($format);
+        if ($mimeType === null) throw new SoFinderException('The requested image variant format is unavailable.', 'unsupported_image_output_format', 415);
+        $extension = $this->formats->extensionsForMime($mimeType)[0] ?? 'img';
+        $directory = rtrim($this->cacheDirectory, DIRECTORY_SEPARATOR) . '/variants';
+        if (!is_dir($directory) && !@mkdir($directory, $this->directoryMode, true) && !is_dir($directory)) throw new SoFinderException('Unable to create the image variant cache.', 'image_processing_failed', 500);
+        $this->maintainCache($directory, $this->variantCacheTtl);
+        $processorVersion = $this->processor instanceof ImageCapabilityProviderInterface ? $this->processor->cacheVersion() : get_debug_type($this->processor);
+        $cachePath = $directory . '/' . hash('sha256', implode('|', [$processorVersion, $resource, $entry->path, $entry->modifiedAt, $entry->size, $width, $format, $this->variantQuality])) . '.' . $extension;
+        $lock = fopen($cachePath . '.lock', 'c+'); if ($lock === false || !flock($lock, LOCK_EX)) throw new SoFinderException('Unable to lock the image variant cache.', 'image_processing_failed', 500);
+        try {
+            if (!is_file($cachePath)) {
+                $temporary = tempnam($directory, '.sofinder-variant-'); if ($temporary === false) throw new SoFinderException('Unable to create an image variant work file.', 'image_processing_failed', 500);
+                try {
+                    $this->process($resource, $path, function (ImageProcessorInterface $processor, string $source, string $destination) use ($width, $height, $format, $mimeType, $directory): void {
+                        if ($format === 'original') { $processor->transform($source, $destination, 0, $width, $height, $this->variantQuality); return; }
+                        $resized = tempnam($directory, '.sofinder-resized-'); if ($resized === false) throw new SoFinderException('Unable to create an image variant work file.', 'image_processing_failed', 500);
+                        try { $processor->transform($source, $resized, 0, $width, $height, $this->variantQuality); $this->effectsProcessor()->optimize($resized, $destination, $mimeType, $this->variantQuality); } finally { @unlink($resized); }
+                    }, $temporary);
+                    if (!@rename($temporary, $cachePath) && !is_file($cachePath)) throw new SoFinderException('Unable to store the image variant.', 'image_processing_failed', 500);
+                    @chmod($cachePath, $this->fileMode);
+                } finally { @unlink($temporary); }
+            }
+        } finally { flock($lock, LOCK_UN); fclose($lock); @unlink($cachePath . '.lock'); }
+        return ['path' => $cachePath, 'mimeType' => $mimeType, 'width' => $width, 'height' => $height];
+    }
+
+    /** @param list<string> $configured */
+    public function preferredVariantFormat(string $originalMimeType, array $configured): string
+    {
+        foreach ($configured as $format) {
+            if ($format === 'original') continue;
+            $mime = $this->formats->canonicalMime($format);
+            if ($mime === null || !$this->processor->supports($mime)) continue;
+            try { $this->effectsProcessor(); return $format; } catch (SoFinderException) { continue; }
+        }
+        return 'original';
     }
 
     /** @return array{path:string,mimeType:string} */
@@ -431,15 +482,15 @@ final readonly class ImageManager
         return $this->processor;
     }
 
-    private function maintainCache(string $directory): void
+    private function maintainCache(string $directory, int $ttl = 2_592_000): void
     {
-        static $maintained = false;
-        if ($maintained) {
+        static $maintained = [];
+        if (isset($maintained[$directory])) {
             return;
         }
-        $maintained = true;
+        $maintained[$directory] = true;
         $files = [];
-        $expiry = time() - 2_592_000;
+        $expiry = time() - $ttl;
         foreach (new \FilesystemIterator($directory, \FilesystemIterator::SKIP_DOTS | \FilesystemIterator::CURRENT_AS_FILEINFO) as $file) {
             if (!$file instanceof \SplFileInfo) {
                 continue;

@@ -79,6 +79,54 @@ final class ImageManagerTest extends TestCase
         self::assertSame(0664, fileperms($thumbnail['path']) & 07777);
     }
 
+    public function testResponsiveVariantIsBoundedVersionedAndCached(): void
+    {
+        $authorization = new class implements AuthorizationInterface {
+            public function isAuthenticated(): bool { return true; }
+            public function isGranted(string $operation, ResourceType $resource, string $path): bool { return true; }
+        };
+        $type = new ResourceType('Images', $this->directory, '/images', allowedExtensions: ['png'], allowedMimeTypes: ['image/png']);
+        $files = new FileManager(new ResourceRegistry([new ResourceStorage($type, new LocalStorageAdapter($this->directory, '/images'))]), $authorization, new EventDispatcher());
+        $images = new ImageManager(
+            $files,
+            new GdImageProcessor(),
+            $this->directory . '/cache',
+            formats: new ImageFormatRegistry(),
+            variantsEnabled: true,
+            variantWidths: [200],
+            variantFormats: ['original'],
+        );
+
+        $first = $images->variant('Images', 'source.png', 200);
+        $second = $images->variant('Images', 'source.png', 200);
+
+        self::assertSame($first, $second);
+        self::assertSame(['width' => 200, 'height' => 100], array_intersect_key($first, ['width' => true, 'height' => true]));
+        self::assertSame('image/png', $first['mimeType']);
+        self::assertFileExists($first['path']);
+
+        try {
+            $images->variant('Images', 'source.png', 201);
+            self::fail('An arbitrary image width must be rejected.');
+        } catch (SoFinderException $exception) {
+            self::assertSame('invalid_image_variant', $exception->errorCode);
+        }
+    }
+
+    public function testResponsiveVariantNeverEnlargesTheOriginal(): void
+    {
+        $authorization = new class implements AuthorizationInterface {
+            public function isAuthenticated(): bool { return true; }
+            public function isGranted(string $operation, ResourceType $resource, string $path): bool { return true; }
+        };
+        $type = new ResourceType('Images', $this->directory, '/images', allowedExtensions: ['png'], allowedMimeTypes: ['image/png']);
+        $files = new FileManager(new ResourceRegistry([new ResourceStorage($type, new LocalStorageAdapter($this->directory, '/images'))]), $authorization, new EventDispatcher());
+        $images = new ImageManager($files, new GdImageProcessor(), $this->directory . '/cache', formats: new ImageFormatRegistry(), variantsEnabled: true, variantWidths: [800], variantFormats: ['original']);
+
+        $this->expectExceptionObject(new SoFinderException('Image variants cannot enlarge the original image.', 'image_variant_upscale', 422));
+        $images->variant('Images', 'source.png', 800);
+    }
+
     #[Group('performance')]
     public function testConcurrentThumbnailRequestsProduceOneValidCacheObject(): void
     {

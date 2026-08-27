@@ -14,6 +14,7 @@ use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
 use Symfony\Component\Routing\RouterInterface;
 use Symfony\Component\Security\Csrf\CsrfTokenManagerInterface;
 use Symfony\Component\Security\Core\Authorization\AuthorizationCheckerInterface;
+use SohoPHP\SoFinder\Workspace\WorkspaceProvider;
 
 final readonly class BrowserController
 {
@@ -29,6 +30,7 @@ final readonly class BrowserController
         private ?AuthorizationCheckerInterface $authorization = null,
         /** @var list<string> */ private array $securityStatusRoles = [],
         /** @var list<string> */ private array $pickerAllowedOrigins = [],
+        private ?WorkspaceProvider $workspaces = null,
     ) {
     }
 
@@ -78,6 +80,7 @@ final readonly class BrowserController
                 'lowercaseUploadExtensions' => (bool) ($this->ui['lowercase_upload_extensions'] ?? true),
                 ...$ui,
             ],
+            'workspace' => $this->workspaces?->current()->jsonSerialize(),
         ];
         $encoded = htmlspecialchars(json_encode($config, JSON_THROW_ON_ERROR | JSON_UNESCAPED_SLASHES), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
         $version = rawurlencode($this->assetVersion);

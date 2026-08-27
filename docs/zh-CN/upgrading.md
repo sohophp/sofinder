@@ -5,6 +5,10 @@ description: 各 SoFinder 预发布版本的兼容性、配置与 adapter 升级
 
 # 升级 SoFinder
 
+## 从 0.1.0-beta.20 升级至 beta.21–beta.23
+
+Picker 1.0 与上传响应原有 `entry` 保持兼容；新版可读取增加的 `asset`，并按需加载独立上传 SDK 与编辑器 Adapter。`asset_catalog`、`image_variants`、`workspaces` 均默认关闭。集群启用资产目录时必须使用共享原子状态或自定义共享 Store；Workspace Resolver 必须从可信登录上下文解析，不能直接信任查询参数。Plugin Descriptor 统一为 1.0，部署前运行 `./scripts/php-bin.sh bin/console sofinder:plugin:validate --json`。旧操作事件继续派发，新集成使用 `AssetOperationEvent`。
+
 ## 从 0.1.0-beta.19 升级至 0.1.0-beta.20
 
 请完整部署重新构建的 `dist/` 目录；存储文件无需迁移。快速访问 metadata 保持向后

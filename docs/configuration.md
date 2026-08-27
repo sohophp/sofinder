@@ -61,6 +61,41 @@ only available for `proxy` resources. To allow access without login, place a
 narrow `PUBLIC_ACCESS` firewall rule for `/sofinder/signed/` before the general
 SoFinder access rule.
 
+## Asset catalog, variants and workspaces
+
+All three capabilities are opt-in, so existing installations keep path-based,
+single-workspace behavior:
+
+```yaml
+so_finder:
+  asset_catalog:
+    enabled: false
+    store_service: null
+    register_existing: lazy
+  image_variants:
+    enabled: false
+    widths: [320, 640, 960, 1280, 1920]
+    formats: [original, webp]
+    quality: 82
+    mode: on_demand
+    max_variants_per_asset: 10
+    cache_ttl_seconds: 2592000
+  workspaces:
+    enabled: false
+    default: main
+    resolver_service: null
+```
+
+The catalog assigns opaque UUIDs lazily. Rename, move, overwrite and recycle-bin
+restore retain the ID; upload and copy create a new one. With cluster state,
+SoFinder automatically uses the shared catalog; a node-local catalog is not
+allowed for a clustered deployment. Variants accept configured widths and
+formats only, never enlarge the original and inherit resource authorization.
+Workspace IDs must come from a trusted host `WorkspaceResolverInterface`, never
+from an unchecked query parameter. A workspace is an authorization context, not
+automatic physical storage isolation; the host must map its resources to
+separate storage where tenant isolation requires it.
+
 ## Filesystem permissions
 
 ```yaml

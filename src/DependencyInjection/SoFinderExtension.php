@@ -14,11 +14,14 @@ use SohoPHP\SoFinder\Command\ImageCapabilitiesCommand;
 use SohoPHP\SoFinder\Command\MaintenanceStatusCommand;
 use SohoPHP\SoFinder\Command\CacheCleanupCommand;
 use SohoPHP\SoFinder\Command\MetadataRepairCommand;
+use SohoPHP\SoFinder\Command\PluginValidateCommand;
 use SohoPHP\SoFinder\Archive\ArchiveManager;
 use SohoPHP\SoFinder\Contract\AuthorizationInterface;
 use SohoPHP\SoFinder\Contract\AtomicStateStoreInterface;
 use SohoPHP\SoFinder\Contract\ChunkUploadStoreInterface;
 use SohoPHP\SoFinder\Contract\ActorProviderInterface;
+use SohoPHP\SoFinder\Contract\AssetCatalogInterface;
+use SohoPHP\SoFinder\Contract\WorkspaceResolverInterface;
 use SohoPHP\SoFinder\Contract\ImageProcessorInterface;
 use SohoPHP\SoFinder\Contract\ImageCapabilityProviderInterface;
 use SohoPHP\SoFinder\Contract\FileInspectorInterface;
@@ -43,6 +46,7 @@ use SohoPHP\SoFinder\Http\ApiController;
 use SohoPHP\SoFinder\Http\CapabilityController;
 use SohoPHP\SoFinder\Http\ArchiveController;
 use SohoPHP\SoFinder\Http\AssetController;
+use SohoPHP\SoFinder\Http\AssetApiController;
 use SohoPHP\SoFinder\Http\BrowserController;
 use SohoPHP\SoFinder\Http\ChunkUploadController;
 use SohoPHP\SoFinder\Http\ContentController;
@@ -107,6 +111,9 @@ use SohoPHP\SoFinder\Symfony\CsrfGuard;
 use SohoPHP\SoFinder\Symfony\OperationAuditSubscriber;
 use SohoPHP\SoFinder\Symfony\MetadataOperationSubscriber;
 use SohoPHP\SoFinder\Symfony\SymfonyActorProvider;
+use SohoPHP\SoFinder\Symfony\DefaultWorkspaceResolver;
+use SohoPHP\SoFinder\Symfony\AssetCatalogSubscriber;
+use SohoPHP\SoFinder\Symfony\VersionedOperationSubscriber;
 use SohoPHP\SoFinder\Symfony\ResourceRegistryFactory;
 use SohoPHP\SoFinder\Symfony\SymfonyAuthorization;
 use SohoPHP\SoFinder\Symfony\SymfonyEntryUrlGenerator;
@@ -115,6 +122,11 @@ use SohoPHP\SoFinder\Usage\PersistentUsageTracker;
 use SohoPHP\SoFinder\Upload\ChunkUploadManager;
 use SohoPHP\SoFinder\Upload\SharedChunkUploadStore;
 use SohoPHP\SoFinder\Upload\UploadNamePolicy;
+use SohoPHP\SoFinder\Asset\JsonAssetCatalog;
+use SohoPHP\SoFinder\Asset\SharedAssetCatalog;
+use SohoPHP\SoFinder\Asset\AssetReferenceFactory;
+use SohoPHP\SoFinder\Asset\AssetOperationPublisher;
+use SohoPHP\SoFinder\Workspace\WorkspaceProvider;
 use SohoPHP\SoFinder\Value\Theme;
 use SohoPHP\SoFinder\Value\ImageProcessingLimits;
 use SohoPHP\SoFinder\Value\CapabilityCatalog;
@@ -168,6 +180,9 @@ final class SoFinderExtension extends Extension
         $clusterConfig = $config['cluster'];
         $sharedState = $clusterConfig['state_service'] === null ? null : new Reference((string) $clusterConfig['state_service']);
         $signedUrlConfig = $config['signed_urls'];
+        $assetCatalogConfig = $config['asset_catalog'];
+        $workspaceConfig = $config['workspaces'];
+        $variantConfig = $config['image_variants'];
         if ($maintenanceConfig['mode'] === 'messenger' && !interface_exists('Symfony\\Component\\Messenger\\MessageBusInterface')) {
             throw new \InvalidArgumentException('SoFinder maintenance.mode is messenger, but symfony/messenger is not installed.');
         }
@@ -212,12 +227,22 @@ final class SoFinderExtension extends Extension
                 new Reference(RequestStack::class),
             ]));
         $container->setAlias(ActorProviderInterface::class, new Alias(SymfonyActorProvider::class));
+        $container->setDefinition(DefaultWorkspaceResolver::class, (new Definition(DefaultWorkspaceResolver::class))
+            ->setArguments([new Reference(ActorProviderInterface::class), new Reference(ResourceRegistry::class), $workspaceConfig['default']]));
+        $container->setAlias(WorkspaceResolverInterface::class, new Alias(
+            $workspaceConfig['resolver_service'] !== null ? (string) $workspaceConfig['resolver_service'] : DefaultWorkspaceResolver::class,
+        ));
+        $container->setDefinition(WorkspaceProvider::class, (new Definition(WorkspaceProvider::class))
+            ->setArguments([new Reference(WorkspaceResolverInterface::class), new Reference(RequestStack::class)]));
         $container->setDefinition(PersistentUsageTracker::class, (new Definition(PersistentUsageTracker::class))
             ->setArgument('$directory', $config['usage_dir']));
         $container->setAlias(UsageTrackerInterface::class, new Alias(PersistentUsageTracker::class));
         $container->setDefinition(JsonMetadataStore::class, (new Definition(JsonMetadataStore::class))
             ->setArgument('$file', $config['metadata_file']));
         $container->setAlias(MetadataStoreInterface::class, new Alias(JsonMetadataStore::class));
+        $container->setDefinition(JsonAssetCatalog::class, (new Definition(JsonAssetCatalog::class))
+            ->setArgument('$file', rtrim((string) $config['cache_dir'], '/') . '/assets.json'));
+        $container->setAlias(AssetCatalogInterface::class, new Alias(JsonAssetCatalog::class));
         $container->setAlias(EventDispatcherInterface::class, new Alias(SymfonyEventDispatcherInterface::class));
         $container->setDefinition(CsrfGuard::class, (new Definition(CsrfGuard::class))
             ->setArguments([
@@ -330,6 +355,7 @@ final class SoFinderExtension extends Extension
                 new Reference(UsageTrackerInterface::class),
                 new Reference(StoragePaginator::class),
                 new Reference(MaintenanceCoordinator::class),
+                $workspaceConfig['enabled'] ? new Reference(WorkspaceProvider::class) : null,
             ]));
         $container->setDefinition(ImageManager::class, (new Definition(ImageManager::class))
             ->setArguments([
@@ -340,7 +366,25 @@ final class SoFinderExtension extends Extension
                 new Reference(ImageFormatRegistry::class),
                 $directoryMode,
                 $fileMode,
+                $variantConfig['enabled'],
+                array_values(array_unique($variantConfig['widths'])),
+                $variantConfig['formats'],
+                $variantConfig['quality'],
+                $variantConfig['cache_ttl_seconds'],
             ]));
+        $container->setDefinition(AssetReferenceFactory::class, (new Definition(AssetReferenceFactory::class))
+            ->setArguments([
+                new Reference(RouterInterface::class),
+                new Reference(WorkspaceProvider::class),
+                new Reference(AssetCatalogInterface::class),
+                new Reference(ImageManager::class),
+                $assetCatalogConfig['enabled'],
+                $variantConfig['enabled'],
+                array_slice(array_values(array_unique($variantConfig['widths'])), 0, $variantConfig['max_variants_per_asset']),
+                $variantConfig['formats'],
+            ]));
+        $container->setDefinition(AssetOperationPublisher::class, (new Definition(AssetOperationPublisher::class))
+            ->setArguments([new Reference(EventDispatcherInterface::class), new Reference(WorkspaceProvider::class), new Reference(ResourceRegistry::class), new Reference(AssetCatalogInterface::class), $assetCatalogConfig['enabled']]));
         $container->setDefinition(ArchiveManager::class, (new Definition(ArchiveManager::class))
             ->setArguments([
                 new Reference(FileManager::class),
@@ -353,6 +397,7 @@ final class SoFinderExtension extends Extension
                 new Reference(MetadataStoreInterface::class),
                 new Reference(ActorProviderInterface::class),
                 $config['features']['quick_access_files'],
+                $workspaceConfig['enabled'] ? new Reference(WorkspaceProvider::class) : null,
             ]));
         $container->setDefinition(Theme::class, (new Definition(Theme::class))->setArgument('$values', $config['theme']));
         $container->setDefinition(CapabilityCatalog::class, new Definition(CapabilityCatalog::class));
@@ -461,6 +506,7 @@ final class SoFinderExtension extends Extension
             new Reference(AuthorizationCheckerInterface::class),
             $malwareConfig['status_roles'],
             $config['picker']['allowed_origins'],
+            $workspaceConfig['enabled'] ? new Reference(WorkspaceProvider::class) : null,
         ]);
         $this->controller($container, ApiController::class, [
             new Reference(FileManager::class),
@@ -475,6 +521,9 @@ final class SoFinderExtension extends Extension
             $signedUrlConfig['default_ttl_seconds'],
             $signedUrlConfig['max_ttl_seconds'],
             new Reference(UploadNamePolicy::class),
+            new Reference(AssetReferenceFactory::class),
+            $assetCatalogConfig['enabled'],
+            $variantConfig['enabled'],
         ]);
         $this->controller($container, CapabilityController::class, [new Reference(CapabilityCatalog::class)]);
         $this->controller($container, ContentController::class, [
@@ -495,11 +544,13 @@ final class SoFinderExtension extends Extension
             new Reference(CsrfGuard::class),
             new Reference(MaintenanceCoordinator::class),
             new Reference(UploadNamePolicy::class),
+            new Reference(AssetReferenceFactory::class),
         ]);
         $this->controller($container, ImageController::class, [
             new Reference(ImageManager::class),
             new Reference(CsrfGuard::class),
             new Reference(FeaturePolicy::class),
+            new Reference(AssetOperationPublisher::class),
         ]);
         $this->controller($container, ArchiveController::class, [
             new Reference(ArchiveManager::class),
@@ -532,6 +583,15 @@ final class SoFinderExtension extends Extension
             new Reference(RouterInterface::class),
         ]);
         $this->controller($container, AssetController::class, [$container->getParameter('so_finder.package_dir')]);
+        $this->controller($container, AssetApiController::class, [
+            new Reference(FileManager::class),
+            new Reference(AssetReferenceFactory::class),
+            new Reference(AssetCatalogInterface::class),
+            new Reference(WorkspaceProvider::class),
+            new Reference(CsrfGuard::class),
+            $assetCatalogConfig['enabled'],
+            new Reference(AssetOperationPublisher::class),
+        ]);
 
         $container->setDefinition(ExceptionSubscriber::class, (new Definition(ExceptionSubscriber::class))
             ->addTag('kernel.event_subscriber'));
@@ -560,18 +620,26 @@ final class SoFinderExtension extends Extension
                     new Reference(AtomicStateStoreInterface::class),
                     new Reference(ActorProviderInterface::class),
                 ]));
+            $container->setDefinition(SharedAssetCatalog::class, (new Definition(SharedAssetCatalog::class))
+                ->setArgument('$state', new Reference(AtomicStateStoreInterface::class)));
             $container->setAlias(MetadataStoreInterface::class, new Alias(SharedMetadataStore::class));
             $container->setAlias(RequestGateStoreInterface::class, new Alias(SharedRequestGateStore::class));
             $container->setAlias(UsageTrackerInterface::class, new Alias(SharedUsageTracker::class));
             $container->setAlias(MetricsStoreInterface::class, new Alias(SharedMetricsStore::class));
             $container->setAlias(GaugeMetricsStoreInterface::class, new Alias(SharedMetricsStore::class));
             $container->setAlias(MalwareScanStatusStoreInterface::class, new Alias(SharedMalwareScanStatusStore::class));
+            if ($assetCatalogConfig['store_service'] === null) {
+                $container->setAlias(AssetCatalogInterface::class, new Alias(SharedAssetCatalog::class));
+            }
             if ($clusterConfig['chunk_upload_store_service'] === null) {
                 $container->setAlias(ChunkUploadStoreInterface::class, new Alias(SharedChunkUploadStore::class));
             }
             $container->setDefinition(SharedStateHealthCheck::class, (new Definition(SharedStateHealthCheck::class))
                 ->setArgument('$state', new Reference(AtomicStateStoreInterface::class))
                 ->addTag('sofinder.health_check', ['priority' => 85]));
+        }
+        if ($assetCatalogConfig['store_service'] !== null) {
+            $container->setAlias(AssetCatalogInterface::class, new Alias((string) $assetCatalogConfig['store_service']));
         }
         if ($clusterConfig['chunk_upload_store_service'] !== null) {
             $container->setAlias(ChunkUploadStoreInterface::class, new Alias((string) $clusterConfig['chunk_upload_store_service']));
@@ -602,6 +670,15 @@ final class SoFinderExtension extends Extension
                 new Reference(LoggerInterface::class),
             ])
             ->addTag('kernel.event_subscriber'));
+        $container->setDefinition(AssetCatalogSubscriber::class, (new Definition(AssetCatalogSubscriber::class))
+            ->setArguments([new Reference(AssetCatalogInterface::class), new Reference(WorkspaceProvider::class), $assetCatalogConfig['enabled']])
+            ->addTag('kernel.event_subscriber'));
+        $container->setDefinition(VersionedOperationSubscriber::class, (new Definition(VersionedOperationSubscriber::class))
+            ->setArguments([new Reference(EventDispatcherInterface::class), new Reference(WorkspaceProvider::class), new Reference(AssetCatalogInterface::class), new Reference(RequestStack::class), $assetCatalogConfig['enabled']])
+            ->addTag('kernel.event_subscriber'));
+        $container->setDefinition(PluginValidateCommand::class, (new Definition(PluginValidateCommand::class))
+            ->setArgument('$plugins', new Reference(PluginRegistry::class))
+            ->addTag('console.command'));
         $container->setDefinition(TrashCleanupCommand::class, (new Definition(TrashCleanupCommand::class))
             ->setArgument('$runner', new Reference(MaintenanceRunner::class))
             ->addTag('console.command'));

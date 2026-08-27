@@ -1,5 +1,22 @@
 # Upgrading SoFinder
 
+## From beta.20 to beta.21–beta.23
+
+- Existing Picker 1.0 messages and upload `entry` responses remain valid. New
+  consumers may read the additive `asset` object and independent upload SDK and
+  editor-adapter ESM entries.
+- `asset_catalog`, `image_variants` and `workspaces` default to disabled. Enable
+  one capability at a time after configuring authorization and shared state.
+- Cluster deployments that enable the asset catalog must use the configured
+  atomic state service or a custom shared `AssetCatalogInterface` service.
+- Workspace resolvers must be host-authenticated and constrain resources. Do not
+  derive a workspace directly from an untrusted query parameter.
+- Plugin descriptors normalize to `descriptorVersion: "1.0"`; unknown fields
+  and unsafe URLs now fail. Run `./scripts/php-bin.sh bin/console
+  sofinder:plugin:validate --json` before deployment.
+- Legacy operation events continue to fire. New integrations should consume
+  `AssetOperationEvent`; existing listeners do not need removal.
+
 ## From 0.1.0-beta.19 to 0.1.0-beta.20
 
 Deploy the complete rebuilt `dist/` directory together; stored files require no

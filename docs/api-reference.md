@@ -51,6 +51,15 @@ HTTP status is authoritative. `429` responses include `Retry-After: 2`. A batch 
 
 `url` can be null. A non-null value may be public, authenticated proxy or a host application route. Capabilities are hints; the server authorizes the final operation again.
 
+### Asset Reference 1.0
+
+Upload and picker responses may additionally contain `asset`, following the
+[published Schema](/schema/asset-reference.schema.json). The legacy `entry`
+remains present. With `asset_catalog.enabled`, `GET /api/assets/resolve` resolves
+or lazily registers a resource/path, and `GET /api/assets/{id}` retrieves the
+same workspace-scoped record. `PATCH /api/assets/{id}/metadata` updates `alt`,
+`title` and shared `tags`; send the returned metadata `version` for optimistic concurrency.
+
 ### Resource
 
 `GET /api/config` returns resource policy fields including `name`, `publicUrl`, `allowedExtensions`, `allowedMimeTypes`, `maxSize`, `readOnly`, `quotaBytes`, `usedBytes`, name/depth/image/batch/archive limits, `deliveryMode`, `animatedImagePolicy` and:
@@ -254,6 +263,7 @@ Trash IDs are actor-private 32-character hexadecimal values. Overwrite restore r
 
 - `GET /api/images/thumbnail?resource=Images&path=photo.jpg&width=240&height=180` returns a private cached thumbnail with ETag.
 - `GET /api/images/info?resource=Images&path=photo.jpg` returns decoded `width` and `height`.
+- `GET /api/images/variant?resource=Images&path=photo.jpg&width=640&format=webp&v=...` returns an authorization-preserving, whitelist-bounded responsive variant when enabled.
 - `PATCH /api/images/edit` applies one to ten ordered actions.
 - `PATCH /api/images/batch` applies the same actions to 1–100 paths and returns per-item success/error records.
 

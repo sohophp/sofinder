@@ -1,5 +1,11 @@
 //#region src/locales/zh-cn.ts
 var e = {
+	assetMetadata: "资产元数据",
+	assetAlt: "默认替代文本",
+	assetTitle: "资产标题",
+	decorativeImage: "装饰性图片（空替代文本）",
+	assetAltUnset: "留空时使用文件名",
+	assetMetadataSaved: "资产元数据已保存",
 	files: "文件",
 	images: "图片",
 	newFolder: "新建文件夹",

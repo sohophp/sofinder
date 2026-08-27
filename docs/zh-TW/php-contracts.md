@@ -17,6 +17,8 @@ Storage Interface、選用的本機 Capability 及 Factory Tag 記錄於[儲存 
 
 Remote Adapter 也可實作 `StorageAuditProviderInterface`，向安全稽核回傳不含機密的 `warning` 或 `critical` Finding。
 
+可選的 `AssetCatalogInterface` 依 Workspace／資源／路徑解析不透明資產 ID，並維護上傳、移動、刪除與還原的身分變化；JSON 實作用於單節點，共享實作基於 `AtomicStateStoreInterface`。`WorkspaceResolverInterface` 必須從可信請求上下文回傳不可變 `WorkspaceContext`，不得直接信任瀏覽器查詢參數。
+
 `EntryUrlContextProviderInterface` 可為資源設定的 `entry_url` Route Template 加入宿主擁有的 Scalar Value。Autoconfiguration 會自動加入 `sofinder.entry_url_context_provider` Tag。Provider 對無關資源應回傳空陣列，且不得在 Route Parameter 中暴露機密。
 
 ## 檢查與圖片
@@ -26,5 +28,7 @@ Remote Adapter 也可實作 `StorageAuditProviderInterface`，向安全稽核回
 ## Event 與 Plugin
 
 實作 `PluginInterface` 以提供 Browser-safe Descriptor，並使用 `sofinder.plugin` Tag。檔案操作會發送名稱為 `before.<operation>` 及 `after.<operation>` 的 `OperationEvent`。Before Handler 可透過拋出 Exception 拒絕操作；After Handler 必須假設 Storage 已變更，並讓次要工作保持 Idempotent。Event Context 是可擴充 Map，因此 Subscriber 必須忽略未知 Key。
+
+新版 `AssetOperationEvent` 會同步派發，包含穩定操作 ID、固定操作與階段、Workspace、邏輯路徑、可選資產 ID 和安全可序列化屬性；公開格式請見 [Event Schema](/schema/asset-operation-event.schema.json)。
 
 公開 Value Object 不可變。1.x 可新增選用 Field 或 Capability Flag；Consumer 必須忽略不認識的值。在 1.x 期間，Method 不會被移除，Parameter 的意義也不會改變。

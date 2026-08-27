@@ -12,6 +12,7 @@ use SohoPHP\SoFinder\Value\OperationResult;
 use Symfony\Component\HttpFoundation\BinaryFileResponse;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
+use SohoPHP\SoFinder\Asset\AssetOperationPublisher;
 
 final readonly class ImageController
 {
@@ -19,6 +20,7 @@ final readonly class ImageController
         private ImageManager $images,
         private CsrfGuard $csrf,
         private ?FeaturePolicy $features = null,
+        private ?AssetOperationPublisher $events = null,
     ) {
     }
 
@@ -49,6 +51,13 @@ final readonly class ImageController
         )));
     }
 
+    public function variant(Request $request): BinaryFileResponse
+    {
+        $variant = $this->images->variant($request->query->getString('resource', 'Images'), $request->query->getString('path'), $request->query->getInt('width'), strtolower($request->query->getString('format', 'original')));
+        $response = new BinaryFileResponse($variant['path']); $response->headers->set('Content-Type', $variant['mimeType']); $response->headers->set('X-Content-Type-Options', 'nosniff');
+        $response->setPrivate()->setMaxAge(2592000)->setAutoEtag(); $response->isNotModified($request); return $response;
+    }
+
     public function edit(Request $request): JsonResponse
     {
         $this->csrf->assertMutation($request);
@@ -71,12 +80,12 @@ final readonly class ImageController
             if (!is_array($save)) {
                 throw new SoFinderException('Image save settings must be an object.', 'invalid_image_save', 400);
             }
-            $result = $this->images->applyActions($resource, $path, array_values($data['actions']), $save);
+            $result = $this->process($resource, $path, fn (): array => $this->images->applyActions($resource, $path, array_values($data['actions']), $save));
 
             return new JsonResponse(OperationResult::success($result));
         }
         ($this->features ?? new FeaturePolicy())->assertEnabled('image_editing');
-        $entry = ($data['operation'] ?? 'transform') === 'crop'
+        $entry = $this->process($resource, $path, fn () => ($data['operation'] ?? 'transform') === 'crop'
             ? $this->images->crop(
                 $resource,
                 $path,
@@ -91,7 +100,7 @@ final readonly class ImageController
                 (int) ($data['rotation'] ?? 0),
                 (int) ($data['width'] ?? 0),
                 (int) ($data['height'] ?? 0),
-            );
+            ));
 
         $request->attributes->set('_sofinder_deprecated_fields', 'operation,rotation,width,height,x,y');
 
@@ -114,11 +123,23 @@ final readonly class ImageController
             throw new SoFinderException('Image actions must be an array of objects.', 'invalid_image_actions', 400);
         }
 
-        return new JsonResponse(OperationResult::success($this->images->applyBatch(
-            (string) ($data['resource'] ?? 'Images'),
-            array_values($data['paths']),
-            array_values($data['actions']),
-            $data['save'],
-        )));
+        $resource = (string) ($data['resource'] ?? 'Images'); $paths = array_values($data['paths']);
+        return new JsonResponse(OperationResult::success($this->process($resource, (string) ($paths[0] ?? ''), fn (): array => $this->images->applyBatch(
+            $resource, $paths, array_values($data['actions']), $data['save'],
+        ), ['batchItems' => count($paths)])));
+    }
+
+    /**
+     * @param \Closure():mixed $operation
+     * @param array<string,mixed> $attributes
+     */
+    private function process(string $resource, string $path, \Closure $operation, array $attributes = []): mixed
+    {
+        $id = $this->events?->operationId();
+        if ($id !== null) $this->events?->dispatch($id, 'image.process', 'before', $resource, $path, attributes: $attributes);
+        try { $result = $operation(); }
+        catch (\Throwable $error) { if ($id !== null) $this->events?->dispatch($id, 'image.process', 'failed', $resource, $path, attributes: ['errorCode' => $this->events?->errorCode($error) ?? 'operation_failed'] + $attributes); throw $error; }
+        if ($id !== null) $this->events?->dispatch($id, 'image.process', 'after', $resource, $path, attributes: $attributes);
+        return $result;
     }
 }

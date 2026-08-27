@@ -26,6 +26,7 @@ use SohoPHP\SoFinder\Value\Entry;
 use SohoPHP\SoFinder\Value\ListQuery;
 use SohoPHP\SoFinder\Value\ResourceStorage;
 use SohoPHP\SoFinder\Value\TrashItem;
+use SohoPHP\SoFinder\Workspace\WorkspaceProvider;
 
 final readonly class FileManager
 {
@@ -43,6 +44,7 @@ final readonly class FileManager
         ?UsageTrackerInterface $usage = null,
         ?StoragePaginator $paginator = null,
         private ?MaintenanceCoordinator $maintenance = null,
+        private ?WorkspaceProvider $workspaces = null,
     ) {
         $this->uploads = $uploads ?? new UploadPipeline(
             new DefaultFileInspector(new GdImageProcessor()),
@@ -562,6 +564,7 @@ final readonly class FileManager
 
     private function authorized(string $name, string $operation, string $path, bool $write = false): ResourceStorage
     {
+        $this->workspaces?->assertResource($name);
         if (!$this->authorization->isAuthenticated()) {
             throw new AccessDeniedException('Authentication is required.');
         }

@@ -1,0 +1,20 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://sofinder.sohophp.app/schema/asset-operation-event.schema.json",
+  "title": "SoFinder versioned asset operation event",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "operationId", "operation", "phase", "workspace", "resource", "path", "sourcePath", "assetId", "attributes"],
+  "properties": {
+    "schemaVersion": {"const": "1.0"},
+    "operationId": {"type": "string", "pattern": "^[a-f0-9]{32}$"},
+    "operation": {"enum": ["upload", "overwrite", "rename", "copy", "move", "delete", "restore", "image.process", "metadata.update"]},
+    "phase": {"enum": ["before", "after", "failed"]},
+    "workspace": {"type": "string", "minLength": 1, "maxLength": 64},
+    "resource": {"type": "string", "minLength": 1},
+    "path": {"type": "string"},
+    "sourcePath": {"type": ["string", "null"]},
+    "assetId": {"type": ["string", "null"]},
+    "attributes": {"type": "object", "maxProperties": 32, "additionalProperties": {"type": ["string", "integer", "number", "boolean", "null"]}}
+  }
+}
