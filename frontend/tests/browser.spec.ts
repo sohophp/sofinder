@@ -461,7 +461,9 @@ test("visual baseline covers dark Chinese grid, compact list, long names and mob
   await page.setViewportSize({ width: 403, height: 740 });
   await expect(page.locator(".sf-app")).toHaveScreenshot("mobile-chinese.png", {
     animations: "disabled",
-    maxDiffPixelRatio: 0.02,
+    // Mobile text rasterization differs slightly between the local Playwright
+    // image and GitHub's Linux runner; keep the desktop baselines stricter.
+    maxDiffPixelRatio: 0.04,
   });
 });
 
