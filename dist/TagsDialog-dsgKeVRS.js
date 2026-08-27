@@ -57,13 +57,10 @@ function o({ initial: e, suggestions: t, labels: o, onSave: s, onClose: c }) {
 					className: "sf-tag-suggestions",
 					children: m.map((e) => /* @__PURE__ */ (0, a.jsxs)("button", {
 						type: "button",
+						title: e,
 						onMouseDown: (e) => e.preventDefault(),
 						onClick: () => h(e),
-						children: [
-							/* @__PURE__ */ (0, a.jsx)(n, { name: "add" }),
-							" ",
-							e
-						]
+						children: [/* @__PURE__ */ (0, a.jsx)(n, { name: "add" }), /* @__PURE__ */ (0, a.jsx)("span", { children: e })]
 					}, e))
 				}),
 				/* @__PURE__ */ (0, a.jsxs)("small", { children: [

@@ -1526,13 +1526,38 @@ select:focus-visible,
   flex-wrap: wrap;
   gap: 6px;
 }
-.sf-tag-suggestions button {
+.sf-tags-modal .sf-tag-suggestions button {
+  display: inline-flex;
+  flex: 0 1 auto;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 5px;
+  max-width: min(100%, 260px);
+  min-height: 30px;
   border: 1px solid var(--sf-line);
   border-radius: 999px;
-  background: #fff;
+  background: var(--sf-panel);
   padding: 5px 9px;
   color: var(--sf-muted);
   font-size: 12px;
+  line-height: 1.2;
+  white-space: nowrap;
+}
+.sf-tags-modal .sf-tag-suggestions button:hover,
+.sf-tags-modal .sf-tag-suggestions button:focus-visible {
+  border-color: color-mix(in srgb, var(--sf-accent) 35%, var(--sf-line));
+  background: var(--sf-accent-soft);
+  color: var(--sf-accent);
+}
+.sf-tags-modal .sf-tag-suggestions button .sf-ui-icon {
+  flex: 0 0 auto;
+  width: 14px;
+  height: 14px;
+}
+.sf-tags-modal .sf-tag-suggestions button span {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 .sf-tags-editor small {
   color: var(--sf-muted);

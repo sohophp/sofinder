@@ -33,7 +33,7 @@ export function TagsDialog({ initial, suggestions, labels, onSave, onClose }: {
           if (event.key === "Backspace" && value === "" && tags.length > 0) remove(tags.at(-1) || "");
         }} onBlur={() => add()}/>
       </div>
-      {available.length > 0 && <div className="sf-tag-suggestions">{available.map(tag => <button type="button" key={tag} onMouseDown={event => event.preventDefault()} onClick={() => add(tag)}><UiIcon name="add"/> {tag}</button>)}</div>}
+      {available.length > 0 && <div className="sf-tag-suggestions">{available.map(tag => <button type="button" key={tag} title={tag} onMouseDown={event => event.preventDefault()} onClick={() => add(tag)}><UiIcon name="add"/><span>{tag}</span></button>)}</div>}
       <small>{labels.hint} · {labels.maximum}</small>
     </div>
   </Modal>;
