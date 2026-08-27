@@ -4,10 +4,15 @@ import type { UploadTask } from "../components/UploadQueue";
 import type { MessageKey } from "../i18n";
 import { entryNameIssue } from "../nameValidation";
 import type { ResourceType, UploadConflictStrategy } from "../types";
+import { normalizeUploadExtension } from "../uploadNaming";
 
 interface Confirmation { title: string; message: string; detail?: string; danger?: boolean }
 
-export function useUploads({ api, resource, path, currentResource, currentDepth, autoCollapse, conflictStrategy, t, ask, chooseConflict, reload, setNotice, report }: {
+const uploadFileWithName = (file: File, name: string): File => name === file.name
+  ? file
+  : new File([file], name, { type: file.type, lastModified: file.lastModified });
+
+export function useUploads({ api, resource, path, currentResource, currentDepth, autoCollapse, conflictStrategy, lowercaseExtensions, t, ask, chooseConflict, reload, setNotice, report }: {
   api: Api;
   resource: string;
   path: string;
@@ -15,6 +20,7 @@ export function useUploads({ api, resource, path, currentResource, currentDepth,
   currentDepth: number;
   autoCollapse: boolean;
   conflictStrategy: UploadConflictStrategy;
+  lowercaseExtensions: boolean;
   t: (key: MessageKey) => string;
   ask: (confirmation: Confirmation) => Promise<boolean>;
   chooseConflict: (fileName: string) => Promise<Exclude<UploadConflictStrategy, "ask">>;
@@ -57,7 +63,7 @@ export function useUploads({ api, resource, path, currentResource, currentDepth,
   };
 
   const upload = async (files: FileList | File[], targetPath = path) => {
-    const candidates = Array.from(files);
+    const candidates = Array.from(files).map(file => uploadFileWithName(file, normalizeUploadExtension(file.name, lowercaseExtensions)));
     const accepted = currentResource ? candidates.filter(file => entryNameIssue(file.name, currentResource.maxFileNameLength) === null) : candidates;
     if (accepted.length !== candidates.length && currentResource) {
       const issues = candidates.map(file => entryNameIssue(file.name, currentResource.maxFileNameLength)).filter(issue => issue !== null);

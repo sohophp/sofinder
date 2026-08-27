@@ -19,6 +19,7 @@ use SohoPHP\SoFinder\State\SharedRequestGateStore;
 use SohoPHP\SoFinder\State\SharedUsageTracker;
 use SohoPHP\SoFinder\Observability\SharedMetricsStore;
 use SohoPHP\SoFinder\Upload\SharedChunkUploadStore;
+use SohoPHP\SoFinder\Upload\UploadNamePolicy;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
 
 final class DependencyInjectionTest extends TestCase
@@ -85,5 +86,28 @@ final class DependencyInjectionTest extends TestCase
         ]], $container);
 
         self::assertSame(SharedChunkUploadStore::class, (string) $container->getAlias(ChunkUploadStoreInterface::class));
+    }
+
+    public function testUploadNamingPolicyIsSharedByEveryUploadController(): void
+    {
+        $container = new ContainerBuilder();
+        (new SoFinderExtension())->load([[
+            'uploads' => ['naming' => ['lowercase_extensions' => false]],
+            'resources' => ['Files' => ['root' => sys_get_temp_dir() . '/sofinder-di-files']],
+        ]], $container);
+
+        self::assertFalse($container->getDefinition(UploadNamePolicy::class)->getArgument(0));
+        self::assertSame('Manual.PDF', (new UploadNamePolicy(false))->normalize('Manual.PDF'));
+    }
+
+    public function testLegacyUiUploadNamingKeyRemainsCompatible(): void
+    {
+        $container = new ContainerBuilder();
+        (new SoFinderExtension())->load([[
+            'ui' => ['lowercase_upload_extensions' => false],
+            'resources' => ['Files' => ['root' => sys_get_temp_dir() . '/sofinder-di-files']],
+        ]], $container);
+
+        self::assertFalse($container->getDefinition(UploadNamePolicy::class)->getArgument(0));
     }
 }

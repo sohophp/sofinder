@@ -87,6 +87,17 @@ final class FileManagerTest extends TestCase
         self::assertSame('Docs', $result['entries'][0]->name);
     }
 
+    public function testListingAMissingFolderReturnsStableNotFound(): void
+    {
+        try {
+            $this->manager(true)->list('Files', 'missing-folder');
+            self::fail('A missing folder must not become an internal server error.');
+        } catch (\SohoPHP\SoFinder\Exception\NotFoundException $exception) {
+            self::assertSame('not_found', $exception->errorCode);
+            self::assertSame(404, $exception->httpStatus);
+        }
+    }
+
     public function testBatchRenameReturnsExactPerItemResults(): void
     {
         file_put_contents($this->directory . '/alpha.txt', 'a');

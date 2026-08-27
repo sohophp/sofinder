@@ -8,7 +8,10 @@ use PHPUnit\Framework\TestCase;
 use PHPUnit\Framework\Attributes\DataProvider;
 use SohoPHP\SoFinder\Exception\ConflictException;
 use SohoPHP\SoFinder\Exception\InvalidPathException;
+use SohoPHP\SoFinder\Exception\NotFoundException;
+use SohoPHP\SoFinder\Exception\SoFinderException;
 use SohoPHP\SoFinder\Storage\LocalStorageAdapter;
+use SohoPHP\SoFinder\Value\Entry;
 use SohoPHP\SoFinder\Value\ListQuery;
 
 final class LocalStorageAdapterTest extends TestCase
@@ -107,6 +110,56 @@ final class LocalStorageAdapterTest extends TestCase
         symlink($this->directory . '/target', $this->directory . '/link');
         $this->expectException(InvalidPathException::class);
         $this->storage->list(new ListQuery('link'));
+    }
+
+    public function testListingNeverExposesSymlinkChildren(): void
+    {
+        file_put_contents($this->directory . '/target.txt', 'target');
+        symlink($this->directory . '/target.txt', $this->directory . '/alias.txt');
+
+        $names = array_map(static fn (Entry $entry): string => $entry->name, $this->storage->list(new ListQuery())->entries);
+
+        self::assertContains('target.txt', $names);
+        self::assertNotContains('alias.txt', $names);
+    }
+
+    public function testMissingDirectoryUsesAStableNotFoundError(): void
+    {
+        mkdir($this->directory . '/gone');
+        rmdir($this->directory . '/gone');
+
+        $this->expectException(NotFoundException::class);
+        $this->storage->list(new ListQuery('gone'));
+    }
+
+    public function testUnreadableDirectoryUsesAStableUnavailableError(): void
+    {
+        if (DIRECTORY_SEPARATOR === '\\') self::markTestSkipped('POSIX permissions are required.');
+        mkdir($this->directory . '/locked');
+        chmod($this->directory . '/locked', 0000);
+        if (is_readable($this->directory . '/locked')) {
+            chmod($this->directory . '/locked', 0775);
+            self::markTestSkipped('The current user bypasses directory permission checks.');
+        }
+        try {
+            $this->storage->list(new ListQuery('locked'));
+            self::fail('Unreadable directories must not leak an internal iterator error.');
+        } catch (SoFinderException $exception) {
+            self::assertSame('storage_unavailable', $exception->errorCode);
+            self::assertSame(503, $exception->httpStatus);
+        } finally {
+            chmod($this->directory . '/locked', 0775);
+        }
+    }
+
+    public function testEntryObservesAnAtomicFileReplacement(): void
+    {
+        file_put_contents($this->directory . '/report.txt', 'old');
+        self::assertSame(3, $this->storage->entry('report.txt')->size);
+        file_put_contents($this->directory . '/replacement', 'replacement');
+        rename($this->directory . '/replacement', $this->directory . '/report.txt');
+
+        self::assertSame(11, $this->storage->entry('report.txt')->size);
     }
 
     #[DataProvider('recursiveTransferProvider')]

@@ -53,7 +53,7 @@ final class QuickUploadControllerTest extends TestCase
         $request = Request::create(
             'https://example.test/winstar2024/sofinder/quick-upload?' . $query,
             'POST',
-            files: ['upload' => new UploadedFile($this->upload, 'hello.txt', 'text/plain', UPLOAD_ERR_OK, true)],
+            files: ['upload' => new UploadedFile($this->upload, 'hello.TXT', 'text/plain', UPLOAD_ERR_OK, true)],
             server: [
                 'SCRIPT_NAME' => '/winstar2024/index.php',
                 'SCRIPT_FILENAME' => '/var/www/public/index.php',

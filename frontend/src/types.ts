@@ -49,6 +49,7 @@ export interface SoFinderConfig {
     viewSwitcher?: boolean;
     fullTools?: boolean;
     uploadConflictStrategy?: UploadConflictStrategy;
+    lowercaseUploadExtensions?: boolean;
   };
 }
 

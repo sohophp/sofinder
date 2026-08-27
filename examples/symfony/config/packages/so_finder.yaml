@@ -36,6 +36,9 @@ so_finder:
     office_binary: '/usr/bin/libreoffice'
     timeout_seconds: 60
     max_bytes: 52428800
+  uploads:
+    naming:
+      lowercase_extensions: true
   ui:
     mode: auto
     header: true

@@ -12,6 +12,7 @@ use SohoPHP\SoFinder\Metadata\MetadataManager;
 use SohoPHP\SoFinder\Plugin\PluginRegistry;
 use SohoPHP\SoFinder\Symfony\CsrfGuard;
 use SohoPHP\SoFinder\Value\OperationResult;
+use SohoPHP\SoFinder\Upload\UploadNamePolicy;
 use Symfony\Component\HttpFoundation\File\UploadedFile;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
@@ -29,12 +30,13 @@ final readonly class ApiController
         private array $imagePresets = [],
         private ?MetadataManager $metadata = null,
         private ?ImageCapabilityProviderInterface $imageCapabilities = null,
-        /** @var array{mode?:string,header?:bool,logo?:bool,search?:bool,language_switcher?:bool,view_switcher?:bool,folder_tree?:bool,scale?:string,upload_conflict_strategy?:string} */
+        /** @var array{mode?:string,header?:bool,logo?:bool,search?:bool,language_switcher?:bool,view_switcher?:bool,folder_tree?:bool,scale?:string,upload_conflict_strategy?:string,lowercase_upload_extensions?:bool} */
         private array $ui = [],
         private ?FeaturePolicy $features = null,
         private bool $signedUrlsEnabled = false,
         private int $signedUrlDefaultTtl = 300,
         private int $signedUrlMaxTtl = 3600,
+        private UploadNamePolicy $uploadNames = new UploadNamePolicy(),
     ) {
     }
 
@@ -58,6 +60,7 @@ final readonly class ApiController
                 'languageSwitcher' => (bool) ($this->ui['language_switcher'] ?? true),
                 'viewSwitcher' => (bool) ($this->ui['view_switcher'] ?? true),
                 'uploadConflictStrategy' => (string) ($this->ui['upload_conflict_strategy'] ?? 'ask'),
+                'lowercaseUploadExtensions' => (bool) ($this->ui['lowercase_upload_extensions'] ?? true),
             ],
             'featureAvailability' => $this->featurePolicy()->browserAvailability(),
             'signedUrls' => [
@@ -147,7 +150,7 @@ final readonly class ApiController
             $entry = $this->files->upload(
                 $this->resource($request),
                 (string) $request->request->get('path', ''),
-                $uploaded->getClientOriginalName(),
+                $this->uploadNames->normalize($uploaded->getClientOriginalName()),
                 (int) $uploaded->getSize(),
                 $stream,
                 $request->request->getBoolean('overwrite'),

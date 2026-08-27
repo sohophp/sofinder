@@ -50,18 +50,45 @@ final class LocalStorageAdapter implements StorageAdapterInterface, LocalPathPro
         if (!is_dir($absolute)) {
             throw new InvalidPathException('The requested path is not a directory.');
         }
+        $directoryIdentity = $this->filesystemIdentity($absolute);
 
         $entries = [];
-        $iterator = new \FilesystemIterator($absolute, \FilesystemIterator::SKIP_DOTS | \FilesystemIterator::CURRENT_AS_FILEINFO);
-        foreach ($iterator as $file) {
-            if (!$file instanceof \SplFileInfo) {
-                continue;
+        try {
+            $iterator = new \FilesystemIterator($absolute, \FilesystemIterator::SKIP_DOTS | \FilesystemIterator::CURRENT_AS_FILEINFO);
+            foreach ($iterator as $file) {
+                if (!$file instanceof \SplFileInfo) {
+                    continue;
+                }
+                if ($file->isLink() || str_starts_with($file->getFilename(), '.')) {
+                    continue;
+                }
+                $child = $relative === '' ? $file->getFilename() : $relative . '/' . $file->getFilename();
+                try {
+                    $entries[] = $this->makeEntry($child, $file->getPathname());
+                } catch (NotFoundException) {
+                    // A concurrent deletion is a normal directory-listing race.
+                    continue;
+                } catch (SoFinderException $exception) {
+                    if ($exception->errorCode !== 'storage_changed') {
+                        throw $exception;
+                    }
+                    // Never expose a child that changed identity while it was inspected.
+                    continue;
+                }
             }
-            if ($file->isLink() || str_starts_with($file->getFilename(), '.')) {
-                continue;
+        } catch (\UnexpectedValueException $exception) {
+            clearstatcache(true, $absolute);
+            if (!is_dir($absolute)) {
+                throw new NotFoundException();
             }
-            $child = $relative === '' ? $file->getFilename() : $relative . '/' . $file->getFilename();
-            $entries[] = $this->makeEntry($child, $file->getPathname());
+            throw new SoFinderException('The requested directory cannot be read.', 'storage_unavailable', 503, $exception);
+        }
+        clearstatcache(true, $absolute);
+        if (!is_dir($absolute)) {
+            throw new NotFoundException();
+        }
+        if ($directoryIdentity !== $this->filesystemIdentity($absolute)) {
+            throw new SoFinderException('The requested directory changed while it was being listed.', 'storage_changed', 409);
         }
         if ($query->onlyPaths !== null) {
             $allowed = array_fill_keys($query->onlyPaths, true);
@@ -319,18 +346,42 @@ final class LocalStorageAdapter implements StorageAdapterInterface, LocalPathPro
         // Long-lived workers and repeated operations in the same request must
         // observe replacements made after an earlier stat of this path.
         clearstatcache(true, $absolute);
+        if (is_link($absolute)) {
+            throw new InvalidPathException('Symbolic links are not accessible.');
+        }
+        $identity = $this->filesystemIdentity($absolute);
         $directory = is_dir($absolute);
-        $mime = $directory ? null : ((new \finfo(FILEINFO_MIME_TYPE))->file($absolute) ?: 'application/octet-stream');
+        $size = $directory ? 0 : @filesize($absolute);
+        $modifiedAt = @filemtime($absolute);
+        $mime = $directory ? null : (@(new \finfo(FILEINFO_MIME_TYPE))->file($absolute) ?: 'application/octet-stream');
+        clearstatcache(true, $absolute);
+        if (is_link($absolute)) {
+            throw new InvalidPathException('Symbolic links are not accessible.');
+        }
+        if ($size === false || $modifiedAt === false || $identity !== $this->filesystemIdentity($absolute)) {
+            throw new SoFinderException('The entry changed while it was being inspected.', 'storage_changed', 409);
+        }
 
         return new Entry(
             $relative,
             basename($absolute),
             $directory,
-            $directory ? 0 : (int) filesize($absolute),
-            (int) filemtime($absolute),
+            (int) $size,
+            (int) $modifiedAt,
             $mime,
             $directory ? null : $this->publicUrl($relative),
         );
+    }
+
+    /** @return array{dev: int, ino: int, mode: int} */
+    private function filesystemIdentity(string $absolute): array
+    {
+        $stat = @lstat($absolute);
+        if ($stat === false) {
+            throw new NotFoundException();
+        }
+
+        return ['dev' => (int) $stat['dev'], 'ino' => (int) $stat['ino'], 'mode' => (int) $stat['mode']];
     }
 
     private function assertDestinationAvailable(string $destination, bool $overwrite): void

@@ -34,6 +34,7 @@ const MetadataSidebarPanels = lazy(() => import("./components/MetadataSidebarPan
 const RecentPanel = lazy(() => import("./components/MetadataSidebarPanels").then(module => ({ default: module.RecentPanel })));
 const ContextMenu = lazy(() => import("./components/ContextMenu").then(module => ({ default: module.ContextMenu })));
 const UploadQueue = lazy(() => import("./components/UploadQueue").then(module => ({ default: module.UploadQueue })));
+const ImagePreviewPane = lazy(() => import("./components/ImagePreviewPane"));
 
 interface TextDialogState { kind: "folder" | "rename" | "resize"; title: string; label: string; initial: string; maximum: number; extension?: string }
 interface ConfirmState { title: string; message: string; detail?: string; danger?: boolean }
@@ -86,6 +87,7 @@ export default function App({ config, initialMessages }: { config: SoFinderConfi
   const [typeFilter, setTypeFilter] = useState<EntryTypeFilter>(savedTypeFilter);
   const [uiScale, setUiScale] = useState<UiScale>(() => loadScale(config.uiDefaults?.scale ?? "standard"));
   const [uploadConflictStrategy, setUploadConflictStrategy] = useState<UploadConflictStrategy>(() => loadUploadConflictStrategy(config.uiDefaults.uploadConflictStrategy ?? "ask"));
+  const lowercaseUploadExtensions = config.uiDefaults.lowercaseUploadExtensions ?? true;
   const { destinationDialog, setDestinationDialog, bulkRenameOpen, setBulkRenameOpen } = useBatchState();
   const [cropOpen, setCropOpen] = useState(false);
   const [imageProcessOpen, setImageProcessOpen] = useState(false);
@@ -115,6 +117,10 @@ export default function App({ config, initialMessages }: { config: SoFinderConfi
   const utility = useRef<HTMLDivElement>(null);
   const utilityButton = useRef<HTMLButtonElement>(null);
   const selectionMenu = useRef<HTMLDivElement>(null);
+  const activeResource = useRef(resource);
+  const metadataSequence = useRef<Record<string, number>>({});
+  const metadataMutations = useRef<Record<string, number>>({});
+  const metadataChannel = useRef<BroadcastChannel | null>(null);
 
   useEffect(() => {
     const variableNames = {
@@ -177,6 +183,52 @@ export default function App({ config, initialMessages }: { config: SoFinderConfi
   }, [selectionMenuOpen]);
 
   const report = useCallback((error: unknown) => setNotice(error instanceof Error ? error.message : t("error")), [t]);
+  const applyMetadata = useCallback((targetResource: string, value: MetadataState, sequence: number) => {
+    if ((metadataSequence.current[targetResource] || 0) !== sequence) return false;
+    if (activeResource.current === targetResource) setMetadata(value);
+    setQuickAccessByResource(current => ({ ...current, [targetResource]: value.quickAccessEntries }));
+    return true;
+  }, []);
+  const fetchMetadata = useCallback(async (targetResource: string, force = false) => {
+    if (!targetResource || (!force && (metadataMutations.current[targetResource] || 0) > 0)) return null;
+    const sequence = (metadataSequence.current[targetResource] || 0) + 1;
+    metadataSequence.current[targetResource] = sequence;
+    const value = await api.metadata(targetResource);
+    applyMetadata(targetResource, value, sequence);
+    return value;
+  }, [api, applyMetadata]);
+  const mutateMetadata = useCallback(async (targetResource: string, targetPath: string, action: "favorite" | "quick_access" | "tags" | "touch" | "forget", values: { favorite?: boolean; pinned?: boolean; tags?: string[] } = {}) => {
+    const sequence = (metadataSequence.current[targetResource] || 0) + 1;
+    metadataSequence.current[targetResource] = sequence;
+    metadataMutations.current[targetResource] = (metadataMutations.current[targetResource] || 0) + 1;
+    try {
+      const value = await api.updateMetadata(targetResource, targetPath, action, values);
+      applyMetadata(targetResource, value, sequence);
+      metadataChannel.current?.postMessage({ resource: targetResource });
+      return value;
+    } finally {
+      metadataMutations.current[targetResource] = Math.max(0, (metadataMutations.current[targetResource] || 1) - 1);
+      if (metadataMutations.current[targetResource] === 0 && (metadataSequence.current[targetResource] || 0) !== sequence) void fetchMetadata(targetResource, true).catch(report);
+    }
+  }, [api, applyMetadata, fetchMetadata, report]);
+
+  useEffect(() => { activeResource.current = resource; }, [resource]);
+
+  useEffect(() => {
+    if (!("BroadcastChannel" in window)) return;
+    let channel: BroadcastChannel;
+    try {
+      channel = new BroadcastChannel("sofinder-metadata-v1");
+    } catch {
+      return;
+    }
+    metadataChannel.current = channel;
+    channel.onmessage = event => {
+      const targetResource = typeof event.data?.resource === "string" ? event.data.resource : "";
+      if (targetResource) void fetchMetadata(targetResource).catch(report);
+    };
+    return () => { metadataChannel.current = null; channel.close(); };
+  }, [fetchMetadata, report]);
   const ask = useCallback((state: ConfirmState) => new Promise<boolean>(resolve => {
     confirmResolver.current?.(false);
     confirmResolver.current = resolve;
@@ -200,13 +252,13 @@ export default function App({ config, initialMessages }: { config: SoFinderConfi
     resolve?.(strategy);
   };
   const load = useCallback(async (nextResource = resource, nextPath = path, term = search, nextOffset = offset, nextSort = sort, nextDirection = direction, nextSearchMode = searchMode, cursor: string | null = pageCursor) => {
-    if (!nextResource) return;
+    if (!nextResource) return "error" as const;
     const sequence = ++loadSequence.current;
     setLoading(true);
     setNotice("");
     try {
       const result = await api.list(nextResource, nextPath, term, nextSort, nextDirection, nextOffset, pageSizeRef.current, nextSearchMode, cursor);
-      if (sequence !== loadSequence.current) return;
+      if (sequence !== loadSequence.current) return "stale" as const;
       setEntries(result.entries);
       setPath(result.path);
       setResolvedPath(result.path);
@@ -217,12 +269,13 @@ export default function App({ config, initialMessages }: { config: SoFinderConfi
       setDirectoryCapabilities(result.capabilities || {});
       setSelectedPaths(new Set());
       setSelectionAnchor(null);
+      return "ok" as const;
     } catch (error) {
-      if (sequence !== loadSequence.current) return;
+      if (sequence !== loadSequence.current) return "stale" as const;
       if (error instanceof ApiError && error.code === "not_found" && nextPath !== "") {
         try {
           const fallback = await api.list(nextResource, "", "", nextSort, nextDirection, 0, pageSizeRef.current, "name", null);
-          if (sequence !== loadSequence.current) return;
+          if (sequence !== loadSequence.current) return "stale" as const;
           setEntries(fallback.entries);
           setPath(fallback.path);
           setResolvedPath(fallback.path);
@@ -235,7 +288,7 @@ export default function App({ config, initialMessages }: { config: SoFinderConfi
           setSelectionAnchor(null);
           setCursorHistory([]);
           setNotice(t("missingPathFallback"));
-          return;
+          return "not_found" as const;
         } catch (fallbackError) {
           error = fallbackError;
         }
@@ -250,6 +303,7 @@ export default function App({ config, initialMessages }: { config: SoFinderConfi
       setSelectedPaths(new Set());
       setSelectionAnchor(null);
       report(error);
+      return "error" as const;
     } finally {
       if (sequence === loadSequence.current) setLoading(false);
     }
@@ -258,7 +312,7 @@ export default function App({ config, initialMessages }: { config: SoFinderConfi
   const currentResource = resources.find(item => item.name === resource);
   const currentDepth = path === "" ? 0 : path.split("/").length;
   const { uploads, uploadsCollapsed, setUploadsCollapsed, uploadInput, directoryUploadInput, upload, uploadTo, uploadDirectory, cancelUpload, cancelAllUploads, removeUploadTask, retryUpload, clearFinishedUploads } = useUploads({
-    api, resource, path, currentResource, currentDepth, autoCollapse: features.autoCollapseUploads, conflictStrategy: uploadConflictStrategy, t, ask, chooseConflict: chooseUploadConflict, reload: async () => { await load(); }, setNotice, report,
+    api, resource, path, currentResource, currentDepth, autoCollapse: features.autoCollapseUploads, conflictStrategy: uploadConflictStrategy, lowercaseExtensions: lowercaseUploadExtensions, t, ask, chooseConflict: chooseUploadConflict, reload: async () => { await load(); }, setNotice, report,
   });
 
   useEffect(() => {
@@ -329,15 +383,22 @@ export default function App({ config, initialMessages }: { config: SoFinderConfi
       setMetadata({ favorites: [], quickAccess: [], quickAccessEntries: [], tags: {}, recent: [] });
       return;
     }
-    api.metadata(resource).then(value => { setMetadata(value); setQuickAccessByResource(current => ({ ...current, [resource]: value.quickAccessEntries })); }).catch(report);
-  }, [api, featureAvailability.quickAccess, features.favorites, features.recent, features.tags, report, resource]);
+    void fetchMetadata(resource).catch(report);
+  }, [featureAvailability.quickAccess, features.favorites, features.recent, features.tags, fetchMetadata, report, resource]);
 
   useEffect(() => {
     if (featureAvailability.quickAccess === false || !features.sidebarQuickAccess || quickAccessScope !== "all") return;
-    Promise.all(resources.filter(item => item.name !== resource).map(async item => [item.name, (await api.metadata(item.name)).quickAccessEntries] as const))
-      .then(values => setQuickAccessByResource(current => ({ ...current, ...Object.fromEntries(values) })))
-      .catch(report);
-  }, [api, featureAvailability.quickAccess, features.sidebarQuickAccess, quickAccessScope, report, resource, resources]);
+    void Promise.all(resources.filter(item => item.name !== resource).map(item => fetchMetadata(item.name))).catch(report);
+  }, [featureAvailability.quickAccess, features.sidebarQuickAccess, fetchMetadata, quickAccessScope, report, resource, resources]);
+
+  useEffect(() => {
+    if (featureAvailability.quickAccess === false || !features.sidebarQuickAccess) return;
+    const refresh = () => Object.entries(quickAccessByResource).forEach(([targetResource, links]) => {
+      if (links.length > 0) void fetchMetadata(targetResource).catch(report);
+    });
+    const timer = window.setInterval(refresh, 60_000);
+    return () => window.clearInterval(timer);
+  }, [featureAvailability.quickAccess, features.sidebarQuickAccess, fetchMetadata, quickAccessByResource, report]);
 
   useEffect(() => {
     if (!features.favorites && collectionView === "favorites") setCollectionView(null);
@@ -357,8 +418,8 @@ export default function App({ config, initialMessages }: { config: SoFinderConfi
 
   const crumbs = useMemo(() => path === "" ? [] : path.split("/"), [path]);
   const touchRecent = useCallback((entry: Entry) => {
-    if (features.recent) void api.updateMetadata(resource, entry.path, "touch").then(setMetadata).catch(report);
-  }, [api, features.recent, report, resource]);
+    if (features.recent) void mutateMetadata(resource, entry.path, "touch").catch(report);
+  }, [features.recent, mutateMetadata, report, resource]);
   const filteredEntries = useMemo(() => filterEntries(entries, typeFilter), [entries, typeFilter]);
   const presentationGroupMode: EntryGroupMode = groupMode === "tags" && !features.tags ? "none" : groupMode;
   const entryGroups = useMemo(() => groupEntries(filteredEntries, presentationGroupMode, metadata.tags), [filteredEntries, presentationGroupMode, metadata.tags]);
@@ -607,7 +668,7 @@ export default function App({ config, initialMessages }: { config: SoFinderConfi
   const toggleFavorite = async (entry = selected) => {
     if (!entry) return;
     try {
-      setMetadata(await api.updateMetadata(resource, entry.path, "favorite", { favorite: !metadata.favorites.includes(entry.path) }));
+      await mutateMetadata(resource, entry.path, "favorite", { favorite: !metadata.favorites.includes(entry.path) });
     } catch (error) { report(error); }
   };
 
@@ -615,9 +676,7 @@ export default function App({ config, initialMessages }: { config: SoFinderConfi
     if (!entry) return;
     if (!entry.directory && !metadata.quickAccess.includes(entry.path) && !quickAccessFiles) return;
     try {
-      const value = await api.updateMetadata(resource, entry.path, "quick_access", { pinned: !metadata.quickAccess.includes(entry.path) });
-      setMetadata(value);
-      setQuickAccessByResource(current => ({ ...current, [resource]: value.quickAccessEntries }));
+      await mutateMetadata(resource, entry.path, "quick_access", { pinned: !metadata.quickAccess.includes(entry.path) });
     } catch (error) { report(error); }
   };
 
@@ -648,7 +707,7 @@ export default function App({ config, initialMessages }: { config: SoFinderConfi
     try {
       const result = await api.list(resource, directory, name, "name", "asc", 0, 500);
       if (!result.entries.some(entry => entry.path === recentPath)) {
-        setMetadata(await api.updateMetadata(resource, recentPath, "forget"));
+        await mutateMetadata(resource, recentPath, "forget");
         setNotice(t("recentMissing"));
         return;
       }
@@ -656,7 +715,7 @@ export default function App({ config, initialMessages }: { config: SoFinderConfi
       setSelectedPaths(new Set([recentPath]));
     } catch (error) {
       if (error instanceof ApiError && error.code === "not_found") {
-        try { setMetadata(await api.updateMetadata(resource, recentPath, "forget")); }
+        try { await mutateMetadata(resource, recentPath, "forget"); }
         catch (metadataError) { report(metadataError); return; }
         setNotice(t("recentMissing"));
         return;
@@ -882,35 +941,41 @@ export default function App({ config, initialMessages }: { config: SoFinderConfi
     setSearchMode("name");
     setCollectionView("favorites");
   };
-  const sidebarPath = async (targetResource: string, targetPath: string, kind: "favorite" | "quick_access") => {
+  const sidebarPath = async (targetResource: string, targetPath: string, kind: "favorite" | "quick_access", knownExists?: boolean) => {
     const parent = targetPath.includes("/") ? targetPath.slice(0, targetPath.lastIndexOf("/")) : "";
     const name = targetPath.split("/").pop() || targetPath;
     try {
+      if (knownExists === false) throw new ApiError(t("quickAccessRemoved"), "not_found", 404);
       const result = await api.list(targetResource, parent, name, "name", "asc", 0, 500);
       const entry = result.entries.find(item => item.path === targetPath);
       if (!entry) throw new ApiError(t("favoriteMissing"), "not_found", 404);
       setCollectionView(null);
       setResource(targetResource);
-      if (entry.directory) resetAndLoad(targetResource, entry.path, "");
+      if (entry.directory) {
+        setCursorHistory([]);
+        const outcome = await load(targetResource, entry.path, "", 0, sort, direction, "name", null);
+        if (outcome === "not_found") throw new ApiError(t("quickAccessRemoved"), "not_found", 404);
+      }
       else { await load(targetResource, parent, "", 0); setSelectedPaths(new Set([entry.path])); }
     } catch (error) {
       if (error instanceof ApiError && error.code === "not_found") {
-        const value = await api.updateMetadata(targetResource, targetPath, kind, kind === "favorite" ? { favorite: false } : { pinned: false });
-        if (targetResource === resource) setMetadata(value);
-        setQuickAccessByResource(current => ({ ...current, [targetResource]: value.quickAccessEntries }));
+        try {
+          await mutateMetadata(targetResource, targetPath, kind, kind === "favorite" ? { favorite: false } : { pinned: false });
+        } catch (metadataError) {
+          report(metadataError);
+          return;
+        }
         setNotice(t(kind === "favorite" ? "favoriteMissing" : "quickAccessRemoved"));
       } else report(error);
     }
   };
   const unpinQuickAccess = async (link: { resource: string; path: string }) => {
     try {
-      const value = await api.updateMetadata(link.resource, link.path, "quick_access", { pinned: false });
-      if (link.resource === resource) setMetadata(value);
-      setQuickAccessByResource(current => ({ ...current, [link.resource]: value.quickAccessEntries }));
+      await mutateMetadata(link.resource, link.path, "quick_access", { pinned: false });
     } catch (error) { report(error); }
   };
   const removeFavorite = async (targetPath: string) => {
-    try { setMetadata(await api.updateMetadata(resource, targetPath, "favorite", { favorite: false })); }
+    try { await mutateMetadata(resource, targetPath, "favorite", { favorite: false }); }
     catch (error) { report(error); }
   };
   const previousPage = () => {
@@ -987,7 +1052,7 @@ export default function App({ config, initialMessages }: { config: SoFinderConfi
           <label><span>{t("groupBy")}</span><select value={presentationGroupMode} disabled={collectionView !== null} aria-label={t("groupBy")} onChange={event => { const value = event.target.value as EntryGroupMode; setGroupMode(value); localStorage.setItem("sofinder.groupMode.v1", value); }}><option value="none">{t("groupNone")}</option><option value="name">{t("name")}</option><option value="type">{t("type")}</option><option value="size">{t("size")}</option><option value="modified">{t("modified")}</option>{features.tags && <option value="tags">{t("tags")}</option>}</select></label>
           <label><span>{t("filterType")}</span><select value={typeFilter} disabled={collectionView !== null} aria-label={t("filterType")} onChange={event => { const value = event.target.value as EntryTypeFilter; setTypeFilter(value); localStorage.setItem("sofinder.typeFilter.v1", value); clearSelection(); }}><option value="all">{t("allTypes")}</option><option value="folder">{t("folder")}</option><option value="image">{t("images")}</option><option value="document">{t("documents")}</option><option value="audio">{t("audio")}</option><option value="video">{t("video")}</option><option value="archive">{t("archives")}</option><option value="other">{t("other")}</option></select></label>
           <button role="menuitem" className={`sf-sort-direction ${direction}`} disabled={collectionView !== null || currentResource?.storageCapabilities?.sort === false} aria-label={`${t("direction")}: ${t(direction === "asc" ? "ascending" : "descending")}`} onClick={changeDirection}>{iconButton(direction === "asc" ? "sort-asc" : "sort-desc", t(direction === "asc" ? "ascending" : "descending"))}</button>
-          <button role="menuitem" onClick={() => { setUtilityOpen(false); if (collectionView === "favorites") void api.metadata(resource).then(setMetadata).catch(report); else void load(); }}>{iconButton("refresh", t("refresh"))}</button>
+          <button role="menuitem" onClick={() => { setUtilityOpen(false); if (collectionView === "favorites") void fetchMetadata(resource, true).catch(report); else void load(); }}>{iconButton("refresh", t("refresh"))}</button>
           <button role="menuitem" onClick={() => { setUtilityOpen(false); setSettingsOpen(true); }}>{iconButton("settings", t("settings"))}</button>
           {(uiMode === "manager" || fullTools) && config.securityStatusAvailable !== false && <button role="menuitem" onClick={() => { setUtilityOpen(false); setSecurityStatusOpen(true); }}>{iconButton("security", t("securityStatus"))}</button>}
           {(uiMode === "manager" || fullTools) && features.trash && recoverableDelete && <button role="menuitem" onClick={() => { setUtilityOpen(false); setTrashOpen(true); }}>{iconButton("trash", t("trash"))}</button>}
@@ -1035,7 +1100,7 @@ export default function App({ config, initialMessages }: { config: SoFinderConfi
         {folderNavigationLeft && resource && (
           <Suspense fallback={null}><FolderTree api={api} resource={resource} currentPath={resolvedPath} rootLabel={t("home")} onNavigate={next => resetAndLoad(resource, next, "")}/></Suspense>
         )}
-        {(features.favorites && features.sidebarFavorites || quickAccessEnabled && features.sidebarQuickAccess && hasQuickAccess) && <Suspense fallback={null}><MetadataSidebarPanels favorites={metadata.favorites} quickAccessByResource={quickAccessByResource} resources={resources} currentResource={resource} quickAccessScope={quickAccessScope} showFavorites={features.favorites && features.sidebarFavorites} showQuickAccess={quickAccessEnabled && features.sidebarQuickAccess && hasQuickAccess} favoritesActive={collectionView === "favorites"} labels={{ favorites: t("favorites"), favoritesEmpty: t("favoritesEmpty"), quickAccess: t("quickAccess"), quickAccessEmpty: t("quickAccessEmpty"), home: t("home"), more: t("moreItems"), missing: t("quickAccessMissing") }} onOpenFavorites={openFavorites} onOpenFavorite={item => void sidebarPath(resource, item, "favorite")} onOpenQuickAccess={link => void sidebarPath(link.resource, link.path, "quick_access")} onQuickAccessContext={(link, event) => { event.preventDefault(); setSidebarMenu({ x: event.clientX, y: event.clientY, link }); }} onFavoriteContext={(path, event) => { event.preventDefault(); setSidebarMenu({ x: event.clientX, y: event.clientY, link: { resource, path }, favorite: true }); }}/></Suspense>}
+        {(features.favorites && features.sidebarFavorites || quickAccessEnabled && features.sidebarQuickAccess && hasQuickAccess) && <Suspense fallback={null}><MetadataSidebarPanels favorites={metadata.favorites} quickAccessByResource={quickAccessByResource} resources={resources} currentResource={resource} quickAccessScope={quickAccessScope} showFavorites={features.favorites && features.sidebarFavorites} showQuickAccess={quickAccessEnabled && features.sidebarQuickAccess && hasQuickAccess} favoritesActive={collectionView === "favorites"} labels={{ favorites: t("favorites"), favoritesEmpty: t("favoritesEmpty"), quickAccess: t("quickAccess"), quickAccessEmpty: t("quickAccessEmpty"), home: t("home"), more: t("moreItems"), missing: t("quickAccessMissing") }} onOpenFavorites={openFavorites} onOpenFavorite={item => void sidebarPath(resource, item, "favorite")} onOpenQuickAccess={link => void sidebarPath(link.resource, link.path, "quick_access", link.exists)} onQuickAccessContext={(link, event) => { event.preventDefault(); setSidebarMenu({ x: event.clientX, y: event.clientY, link }); }} onFavoriteContext={(path, event) => { event.preventDefault(); setSidebarMenu({ x: event.clientX, y: event.clientY, link: { resource, path }, favorite: true }); }}/></Suspense>}
         {currentResource && (currentResource.readOnly || currentResource.quotaBytes > 0) && <div className="sf-resource-status">
           {currentResource.readOnly && <strong>{t("readOnly")}</strong>}
           {currentResource.quotaBytes > 0 && <><span>{t("storageUsage")}: {formatSize(currentResource.usedBytes)} / {formatSize(currentResource.quotaBytes)}</span><progress max={currentResource.quotaBytes} value={Math.min(currentResource.usedBytes, currentResource.quotaBytes)}/></>}
@@ -1113,7 +1178,7 @@ export default function App({ config, initialMessages }: { config: SoFinderConfi
       suggestions={Array.from(new Set(Object.values(metadata.tags).flat())).sort((left, right) => left.localeCompare(right, language))}
       labels={{ title: t("tags"), close: t("close"), cancel: t("cancel"), save: t("save"), input: t("tagInput"), hint: t("tagInputHint"), maximum: t("tagMaximum") }}
       onClose={() => setTagsOpen(false)}
-      onSave={tags => { setTagsOpen(false); void api.updateMetadata(resource, selected.path, "tags", { tags }).then(setMetadata).catch(report); }}
+      onSave={tags => { setTagsOpen(false); void mutateMetadata(resource, selected.path, "tags", { tags }).catch(report); }}
     /></Suspense>}
     {previewEntry && <Modal
       title={previewEntry.name}
@@ -1124,17 +1189,17 @@ export default function App({ config, initialMessages }: { config: SoFinderConfi
       footer={<><a className="sf-preview-download" href={previewEntry.url || api.downloadUrl(resource, previewEntry.path)} target="_blank" rel="noopener noreferrer">{t("download")}</a><button type="button" onClick={() => void openShare(previewEntry)}>{t("share")}</button><button className="primary" onClick={() => setPreviewEntry(null)}>{t("close")}</button></>}
     >
       <div className="sf-file-preview-body">
-        <div className="sf-file-preview-content">
-          {canPreviewImage(previewEntry)
-            ? <ThumbnailImage src={api.thumbnailUrl(resource, previewEntry, 512, 512)} alt={previewEntry.name}/>
-            : featureAvailability.textPreview !== false && textPreview?.path === previewEntry.path
+        {canPreviewImage(previewEntry)
+          ? <Suspense fallback={<div className="sf-state">{t("loading")}</div>}><ImagePreviewPane api={api} resource={resource} entry={previewEntry} labels={{ actual: t("actualSize"), fit: t("fitToWindow"), zoom: t("zoomLevel"), center: t("centerImage"), loading: t("loadingOriginalImage"), failed: t("imagePreviewFailed"), retry: t("retryImagePreview"), warning: t("largeOriginalImageWarning"), continue: t("continueOriginalImage"), cancel: t("cancel"), dimensions: t("dimensions"), size: t("size") }}/></Suspense>
+          : <div className="sf-file-preview-content">
+          {featureAvailability.textPreview !== false && textPreview?.path === previewEntry.path
               ? <><pre className="sf-text-preview">{textPreview.content}</pre>{textPreview.truncated && <p className="sf-warning">{t("previewTruncated")}</p>}</>
             : previewerFor(previewEntry, pluginPreviewers)?.plugin === "document-preview"
               ? <Suspense fallback={null}><DocumentPreviewPane api={api} resource={resource} entry={previewEntry} labels={{ submitting: t("previewSubmitting"), queued: t("previewQueued"), converting: t("previewConverting"), loading: t("previewLoading"), failed: t("previewFailed"), retry: t("previewRetry"), elapsed: seconds => t("previewElapsed").replace("{seconds}", String(seconds)) }}/></Suspense>
             : previewerUrl(previewEntry, pluginPreviewers, resource)
               ? <iframe className="sf-document-preview" src={previewerUrl(previewEntry, pluginPreviewers, resource) || undefined} title={previewEntry.name}/>
               : <div className="sf-file-preview-fallback"><Icon kind="file"/><p>{t("previewUnavailable")}</p></div>}
-        </div>
+        </div>}
         <dl className="sf-file-preview-meta"><dt>{t("type")}</dt><dd>{previewEntry.mimeType || t("file")}</dd><dt>{t("size")}</dt><dd>{formatSize(previewEntry.size)}</dd><dt>{t("modified")}</dt><dd><time dateTime={new Date(previewEntry.modifiedAt * 1000).toISOString()}>{dateFormatter.format(previewEntry.modifiedAt * 1000)}</time></dd><dt>{t("location")}</dt><dd>{previewEntry.path}</dd>{featureAvailability.checksum !== false && <><dt>SHA-256</dt><dd>{checksum?.path === previewEntry.path ? <code className="sf-checksum">{checksum.value}</code> : <button onClick={() => void api.checksum(resource, previewEntry.path).then(result => setChecksum({ path: previewEntry.path, value: result.checksum })).catch(report)}>{t("calculateChecksum")}</button>}</dd></>}</dl>
       </div>
     </Modal>}

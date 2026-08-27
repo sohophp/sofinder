@@ -723,6 +723,116 @@ select:focus-visible,
   object-fit: contain;
 }
 
+.sf-image-preview-pane {
+  display: grid;
+  grid-template-rows: auto minmax(280px, 1fr) auto;
+  gap: 8px;
+  min-width: 0;
+  min-height: 0;
+}
+
+.sf-image-preview-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+}
+
+.sf-image-preview-toolbar button {
+  min-height: 32px;
+  padding: 5px 9px;
+}
+
+.sf-image-preview-toolbar button.active {
+  border-color: color-mix(in srgb, var(--sf-accent) 55%, var(--sf-line));
+  background: var(--sf-accent-soft);
+  color: var(--sf-accent);
+}
+
+.sf-image-zoom-level {
+  min-width: 70px;
+  color: var(--sf-muted);
+  font-size: 12px;
+  text-align: center;
+}
+
+.sf-image-preview-viewport {
+  outline: none;
+}
+
+.sf-image-preview-viewport:focus-visible {
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--sf-accent) 25%, transparent);
+}
+
+.sf-file-preview-content.sf-image-original-size {
+  display: block;
+  overflow: auto;
+}
+
+.sf-image-original-canvas {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 100%;
+  min-width: 100%;
+  min-height: 280px;
+}
+
+.sf-image-preview-viewport:not(.sf-image-original-size) .sf-image-original-canvas > img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  max-height: min(68vh, 720px);
+  object-fit: contain;
+}
+
+.sf-image-original-size .sf-image-original-canvas {
+  width: max-content;
+}
+
+.sf-image-original-canvas > img {
+  display: block;
+  height: auto;
+  max-width: none;
+  max-height: none;
+}
+
+.sf-image-preview-state,
+.sf-image-preview-confirm {
+  position: absolute;
+  z-index: 1;
+  top: 50%;
+  left: 50%;
+  display: grid;
+  justify-items: center;
+  gap: 10px;
+  max-width: min(420px, calc(100% - 32px));
+  border: 1px solid var(--sf-line);
+  border-radius: 10px;
+  background: color-mix(in srgb, var(--sf-panel) 94%, transparent);
+  box-shadow: var(--sf-shadow);
+  padding: 16px;
+  text-align: center;
+  transform: translate(-50%, -50%);
+}
+
+.sf-image-preview-confirm p {
+  margin: 0;
+  color: var(--sf-muted);
+  line-height: 1.5;
+}
+
+.sf-image-preview-confirm > div {
+  display: flex;
+  gap: 8px;
+}
+
+.sf-image-preview-info {
+  color: var(--sf-muted);
+  font-size: 12px;
+  text-align: right;
+}
+
 .sf-file-preview-fallback {
   display: grid;
   place-items: center;
@@ -786,6 +896,14 @@ select:focus-visible,
   height: 100%;
   min-height: 0;
   max-height: none;
+}
+
+.sf-file-preview-modal.sf-modal-fullscreen .sf-image-original-canvas {
+  min-height: 100%;
+}
+
+.sf-file-preview-modal.sf-modal-fullscreen .sf-image-preview-pane {
+  height: 100%;
 }
 
 .sf-file-preview-modal > footer .sf-icon-button {
@@ -956,6 +1074,10 @@ select:focus-visible,
 .sf-settings-modal {
   width: min(430px, 100%);
   overflow-y: auto;
+}
+
+.sf-settings-modal > * {
+  flex-shrink: 0;
 }
 
 .sf-settings-modal > header {

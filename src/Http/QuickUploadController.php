@@ -12,6 +12,7 @@ use Symfony\Component\HttpFoundation\File\UploadedFile;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
+use SohoPHP\SoFinder\Upload\UploadNamePolicy;
 
 final readonly class QuickUploadController
 {
@@ -20,6 +21,7 @@ final readonly class QuickUploadController
         private CsrfGuard $csrf,
         private ?ImageCapabilityProviderInterface $imageCapabilities = null,
         private bool $overwriteOnUpload = false,
+        private UploadNamePolicy $uploadNames = new UploadNamePolicy(),
     ) {
     }
 
@@ -49,7 +51,7 @@ final readonly class QuickUploadController
             $entry = $this->files->upload(
                 $resource,
                 (string) $request->query->get('currentFolder', ''),
-                $uploaded->getClientOriginalName(),
+                $this->uploadNames->normalize($uploaded->getClientOriginalName()),
                 (int) $uploaded->getSize(),
                 $stream,
                 $this->overwriteOnUpload,
@@ -59,7 +61,7 @@ final readonly class QuickUploadController
             fclose($stream);
         }
         $url = $entry->url ?? '';
-        $renamed = $entry->name !== $uploaded->getClientOriginalName();
+        $renamed = $entry->name !== $this->uploadNames->normalize($uploaded->getClientOriginalName());
         $message = $renamed
             ? sprintf('A file with the same name already exists. The uploaded file was renamed to "%s".', $entry->name)
             : '';

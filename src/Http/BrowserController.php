@@ -23,7 +23,7 @@ final readonly class BrowserController
         private CsrfTokenManagerInterface $csrf,
         private string $assetVersion,
         private Theme $theme,
-        /** @var array{mode:string,header:bool,logo:bool,search:bool,language_switcher:bool,view_switcher:bool,folder_tree:bool,scale:string,upload_conflict_strategy?:string} */
+        /** @var array{mode:string,header:bool,logo:bool,search:bool,language_switcher:bool,view_switcher:bool,folder_tree:bool,scale:string,upload_conflict_strategy?:string,lowercase_upload_extensions?:bool} */
         private array $ui,
         private ?FeaturePolicy $features = null,
         private ?AuthorizationCheckerInterface $authorization = null,
@@ -75,6 +75,7 @@ final readonly class BrowserController
             'uiDefaults' => [
                 'scale' => (string) ($this->ui['scale'] ?? 'standard'),
                 'uploadConflictStrategy' => (string) ($this->ui['upload_conflict_strategy'] ?? 'ask'),
+                'lowercaseUploadExtensions' => (bool) ($this->ui['lowercase_upload_extensions'] ?? true),
                 ...$ui,
             ],
         ];

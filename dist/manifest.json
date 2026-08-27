@@ -128,6 +128,17 @@
       "_nameValidation-DURyMFRU.js"
     ]
   },
+  "src/components/ImagePreviewPane.tsx": {
+    "file": "ImagePreviewPane-D5O_-Lqv.js",
+    "name": "ImagePreviewPane",
+    "src": "src/components/ImagePreviewPane.tsx",
+    "isDynamicEntry": true,
+    "imports": [
+      "_jsx-runtime-CmCsaYvT.js",
+      "_react-B5TC723I.js",
+      "_format-GD3_dnvn.js"
+    ]
+  },
   "src/components/ImageProcessDialog.tsx": {
     "file": "ImageProcessDialog-BXXUiXNB.js",
     "name": "ImageProcessDialog",
@@ -219,19 +230,19 @@
     ]
   },
   "src/locales/en.ts": {
-    "file": "en-DjNrcY22.js",
+    "file": "en-C9IYgA52.js",
     "name": "en",
     "src": "src/locales/en.ts",
     "isDynamicEntry": true
   },
   "src/locales/zh-cn.ts": {
-    "file": "zh-cn-FVLcJn9X.js",
+    "file": "zh-cn-BKI-ICDG.js",
     "name": "zh-cn",
     "src": "src/locales/zh-cn.ts",
     "isDynamicEntry": true
   },
   "src/locales/zh-tw.ts": {
-    "file": "zh-tw-DwI_k4NE.js",
+    "file": "zh-tw-D7YgC_eW.js",
     "name": "zh-tw",
     "src": "src/locales/zh-tw.ts",
     "isDynamicEntry": true
@@ -269,7 +280,8 @@
       "src/components/FavoritesPage.tsx",
       "src/components/MetadataSidebarPanels.tsx",
       "src/components/ContextMenu.tsx",
-      "src/components/UploadQueue.tsx"
+      "src/components/UploadQueue.tsx",
+      "src/components/ImagePreviewPane.tsx"
     ]
   },
   "src/picker.ts": {

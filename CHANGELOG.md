@@ -2,6 +2,22 @@
 
 ## Unreleased
 
+- Add a lazy original-image preview with fit, 25/50/100/200% zoom, centering,
+  keyboard and Ctrl/Command-wheel controls, retry states and large-image memory
+  confirmation while retaining a lightweight thumbnail by default.
+- Add a host-controlled upload extension case policy, defaulting to lowercase
+  while preserving the base file name and enforcing the same rule for regular,
+  chunked and editor uploads; users cannot override it.
+- Remove stale Quick access links only after confirmed not-found responses, use
+  metadata existence hints, retain links when metadata mutation fails, suppress
+  stale responses, refresh active links and synchronize browser tabs.
+- Harden local listings against concurrent deletion, replacement, permission and
+  symbolic-link races with stable not-found, conflict and unavailable errors.
+- Run the complete Chromium, Firefox and WebKit regression suite in the tag
+  release workflow as well as CI.
+- Prevent settings sections from shrinking to their headings at large interface
+  scales; the dialog now owns scrolling while every section keeps its content height.
+
 ## 0.1.0-beta.20 - 2026-08-27
 
 - Make LibreOffice-converted Office previews fill the available content area in

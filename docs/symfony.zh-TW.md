@@ -26,6 +26,9 @@ so_finder:
   trash_retention_days: 30
   trash_max_items: 1000
   trash_max_bytes: 1073741824
+  uploads:
+    naming:
+      lowercase_extensions: true # 一般、分塊及編輯器上傳皆由伺服器強制執行。
   ui:
     mode: auto          # auto、manager 或 picker
     header: true        # 在 Logo 旁顯示品牌文字

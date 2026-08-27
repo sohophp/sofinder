@@ -14,6 +14,7 @@ use SohoPHP\SoFinder\Maintenance\MaintenanceTask;
 use Symfony\Component\HttpFoundation\File\UploadedFile;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
+use SohoPHP\SoFinder\Upload\UploadNamePolicy;
 
 final readonly class ChunkUploadController
 {
@@ -22,6 +23,7 @@ final readonly class ChunkUploadController
         private ChunkUploadStoreInterface $chunks,
         private CsrfGuard $csrf,
         private ?MaintenanceCoordinator $maintenance = null,
+        private UploadNamePolicy $uploadNames = new UploadNamePolicy(),
     )
     {
     }
@@ -36,7 +38,7 @@ final readonly class ChunkUploadController
         $id = (string) $request->request->get('uploadId', '');
         $resource = (string) $request->request->get('resource', 'Files');
         $path = (string) $request->request->get('path', '');
-        $name = (string) $request->request->get('name', '');
+        $name = $this->uploadNames->normalize((string) $request->request->get('name', ''));
         $limit = $this->files->uploadLimit($resource, $path, $name);
         $stream = @fopen($uploaded->getPathname(), 'rb');
         if ($stream === false) throw new SoFinderException('Unable to read the upload chunk.', 'invalid_upload_chunk', 400);

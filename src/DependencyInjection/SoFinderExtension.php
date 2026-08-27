@@ -114,6 +114,7 @@ use SohoPHP\SoFinder\Trash\TrashManager;
 use SohoPHP\SoFinder\Usage\PersistentUsageTracker;
 use SohoPHP\SoFinder\Upload\ChunkUploadManager;
 use SohoPHP\SoFinder\Upload\SharedChunkUploadStore;
+use SohoPHP\SoFinder\Upload\UploadNamePolicy;
 use SohoPHP\SoFinder\Value\Theme;
 use SohoPHP\SoFinder\Value\ImageProcessingLimits;
 use SohoPHP\SoFinder\Value\CapabilityCatalog;
@@ -138,6 +139,13 @@ final class SoFinderExtension extends Extension
     public function load(array $configs, ContainerBuilder $container): void
     {
         $config = $this->processConfiguration(new Configuration(), $configs);
+        $lowercaseUploadExtensions = (bool) $config['uploads']['naming']['lowercase_extensions'];
+        foreach ($configs as $source) {
+            if (isset($source['ui']) && is_array($source['ui']) && array_key_exists('lowercase_upload_extensions', $source['ui'])) {
+                $lowercaseUploadExtensions = (bool) $source['ui']['lowercase_upload_extensions'];
+            }
+        }
+        $config['ui']['lowercase_upload_extensions'] = $lowercaseUploadExtensions;
         $imageDriver = (string) $config['image_processing']['driver'];
         if ($imageDriver === 'gd' && !extension_loaded('gd')) {
             throw new \InvalidArgumentException('SoFinder image_processing.driver is gd, but ext-gd is not installed.');
@@ -181,6 +189,7 @@ final class SoFinderExtension extends Extension
         $container->setParameter('so_finder.asset_version', substr(hash_final($assetFingerprint), 0, 12));
 
         $container->setDefinition(PathGuard::class, new Definition(PathGuard::class));
+        $container->setDefinition(UploadNamePolicy::class, new Definition(UploadNamePolicy::class, [$lowercaseUploadExtensions]));
         $container->setDefinition(LocalStorageAdapterFactory::class, (new Definition(LocalStorageAdapterFactory::class))
             ->setArgument('$pathGuard', new Reference(PathGuard::class))
             ->setArgument('$directoryMode', $directoryMode)
@@ -465,6 +474,7 @@ final class SoFinderExtension extends Extension
             $signedUrlConfig['enabled'],
             $signedUrlConfig['default_ttl_seconds'],
             $signedUrlConfig['max_ttl_seconds'],
+            new Reference(UploadNamePolicy::class),
         ]);
         $this->controller($container, CapabilityController::class, [new Reference(CapabilityCatalog::class)]);
         $this->controller($container, ContentController::class, [
@@ -477,12 +487,14 @@ final class SoFinderExtension extends Extension
             new Reference(CsrfGuard::class),
             new Reference(ImageCapabilityProviderInterface::class),
             $config['ckeditor4']['overwrite_on_upload'],
+            new Reference(UploadNamePolicy::class),
         ]);
         $this->controller($container, ChunkUploadController::class, [
             new Reference(FileManager::class),
             new Reference(ChunkUploadStoreInterface::class),
             new Reference(CsrfGuard::class),
             new Reference(MaintenanceCoordinator::class),
+            new Reference(UploadNamePolicy::class),
         ]);
         $this->controller($container, ImageController::class, [
             new Reference(ImageManager::class),

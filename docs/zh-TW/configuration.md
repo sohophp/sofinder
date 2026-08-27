@@ -97,6 +97,9 @@ so_finder:
 
 ```yaml
 so_finder:
+  uploads:
+    naming:
+      lowercase_extensions: true
   ui:
     mode: auto
     header: true
@@ -109,7 +112,7 @@ so_finder:
     upload_conflict_strategy: ask
 ```
 
-`mode` 可設為 `auto`、`manager` 或 `picker`。啟用 `logo` 時，左側顯示 Logo 和可選品牌文字，搜尋置中，麵包屑位於檔案清單或網格上方；關閉 `logo` 時，麵包屑占用原 Logo 位置，寬螢幕搜尋框向右移動。啟用 Logo 時，設定 `header: false` 只隱藏品牌文字。`scale` 可設為 `compact`、`standard`、`large` 或 `xlarge`。`upload_conflict_strategy` 可設為 `ask`、`rename`、`overwrite` 或 `skip`；預設 `ask`，遇到同名檔案時顯示自動重新命名、覆寫與略過三種選擇，使用者也可在設定中覆蓋此預設值。瀏覽器偏好和 `uiTools=common|full` 只能改變顯示方式，不會授予伺服器能力。
+`mode` 可設為 `auto`、`manager` 或 `picker`。啟用 `logo` 時，左側顯示 Logo 和可選品牌文字，搜尋置中，麵包屑位於檔案清單或網格上方；關閉 `logo` 時，麵包屑占用原 Logo 位置，寬螢幕搜尋框向右移動。啟用 Logo 時，設定 `header: false` 只隱藏品牌文字。`scale` 可設為 `compact`、`standard`、`large` 或 `xlarge`。`upload_conflict_strategy` 可設為 `ask`、`rename`、`overwrite` 或 `skip`；預設 `ask`，遇到同名檔案時顯示自動重新命名、覆寫與略過三種選擇。`uploads.naming.lowercase_extensions` 預設為 `true`，因此 `Report.XLSX` 會上傳為 `Report.xlsx`；服務端會統一約束一般、分塊和編輯器上傳。舊的 `ui.lowercase_upload_extensions` 設定仍相容。瀏覽器偏好和 `uiTools=common|full` 只能改變顯示方式，不會授予伺服器能力。
 
 Host 可為選用功能設定不可越過的上限。關閉後，瀏覽器設定不再顯示該功能，專用 HTTP
 Endpoint 統一回傳 `feature_disabled` 404：

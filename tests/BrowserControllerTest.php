@@ -48,6 +48,7 @@ final class BrowserControllerTest extends TestCase
         self::assertFalse($config['uiDefaults']['viewSwitcher']);
         self::assertTrue($config['uiDefaults']['fullTools']);
         self::assertSame('ask', $config['uiDefaults']['uploadConflictStrategy']);
+        self::assertTrue($config['uiDefaults']['lowercaseUploadExtensions']);
     }
 
     public function testAcceptsSafeDeepLinkAndPickerHandshake(): void

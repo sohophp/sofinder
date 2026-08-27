@@ -460,9 +460,14 @@ test("keeps Quick access available when Favorites is disabled", async ({ page })
 
 test("marks and removes a stale Quick access file", async ({ page }) => {
   let paths = ["missing.txt"];
+  let staleEntryRequests = 0;
   await page.route("**/sofinder/api/metadata**", async route => {
     if (route.request().method() === "PATCH") paths = [];
     await route.fulfill({ json: { success: true, data: { favorites: [], quickAccess: paths, quickAccessEntries: paths.map(path => ({ path, name: path, directory: null, mimeType: null, exists: false })), tags: {}, recent: [] } } });
+  });
+  await page.route("**/sofinder/api/entries?**", async route => {
+    if (new URL(route.request().url()).searchParams.get("search") === "missing.txt") staleEntryRequests++;
+    await route.fallback();
   });
   await page.setContent(`<!doctype html><html lang="zh-CN"><body><main id="sofinder-root" data-config='${JSON.stringify(config)}'></main></body></html>`);
   await page.addStyleTag({ path: resolve(import.meta.dirname, "../../dist/sofinder.css") });
@@ -472,6 +477,58 @@ test("marks and removes a stale Quick access file", async ({ page }) => {
   await stale.click();
   await expect(stale).toHaveCount(0);
   await expect(page.getByRole("alert")).toContainText("该快速访问项目已不存在");
+  expect(staleEntryRequests).toBe(0);
+});
+
+test("keeps a stale Quick access item when removing its metadata fails", async ({ page }) => {
+  await page.route("**/sofinder/api/metadata**", async route => {
+    if (route.request().method() === "PATCH") {
+      await route.fulfill({ status: 503, json: { success: false, error: { code: "metadata_unavailable", message: "Metadata unavailable" } } });
+      return;
+    }
+    await route.fulfill({ json: { success: true, data: { favorites: [], quickAccess: ["missing.txt"], quickAccessEntries: [{ path: "missing.txt", name: "missing.txt", directory: false, mimeType: "text/plain", exists: false }], tags: {}, recent: [] } } });
+  });
+  await page.setContent(`<!doctype html><html lang="zh-CN"><body><main id="sofinder-root" data-config='${JSON.stringify(config)}'></main></body></html>`);
+  await page.addStyleTag({ path: resolve(import.meta.dirname, "../../dist/sofinder.css") });
+  await page.addScriptTag({ path: resolve(import.meta.dirname, "../../dist/sofinder.js"), type: "module" });
+
+  const stale = page.locator(".sf-recent-sidebar").getByRole("button", { name: /missing\.txt/ });
+  await stale.click();
+  await expect(stale).toBeVisible();
+  await expect(page.getByRole("alert")).toContainText("Metadata unavailable");
+});
+
+test("removes a Quick access folder that disappears while opening", async ({ page }) => {
+  let paths = ["123"];
+  let directoryRequests = 0;
+  await page.route("**/sofinder/api/metadata**", async route => {
+    if (route.request().method() === "PATCH") paths = [];
+    await route.fulfill({ json: { success: true, data: { favorites: [], quickAccess: paths, quickAccessEntries: paths.map(path => ({ path, name: path, directory: true, mimeType: null, exists: true })), tags: {}, recent: [] } } });
+  });
+  await page.route("**/sofinder/api/entries?**", async route => {
+    const url = new URL(route.request().url());
+    if (url.searchParams.get("path") === "" && url.searchParams.get("search") === "123") {
+      await route.fulfill({ json: { success: true, data: { entries: [{ path: "123", name: "123", directory: true, size: 0, modifiedAt: 1, mimeType: null, url: null, capabilities: { read: true } }], total: 1, path: "", offset: 0, limit: 500, nextCursor: null, sort: "name", direction: "asc", capabilities: {} } } });
+      return;
+    }
+    if (url.searchParams.get("path") === "123") {
+      directoryRequests++;
+      await route.fulfill({ status: 404, json: { success: false, error: { code: "not_found", message: "Not found" } } });
+      return;
+    }
+    await route.fallback();
+  });
+  await page.setContent(`<!doctype html><html lang="zh-CN"><body><main id="sofinder-root" data-config='${JSON.stringify(config)}'></main></body></html>`);
+  await page.addStyleTag({ path: resolve(import.meta.dirname, "../../dist/sofinder.css") });
+  await page.addScriptTag({ path: resolve(import.meta.dirname, "../../dist/sofinder.js"), type: "module" });
+
+  const shortcut = page.locator(".sf-recent-sidebar").getByRole("button", { name: /123/ });
+  await expect(shortcut).toBeVisible();
+  await shortcut.click();
+  await expect(shortcut).toHaveCount(0);
+  await expect(page.getByRole("alert")).toContainText("该快速访问项目已不存在");
+  await expect.poll(() => new URL(page.url()).searchParams.get("path")).toBeNull();
+  expect(directoryRequests).toBe(1);
 });
 
 test("configures Favorites sidebar sections and keeps the collection link below Recycle bin", async ({ page }) => {
@@ -555,6 +612,21 @@ test("saves, selects and applies named preference profiles", async ({ page }) =>
 
   await settings.getByRole("button", { name: "删除方案" }).click();
   await expect.poll(() => page.evaluate(() => JSON.parse(localStorage.getItem("sofinder.preferenceProfiles.v1") || "[]").length)).toBe(1);
+});
+
+test("keeps every settings section expanded at the largest interface scale", async ({ page }) => {
+  await page.setViewportSize({ width: 800, height: 578 });
+  await page.getByRole("button", { name: "更多操作" }).click();
+  await page.getByRole("menuitem", { name: "设置" }).click();
+  const settings = page.getByRole("dialog", { name: "设置" });
+  await settings.getByRole("radio", { name: "特大（125%）" }).check();
+  const sections = settings.locator(".sf-settings-section");
+  await expect(sections).toHaveCount(4);
+  const dimensions = await sections.evaluateAll(items => items.map(item => ({ clientHeight: item.clientHeight, scrollHeight: item.scrollHeight })));
+  for (const section of dimensions) expect(section.clientHeight).toBe(section.scrollHeight);
+  await sections.last().scrollIntoViewIfNeeded();
+  await expect(settings.getByRole("checkbox", { name: "上传全部结束后自动收起队列" })).toBeVisible();
+  await expect(settings.getByRole("button", { name: "已完成" })).toBeVisible();
 });
 
 test("keeps the more-actions menu open for internal controls and closes it with Escape", async ({ page }) => {
@@ -1203,6 +1275,26 @@ test("right-click preview opens a preview without selecting the file", async ({ 
   await expect(page.locator(".sf-file-preview-content img")).toHaveAttribute("src", /\/sofinder\/api\/images\/thumbnail\?.*path=photo\.png/);
   await expect(page.locator(".sf-file-preview-meta time")).toHaveAttribute("datetime", "1970-01-01T00:00:02.000Z");
   const preview = page.getByRole("dialog", { name: "photo.png" });
+  await preview.getByRole("button", { name: "原始大小（1:1）" }).click();
+  const original = preview.locator(".sf-image-original-canvas img");
+  await expect(original).toHaveAttribute("src", /\/sofinder\/api\/content\?.*path=photo\.png.*disposition=inline/);
+  await expect.poll(() => original.evaluate(image => ({ naturalWidth: (image as HTMLImageElement).naturalWidth, clientWidth: (image as HTMLImageElement).clientWidth }))).toEqual({ naturalWidth: 1200, clientWidth: 1200 });
+  const originalViewport = preview.locator(".sf-file-preview-content");
+  await expect.poll(() => originalViewport.evaluate(element => element.scrollWidth > element.clientWidth)).toBe(true);
+  await preview.getByRole("button", { name: "200%" }).click();
+  await expect.poll(() => original.evaluate(image => (image as HTMLImageElement).clientWidth)).toBe(2400);
+  await preview.getByRole("button", { name: "图片居中" }).click();
+  await expect.poll(() => originalViewport.evaluate(element => element.scrollLeft > 0)).toBe(true);
+  await preview.getByRole("button", { name: "50%" }).click();
+  await expect.poll(() => original.evaluate(image => (image as HTMLImageElement).clientWidth)).toBe(600);
+  await originalViewport.dispatchEvent("wheel", { deltaY: -100, ctrlKey: true });
+  await expect.poll(() => original.evaluate(image => (image as HTMLImageElement).clientWidth)).toBe(1200);
+  await originalViewport.dblclick();
+  await expect(original).toHaveAttribute("src", /\/sofinder\/api\/images\/thumbnail/);
+  await originalViewport.dblclick();
+  await expect(original).toHaveAttribute("src", /\/sofinder\/api\/content/);
+  await preview.getByRole("button", { name: "适应窗口" }).click();
+  await expect(page.locator(".sf-file-preview-content img")).toHaveAttribute("src", /\/sofinder\/api\/images\/thumbnail/);
   await preview.getByRole("button", { name: "全屏" }).click();
   await expect(preview).toHaveClass(/sf-modal-fullscreen/);
   await expect(preview.getByRole("button", { name: "退出全屏" })).toBeVisible();
@@ -1216,6 +1308,43 @@ test("right-click preview opens a preview without selecting the file", async ({ 
   await expect(preview).not.toHaveClass(/sf-modal-fullscreen/);
   await expect(preview).toBeVisible();
   await expect.poll(() => page.evaluate(() => (window as Window & { selectionEvents?: number }).selectionEvents)).toBe(0);
+});
+
+test("asks before loading a very large original image", async ({ page }) => {
+  let originalRequests = 0;
+  await page.route("**/sofinder/api/images/info**", route => route.fulfill({ json: { success: true, data: { width: 10000, height: 5000, format: "png", mimeType: "image/png", editable: true } } }));
+  await page.route("**/sofinder/api/content**", async route => {
+    originalRequests++;
+    await route.fulfill({ contentType: "image/svg+xml", body: '<svg xmlns="http://www.w3.org/2000/svg" width="10000" height="5000"/>' });
+  });
+  await page.locator(".sf-entry", { hasText: "photo.png" }).click({ button: "right" });
+  await page.getByRole("menuitem", { name: "预览" }).click();
+  const preview = page.getByRole("dialog", { name: "photo.png" });
+  const actual = preview.getByRole("button", { name: "原始大小（1:1）" });
+  await expect(actual).toBeEnabled();
+  await actual.click();
+  await expect(preview.getByRole("alertdialog")).toContainText("加载原图可能占用较多内存");
+  expect(originalRequests).toBe(0);
+  await preview.getByRole("button", { name: "加载原图" }).click();
+  await expect.poll(() => originalRequests).toBe(1);
+});
+
+test("retries a failed original image request", async ({ page }) => {
+  let originalRequests = 0;
+  await page.route("**/sofinder/api/content**", async route => {
+    originalRequests++;
+    if (originalRequests === 1) await route.fulfill({ status: 500, body: "failed" });
+    else await route.fulfill({ contentType: "image/svg+xml", body: '<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="400"/>' });
+  });
+  await page.locator(".sf-entry", { hasText: "photo.png" }).click({ button: "right" });
+  await page.getByRole("menuitem", { name: "预览" }).click();
+  const preview = page.getByRole("dialog", { name: "photo.png" });
+  await preview.getByRole("button", { name: "原始大小（1:1）" }).click();
+  await expect(preview.getByRole("alert")).toContainText("图片加载失败");
+  await preview.getByRole("button", { name: "重试" }).click();
+  await expect(preview.locator(".sf-image-original-canvas img")).toHaveAttribute("src", /retry=1/);
+  await expect.poll(() => originalRequests).toBe(2);
+  await expect(preview.getByRole("alert")).toHaveCount(0);
 });
 
 test("opens context-menu downloads in a new browsing context", async ({ page }) => {
@@ -1296,6 +1425,31 @@ test("lets each user configure the default same-name upload strategy", async ({ 
   await expect(settings.getByRole("radio", { name: "每次由我选择" })).toBeChecked();
   await settings.getByRole("radio", { name: "跳过" }).check();
   await expect.poll(() => page.evaluate(() => localStorage.getItem("sofinder.uploadConflictStrategy.v1"))).toBe("skip");
+});
+
+test("uses the host-only lowercase upload extension policy", async ({ page }) => {
+  await page.evaluate(() => localStorage.setItem("sofinder.lowercaseUploadExtensions.v1", "false"));
+  await page.setContent(`<!doctype html><html lang="zh-CN"><body><main id="sofinder-root" data-config='${JSON.stringify(config)}'></main></body></html>`);
+  await page.addStyleTag({ path: resolve(import.meta.dirname, "../../dist/sofinder.css") });
+  await page.addScriptTag({ path: resolve(import.meta.dirname, "../../dist/sofinder.js"), type: "module" });
+  await expect(page.getByText("guide.txt").first()).toBeVisible();
+  const uploadedNames: string[] = [];
+  await page.route("**/sofinder/api/uploads", async route => {
+    const body = route.request().postData() || "";
+    const match = body.match(/filename="([^"]+)"/);
+    uploadedNames.push(match?.[1] || "");
+    const name = uploadedNames.at(-1) || "unknown";
+    await route.fulfill({ status: 201, json: { success: true, data: { entry: { path: name, name, directory: false, size: 3, modifiedAt: 5, mimeType: "application/octet-stream", url: `/uploads/editor/files/${name}`, capabilities: {} } } } });
+  });
+
+  const input = page.locator('input[type="file"]:not([webkitdirectory])');
+  await input.setInputFiles({ name: "Report.XLSX", mimeType: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", buffer: Buffer.from("one") });
+  await expect.poll(() => uploadedNames.length).toBe(1);
+  expect(uploadedNames[0]).toBe("Report.xlsx");
+
+  await page.getByRole("button", { name: "更多操作" }).click();
+  await page.getByRole("menuitem", { name: "设置" }).click();
+  await expect(page.getByRole("dialog", { name: "设置" }).getByText(/扩展名.*小写/)).toHaveCount(0);
 });
 
 test("marks a same-name upload as skipped without retrying it", async ({ page }) => {

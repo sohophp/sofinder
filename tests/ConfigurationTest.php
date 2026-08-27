@@ -21,6 +21,8 @@ final class ConfigurationTest extends TestCase
         self::assertTrue($config['ui']['logo']);
         self::assertTrue($config['ui']['header']);
         self::assertSame('ask', $config['ui']['upload_conflict_strategy']);
+        self::assertNull($config['ui']['lowercase_upload_extensions']);
+        self::assertTrue($config['uploads']['naming']['lowercase_extensions']);
         self::assertFalse($config['ckeditor4']['overwrite_on_upload']);
         self::assertFalse($config['malware_scanning']['enabled']);
         self::assertSame('tcp://127.0.0.1:3310', $config['malware_scanning']['endpoint']);
@@ -57,6 +59,16 @@ final class ConfigurationTest extends TestCase
         ]]);
 
         self::assertSame('rename', $config['ui']['upload_conflict_strategy']);
+    }
+
+    public function testUploadExtensionCaseNormalizationCanBeDisabled(): void
+    {
+        $config = (new Processor())->processConfiguration(new Configuration(), [[
+            'uploads' => ['naming' => ['lowercase_extensions' => false]],
+            'resources' => ['Files' => ['root' => '/tmp/sofinder']],
+        ]]);
+
+        self::assertFalse($config['uploads']['naming']['lowercase_extensions']);
     }
 
     public function testFilesystemPermissionsAcceptQuotedOctalModes(): void

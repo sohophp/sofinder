@@ -31,6 +31,10 @@ jobs:
         working-directory: frontend
       - run: pnpm build && pnpm check:size && pnpm test:unit
         working-directory: frontend
+      - run: pnpm exec playwright install --with-deps
+        working-directory: frontend
+      - run: pnpm test:e2e
+        working-directory: frontend
       - run: vendor/bin/phpunit && vendor/bin/phpstan analyse --no-progress
       - run: git diff --exit-code -- dist
       - name: Create immutable source archive and checksum
