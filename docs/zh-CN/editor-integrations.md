@@ -1,6 +1,6 @@
 ---
 title: 主流编辑器集成
-description: 通过通用 Picker SDK 连接 CKEditor 5、TinyMCE、TipTap、Quill 和普通表单。
+description: 通过通用 Picker SDK 连接 CKEditor 5、TinyMCE、TipTap、Quill、wangEditor 和普通表单。
 ---
 
 # 主流编辑器集成
@@ -81,7 +81,7 @@ tinymce.init({
 
 直接上传请从 `sofinder-tinymce.js` 使用 `createTinyMceUploadIntegration(editor, options)`，并在 TinyMCE 的 `setup` 回调中创建。它会在图片节点生成后补齐 `alt`、宽高、`srcset` 和稳定资产 ID，而不是只保留上传 URL。
 
-## TipTap、Quill 与普通表单
+## TipTap 与 Quill
 
 TipTap 安装 Image Extension 后调用：
 
@@ -95,6 +95,35 @@ Quill 在初始化含图片按钮的 Toolbar 后调用：
 registerQuill(quill, { baseUrl: '/sofinder/browser', resource: 'Images' })
 ```
 
+## wangEditor 5
+
+外部选择按钮使用公开节点 API，本地选择、粘贴和拖入则使用
+`MENU_CONF.uploadImage.customUpload`：
+
+```js
+import { selectForWangEditor } from '/sofinder/assets/sofinder-picker.js'
+import { createWangEditorUploadIntegration } from '/sofinder/assets/sofinder-wangeditor.js'
+
+const editorConfig = {
+  MENU_CONF: {
+    uploadImage: createWangEditorUploadIntegration({
+      apiBase: '/sofinder/api', csrfToken, resource: 'Images'
+    })
+  }
+}
+
+button.addEventListener('click', () => selectForWangEditor(editor, {
+  baseUrl: '/sofinder/browser', resource: 'Images', language: 'zh-cn'
+}))
+```
+
+如果希望 wangEditor 自带的图片按钮直接打开 SoFinder，可把
+`createWangEditorPickerIntegration(options)` 配置到 `MENU_CONF.uploadImage`。
+适配器遵循 wangEditor 5 公开的 `insertNode`、`customUpload` 和
+`customBrowseAndUpload` 接口，不会把编辑器运行时打入 SoFinder。
+
+## 普通表单与 Markdown
+
 普通输入框使用 `selectForInput(input, options)`；它会写入 URL 并触发可冒泡的
 `input` 和 `change` 事件。文档使用 `kind: 'file'`，网页图片使用 `kind: 'image'`。
 
@@ -104,8 +133,8 @@ Markdown 编辑器使用 `selectForMarkdown(textarea, options)`，会在当前�
 ## 项目内本地演示
 
 启动 `examples/symfony`，用 `demo` / `demo` 登录后访问 `/integrations`。页面会用
-本地 SoFinder 后端和 Picker SDK 实际连接 CKEditor 5、TinyMCE 8、TipTap、Quill 2
-和普通表单。第三方编辑器从其文档所列 CDN 加载；部署前须检查各编辑器授权并替换
+本地 SoFinder 后端和 Picker SDK 实际连接 CKEditor 5、TinyMCE 8、TipTap、Quill 2、
+wangEditor 5 和普通表单。第三方编辑器从其文档所列 CDN 加载；部署前须检查各编辑器授权并替换
 演示 Key。
 
 目录深链接可以直接收藏：

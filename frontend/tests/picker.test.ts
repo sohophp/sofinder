@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { openPicker, pickerUrl, registerTinyMce, selectForCkeditor5, selectForInput, selectForMarkdown } from "../src/picker";
+import { createWangEditorPickerIntegration, openPicker, pickerUrl, registerTinyMce, selectForCkeditor5, selectForInput, selectForMarkdown, selectForWangEditor } from "../src/picker";
 
 afterEach(() => vi.restoreAllMocks());
 
@@ -74,5 +74,23 @@ describe("picker SDK", () => {
     const add = vi.fn();
     registerTinyMce({ PluginManager: { add } }, { baseUrl: "/sofinder/browser" });
     expect(add).toHaveBeenCalledWith("sofinder", expect.any(Function));
+  });
+
+  it("inserts a selected image through wangEditor's public node API", async () => {
+    const popup = { closed: false } as Window;
+    vi.spyOn(window, "open").mockReturnValue(popup);
+    const editor = { restoreSelection: vi.fn(), insertNode: vi.fn(), focus: vi.fn() };
+    const promise = selectForWangEditor(editor, { baseUrl: "/sofinder/browser", language: "zh-cn" });
+    const opened = new URL(String(vi.mocked(window.open).mock.calls.at(-1)?.[0]), window.location.href);
+    const entry = { resource: "Images", path: "photo.png", name: "photo.png", directory: false, size: 12, modifiedAt: 1, mimeType: "image/png", url: "/files/photo.png", width: 320, height: 180, altTranslations: { "zh-cn": "产品照片" }, capabilities: {} };
+    window.dispatchEvent(new MessageEvent("message", { source: popup, origin: window.location.origin, data: { type: "sofinder:select", version: "1.0", requestId: opened.searchParams.get("pickerRequestId"), entry } }));
+    await expect(promise).resolves.toEqual(entry);
+    expect(editor.restoreSelection).toHaveBeenCalledOnce();
+    expect(editor.insertNode).toHaveBeenCalledWith({ type: "image", src: entry.url, alt: "产品照片", href: "", children: [{ text: "" }] });
+    expect(editor.focus).toHaveBeenCalledOnce();
+  });
+
+  it("provides wangEditor's public custom picker contract", () => {
+    expect(createWangEditorPickerIntegration({ baseUrl: "/sofinder/browser" }).customBrowseAndUpload).toBeTypeOf("function");
   });
 });

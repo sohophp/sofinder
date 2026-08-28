@@ -34,8 +34,8 @@
     "file": "defineProperty-B_lfzbVN.js",
     "name": "defineProperty"
   },
-  "_editorAdapters-CWoB8jG-.js": {
-    "file": "editorAdapters-CWoB8jG-.js",
+  "_editorAdapters-C0mpkoCs.js": {
+    "file": "editorAdapters-C0mpkoCs.js",
     "name": "editorAdapters",
     "imports": [
       "_defineProperty-B_lfzbVN.js",
@@ -67,7 +67,7 @@
     "src": "src/ckeditor5.ts",
     "isEntry": true,
     "imports": [
-      "_editorAdapters-CWoB8jG-.js"
+      "_editorAdapters-C0mpkoCs.js"
     ]
   },
   "src/components/AssetMetadataDialog.tsx": {
@@ -293,7 +293,7 @@
     "src": "src/editors.ts",
     "isEntry": true,
     "imports": [
-      "_editorAdapters-CWoB8jG-.js"
+      "_editorAdapters-C0mpkoCs.js"
     ]
   },
   "src/locales/en.ts": {
@@ -366,7 +366,7 @@
     "src": "src/quill.ts",
     "isEntry": true,
     "imports": [
-      "_editorAdapters-CWoB8jG-.js"
+      "_editorAdapters-C0mpkoCs.js"
     ]
   },
   "src/sdk.ts": {
@@ -384,7 +384,7 @@
     "src": "src/tinymce.ts",
     "isEntry": true,
     "imports": [
-      "_editorAdapters-CWoB8jG-.js"
+      "_editorAdapters-C0mpkoCs.js"
     ]
   },
   "src/tiptap.ts": {
@@ -393,7 +393,16 @@
     "src": "src/tiptap.ts",
     "isEntry": true,
     "imports": [
-      "_editorAdapters-CWoB8jG-.js"
+      "_editorAdapters-C0mpkoCs.js"
+    ]
+  },
+  "src/wangeditor.ts": {
+    "file": "sofinder-wangeditor.js",
+    "name": "sofinder-wangeditor",
+    "src": "src/wangeditor.ts",
+    "isEntry": true,
+    "imports": [
+      "_editorAdapters-C0mpkoCs.js"
     ]
   },
   "style.css": {

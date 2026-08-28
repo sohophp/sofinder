@@ -5,7 +5,7 @@ description: 各 SoFinder 預發布版本的相容性、設定與 adapter 升級
 
 # 升級 SoFinder
 
-## 從 0.1.0-beta.26 升級至 0.1.0-beta.29
+## 從 0.1.0-beta.26 升級至 0.1.0-beta.30
 
 請完整部署重新建置的 `dist/`，不需移轉儲存檔案。收藏現在僅接受檔案，快速存取改為僅接受
 資料夾的「已固定資料夾」。已知的舊檔案快速項目不再顯示，但仍可透過 Metadata API 移除；
@@ -15,6 +15,9 @@ description: 各 SoFinder 預發布版本的相容性、設定與 adapter 升級
 經過 SHA-256 驗證後快取到 `cache_dir/fonts`。此功能預設啟用；禁止正式環境存取外網時，請
 設定 `image_processing.watermark_font_auto_download: false`。僅加浮水印時使用 100 品質輸出。
 側欄版面偏好只儲存在瀏覽器中，不需後端移轉。
+
+Beta.30 新增 `sofinder-wangeditor.js` 選擇與上傳橋接，不涉及後端或儲存資料變更。請完整部署
+重新建置的 `dist/`，確保新入口與帶 Hash 的共用 Adapter Chunk 保持同步。
 
 ## 從 0.1.0-beta.25 升級至 0.1.0-beta.26
 

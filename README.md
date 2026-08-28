@@ -29,7 +29,7 @@ and drop, per-file/chunked upload progress, cancellation, explicit conflict
 replacement, cached thumbnails, EXIF-aware image rotation and proportional
 resize, Canvas-based cropping, derived-image presets, bounded ZIP downloads,
 responsive layout, English, Simplified Chinese, Traditional Chinese, CKEditor 4
-browse/upload adapters, and a popup SDK for CKEditor 5, TinyMCE, TipTap, Quill
+browse/upload adapters, and a popup SDK for CKEditor 5, TinyMCE, TipTap, Quill, wangEditor
 and ordinary form fields. Folder upload, deterministic batch rename, bounded
 text preview and SHA-256 checksums are available in the standalone manager.
 

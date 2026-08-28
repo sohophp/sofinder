@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
-import { attributesFor, ckeditorUploadResult, createCkeditor5UploadPlugin, imageHtml, resourceForUpload } from "../src/editorAdapters";
+import { attributesFor, ckeditorUploadResult, createCkeditor5UploadPlugin, createWangEditorUploadIntegration, imageHtml, resourceForUpload } from "../src/editorAdapters";
 import { altForAsset, attributesForAsset, imageHtmlForAsset } from "../src/assetPresentation";
 import type { AssetReference } from "../src/types";
 
@@ -47,5 +47,10 @@ describe("editor adapters", () => {
     expect(resourceForUpload(new File(["x"], "photo.bin", { type: "image/png" }), options)).toBe("Images");
     expect(resourceForUpload(new File(["x"], "manual.PDF"), options)).toBe("Documents");
     expect(resourceForUpload(new File(["x"], "archive.zip"), options)).toBe("Files");
+  });
+
+  it("provides wangEditor 5's public custom upload contract", () => {
+    const integration = createWangEditorUploadIntegration({ apiBase: "/api", csrfToken: "token", resource: "Images" });
+    expect(integration.customUpload).toBeTypeOf("function");
   });
 });

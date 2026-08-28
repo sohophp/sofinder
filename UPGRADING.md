@@ -1,6 +1,6 @@
 # Upgrading SoFinder
 
-## From 0.1.0-beta.26 to 0.1.0-beta.29
+## From 0.1.0-beta.26 to 0.1.0-beta.30
 
 Deploy the complete rebuilt `dist/` directory. Stored files require no
 migration. Favorites now accepts files only, while Quick access is presented as
@@ -14,6 +14,10 @@ supported system font exists. This is enabled by default; set
 `image_processing.watermark_font_auto_download: false` where production network
 egress is prohibited. Watermark-only output now uses quality 100. Sidebar layout
 preferences are browser-local and need no backend migration.
+
+Beta.30 adds the `sofinder-wangeditor.js` picker/upload bridge without backend
+or stored-data changes. Deploy the complete rebuilt `dist/` directory so the
+new entry and its hashed shared adapter chunk remain in sync.
 
 ## From 0.1.0-beta.25 to 0.1.0-beta.26
 

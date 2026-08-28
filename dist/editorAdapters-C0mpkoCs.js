@@ -151,7 +151,12 @@ var r = (e, t) => {
 	return e.root.addEventListener("paste", r), e.root.addEventListener("drop", i), () => {
 		e.root.removeEventListener("paste", r), e.root.removeEventListener("drop", i);
 	};
-}, C = (e, t) => {
+}, C = async (e, t, n, r = "input") => {
+	let i = f(await u(e, n, r).completion);
+	return t(i.url, d(i, n), ""), i;
+}, w = (e) => ({ async customUpload(t, n) {
+	await C(t, n, e);
+} }), T = (e, t) => {
 	let n = async (n, r) => {
 		let i = f(await u(n, t, r).completion), a = `![${d(i, t).replace(/([\\\[\]])/g, "\\$1")}](<${i.url.replace(/</g, "%3C").replace(/>/g, "%3E")}>)`;
 		e.setRangeText(a, e.selectionStart, e.selectionEnd, "end"), e.dispatchEvent(new Event("input", { bubbles: !0 }));
@@ -165,7 +170,7 @@ var r = (e, t) => {
 	return e.addEventListener("paste", r), e.addEventListener("drop", i), () => {
 		e.removeEventListener("paste", r), e.removeEventListener("drop", i);
 	};
-}, w = (e, t, n, r = "url") => {
+}, E = (e, t, n, r = "url") => {
 	let i = async () => {
 		let i = e.files?.[0];
 		if (!i) return;
@@ -175,4 +180,4 @@ var r = (e, t) => {
 	return e.addEventListener("change", i), () => e.removeEventListener("change", i);
 };
 //#endregion
-export { y as a, x as c, b as d, _ as i, v as l, w as n, m as o, C as r, S as s, p as t, u };
+export { y as a, S as c, u as d, b as f, _ as i, x as l, E as n, w as o, C as p, T as r, m as s, p as t, v as u };

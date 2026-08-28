@@ -118,6 +118,13 @@ export declare const installQuillUploads: (quill: {
         dangerouslyPasteHTML(index: number, html: string, source: string): void;
     };
 }, options: EditorAdapterOptions) => (() => void);
+export type WangEditorInsertImage = (url: string, alt: string, href: string) => void;
+/** Upload an image through SoFinder and insert it through wangEditor's public upload callback. */
+export declare const uploadForWangEditor: (file: File, insert: WangEditorInsertImage, options: EditorAdapterOptions, source?: "input" | "paste" | "drop") => Promise<AssetReference>;
+/** Create the `MENU_CONF.uploadImage` bridge expected by wangEditor 5. */
+export declare const createWangEditorUploadIntegration: (options: EditorAdapterOptions) => {
+    customUpload(file: File, insert: WangEditorInsertImage): Promise<void>;
+};
 export declare const bindMarkdownUploads: (input: HTMLTextAreaElement, options: EditorAdapterOptions) => (() => void);
 export declare const bindAssetInput: (fileInput: HTMLInputElement, output: HTMLInputElement | HTMLTextAreaElement, options: EditorAdapterOptions, outputMode?: "url" | "json") => (() => void);
 export {};

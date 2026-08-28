@@ -153,3 +153,14 @@ No new package-identity conflict was introduced, so beta.28 retains the name.
 - The beta.27 identity checks above remain current.
 
 No new package-identity conflict was introduced, so beta.29 retains the name.
+
+## 2026-08-28 beta.30 engineering delta check
+
+- This release adds an integration for the separately named third-party
+  wangEditor project and does not change SoFinder's project name, package
+  identities, positioning or visual branding.
+- The beta.27 SoFinder identity checks remain current. Third-party names are
+  used only to describe compatibility and remain attributed in the integration
+  documentation and notices.
+
+No new package-identity conflict was introduced, so beta.30 retains the name.

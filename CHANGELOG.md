@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+## 0.1.0-beta.30 - 2026-08-28
+
+- Add wangEditor 5 picker and upload adapters, declarations, bundle-size checks,
+  integration tests, documentation and a runnable Symfony demo pane.
+
 ## 0.1.0-beta.29 - 2026-08-28
 
 - Route desktop watermark dragging through mouse events while retaining pointer

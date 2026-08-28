@@ -16,6 +16,7 @@
     "src/ckeditor5.ts",
     "src/tinymce.ts",
     "src/tiptap.ts",
-    "src/quill.ts"
+    "src/quill.ts",
+    "src/wangeditor.ts"
   ]
 }

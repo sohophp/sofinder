@@ -19,12 +19,12 @@ Use `composer-6.4.json` for Symfony 6.4. Browse `/sofinder/browser` and sign in
 with `demo` / `demo`. These credentials and the plaintext hasher are for this
 local example only.
 
-Open `/integrations` for a live CKEditor 5, TinyMCE 8, TipTap, Quill 2 and plain
+Open `/integrations` for a live CKEditor 5, TinyMCE 8, TipTap, Quill 2, wangEditor 5 and plain
 form integration matrix. The editors load from their official/documented CDN
 endpoints, while `sofinder-picker.js` and SoFinder itself are served from this
 checkout. The page therefore tests the actual local PHP routes and compiled SDK;
 internet access is needed only for the third-party editor runtimes. The demo
-pins CKEditor 5 Classic, TinyMCE 8 GPL, TipTap and Quill CDN versions and needs
+pins CKEditor 5 Classic, TinyMCE 8 GPL, TipTap, Quill and wangEditor CDN versions and needs
 no cloud API key; review each editor's license and self-host or update the pinned
 versions before using them in an application.
 

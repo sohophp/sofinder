@@ -198,6 +198,24 @@ export const registerQuill = (quill: { getModule(name: "toolbar"): { addHandler(
   });
 };
 
+export type WangEditorInsertImage = (url: string, alt: string, href: string) => void;
+
+/** Select an image and insert it through wangEditor 5's public node API. */
+export const selectForWangEditor = async (editor: { restoreSelection?(): void; insertNode(node: Record<string, unknown>): void; focus?(): void }, options: EditorPickerOptions): Promise<PickerEntry> => {
+  const entry = await openPicker({ ...options, kind: "image" });
+  editor.restoreSelection?.();
+  editor.insertNode({ type: "image", src: entry.url, alt: pickerAlt(entry, options), href: "", children: [{ text: "" }] });
+  editor.focus?.();
+  return entry;
+};
+
+/** Create the `MENU_CONF.uploadImage` picker hook expected by wangEditor 5. */
+export const createWangEditorPickerIntegration = (options: EditorPickerOptions): { customBrowseAndUpload(insert: WangEditorInsertImage): void } => ({
+  customBrowseAndUpload(insert) {
+    void openPicker({ ...options, kind: "image" }).then(entry => insert(entry.url, pickerAlt(entry, options), ""));
+  },
+});
+
 /** Bind a picker result to a plain URL input and emit normal input/change events. */
 export const selectForInput = async (input: HTMLInputElement, options: PickerOptions): Promise<PickerEntry> => {
   const entry = await openPicker(options);

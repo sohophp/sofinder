@@ -86,11 +86,28 @@ var e = "1.0", t = () => typeof crypto < "u" && typeof crypto.randomUUID == "fun
 		});
 	});
 }, m = async (e, t) => {
+	let n = await r({
+		...t,
+		kind: "image"
+	});
+	return e.restoreSelection?.(), e.insertNode({
+		type: "image",
+		src: n.url,
+		alt: a(n, t),
+		href: "",
+		children: [{ text: "" }]
+	}), e.focus?.(), n;
+}, h = (e) => ({ customBrowseAndUpload(t) {
+	r({
+		...e,
+		kind: "image"
+	}).then((n) => t(n.url, a(n, e), ""));
+} }), g = async (e, t) => {
 	let n = await r(t);
 	return e.value = n.url, e.dispatchEvent(new Event("input", { bubbles: !0 })), e.dispatchEvent(new Event("change", { bubbles: !0 })), n;
-}, h = async (e, t) => {
+}, _ = async (e, t) => {
 	let n = await r(t), i = t.kind === "image" || n.mimeType?.startsWith("image/") === !0, o = (i ? a(n, t) : n.name).replace(/([\\\[\]])/g, "\\$1"), s = n.url.replace(/</g, "%3C").replace(/>/g, "%3E"), c = `${i ? "!" : ""}[${o}](<${s}>)`, l = e.selectionStart ?? e.value.length, u = e.selectionEnd ?? l;
 	return e.setRangeText(c, l, u, "end"), e.dispatchEvent(new Event("input", { bubbles: !0 })), e.dispatchEvent(new Event("change", { bubbles: !0 })), e.focus(), n;
 };
 //#endregion
-export { e as PICKER_PROTOCOL_VERSION, r as openPicker, n as pickerUrl, p as registerQuill, d as registerTinyMce, u as replaceSelectedForCkeditor5, l as selectForCkeditor5, m as selectForInput, h as selectForMarkdown, f as selectForTiptap };
+export { e as PICKER_PROTOCOL_VERSION, h as createWangEditorPickerIntegration, r as openPicker, n as pickerUrl, p as registerQuill, d as registerTinyMce, u as replaceSelectedForCkeditor5, l as selectForCkeditor5, g as selectForInput, _ as selectForMarkdown, f as selectForTiptap, m as selectForWangEditor };

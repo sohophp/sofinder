@@ -101,6 +101,17 @@ export declare const registerQuill: (quill: {
         dangerouslyPasteHTML(index: number, html: string, source: string): void;
     };
 }, options: EditorPickerOptions) => void;
+export type WangEditorInsertImage = (url: string, alt: string, href: string) => void;
+/** Select an image and insert it through wangEditor 5's public node API. */
+export declare const selectForWangEditor: (editor: {
+    restoreSelection?(): void;
+    insertNode(node: Record<string, unknown>): void;
+    focus?(): void;
+}, options: EditorPickerOptions) => Promise<PickerEntry>;
+/** Create the `MENU_CONF.uploadImage` picker hook expected by wangEditor 5. */
+export declare const createWangEditorPickerIntegration: (options: EditorPickerOptions) => {
+    customBrowseAndUpload(insert: WangEditorInsertImage): void;
+};
 /** Bind a picker result to a plain URL input and emit normal input/change events. */
 export declare const selectForInput: (input: HTMLInputElement, options: PickerOptions) => Promise<PickerEntry>;
 /** Insert a Markdown image or link at the current textarea selection. */

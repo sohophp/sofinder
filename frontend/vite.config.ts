@@ -25,6 +25,7 @@ export default defineConfig({
         "sofinder-tinymce": resolve(currentDirectory, "src/tinymce.ts"),
         "sofinder-tiptap": resolve(currentDirectory, "src/tiptap.ts"),
         "sofinder-quill": resolve(currentDirectory, "src/quill.ts"),
+        "sofinder-wangeditor": resolve(currentDirectory, "src/wangeditor.ts"),
       },
       formats: ["es"],
       fileName: (_format, entryName) => `${entryName}.js`,

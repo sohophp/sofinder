@@ -1,2 +1,2 @@
-import { a as e, l as t } from "./editorAdapters-CWoB8jG-.js";
+import { a as e, u as t } from "./editorAdapters-C0mpkoCs.js";
 export { e as createTinyMceUploadIntegration, t as tinyMceImagesUploadHandler };

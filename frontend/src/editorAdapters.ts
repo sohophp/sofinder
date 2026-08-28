@@ -188,6 +188,22 @@ export const installQuillUploads = (quill: {
   return () => { quill.root.removeEventListener("paste", paste); quill.root.removeEventListener("drop", drop); };
 };
 
+export type WangEditorInsertImage = (url: string, alt: string, href: string) => void;
+
+/** Upload an image through SoFinder and insert it through wangEditor's public upload callback. */
+export const uploadForWangEditor = async (file: File, insert: WangEditorInsertImage, options: EditorAdapterOptions, source: "input" | "paste" | "drop" = "input"): Promise<AssetReference> => {
+  const asset = embeddable(await uploadForEditor(file, options, source).completion);
+  insert(asset.url, altFor(asset, options), "");
+  return asset;
+};
+
+/** Create the `MENU_CONF.uploadImage` bridge expected by wangEditor 5. */
+export const createWangEditorUploadIntegration = (options: EditorAdapterOptions): { customUpload(file: File, insert: WangEditorInsertImage): Promise<void> } => ({
+  async customUpload(file, insert) {
+    await uploadForWangEditor(file, insert, options);
+  },
+});
+
 export const bindMarkdownUploads = (input: HTMLTextAreaElement, options: EditorAdapterOptions): (() => void) => {
   const insert = async (file: File, source: "paste" | "drop") => {
     const asset = embeddable(await uploadForEditor(file, options, source).completion);
