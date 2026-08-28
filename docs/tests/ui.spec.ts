@@ -35,6 +35,11 @@ test('desktop home keeps its primary hierarchy', async ({ page }) => {
   await expect.poll(() => page.locator('.VPHome .sf-code-panel pre').evaluateAll((panels) =>
     panels.every((panel) => panel.scrollWidth <= panel.clientWidth && panel.scrollHeight <= panel.clientHeight),
   )).toBe(true)
+  const menu = await page.locator('.VPNavBarMenu').boundingBox()
+  const search = await page.locator('.VPNavBarSearch').boundingBox()
+  expect(menu).not.toBeNull()
+  expect(search).not.toBeNull()
+  expect(menu!.x + menu!.width).toBeLessThanOrEqual(search!.x)
   await expect(page).toHaveScreenshot('home-desktop.png')
 })
 
@@ -47,6 +52,36 @@ test('desktop documentation keeps the three-column layout', async ({ page }) => 
   await expect(page.getByRole('heading', { name: 'Installation and quick start' })).toBeVisible()
   await expect(page.locator('.sf-doc-feedback')).toBeVisible()
   await expect(page).toHaveScreenshot('documentation-desktop.png')
+
+  await page.locator('.sf-site-footer').scrollIntoViewIfNeeded()
+  await expect.poll(() => page.evaluate(() => {
+    const footer = document.querySelector<HTMLElement>('.sf-site-footer')
+    if (!footer) return false
+    const rect = footer.getBoundingClientRect()
+    const y = Math.max(1, Math.min(window.innerHeight - 1, rect.top + 20))
+    return [8, window.innerWidth - 8].every((x) =>
+      document.elementFromPoint(x, y)?.closest('.sf-site-footer') === footer,
+    )
+  })).toBe(true)
+})
+
+test('compact footer is not covered by the fixed documentation rails', async ({ page }) => {
+  await page.setViewportSize({ width: 1024, height: 768 })
+  await openAndAudit(page, '/getting-started')
+
+  await page.locator('.sf-site-footer').scrollIntoViewIfNeeded()
+  const footer = page.locator('.sf-site-footer')
+  await expect(footer).toBeVisible()
+  await expect.poll(() => footer.evaluate((element) => element.getBoundingClientRect().height)).toBeLessThan(360)
+  await expect.poll(() => page.evaluate(() => {
+    const element = document.querySelector<HTMLElement>('.sf-site-footer')
+    if (!element) return false
+    const rect = element.getBoundingClientRect()
+    const y = Math.max(1, Math.min(window.innerHeight - 1, rect.top + 20))
+    return [8, window.innerWidth - 8].every((x) =>
+      document.elementFromPoint(x, y)?.closest('.sf-site-footer') === element,
+    )
+  })).toBe(true)
 })
 
 test('mobile dark home remains localized and overflow-free', async ({ page }) => {
