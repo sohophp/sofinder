@@ -145,3 +145,11 @@ engineering rechecks remain unchanged.
   release.
 
 No new package-identity conflict was introduced, so beta.28 retains the name.
+
+## 2026-08-28 beta.29 engineering delta check
+
+- This same-day corrective release separates mouse and pointer input handling
+  for watermark placement and does not change any project or package identity.
+- The beta.27 identity checks above remain current.
+
+No new package-identity conflict was introduced, so beta.29 retains the name.

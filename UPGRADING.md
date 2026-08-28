@@ -1,6 +1,6 @@
 # Upgrading SoFinder
 
-## From 0.1.0-beta.26 to 0.1.0-beta.28
+## From 0.1.0-beta.26 to 0.1.0-beta.29
 
 Deploy the complete rebuilt `dist/` directory. Stored files require no
 migration. Favorites now accepts files only, while Quick access is presented as

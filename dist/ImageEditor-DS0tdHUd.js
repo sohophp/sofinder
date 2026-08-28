@@ -1266,11 +1266,11 @@ function ee({ entry: e, info: t, imageUrl: n, resource: r, watermarkUrl: s, pres
 		K(Math.round(Math.max(0, Math.min(100, t.x + (e.clientX - t.clientX) * 100 / i)))), J(Math.round(Math.max(0, Math.min(100, t.y + (e.clientY - t.clientY) * 100 / a)))), G("custom");
 	};
 	(0, c.useEffect)(() => {
-		let e = (e) => xt(e), t = () => {
+		let e = (e) => xt(e), t = (e) => xt(e), n = () => {
 			N.current = null;
 		};
-		return window.addEventListener("pointermove", e), window.addEventListener("pointerup", t), window.addEventListener("pointercancel", t), () => {
-			window.removeEventListener("pointermove", e), window.removeEventListener("pointerup", t), window.removeEventListener("pointercancel", t);
+		return window.addEventListener("pointermove", e), window.addEventListener("pointerup", n), window.addEventListener("pointercancel", n), window.addEventListener("mousemove", t), window.addEventListener("mouseup", n), () => {
+			window.removeEventListener("pointermove", e), window.removeEventListener("pointerup", n), window.removeEventListener("pointercancel", n), window.removeEventListener("mousemove", t), window.removeEventListener("mouseup", n);
 		};
 	}, []), (0, c.useEffect)(() => {
 		if (!E.current) return;
@@ -1551,23 +1551,25 @@ function ee({ entry: e, info: t, imageUrl: n, resource: r, watermarkUrl: s, pres
 									e.preventDefault(), e.stopPropagation(), G("custom");
 								},
 								onPointerDown: (e) => {
-									F === "watermark" && (e.currentTarget.setPointerCapture(e.pointerId), N.current = {
+									F === "watermark" && e.pointerType !== "mouse" && (N.current = {
 										clientX: e.clientX,
 										clientY: e.clientY,
 										x: Mt,
 										y: Nt
 									});
 								},
-								onPointerMove: xt,
-								onPointerUp: (e) => {
-									e.currentTarget.hasPointerCapture(e.pointerId) && e.currentTarget.releasePointerCapture(e.pointerId), N.current = null;
-								},
-								onPointerCancel: () => {
-									N.current = null;
+								onMouseDown: (e) => {
+									F === "watermark" && (e.preventDefault(), N.current = {
+										clientX: e.clientX,
+										clientY: e.clientY,
+										x: Mt,
+										y: Nt
+									});
 								},
 								children: B === "text" ? V : Pt && /* @__PURE__ */ (0, p.jsx)("img", {
 									src: Pt,
 									alt: "",
+									draggable: !1,
 									onLoad: (e) => X({
 										width: e.currentTarget.naturalWidth,
 										height: e.currentTarget.naturalHeight
