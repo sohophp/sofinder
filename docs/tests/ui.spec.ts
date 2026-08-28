@@ -76,6 +76,18 @@ test('mobile documentation uses the native drawer and page outline', async ({ pa
   await expect(page).toHaveScreenshot('documentation-mobile-dark.png', { maxDiffPixelRatio: 0.025 })
 })
 
+test('Simplified Chinese navigation keeps localized routes', async ({ page }) => {
+  await page.setViewportSize({ width: 1440, height: 1000 })
+  await openAndAudit(page, '/zh-CN/getting-started')
+
+  await expect(page.locator('.VPNavBarMenuLink').first()).toHaveText('文档')
+  await expect(page.locator('.VPSidebar')).toContainText('安装与快速开始')
+
+  const hrefs = await page.locator('.VPNavBarMenuLink, .VPSidebar .VPLink, .VPDocFooter .pager-link')
+    .evaluateAll((links) => links.map((link) => link.getAttribute('href')).filter(Boolean))
+  expect(hrefs.every((href) => href.startsWith('/zh-CN/') || /^https:\/\//.test(href))).toBe(true)
+})
+
 test('local search exposes page and section results', async ({ page }) => {
   await page.setViewportSize({ width: 1280, height: 900 })
   await page.goto('/', { waitUntil: 'networkidle' })

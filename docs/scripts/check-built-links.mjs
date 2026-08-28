@@ -26,8 +26,14 @@ const resolveTarget = (pathname) => {
 }
 
 for (const sourcePath of htmlFiles) {
-  if (relative(distRoot, sourcePath) === '404.html') continue
+  const sourceRelative = relative(distRoot, sourcePath).replace(/\\/g, '/')
+  if (sourceRelative === '404.html') continue
   const html = readFileSync(sourcePath, 'utf8')
+  const localeMatch = /^(zh-TW|zh-CN)\/(.*\.html)$/.exec(sourceRelative)
+  const sourceLocale = localeMatch?.[1]
+  const englishEquivalent = localeMatch
+    ? `/${localeMatch[2].replace(/(?:^|\/)index\.html$/, '').replace(/\.html$/, '')}`
+    : null
 
   for (const match of html.matchAll(/href="([^"]+)"/g)) {
     const href = match[1].replaceAll('&amp;', '&')
@@ -42,7 +48,17 @@ for (const sourcePath of htmlFiles) {
     }
     if (url.origin !== siteOrigin) continue
 
-    const targetPath = url.pathname === relative(distRoot, sourcePath).replace(/\\/g, '/').replace(/index\.html$/, '')
+    // A locale switch may point to the same page in English. Other links from
+    // localized chrome/content must retain the active locale whenever that
+    // localized target exists.
+    if (sourceLocale && url.pathname !== englishEquivalent) {
+      const localizedTarget = resolveTarget(`/${sourceLocale}${url.pathname}`)
+      if (localizedTarget) {
+        errors.push(`${sourceRelative}: locale link ${href} must point to /${sourceLocale}${url.pathname}`)
+      }
+    }
+
+    const targetPath = url.pathname === sourceRelative.replace(/index\.html$/, '')
       ? sourcePath
       : resolveTarget(url.pathname)
     if (!targetPath) {

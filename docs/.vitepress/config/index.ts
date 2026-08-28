@@ -227,6 +227,60 @@ const simplifiedChineseSidebar = [
   },
 ]
 
+const traditionalChineseTheme = {
+  nav: [
+    { text: '文件', link: '/zh-TW/getting-started', activeMatch: '^/zh-TW/(getting-started|configuration|symfony|storage-adapters|s3|security|production|maintenance)' },
+    { text: '指南', link: '/zh-TW/user-guide', activeMatch: '^/zh-TW/(user-guide|image-guide|image-formats|document-preview|editor-integrations|ckeditor4)' },
+    { text: 'API', link: '/zh-TW/api-reference', activeMatch: '^/zh-TW/(api-reference|http-api|php-contracts|plugins|developer-guide|console-commands)' },
+    { text: 'GitHub', link: repository },
+  ],
+  sidebar: traditionalChineseSidebar,
+  darkModeSwitchLabel: '外觀',
+  lightModeSwitchTitle: '切換為淺色主題',
+  darkModeSwitchTitle: '切換為深色主題',
+  sidebarMenuLabel: '選單',
+  returnToTopLabel: '回到頂端',
+  langMenuLabel: '切換語言',
+  skipToContentLabel: '跳至內容',
+  editLink: {
+    pattern: `${repository}/edit/main/docs/:path`,
+    text: '在 GitHub 編輯此頁',
+  },
+  lastUpdated: { text: '最後更新' },
+  outline: { level: [2, 3], label: '本頁內容' },
+  footer: {
+    message: '依 MIT 授權條款發布。',
+    copyright: 'Copyright © SohoPHP contributors',
+  },
+}
+
+const simplifiedChineseTheme = {
+  nav: [
+    { text: '文档', link: '/zh-CN/getting-started', activeMatch: '^/zh-CN/(getting-started|configuration|symfony|storage-adapters|s3|security|production|maintenance)' },
+    { text: '指南', link: '/zh-CN/user-guide', activeMatch: '^/zh-CN/(user-guide|image-guide|image-formats|document-preview|editor-integrations|ckeditor4)' },
+    { text: 'API', link: '/zh-CN/api-reference', activeMatch: '^/zh-CN/(api-reference|http-api|php-contracts|plugins|developer-guide|console-commands)' },
+    { text: 'GitHub', link: repository },
+  ],
+  sidebar: simplifiedChineseSidebar,
+  darkModeSwitchLabel: '外观',
+  lightModeSwitchTitle: '切换为浅色主题',
+  darkModeSwitchTitle: '切换为深色主题',
+  sidebarMenuLabel: '菜单',
+  returnToTopLabel: '返回顶部',
+  langMenuLabel: '切换语言',
+  skipToContentLabel: '跳到内容',
+  editLink: {
+    pattern: `${repository}/edit/main/docs/:path`,
+    text: '在 GitHub 编辑此页',
+  },
+  lastUpdated: { text: '最后更新' },
+  outline: { level: [2, 3], label: '本页内容' },
+  footer: {
+    message: '依据 MIT 许可证发布。',
+    copyright: 'Copyright © SohoPHP contributors',
+  },
+}
+
 export default defineConfig({
   title: 'SoFinder',
   description: 'A secure, framework-friendly web file manager for PHP and Symfony applications.',
@@ -288,6 +342,7 @@ export default defineConfig({
       link: '/zh-TW/',
       title: 'SoFinder',
       description: '適用於 PHP 與 Symfony 應用程式的安全 Web 檔案管理器。',
+      themeConfig: traditionalChineseTheme,
     },
     'zh-CN': {
       label: '简体中文',
@@ -295,6 +350,7 @@ export default defineConfig({
       link: '/zh-CN/',
       title: 'SoFinder',
       description: '适用于 PHP 与 Symfony 应用程序的安全 Web 文件管理器。',
+      themeConfig: simplifiedChineseTheme,
     },
   },
   themeConfig: {
@@ -375,60 +431,6 @@ export default defineConfig({
     footer: {
       message: 'Released under the MIT License.',
       copyright: 'Copyright © SohoPHP contributors',
-    },
-    locales: {
-      'zh-TW': {
-        nav: [
-          { text: '文件', link: '/zh-TW/getting-started', activeMatch: '^/zh-TW/(getting-started|configuration|symfony|storage-adapters|s3|security|production|maintenance)' },
-          { text: '指南', link: '/zh-TW/user-guide', activeMatch: '^/zh-TW/(user-guide|image-guide|image-formats|document-preview|editor-integrations|ckeditor4)' },
-          { text: 'API', link: '/zh-TW/api-reference', activeMatch: '^/zh-TW/(api-reference|http-api|php-contracts|plugins|developer-guide|console-commands)' },
-          { text: 'GitHub', link: repository },
-        ],
-        sidebar: traditionalChineseSidebar,
-        darkModeSwitchLabel: '外觀',
-        lightModeSwitchTitle: '切換為淺色主題',
-        darkModeSwitchTitle: '切換為深色主題',
-        sidebarMenuLabel: '選單',
-        returnToTopLabel: '回到頂端',
-        langMenuLabel: '切換語言',
-        skipToContentLabel: '跳至內容',
-        editLink: {
-          pattern: `${repository}/edit/main/docs/:path`,
-          text: '在 GitHub 編輯此頁',
-        },
-        lastUpdated: { text: '最後更新' },
-        outline: { level: [2, 3], label: '本頁內容' },
-        footer: {
-          message: '依 MIT 授權條款發布。',
-          copyright: 'Copyright © SohoPHP contributors',
-        },
-      },
-      'zh-CN': {
-        nav: [
-          { text: '文档', link: '/zh-CN/getting-started', activeMatch: '^/zh-CN/(getting-started|configuration|symfony|storage-adapters|s3|security|production|maintenance)' },
-          { text: '指南', link: '/zh-CN/user-guide', activeMatch: '^/zh-CN/(user-guide|image-guide|image-formats|document-preview|editor-integrations|ckeditor4)' },
-          { text: 'API', link: '/zh-CN/api-reference', activeMatch: '^/zh-CN/(api-reference|http-api|php-contracts|plugins|developer-guide|console-commands)' },
-          { text: 'GitHub', link: repository },
-        ],
-        sidebar: simplifiedChineseSidebar,
-        darkModeSwitchLabel: '外观',
-        lightModeSwitchTitle: '切换为浅色主题',
-        darkModeSwitchTitle: '切换为深色主题',
-        sidebarMenuLabel: '菜单',
-        returnToTopLabel: '返回顶部',
-        langMenuLabel: '切换语言',
-        skipToContentLabel: '跳到内容',
-        editLink: {
-          pattern: `${repository}/edit/main/docs/:path`,
-          text: '在 GitHub 编辑此页',
-        },
-        lastUpdated: { text: '最后更新' },
-        outline: { level: [2, 3], label: '本页内容' },
-        footer: {
-          message: '依据 MIT 许可证发布。',
-          copyright: 'Copyright © SohoPHP contributors',
-        },
-      },
     },
   },
 })
