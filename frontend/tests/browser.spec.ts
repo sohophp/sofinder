@@ -410,6 +410,25 @@ test("closes the more-actions menu after clicking the main area", async ({ page 
   await expect(trigger).toHaveAttribute("aria-expanded", "false");
 });
 
+test("shows the selection menu outside the scrollable toolbar", async ({ page }) => {
+  await page.setViewportSize({ width: 720, height: 600 });
+  const trigger = page.getByRole("button", { name: "选择", exact: true });
+  await trigger.click();
+
+  const menu = page.getByRole("menu");
+  await expect(menu).toBeVisible();
+  await expect(trigger).toHaveAttribute("aria-expanded", "true");
+  const toolbarBox = await page.locator(".sf-toolbar").boundingBox();
+  const menuBox = await menu.boundingBox();
+  expect(toolbarBox).not.toBeNull();
+  expect(menuBox).not.toBeNull();
+  expect(menuBox!.y).toBeGreaterThanOrEqual(toolbarBox!.y + toolbarBox!.height);
+
+  await page.getByRole("menuitem", { name: "全部选择" }).click();
+  await expect(page.locator(".sf-entry[aria-selected=true]")).toHaveCount(4);
+  await expect(menu).toHaveCount(0);
+});
+
 test("supports favorites, bounded quick access, grouped selection and type filtering", async ({ page }) => {
   let metadata = { favorites: ["guide.txt"], quickAccess: [] as string[], tags: { "guide.txt": ["Docs"] }, recent: [] as Array<{ path: string; touchedAt: number }> };
   await page.route("**/sofinder/api/metadata**", async route => {

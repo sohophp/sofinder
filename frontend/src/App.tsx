@@ -1,4 +1,5 @@
 import { lazy, Suspense, useCallback, useEffect, useId, useMemo, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import { Api, ApiError } from "./api";
 import { loadMessages, translator, type Language, type Messages } from "./i18n";
 import type { AssetMetadata, AssetReference, Entry, ImageCapabilities, ImageInfo, ImagePreset, MetadataState, PluginDescriptor, PluginUiAction, QuickAccessEntry, ResourceType, SoFinderConfig, UiScale, UploadConflictStrategy } from "./types";
@@ -85,6 +86,7 @@ export default function App({ config, initialMessages }: { config: SoFinderConfi
   const [securityStatusOpen, setSecurityStatusOpen] = useState(false);
   const [utilityOpen, setUtilityOpen] = useState(false);
   const [selectionMenuOpen, setSelectionMenuOpen] = useState(false);
+  const [selectionMenuPosition, setSelectionMenuPosition] = useState({ left: 0, top: 0 });
   const [groupMode, setGroupMode] = useState<EntryGroupMode>(savedGroupMode);
   const [typeFilter, setTypeFilter] = useState<EntryTypeFilter>(savedTypeFilter);
   const [uiScale, setUiScale] = useState<UiScale>(() => loadScale(config.uiDefaults?.scale ?? "standard"));
@@ -125,6 +127,7 @@ export default function App({ config, initialMessages }: { config: SoFinderConfi
   const utility = useRef<HTMLDivElement>(null);
   const utilityButton = useRef<HTMLButtonElement>(null);
   const selectionMenu = useRef<HTMLDivElement>(null);
+  const selectionMenuPopup = useRef<HTMLDivElement>(null);
   const activeResource = useRef(resource);
   const metadataSequence = useRef<Record<string, number>>({});
   const metadataMutations = useRef<Record<string, number>>({});
@@ -185,10 +188,38 @@ export default function App({ config, initialMessages }: { config: SoFinderConfi
 
   useEffect(() => {
     if (!selectionMenuOpen) return;
-    const close = (event: PointerEvent) => { if (event.target instanceof Node && !selectionMenu.current?.contains(event.target)) setSelectionMenuOpen(false); };
-    document.addEventListener("pointerdown", close);
-    return () => document.removeEventListener("pointerdown", close);
+    const closeOutside = (event: PointerEvent) => {
+      if (event.target instanceof Node && !selectionMenu.current?.contains(event.target) && !selectionMenuPopup.current?.contains(event.target)) setSelectionMenuOpen(false);
+    };
+    const closeWithKeyboard = (event: KeyboardEvent) => {
+      if (event.key !== "Escape") return;
+      event.preventDefault();
+      setSelectionMenuOpen(false);
+      selectionMenu.current?.querySelector<HTMLButtonElement>(":scope > button")?.focus();
+    };
+    const closeOnViewportChange = () => setSelectionMenuOpen(false);
+    document.addEventListener("pointerdown", closeOutside);
+    document.addEventListener("keydown", closeWithKeyboard);
+    window.addEventListener("resize", closeOnViewportChange);
+    window.addEventListener("scroll", closeOnViewportChange, true);
+    return () => {
+      document.removeEventListener("pointerdown", closeOutside);
+      document.removeEventListener("keydown", closeWithKeyboard);
+      window.removeEventListener("resize", closeOnViewportChange);
+      window.removeEventListener("scroll", closeOnViewportChange, true);
+    };
   }, [selectionMenuOpen]);
+
+  const toggleSelectionMenu = (event: React.MouseEvent<HTMLButtonElement>) => {
+    if (selectionMenuOpen) { setSelectionMenuOpen(false); return; }
+    const rect = event.currentTarget.getBoundingClientRect();
+    const width = 180;
+    setSelectionMenuPosition({
+      left: Math.max(8, Math.min(rect.left, window.innerWidth - width - 8)),
+      top: rect.bottom + 7,
+    });
+    setSelectionMenuOpen(true);
+  };
 
   const report = useCallback((error: unknown) => setNotice(error instanceof Error ? error.message : t("error")), [t]);
   const applyMetadata = useCallback((targetResource: string, value: MetadataState, sequence: number) => {
@@ -1109,7 +1140,7 @@ export default function App({ config, initialMessages }: { config: SoFinderConfi
       <input ref={uploadInput} type="file" multiple hidden onChange={event => { if (event.target.files) void upload(event.target.files); event.target.value = ""; }}/>
       {featureAvailability.folderUpload !== false && <><button onClick={() => directoryUploadInput.current?.click()} disabled={collectionView !== null || currentResource?.readOnly || directoryCapabilities.upload === false}>{iconButton("add-folder", t("uploadFolder"))}</button>
       <input ref={element => { directoryUploadInput.current = element; element?.setAttribute("webkitdirectory", ""); }} type="file" multiple hidden onChange={event => { if (event.target.files) void uploadDirectory(event.target.files); event.target.value = ""; }}/></>}
-      {(uiMode === "manager" || fullTools) && <div ref={selectionMenu} className="sf-utility sf-selection-menu"><button onClick={() => setSelectionMenuOpen(open => !open)} aria-expanded={selectionMenuOpen}>{iconButton("select", t("selection"))}</button>{selectionMenuOpen && <div className="sf-utility-menu" role="menu"><button role="menuitem" disabled={displayedEntries.length === 0} onClick={() => { selectAll(); setSelectionMenuOpen(false); }}>{t("selectAll")}</button><button role="menuitem" disabled={selectedPaths.size === 0} onClick={() => { clearSelection(); setSelectionMenuOpen(false); }}>{t("clearSelection")}</button><button role="menuitem" disabled={displayedEntries.length === 0} onClick={() => { invertSelection(); setSelectionMenuOpen(false); }}>{t("invertSelection")}</button></div>}</div>}
+      {(uiMode === "manager" || fullTools) && <div ref={selectionMenu} className="sf-utility sf-selection-menu"><button onClick={toggleSelectionMenu} aria-expanded={selectionMenuOpen} aria-haspopup="menu">{iconButton("select", t("selection"))}</button></div>}
       {(uiMode === "manager" || fullTools) && selectedEntries.length > 0 && <><span className="sf-separator"/><div className="sf-context-actions">
       <button onClick={rename} disabled={selectedEntries.length !== 1 || !canSelected("rename") || currentResource?.readOnly}>{iconButton("rename", t("rename"))}</button>
       {featureAvailability.batchRename !== false && tools.batchRename && <button onClick={() => setBulkRenameOpen(true)} disabled={selectedEntries.length < 2 || !canSelected("rename") || currentResource?.readOnly}>{iconButton("rename", t("batchRename"))}</button>}
@@ -1130,6 +1161,7 @@ export default function App({ config, initialMessages }: { config: SoFinderConfi
       {selected && pluginActions.filter(action => action.slot === "toolbar" && pluginActionAvailable(action, selected)).map(action => <button key={`${action.plugin}:${action.id}`} onClick={() => openPluginAction(action, selected)}>{pluginLabel(action, language)}</button>)}
       </div></>}
     </div>
+    {selectionMenuOpen && createPortal(<div ref={selectionMenuPopup} className="sf-utility-menu sf-selection-menu-popup" role="menu" style={selectionMenuPosition}><button role="menuitem" disabled={displayedEntries.length === 0} onClick={() => { selectAll(); setSelectionMenuOpen(false); }}>{t("selectAll")}</button><button role="menuitem" disabled={selectedPaths.size === 0} onClick={() => { clearSelection(); setSelectionMenuOpen(false); }}>{t("clearSelection")}</button><button role="menuitem" disabled={displayedEntries.length === 0} onClick={() => { invertSelection(); setSelectionMenuOpen(false); }}>{t("invertSelection")}</button></div>, document.body)}
     {notice && <div className="sf-notice" role="alert">{notice}<button onClick={() => setNotice("")} aria-label={t("close")}><UiIcon name="close"/></button></div>}
     {uploads.length > 0 && <Suspense fallback={null}><UploadQueue tasks={uploads} collapsed={uploadsCollapsed} labels={{ title: t("uploadQueue"), expand: t("expand"), collapse: t("collapse"), cancel: t("cancel"), cancelAll: t("cancelAll"), clearFinished: t("clearFinished"), retry: t("retryUpload"), remove: t("removeUploadTask"), status: status => t(status) }} onToggle={() => setUploadsCollapsed(current => !current)} onCancel={cancelUpload} onCancelAll={cancelAllUploads} onClearFinished={clearFinishedUploads} onRetry={retryUpload} onRemove={removeUploadTask}/></Suspense>}
     <div className="sf-layout" style={{ "--sf-sidebar-width": `${leftWidth}px`, "--sf-details-width": `${rightWidth}px` } as React.CSSProperties}>

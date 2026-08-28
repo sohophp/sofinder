@@ -2090,10 +2090,10 @@ select:focus-visible,
   background: var(--sf-panel);
   box-shadow: 0 14px 38px rgb(23 34 51 / 18%);
 }
-.sf-selection-menu .sf-utility-menu {
+.sf-selection-menu-popup {
+  position: fixed;
   right: auto;
-  left: 0;
-  z-index: 20;
+  z-index: 1000;
   width: 180px;
 }
 
