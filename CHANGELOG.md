@@ -2,6 +2,13 @@
 
 ## Unreleased
 
+## 0.1.0-beta.25 - 2026-08-28
+
+- Redesign the documentation site with a focused landing page, structured guides, localized navigation, responsive dark/mobile layouts, accessibility checks and visual regression coverage.
+- Keep Simplified and Traditional Chinese navigation, sidebars and pagination within their active locale, with build-time checks that reject accidental cross-locale links.
+- Remove nested horizontal scrollbars from narrow home-page code panels while preserving scrolling for full documentation code blocks.
+- Render the manager selection-actions menu outside the horizontally scrollable toolbar so Select all, Clear and Invert selection remain visible and operable at bounded desktop and mobile widths.
+
 ## 0.1.0-beta.24 - 2026-08-28
 
 - Add bounded cross-folder/workspace asset search with field/type/tag/extension/size/date filters, URL state, recent searches and an editable asset-properties sidebar.

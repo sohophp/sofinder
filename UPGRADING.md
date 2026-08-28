@@ -1,5 +1,13 @@
 # Upgrading SoFinder
 
+## From 0.1.0-beta.24 to 0.1.0-beta.25
+
+Deploy the complete rebuilt `dist/` directory so the selection-actions popup
+is not clipped by the horizontally scrollable toolbar. No file, metadata,
+configuration or public API migration is required. Documentation hosts should
+rebuild all locales together so navigation and pagination retain the active
+locale.
+
 ## From 0.1.0-beta.23 to 0.1.0-beta.24
 
 - Deploy the complete rebuilt `dist/` directory. Existing stored files remain
