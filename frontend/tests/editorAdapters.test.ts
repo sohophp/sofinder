@@ -27,7 +27,11 @@ describe("editor adapters", () => {
 
   it("registers a CKEditor 5 public upload adapter factory", () => {
     const repository = { createUploadAdapter: vi.fn() }; const editor = { plugins: { get: vi.fn(() => repository) } };
-    createCkeditor5UploadPlugin({ apiBase: "/api", csrfToken: "token", resource: "Images" })(editor);
+    const Plugin = createCkeditor5UploadPlugin({ apiBase: "/api", csrfToken: "token", resource: "Images" });
+    expect(Plugin.pluginName).toBe("SoFinderUpload");
+    const plugin = new Plugin(editor);
+    expect(editor.plugins.get).not.toHaveBeenCalled();
+    plugin.init();
     expect(editor.plugins.get).toHaveBeenCalledWith("FileRepository"); expect(repository.createUploadAdapter).toBeTypeOf("function");
   });
 

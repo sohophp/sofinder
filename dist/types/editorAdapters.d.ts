@@ -29,8 +29,7 @@ export interface CkeditorLoader {
     uploaded?: number;
     uploadTotal?: number;
 }
-export declare const ckeditorUploadResult: (asset: AssetReference, options: EditorAdapterOptions) => Record<string, unknown>;
-export declare const createCkeditor5UploadPlugin: (options: EditorAdapterOptions) => (editor: {
+interface Ckeditor5Editor {
     plugins: {
         get(name: string): any;
     };
@@ -49,7 +48,21 @@ export declare const createCkeditor5UploadPlugin: (options: EditorAdapterOptions
             attributeToAttribute(definition: object): void;
         };
     };
-}) => void;
+}
+export interface Ckeditor5UploadPlugin {
+    init(): void;
+}
+export interface Ckeditor5UploadPluginConstructor {
+    readonly pluginName: "SoFinderUpload";
+    new (editor: Ckeditor5Editor): Ckeditor5UploadPlugin;
+}
+export declare const ckeditorUploadResult: (asset: AssetReference, options: EditorAdapterOptions) => Record<string, unknown>;
+/**
+ * Creates a constructible CKEditor 5 plugin for use in `plugins` or
+ * `extraPlugins`. CKEditor owns construction and calls `init()` after its
+ * required built-in plugins are available.
+ */
+export declare const createCkeditor5UploadPlugin: (options: EditorAdapterOptions) => Ckeditor5UploadPluginConstructor;
 export declare const tinyMceImagesUploadHandler: (options: EditorAdapterOptions) => (blobInfo: {
     blob(): Blob;
     filename(): string;
@@ -107,3 +120,4 @@ export declare const installQuillUploads: (quill: {
 }, options: EditorAdapterOptions) => (() => void);
 export declare const bindMarkdownUploads: (input: HTMLTextAreaElement, options: EditorAdapterOptions) => (() => void);
 export declare const bindAssetInput: (fileInput: HTMLInputElement, output: HTMLInputElement | HTMLTextAreaElement, options: EditorAdapterOptions, outputMode?: "url" | "json") => (() => void);
+export {};

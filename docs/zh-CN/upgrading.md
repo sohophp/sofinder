@@ -5,6 +5,13 @@ description: 各 SoFinder 预发布版本的兼容性、配置与 adapter 升级
 
 # 升级 SoFinder
 
+## 从 0.1.0-beta.25 升级至 0.1.0-beta.26
+
+请完整部署重新构建的 `dist/`。CKEditor 5 集成可继续把
+`createCkeditor5UploadPlugin(options)` 直接放入 `plugins` 或 `extraPlugins`；工厂现在
+返回新版 CKEditor 所需的可构造插件。请移除宿主中手动调用旧 Adapter 函数的包装类。
+无需迁移存储文件或后端配置。
+
 ## 从 0.1.0-beta.24 升级至 0.1.0-beta.25
 
 请完整部署重新构建的 `dist/`，使选择操作菜单不再被横向滚动工具栏遮挡。无需迁移

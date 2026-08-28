@@ -1,5 +1,13 @@
 # Upgrading SoFinder
 
+## From 0.1.0-beta.25 to 0.1.0-beta.26
+
+Deploy the complete rebuilt `dist/` directory. CKEditor 5 integrations can keep
+passing `createCkeditor5UploadPlugin(options)` directly in `plugins` or
+`extraPlugins`; the factory now returns the constructible plugin expected by
+current CKEditor releases. Remove any host-side wrapper that called the old
+adapter function manually. No stored files or backend configuration change.
+
 ## From 0.1.0-beta.24 to 0.1.0-beta.25
 
 Deploy the complete rebuilt `dist/` directory so the selection-actions popup

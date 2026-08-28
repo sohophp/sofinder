@@ -7,6 +7,11 @@ description: SoFinder 每個公開版本的重要變更。
 
 ## 尚未發佈
 
+## 0.1.0-beta.26 - 2026-08-28
+
+- CKEditor 5 上傳 Factory 現在回傳相容新版 `plugins` 與 `extraPlugins` 初始化方式的
+  可建構 Plugin，同時繼續由 Host 專案自行託管 CKEditor。
+
 ## 0.1.0-beta.25 - 2026-08-28
 
 - 重新設計文件站首頁與指南版面，補充深色、行動版、無障礙及視覺回歸檢查。

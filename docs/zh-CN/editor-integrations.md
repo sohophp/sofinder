@@ -42,7 +42,7 @@ button.addEventListener('click', () => selectForCkeditor5(editor, {
 ```
 
 适配器调用 CKEditor 5 公开的 `insertImage` 和替代文本 Command。开启资产目录后，Picker 与上传会保留显式的 `alt=""`，先按 `language`／`locale` 读取 `altTranslations`，再使用资产默认替代文本；仍未设置时才使用去掉扩展名的文件名。语言键采用规范化的 BCP 47 风格，例如 `en`、`zh-cn`、`fr-ca`，元数据 API 最多接受 20 种语言；上传适配器可传 `locale: 'zh-cn'`。同时会尽量写入响应式变体、宽高和 `data-sofinder-asset-id`。安装及授权要求请查看
-[CKEditor 官方指南](https://ckeditor.com/docs/ckeditor5/latest/getting-started/installation/cloud/quick-start.html)。
+[CKEditor 自托管官方指南](https://ckeditor.com/docs/ckeditor5/latest/getting-started/installation/self-hosted/quick-start.html)。
 原有 CKEditor 4 Callback 和 Quick Upload 接口继续保留。
 
 本地选择、粘贴和桌面拖入使用独立官方上传 Adapter，不会把 CKEditor 打入 SoFinder 主包：
@@ -55,7 +55,7 @@ ClassicEditor.create(element, {
 })
 ```
 
-它与 TinyMCE、TipTap、Quill、Markdown 和普通表单入口共用 `sofinder-sdk.js` 上传任务，统一处理进度、取消、重试、分块恢复及同名文件选择。Private 资源没有稳定鉴权交付 URL 时会拒绝持久插入，临时签名 URL 不会被当成可嵌入地址。
+它与 TinyMCE、TipTap、Quill、Markdown 和普通表单入口共用 `sofinder-sdk.js` 上传任务，统一处理进度、取消、重试、分块恢复及同名文件选择。Private 资源没有稳定鉴权交付 URL 时会拒绝持久插入，临时签名 URL 不会被当成可嵌入地址。工厂返回的是可构造 CKEditor Plugin，请勿手动调用或再套一层 Plugin 包装。
 
 ## TinyMCE
 

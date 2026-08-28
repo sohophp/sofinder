@@ -2,6 +2,12 @@
 
 ## Unreleased
 
+## 0.1.0-beta.26 - 2026-08-28
+
+- Return a constructible CKEditor 5 upload plugin compatible with current
+  `plugins` and `extraPlugins` initialization while keeping CKEditor itself in
+  the host application's self-hosted build.
+
 ## 0.1.0-beta.25 - 2026-08-28
 
 - Redesign the documentation site with a focused landing page, structured guides, localized navigation, responsive dark/mobile layouts, accessibility checks and visual regression coverage.

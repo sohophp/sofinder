@@ -34,10 +34,11 @@
     "file": "defineProperty-B_lfzbVN.js",
     "name": "defineProperty"
   },
-  "_editorAdapters-C-p7BLZ5.js": {
-    "file": "editorAdapters-C-p7BLZ5.js",
+  "_editorAdapters-CWoB8jG-.js": {
+    "file": "editorAdapters-CWoB8jG-.js",
     "name": "editorAdapters",
     "imports": [
+      "_defineProperty-B_lfzbVN.js",
       "src/sdk.ts"
     ]
   },
@@ -66,7 +67,7 @@
     "src": "src/ckeditor5.ts",
     "isEntry": true,
     "imports": [
-      "_editorAdapters-C-p7BLZ5.js"
+      "_editorAdapters-CWoB8jG-.js"
     ]
   },
   "src/components/AssetMetadataDialog.tsx": {
@@ -290,7 +291,7 @@
     "src": "src/editors.ts",
     "isEntry": true,
     "imports": [
-      "_editorAdapters-C-p7BLZ5.js"
+      "_editorAdapters-CWoB8jG-.js"
     ]
   },
   "src/locales/en.ts": {
@@ -363,7 +364,7 @@
     "src": "src/quill.ts",
     "isEntry": true,
     "imports": [
-      "_editorAdapters-C-p7BLZ5.js"
+      "_editorAdapters-CWoB8jG-.js"
     ]
   },
   "src/sdk.ts": {
@@ -381,7 +382,7 @@
     "src": "src/tinymce.ts",
     "isEntry": true,
     "imports": [
-      "_editorAdapters-C-p7BLZ5.js"
+      "_editorAdapters-CWoB8jG-.js"
     ]
   },
   "src/tiptap.ts": {
@@ -390,7 +391,7 @@
     "src": "src/tiptap.ts",
     "isEntry": true,
     "imports": [
-      "_editorAdapters-C-p7BLZ5.js"
+      "_editorAdapters-CWoB8jG-.js"
     ]
   },
   "style.css": {

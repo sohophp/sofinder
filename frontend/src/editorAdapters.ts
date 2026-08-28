@@ -52,6 +52,21 @@ export interface CkeditorLoader {
   uploadTotal?: number;
 }
 
+interface Ckeditor5Editor {
+  plugins: { get(name: string): any };
+  model?: { schema: { extend(name: string, options: { allowAttributes: string[] }): void }; change(callback: (writer: { setAttribute(name: string, value: unknown, item: unknown): void }) => void): void };
+  conversion?: { for(direction: string): { attributeToAttribute(definition: object): void } };
+}
+
+export interface Ckeditor5UploadPlugin {
+  init(): void;
+}
+
+export interface Ckeditor5UploadPluginConstructor {
+  readonly pluginName: "SoFinderUpload";
+  new(editor: Ckeditor5Editor): Ckeditor5UploadPlugin;
+}
+
 export const ckeditorUploadResult = (asset: AssetReference, options: EditorAdapterOptions): Record<string, unknown> => {
   const urls: Record<string, string> = { default: asset.url };
   if (asset.width) urls[String(asset.width)] = asset.url;
@@ -63,11 +78,7 @@ export const ckeditorUploadResult = (asset: AssetReference, options: EditorAdapt
   return result;
 };
 
-export const createCkeditor5UploadPlugin = (options: EditorAdapterOptions) => (editor: {
-  plugins: { get(name: string): any };
-  model?: { schema: { extend(name: string, options: { allowAttributes: string[] }): void }; change(callback: (writer: { setAttribute(name: string, value: unknown, item: unknown): void }) => void): void };
-  conversion?: { for(direction: string): { attributeToAttribute(definition: object): void } };
-}) => {
+const installCkeditor5UploadAdapter = (editor: Ckeditor5Editor, options: EditorAdapterOptions): void => {
   const repository = editor.plugins.get("FileRepository") as { createUploadAdapter: (loader: CkeditorLoader) => { upload(): Promise<Record<string, unknown>>; abort(): void } };
   const assetAttributes = ["sofinderAssetId", "sofinderWidth", "sofinderHeight"];
   if (editor.model && editor.conversion) {
@@ -97,6 +108,21 @@ export const createCkeditor5UploadPlugin = (options: EditorAdapterOptions) => (e
       abort() { task?.cancel(); },
     };
   };
+};
+
+/**
+ * Creates a constructible CKEditor 5 plugin for use in `plugins` or
+ * `extraPlugins`. CKEditor owns construction and calls `init()` after its
+ * required built-in plugins are available.
+ */
+export const createCkeditor5UploadPlugin = (options: EditorAdapterOptions): Ckeditor5UploadPluginConstructor => class SoFinderUpload {
+  static readonly pluginName = "SoFinderUpload";
+
+  constructor(private readonly editor: Ckeditor5Editor) {}
+
+  init(): void {
+    installCkeditor5UploadAdapter(this.editor, options);
+  }
 };
 
 export const tinyMceImagesUploadHandler = (options: EditorAdapterOptions) => async (blobInfo: { blob(): Blob; filename(): string }, progress: (value: number) => void): Promise<string> => {

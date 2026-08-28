@@ -49,7 +49,7 @@ button.addEventListener('click', () => selectForCkeditor5(editor, {
 ```
 
 The adapter executes CKEditor 5's public `insertImage` and alternative-text commands. When the asset catalog is enabled, picker and upload insertion preserve explicit `alt=""`, resolve `altTranslations` for `language`/`locale`, use the asset default alt next, and otherwise fall back to the extension-free filename. Translation keys are normalized BCP 47-style tags such as `en`, `zh-cn` and `fr-ca`; the metadata API accepts up to 20. Pass `locale: 'en'` to an upload adapter. Responsive variants, dimensions and `data-sofinder-asset-id` are also carried where the editor model supports them. Configure its
-Image plugin and follow the [official installation and licensing guide](https://ckeditor.com/docs/ckeditor5/latest/getting-started/installation/cloud/quick-start.html).
+Image plugin and follow the [official self-hosted installation and licensing guide](https://ckeditor.com/docs/ckeditor5/latest/getting-started/installation/self-hosted/quick-start.html).
 The legacy CKEditor 4 callback and quick-upload endpoints remain available.
 
 For local selection, paste and desktop drop uploads, install the official
@@ -70,7 +70,8 @@ The adapter uses the public CKEditor UploadAdapter contract and the shared
 transfer and `ask|rename|overwrite|skip` conflicts therefore behave the same in
 every editor. A Private resource is rejected unless it has a stable,
 authorization-preserving delivery URL; a temporary signed URL is never treated
-as embeddable content.
+as embeddable content. The returned value is a constructible CKEditor plugin;
+do not invoke it manually or wrap it in another plugin class.
 
 ## TinyMCE
 
