@@ -32,6 +32,9 @@ test('desktop home keeps its primary hierarchy', async ({ page }) => {
   await expect(page.getByRole('link', { name: 'Get started' })).toBeVisible()
   await expect(page.locator('.VPFeature')).toHaveCount(6)
   await expect(page.locator('.sf-hero-terminal')).toBeVisible()
+  await expect.poll(() => page.locator('.VPHome .sf-code-panel pre').evaluateAll((panels) =>
+    panels.every((panel) => panel.scrollWidth <= panel.clientWidth && panel.scrollHeight <= panel.clientHeight),
+  )).toBe(true)
   await expect(page).toHaveScreenshot('home-desktop.png')
 })
 
@@ -54,6 +57,9 @@ test('mobile dark home remains localized and overflow-free', async ({ page }) =>
   await expect(page.locator('html')).toHaveClass(/dark/)
   await expect(page.getByRole('heading', { name: /安全的文件管理/ })).toBeVisible()
   await expect(page.locator('.VPNavBarHamburger')).toBeVisible()
+  await expect.poll(() => page.locator('.VPHome .sf-code-panel pre').evaluateAll((panels) =>
+    panels.every((panel) => panel.scrollWidth <= panel.clientWidth && panel.scrollHeight <= panel.clientHeight),
+  )).toBe(true)
   // Linux hosts can use different CJK fallback fonts; keep structural drift strict
   // while allowing the small glyph-rasterization difference seen in CI.
   await expect(page).toHaveScreenshot('home-mobile-dark.png', { maxDiffPixelRatio: 0.025 })

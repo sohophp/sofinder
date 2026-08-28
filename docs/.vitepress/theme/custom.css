@@ -110,6 +110,10 @@ a, button { -webkit-tap-highlight-color: transparent; }
 .sf-code-panel__copy svg { width: 15px; fill: none; stroke: currentColor; stroke-width: 1.7; }
 .sf-code-panel pre { max-height: 260px; margin: 0; padding: 18px; overflow: auto; font-family: var(--vp-font-family-mono); font-size: 12px; line-height: 1.7; white-space: pre; }
 .sf-code-panel code { color: #eef2ff; }
+/* Home cards are narrow by design. Wrap their short snippets instead of
+   presenting a second, nested page scrollbar. Documentation code blocks keep
+   their normal horizontal scrolling behavior. */
+.VPHome .sf-code-panel pre { overflow: hidden; overflow-wrap: anywhere; white-space: pre-wrap; }
 .sf-hero-terminal__meta { display: flex; align-items: center; gap: 8px; margin: 0 22px; padding: 17px 0 20px; border-top: 1px solid #263249; color: #aab4c7; font-size: 11px; }
 .sf-hero-terminal__meta svg { width: 16px; fill: none; stroke: #a5b4fc; stroke-width: 1.7; }
 
