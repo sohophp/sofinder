@@ -1,5 +1,5 @@
 import { useState } from "react";
-import type { Entry, ImageAction, WatermarkPosition } from "../types";
+import type { Entry, ImageAction, WatermarkFont, WatermarkPosition } from "../types";
 import { Modal } from "./Modal";
 
 type Mode = "optimize" | "text" | "image";
@@ -16,6 +16,7 @@ export function ImageProcessDialog({ entries, resource, formats, labels, onClose
   const [quality, setQuality] = useState(82);
   const [format, setFormat] = useState("original");
   const [text, setText] = useState("SoFinder");
+  const [font, setFont] = useState<WatermarkFont>("interface");
   const [color, setColor] = useState("#ffffff");
   const [watermarkResource, setWatermarkResource] = useState(resource);
   const [watermarkPath, setWatermarkPath] = useState("");
@@ -29,11 +30,11 @@ export function ImageProcessDialog({ entries, resource, formats, labels, onClose
   const invalid = entries.length === 0 || (mode === "text" && text.trim() === "") || (mode === "image" && watermarkPath.trim() === "");
 
   const submit = async () => {
-    const common = { position, opacity, scale, quality };
+    const common = { position, opacity, scale, quality: 100 };
     const action: ImageAction = mode === "optimize"
       ? { type: "optimize", format, quality }
       : mode === "text"
-        ? { type: "watermarkText", text: text.trim(), color, ...common }
+        ? { type: "watermarkText", text: text.trim(), font, color, ...common }
         : { type: "watermarkImage", resource: watermarkResource.trim() || resource, path: watermarkPath.trim(), ...common };
     setWorking(true);
     setError("");
@@ -46,10 +47,10 @@ export function ImageProcessDialog({ entries, resource, formats, labels, onClose
     <div className="sf-image-process-grid">
       <label>{labels.operation}<select value={mode} onChange={event => setMode(event.target.value as Mode)}><option value="optimize">{labels.optimize}</option><option value="text">{labels.textWatermark}</option><option value="image">{labels.imageWatermark}</option></select></label>
       {mode === "optimize" && <label>{labels.outputFormat}<select value={format} onChange={event => setFormat(event.target.value)}><option value="original">{labels.keepFormat}</option>{formats.map(value => <option key={value} value={value}>{value.toUpperCase()}</option>)}</select></label>}
-      {mode === "text" && <><label className="sf-process-wide">{labels.watermarkText}<input value={text} maxLength={200} onChange={event => setText(event.target.value)}/></label><label>{labels.color}<input type="color" value={color} onChange={event => setColor(event.target.value)}/></label></>}
+      {mode === "text" && <><label className="sf-process-wide">{labels.watermarkText}<input value={text} maxLength={200} onChange={event => setText(event.target.value)}/></label><label>{labels.watermarkFont}<select value={font} onChange={event => setFont(event.target.value as WatermarkFont)}><option value="interface">{labels.interfaceFont}</option><option value="sans">{labels.sansFont}</option><option value="serif">{labels.serifFont}</option></select></label><label>{labels.color}<input type="color" value={color} onChange={event => setColor(event.target.value)}/></label></>}
       {mode === "image" && <><label>{labels.watermarkResource}<input value={watermarkResource} onChange={event => setWatermarkResource(event.target.value)}/></label><label className="sf-process-wide">{labels.watermarkPath}<input value={watermarkPath} placeholder="branding/logo.png" onChange={event => setWatermarkPath(event.target.value)}/></label></>}
       {mode !== "optimize" && <><label>{labels.position}<select value={position} onChange={event => setPosition(event.target.value as WatermarkPosition)}><option value="top-left">{labels.topLeft}</option><option value="top-right">{labels.topRight}</option><option value="center">{labels.center}</option><option value="bottom-left">{labels.bottomLeft}</option><option value="bottom-right">{labels.bottomRight}</option></select></label><label>{labels.opacity}: {opacity}%<input type="range" min="1" max="100" value={opacity} onChange={event => setOpacity(Number(event.target.value))}/></label><label>{labels.scale}: {scale}%<input type="range" min="5" max="80" value={scale} onChange={event => setScale(Number(event.target.value))}/></label></>}
-      <label>{labels.quality}: {quality}<input type="range" min="1" max="100" value={quality} onChange={event => setQuality(Number(event.target.value))}/></label>
+      {mode === "optimize" && <label>{labels.quality}: {quality}<input type="range" min="1" max="100" value={quality} onChange={event => setQuality(Number(event.target.value))}/></label>}
       <label>{labels.saveMode}<select value={effectiveSaveMode} disabled={mode === "optimize" && format !== "original"} onChange={event => setSaveMode(event.target.value as "copy" | "overwrite")}><option value="copy">{labels.saveCopy}</option><option value="overwrite">{labels.overwrite}</option></select></label>
     </div>
     {mode === "optimize" && format !== "original" && <p className="sf-configured-limits">{labels.conversionCopyHint}</p>}

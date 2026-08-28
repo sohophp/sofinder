@@ -80,22 +80,22 @@ final readonly class HybridImageProcessor implements ImageProcessorInterface, Im
         $processor->optimize($source, $destination, $mimeType, $quality);
     }
 
-    public function textWatermark(string $source, string $destination, string $text, string $position, int $opacity, int $scale, string $color, int $quality): void
+    public function textWatermark(string $source, string $destination, string $text, string $position, int $opacity, int $scale, string $color, int $quality, ?int $x = null, ?int $y = null, string $font = 'interface'): void
     {
         $processor = $this->processorForSource($source);
         if (!$processor instanceof ImageEffectsProcessorInterface) {
             throw new SoFinderException('Image watermarking is unavailable.', 'image_effects_unavailable', 501);
         }
-        $processor->textWatermark($source, $destination, $text, $position, $opacity, $scale, $color, $quality);
+        $processor->textWatermark($source, $destination, $text, $position, $opacity, $scale, $color, $quality, $x, $y, $font);
     }
 
-    public function imageWatermark(string $source, string $watermark, string $destination, string $position, int $opacity, int $scale, int $quality): void
+    public function imageWatermark(string $source, string $watermark, string $destination, string $position, int $opacity, int $scale, int $quality, ?int $x = null, ?int $y = null): void
     {
         $processor = $this->processorForSource($source);
         if (!$processor instanceof ImageEffectsProcessorInterface) {
             throw new SoFinderException('Image watermarking is unavailable.', 'image_effects_unavailable', 501);
         }
-        $processor->imageWatermark($source, $watermark, $destination, $position, $opacity, $scale, $quality);
+        $processor->imageWatermark($source, $watermark, $destination, $position, $opacity, $scale, $quality, $x, $y);
     }
 
     /** @return list<array{format:string,extensions:list<string>,mimes:list<string>,processor:string,read:bool,edit:bool,thumbnail:bool,webEmbeddable:bool}> */

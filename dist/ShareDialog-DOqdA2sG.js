@@ -1,6 +1,6 @@
 import { n as e, r as t, t as n } from "./jsx-runtime-CmCsaYvT.js";
 import { t as r } from "./react-B5TC723I.js";
-import { t as i } from "./Modal-Dw1vVt5K.js";
+import { t as i } from "./Modal-ClPLM5jI.js";
 //#region node_modules/.pnpm/qrcode@1.5.4/node_modules/qrcode/lib/can-promise.js
 var a = /* @__PURE__ */ e(((e, t) => {
 	t.exports = function() {

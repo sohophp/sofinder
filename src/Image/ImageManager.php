@@ -182,14 +182,17 @@ final readonly class ImageManager
                 throw new SoFinderException('Animated or multi-page images cannot be edited without losing content.', 'animated_image_edit_unsupported', 415);
             }
             $originalDimensions = $this->processor->dimensions($source);
-            foreach ($actions as $action) {
+            $lastActionIndex = array_key_last($actions);
+            foreach ($actions as $actionIndex => $action) {
                 $output = tempnam(sys_get_temp_dir(), 'sofinder-image-action-');
                 if ($output === false) {
                     throw new SoFinderException('Unable to create an image action file.', 'image_processing_failed', 500);
                 }
                 try {
                     $type = (string) ($action['type'] ?? '');
-                    $quality = (int) ($action['quality'] ?? 88);
+                    // Intermediate JPEG/WebP files are decoded again by the next action.
+                    // Keep those encodes at maximum quality and apply the requested quality once, at the end.
+                    $quality = $actionIndex === $lastActionIndex ? (int) ($action['quality'] ?? 88) : 100;
                     if ($type === 'crop') {
                         $this->processor->crop($working, $output, (int) ($action['x'] ?? -1), (int) ($action['y'] ?? -1), (int) ($action['width'] ?? 0), (int) ($action['height'] ?? 0), $quality);
                     } elseif ($type === 'rotate') {
@@ -202,7 +205,8 @@ final readonly class ImageManager
                         if ($preset === null) {
                             throw new SoFinderException('The requested image preset does not exist.', 'unknown_image_preset', 404);
                         }
-                        $this->processor->transform($working, $output, 0, $preset['width'], $preset['height'], $preset['quality']);
+                        $presetQuality = $actionIndex === $lastActionIndex ? (int) ($action['quality'] ?? $preset['quality']) : 100;
+                        $this->processor->transform($working, $output, 0, $preset['width'], $preset['height'], $presetQuality);
                     } elseif ($type === 'optimize') {
                         $effects = $this->effectsProcessor();
                         $format = strtolower((string) ($action['format'] ?? 'original'));
@@ -212,6 +216,10 @@ final readonly class ImageManager
                         }
                         $effects->optimize($working, $output, $outputMimeType, $quality);
                     } elseif ($type === 'watermarkText') {
+                        $font = (string) ($action['font'] ?? 'interface');
+                        if (!in_array($font, ['interface', 'sans', 'serif'], true)) {
+                            throw new SoFinderException('The watermark font is invalid.', 'invalid_watermark_font', 422);
+                        }
                         $this->effectsProcessor()->textWatermark(
                             $working,
                             $output,
@@ -220,7 +228,10 @@ final readonly class ImageManager
                             (int) ($action['opacity'] ?? 60),
                             (int) ($action['scale'] ?? 25),
                             (string) ($action['color'] ?? '#ffffff'),
-                            $quality,
+                            100,
+                            isset($action['x']) ? (int) $action['x'] : null,
+                            isset($action['y']) ? (int) $action['y'] : null,
+                            $font,
                         );
                     } elseif ($type === 'watermarkImage') {
                         $watermarkResource = (string) ($action['resource'] ?? $resource);
@@ -242,7 +253,9 @@ final readonly class ImageManager
                                 (string) ($action['position'] ?? 'bottom-right'),
                                 (int) ($action['opacity'] ?? 60),
                                 (int) ($action['scale'] ?? 25),
-                                $quality,
+                                100,
+                                isset($action['x']) ? (int) $action['x'] : null,
+                                isset($action['y']) ? (int) $action['y'] : null,
                             );
                         } finally {
                             @unlink($watermark);

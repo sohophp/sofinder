@@ -236,7 +236,7 @@ Action 为 `crop`、`resize`、`rotate`、`preset`、`optimize`、`watermarkText
 
 返回名为 `sofinder-download.zip` 的 `application/zip`，受资源选择数量、递归项目数和容量限制。
 
-`GET /api/metadata?resource=Files` 返回 `favorites`、最多 12 个文件或文件夹的 `quickAccess` 路径、兼容增加的 `quickAccessEntries` 展示信息（`name`、`directory`、`mimeType`、`exists`）、按 Path 组织的 `tags`，以及最多 50 条 `recent {path,touchedAt}`。失效快捷项以 `exists: false` 保留显示，直到用户打开或移除。使用 `PATCH /api/metadata` 更新：
+`GET /api/metadata?resource=Files` 返回仅含文件的 `favorites`、最多 12 个仅含文件夹的 `quickAccess` 路径、兼容增加的 `quickAccessEntries` 展示信息（`name`、`directory`、`mimeType`、`exists`）、按 Path 组织的 `tags`，以及最多 50 条 `recent {path,touchedAt}`。失效的固定文件夹以 `exists: false` 保留显示，直到用户打开或移除。使用 `PATCH /api/metadata` 更新：
 
 ```json
 {"resource":"Files","path":"manual.pdf","action":"favorite","favorite":true}
@@ -245,7 +245,7 @@ Action 为 `crop`、`resize`、`rotate`、`preset`、`optimize`、`watermarkText
 {"resource":"Files","path":"manual.pdf","action":"touch"}
 ```
 
-宿主配置关闭 `features.quick_access_files` 后，新增文件快捷项会返回 `422 quick_access_file_disabled`；文件夹仍可使用，已有文件快捷项仍可移除。
+把文件夹加入收藏会返回 `422 favorite_folder_unsupported`；把文件固定到侧栏会返回 `422 quick_access_file_disabled`。旧的 `features.quick_access_files` 设置不再生效，已有文件快捷项仍可移除。
 
 客户端确认最近路径已在 SoFinder 外部消失后，可发送 `action: "forget"`，从收藏、标签和
 最近状态中清理该路径。宿主关闭某项功能后，其专用操作返回 `feature_disabled` 及 HTTP

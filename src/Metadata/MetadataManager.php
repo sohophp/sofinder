@@ -19,9 +19,10 @@ final readonly class MetadataManager
         private FileManager $files,
         private MetadataStoreInterface $store,
         private ActorProviderInterface $actors,
-        private bool $allowQuickAccessFiles = true,
+        private bool $allowQuickAccessFiles = false,
         private ?WorkspaceProvider $workspaces = null,
     ) {
+        // Kept in the public constructor for backward compatibility; files are no longer pinnable.
     }
 
     /** @return array{favorites:list<string>,quickAccess:list<string>,tags:array<string,list<string>>,recent:list<array{path:string,touchedAt:int}>} */
@@ -30,7 +31,8 @@ final readonly class MetadataManager
         $this->files->entry($resource, '');
 
         $metadata = $this->store->get($this->actor(), $resource);
-        $metadata['quickAccess'] = array_slice(array_values(array_filter((array) ($metadata['quickAccess'] ?? []), 'is_string')), 0, self::MAX_QUICK_ACCESS);
+        $metadata['favorites'] = array_values(array_filter((array) ($metadata['favorites'] ?? []), 'is_string'));
+        $metadata['quickAccess'] = array_slice($this->pathsByType($resource, (array) ($metadata['quickAccess'] ?? []), true), 0, self::MAX_QUICK_ACCESS);
 
         return $metadata;
     }
@@ -38,6 +40,9 @@ final readonly class MetadataManager
     public function favorite(string $resource, string $path, bool $favorite): void
     {
         $entry = $this->files->entry($resource, $path);
+        if ($favorite && $entry->directory) {
+            throw new SoFinderException('Favorites only support files.', 'favorite_folder_unsupported', 422);
+        }
         $this->store->setFavorite($this->actor(), $resource, $entry->path, $favorite);
     }
 
@@ -47,11 +52,14 @@ final readonly class MetadataManager
             throw new SoFinderException('The configured metadata store does not support quick access.', 'quick_access_unsupported', 501);
         }
         $entry = $this->files->entry($resource, $path);
-        if ($pinned && !$entry->directory && !$this->allowQuickAccessFiles) {
-            throw new SoFinderException('Files are disabled for quick access.', 'quick_access_file_disabled', 422);
+        if ($pinned && !$entry->directory) {
+            $message = $this->allowQuickAccessFiles
+                ? 'Only folders can be pinned to the sidebar; the legacy file policy is ignored.'
+                : 'Only folders can be pinned to the sidebar.';
+            throw new SoFinderException($message, 'quick_access_file_disabled', 422);
         }
         $actor = $this->actor();
-        $current = (array) ($this->store->get($actor, $resource)['quickAccess'] ?? []);
+        $current = $this->get($resource)['quickAccess'];
         if ($pinned && !in_array($entry->path, $current, true) && count($current) >= self::MAX_QUICK_ACCESS) {
             throw new SoFinderException('Quick access is limited to 12 entries.', 'quick_access_limit', 409);
         }
@@ -65,9 +73,14 @@ final readonly class MetadataManager
         foreach ($this->get($resource)['quickAccess'] as $path) {
             try {
                 $entry = $this->files->entry($resource, $path);
+                if (!$entry->directory) {
+                    continue;
+                }
                 $entries[] = ['path' => $entry->path, 'name' => $entry->name, 'directory' => $entry->directory, 'mimeType' => $entry->mimeType, 'exists' => true];
             } catch (SoFinderException $exception) {
-                if ($exception->errorCode !== 'not_found') throw $exception;
+                if ($exception->errorCode !== 'not_found') {
+                    throw $exception;
+                }
                 $entries[] = ['path' => $path, 'name' => basename($path), 'directory' => null, 'mimeType' => null, 'exists' => false];
             }
         }
@@ -122,5 +135,29 @@ final readonly class MetadataManager
     {
         $actor = $this->actors->actorId();
         return $this->workspaces === null ? $actor : hash('sha256', 'workspace:' . $this->workspaces->current()->id . ':' . $actor);
+    }
+
+    /**
+     * @param array<array-key, mixed> $paths
+     * @return list<string>
+     */
+    private function pathsByType(string $resource, array $paths, bool $directory): array
+    {
+        $filtered = [];
+        foreach (array_filter($paths, 'is_string') as $path) {
+            try {
+                if ($this->files->entry($resource, $path)->directory !== $directory) {
+                    continue;
+                }
+            } catch (SoFinderException $exception) {
+                if ($exception->errorCode !== 'not_found') {
+                    throw $exception;
+                }
+                // Keep stale paths visible so users can remove them from metadata.
+            }
+            $filtered[] = $path;
+        }
+
+        return array_values(array_unique($filtered));
     }
 }

@@ -344,7 +344,10 @@ export type ImageAction = {
 } | {
     type: "watermarkText";
     text: string;
+    font?: WatermarkFont;
     position: WatermarkPosition;
+    x?: number;
+    y?: number;
     opacity: number;
     scale: number;
     color: string;
@@ -354,11 +357,14 @@ export type ImageAction = {
     resource: string;
     path: string;
     position: WatermarkPosition;
+    x?: number;
+    y?: number;
     opacity: number;
     scale: number;
     quality: number;
 };
-export type WatermarkPosition = "top-left" | "top-right" | "center" | "bottom-left" | "bottom-right";
+export type WatermarkPosition = "top-left" | "top-right" | "center" | "bottom-left" | "bottom-right" | "custom";
+export type WatermarkFont = "interface" | "sans" | "serif";
 export interface ImageBatchResult {
     total: number;
     succeeded: number;

@@ -29,8 +29,9 @@ so_finder:
     disk_bytes: 1073741824
     threads: 1
     timeout_seconds: 30
-    # 非 ASCII 文字浮水印必須設定；僅使用 ASCII 時可保持 null。
+    # 可選覆寫；否則使用系統 CJK 字型或經過驗證的字型快取。
     watermark_font: /usr/share/fonts/truetype/noto/NotoSansCJK-Regular.ttc
+    watermark_font_auto_download: true
 ```
 
 Imagick 只會接收由 Registry 產生的固定 Coder，永遠不執行自動 SVG、PDF、PostScript、URL 或 Pseudo-protocol Dispatch。Memory、Map、Disk、Thread 與 Time Limit 僅套用於各次操作，完成後還原。公開 Edit Capability 前，會透過有界 Round Trip 驗證 Encoder Availability。
@@ -39,7 +40,7 @@ Imagick 只會接收由 Registry 產生的固定 Coder，永遠不執行自動 S
 
 「壓縮 / 浮水印」圖片工具在使用者工具列中預設關閉，可在「設定」中啟用。它提供品質可調的重新壓縮、Runtime 支援的 JPEG/PNG/WebP/AVIF 轉換、文字浮水印與圖片浮水印。單批最多處理 100 張已選圖片，並為每項回傳獨立結果。
 
-格式轉換一律另存副本；同格式壓縮與浮水印可另存或覆寫。動畫與多頁圖片會被拒絕以避免靜默遺失 Frame，浮水印圖片仍經過一般資源權限檢查。Unicode 文字必須設定可讀的絕對路徑 `watermark_font`；否則 API 回傳 `watermark_font_unavailable`，不會產生亂碼。
+格式轉換一律另存副本；同格式壓縮與浮水印可另存或覆寫。動畫與多頁圖片會被拒絕以避免靜默遺失 Frame，浮水印圖片仍經過一般資源權限檢查。文字浮水印提供精簡的「介面黑體、清晰黑體、典雅宋體」三種選擇；預設使用介面黑體，保留最初編輯介面的字型風格。所選字型優先使用明確設定的 `watermark_font`（僅預設樣式）或系統 CJK 字型；若都不存在且啟用 `watermark_font_auto_download`，只會從官方儲存庫下載目前選取的固定版本 Noto CJK 字型，驗證 SHA-256 後快取至 `cache_dir/fonts`，並以檔案鎖避免並行重複下載。將此選項設為 `false` 可禁止自動連線。最終仍無可用字型時，Unicode 文字會回傳 `watermark_font_unavailable`，不會產生亂碼。
 
 ## 一般非 Web 圖片檔
 

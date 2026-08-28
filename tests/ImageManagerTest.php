@@ -7,6 +7,8 @@ namespace SohoPHP\SoFinder\Tests;
 use PHPUnit\Framework\TestCase;
 use PHPUnit\Framework\Attributes\Group;
 use SohoPHP\SoFinder\Contract\AuthorizationInterface;
+use SohoPHP\SoFinder\Contract\ImageEffectsProcessorInterface;
+use SohoPHP\SoFinder\Contract\ImageProcessorInterface;
 use SohoPHP\SoFinder\Exception\SoFinderException;
 use SohoPHP\SoFinder\FileManager;
 use SohoPHP\SoFinder\Image\GdImageProcessor;
@@ -54,6 +56,37 @@ final class ImageManagerTest extends TestCase
         self::assertSame(['width' => 400, 'height' => 200], $images->info('Images', 'source.png'));
         self::assertSame(['width' => 100, 'height' => 50], $images->info('Images', 'source-edited.png'));
         self::assertFileExists($this->directory . '/source.png');
+    }
+
+    public function testIntermediateActionsUseMaximumQualityAndFinalActionUsesRequestedQuality(): void
+    {
+        $processor = new class(new GdImageProcessor()) implements ImageProcessorInterface {
+            /** @var list<int> */
+            public array $qualities = [];
+
+            public function __construct(private readonly GdImageProcessor $inner) {}
+            public function supports(string $mimeType): bool { return $this->inner->supports($mimeType); }
+            public function dimensions(string $source): array { return $this->inner->dimensions($source); }
+            public function validate(string $source): array { return $this->inner->validate($source); }
+            public function isAnimated(string $source): bool { return $this->inner->isAnimated($source); }
+            public function thumbnail(string $source, string $destination, int $width, int $height): void { $this->inner->thumbnail($source, $destination, $width, $height); }
+            public function transform(string $source, string $destination, int $rotation, int $width, int $height, int $quality = 88): void { $this->qualities[] = $quality; $this->inner->transform($source, $destination, $rotation, $width, $height, $quality); }
+            public function crop(string $source, string $destination, int $x, int $y, int $width, int $height, int $quality = 88): void { $this->qualities[] = $quality; $this->inner->crop($source, $destination, $x, $y, $width, $height, $quality); }
+        };
+        $authorization = new class implements AuthorizationInterface {
+            public function isAuthenticated(): bool { return true; }
+            public function isGranted(string $operation, ResourceType $resource, string $path): bool { return true; }
+        };
+        $type = new ResourceType('Images', $this->directory, '/images', allowedExtensions: ['png'], allowedMimeTypes: ['image/png']);
+        $files = new FileManager(new ResourceRegistry([new ResourceStorage($type, new LocalStorageAdapter($this->directory, '/images'))]), $authorization, new EventDispatcher());
+        $images = new ImageManager($files, $processor, $this->directory . '/cache');
+
+        $images->applyActions('Images', 'source.png', [
+            ['type' => 'crop', 'x' => 0, 'y' => 0, 'width' => 200, 'height' => 100, 'quality' => 70],
+            ['type' => 'resize', 'width' => 100, 'height' => 100, 'quality' => 95],
+        ]);
+
+        self::assertSame([100, 95], $processor->qualities);
     }
 
     public function testConfiguredPresetCreatesDerivedImage(): void
@@ -265,6 +298,42 @@ final class ImageManagerTest extends TestCase
         self::assertSame(['width' => 400, 'height' => 200], $images->info('Images', $mark['entry']->path));
     }
 
+    public function testWatermarksAlwaysEncodeAtMaximumQuality(): void
+    {
+        $processor = new class(new GdImageProcessor()) implements ImageProcessorInterface, ImageEffectsProcessorInterface {
+            /** @var list<int> */
+            public array $watermarkQualities = [];
+
+            public function __construct(private readonly GdImageProcessor $inner) {}
+            public function supports(string $mimeType): bool { return $this->inner->supports($mimeType); }
+            public function dimensions(string $source): array { return $this->inner->dimensions($source); }
+            public function validate(string $source): array { return $this->inner->validate($source); }
+            public function isAnimated(string $source): bool { return $this->inner->isAnimated($source); }
+            public function thumbnail(string $source, string $destination, int $width, int $height): void { $this->inner->thumbnail($source, $destination, $width, $height); }
+            public function transform(string $source, string $destination, int $rotation, int $width, int $height, int $quality = 88): void { $this->inner->transform($source, $destination, $rotation, $width, $height, $quality); }
+            public function crop(string $source, string $destination, int $x, int $y, int $width, int $height, int $quality = 88): void { $this->inner->crop($source, $destination, $x, $y, $width, $height, $quality); }
+            public function optimize(string $source, string $destination, string $mimeType, int $quality): void { $this->inner->optimize($source, $destination, $mimeType, $quality); }
+            public function textWatermark(string $source, string $destination, string $text, string $position, int $opacity, int $scale, string $color, int $quality, ?int $x = null, ?int $y = null, string $font = 'interface'): void { $this->watermarkQualities[] = $quality; $this->inner->textWatermark($source, $destination, $text, $position, $opacity, $scale, $color, $quality, $x, $y, $font); }
+            public function imageWatermark(string $source, string $watermark, string $destination, string $position, int $opacity, int $scale, int $quality, ?int $x = null, ?int $y = null): void { $this->watermarkQualities[] = $quality; $this->inner->imageWatermark($source, $watermark, $destination, $position, $opacity, $scale, $quality, $x, $y); }
+        };
+        $authorization = new class implements AuthorizationInterface {
+            public function isAuthenticated(): bool { return true; }
+            public function isGranted(string $operation, ResourceType $resource, string $path): bool { return true; }
+        };
+        $type = new ResourceType('Images', $this->directory, '/images', allowedExtensions: ['png'], allowedMimeTypes: ['image/png']);
+        $files = new FileManager(new ResourceRegistry([new ResourceStorage($type, new LocalStorageAdapter($this->directory, '/images'))]), $authorization, new EventDispatcher());
+        $images = new ImageManager($files, $processor, $this->directory . '/cache');
+
+        $images->applyActions('Images', 'source.png', [[
+            'type' => 'watermarkText', 'text' => 'mark', 'position' => 'center', 'opacity' => 60, 'scale' => 25, 'quality' => 12,
+        ]]);
+        $images->applyActions('Images', 'source.png', [[
+            'type' => 'watermarkImage', 'resource' => 'Images', 'path' => 'source.png', 'position' => 'center', 'opacity' => 60, 'scale' => 25, 'quality' => 34,
+        ]]);
+
+        self::assertSame([100, 100], $processor->watermarkQualities);
+    }
+
     public function testBatchOptimizationReportsPartialResults(): void
     {
         $result = $this->manager()->applyBatch('Images', ['source.png', 'missing.png'], [
@@ -286,6 +355,18 @@ final class ImageManagerTest extends TestCase
             self::fail('Unicode text must not be rendered with the GD bitmap font.');
         } catch (SoFinderException $exception) {
             self::assertSame('watermark_font_unavailable', $exception->errorCode);
+        }
+    }
+
+    public function testRejectsUnknownWatermarkFont(): void
+    {
+        try {
+            $this->manager()->applyActions('Images', 'source.png', [[
+                'type' => 'watermarkText', 'text' => 'mark', 'font' => 'unknown', 'position' => 'center', 'opacity' => 60, 'scale' => 25,
+            ]]);
+            self::fail('An unknown watermark font must be rejected.');
+        } catch (SoFinderException $exception) {
+            self::assertSame('invalid_watermark_font', $exception->errorCode);
         }
     }
 

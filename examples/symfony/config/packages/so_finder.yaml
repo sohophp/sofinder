@@ -1,8 +1,9 @@
 so_finder:
   image_processing:
     driver: auto
-    # Configure an absolute TTF/OTF/TTC path before using Unicode text watermarks.
+    # An explicit font wins; otherwise SoFinder finds a system CJK font or caches Noto Sans CJK.
     watermark_font: null
+    watermark_font_auto_download: true
   signed_urls:
     enabled: true
     secret: '%kernel.secret%'

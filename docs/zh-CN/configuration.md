@@ -166,7 +166,7 @@ so_finder:
     recent: true
     favorites: true
     quick_access: true
-    quick_access_files: true
+    quick_access_files: false
     tags: true
     archive: true
     trash: true
@@ -181,7 +181,7 @@ so_finder:
     qr_code: true
 ```
 
-`quick_access` 独立控制快速访问，不再依赖收藏功能。`quick_access_files` 是“文件加入快速访问”的宿主上限。启用后，用户仍可在设置中自行关闭；宿主关闭后会隐藏用户开关并拒绝新增文件快捷项，但已有快捷项仍可移除。
+`favorites` 仅用于收藏文件。`quick_access` 独立控制固定到侧栏的文件夹，每个资源最多 12 个。`quick_access_files` 仅为兼容旧配置而保留，现已无实际作用并默认为 `false`。已知的旧文件快捷项不再显示，但仍可通过 Metadata API 移除。
 
 ## 主题
 

@@ -317,7 +317,7 @@ Action types are `crop`, `resize`, `rotate`, `preset`, `optimize`, `watermarkTex
 
 Returns `application/zip` named `sofinder-download.zip`; it is limited by resource selection, recursive entry and byte policies.
 
-`GET /api/metadata?resource=Files` returns `favorites`, up to 12 file-or-folder `quickAccess` paths, compatible `quickAccessEntries` display metadata (`name`, `directory`, `mimeType`, `exists`), `tags` keyed by path, and up to 50 recent `{path,touchedAt}` entries. Missing shortcuts remain visible with `exists: false` until the user opens or removes them. Use `PATCH /api/metadata` to update with:
+`GET /api/metadata?resource=Files` returns file-only `favorites`, up to 12 folder-only `quickAccess` paths, compatible `quickAccessEntries` display metadata (`name`, `directory`, `mimeType`, `exists`), `tags` keyed by path, and up to 50 recent `{path,touchedAt}` entries. Missing pinned folders remain visible with `exists: false` until the user opens or removes them. Use `PATCH /api/metadata` to update with:
 
 ```json
 {"resource":"Files","path":"manual.pdf","action":"favorite","favorite":true}
@@ -326,7 +326,7 @@ Returns `application/zip` named `sofinder-download.zip`; it is limited by resour
 {"resource":"Files","path":"manual.pdf","action":"touch"}
 ```
 
-When host configuration `features.quick_access_files` is disabled, adding a file returns `422 quick_access_file_disabled`; folders remain supported and existing file shortcuts remain removable.
+Adding a folder to Favorites returns `422 favorite_folder_unsupported`; adding a file to Quick access returns `422 quick_access_file_disabled`. The legacy `features.quick_access_files` setting is ignored, and existing file shortcuts remain removable.
 
 Clients may send `action: "forget"` after an authorized lookup confirms that a
 recent path disappeared outside SoFinder; this removes that path from favorites,

@@ -17,7 +17,7 @@ export function RecentPanel({ variant, items, labels, onOpen }: { variant: "side
   </div>;
 }
 
-export default function MetadataSidebarPanels({ favorites, quickAccessByResource, resources, currentResource, quickAccessScope, showFavorites, showQuickAccess, favoritesActive, labels, onOpenFavorites, onOpenFavorite, onOpenQuickAccess, onQuickAccessContext, onFavoriteContext }: {
+interface MetadataSidebarProps {
   favorites: string[];
   quickAccessByResource: Record<string, QuickAccessEntry[]>;
   resources: Array<{ name: string }>;
@@ -32,32 +32,43 @@ export default function MetadataSidebarPanels({ favorites, quickAccessByResource
   onOpenQuickAccess: (link: QuickAccessLink) => void;
   onQuickAccessContext: (link: QuickAccessLink, event: MouseEvent<HTMLButtonElement>) => void;
   onFavoriteContext: (path: string, event: MouseEvent<HTMLButtonElement>) => void;
-}) {
+}
+
+export function QuickAccessPanel({ quickAccessByResource, resources, currentResource, quickAccessScope, labels, onOpenQuickAccess, onQuickAccessContext }: MetadataSidebarProps) {
   const [quickCollapsed, setQuickCollapsed] = useState(false);
-  const [favoritesCollapsed, setFavoritesCollapsed] = useState(false);
   const quickAccess: QuickAccessLink[] = quickAccessScope === "resource"
     ? (quickAccessByResource[currentResource] || []).map(entry => ({ resource: currentResource, ...entry }))
     : resources.flatMap(item => (quickAccessByResource[item.name] || []).map(entry => ({ resource: item.name, ...entry })));
+  const pinnedFolders = quickAccess.filter(link => link.directory !== false);
+  return <div className={`sf-recent sf-recent-sidebar${quickCollapsed ? " collapsed" : ""}`}>
+    <SectionHeader title={labels.quickAccess} count={pinnedFolders.length} collapsed={quickCollapsed} onToggle={() => setQuickCollapsed(value => !value)}/>
+    <SectionContent collapsed={quickCollapsed}>
+    {pinnedFolders.length === 0 ? <p className="sf-recent-empty">{labels.quickAccessEmpty}</p> : pinnedFolders.slice(0, 12).map(link => <button className={link.exists ? "" : "missing"} key={`${link.resource}:${link.path}`} title={link.exists ? `${link.resource}: ${link.path}` : labels.missing} onClick={() => onOpenQuickAccess(link)} onContextMenu={event => onQuickAccessContext(link, event)}><span className="sf-recent-icon"><UiIcon name={!link.exists ? "warning" : "folder"}/></span><span><b>{link.name}</b><small>{link.exists ? (quickAccessScope === "all" ? `${link.resource} · ${parent(link.path, labels.home)}` : parent(link.path, labels.home)) : labels.missing}</small></span></button>)}
+    {pinnedFolders.length > 12 && <small className="sf-sidebar-overflow">+{pinnedFolders.length - 12} {labels.more}</small>}
+    </SectionContent>
+  </div>;
+}
+
+export function FavoritesPanel({ favorites, currentResource, favoritesActive, labels, onOpenFavorites, onOpenFavorite, onFavoriteContext }: MetadataSidebarProps) {
+  const [favoritesCollapsed, setFavoritesCollapsed] = useState(false);
   const favoritesUrl = new URL(window.location.href);
   favoritesUrl.searchParams.set("type", currentResource);
   favoritesUrl.searchParams.set("collection", "favorites");
   const favoritesHref = `${favoritesUrl.pathname}${favoritesUrl.search}${favoritesUrl.hash}`;
-  return <>
-    {showQuickAccess && <div className={`sf-recent sf-recent-sidebar${quickCollapsed ? " collapsed" : ""}`}>
-      <SectionHeader title={labels.quickAccess} count={quickAccess.length} collapsed={quickCollapsed} onToggle={() => setQuickCollapsed(value => !value)}/>
-      <SectionContent collapsed={quickCollapsed}>
-      {quickAccess.length === 0 ? <p className="sf-recent-empty">{labels.quickAccessEmpty}</p> : quickAccess.slice(0, 12).map(link => <button className={link.exists ? "" : "missing"} key={`${link.resource}:${link.path}`} title={link.exists ? `${link.resource}: ${link.path}` : labels.missing} onClick={() => onOpenQuickAccess(link)} onContextMenu={event => onQuickAccessContext(link, event)}><span className="sf-recent-icon"><UiIcon name={!link.exists ? "warning" : link.directory ? "folder" : "file"}/></span><span><b>{link.name}</b><small>{link.exists ? (quickAccessScope === "all" ? `${link.resource} · ${parent(link.path, labels.home)}` : parent(link.path, labels.home)) : labels.missing}</small></span></button>)}
-      {quickAccess.length > 12 && <small className="sf-sidebar-overflow">+{quickAccess.length - 12} {labels.more}</small>}
-      </SectionContent>
-    </div>}
-    {showFavorites && <div className={`sf-recent sf-recent-sidebar${favoritesCollapsed ? " collapsed" : ""}`}>
+  return <div className={`sf-recent sf-recent-sidebar${favoritesCollapsed ? " collapsed" : ""}`}>
       <SectionHeader title={labels.favorites} count={favorites.length} collapsed={favoritesCollapsed} onToggle={() => setFavoritesCollapsed(value => !value)}/>
       <SectionContent collapsed={favoritesCollapsed}>
       {favorites.length === 0 ? <p className="sf-recent-empty">{labels.favoritesEmpty}</p> : favorites.slice(0, 8).map(path => <button key={path} title={path} onClick={() => onOpenFavorite(path)} onContextMenu={event => onFavoriteContext(path, event)}><span className="sf-recent-icon"><UiIcon name="favorite"/></span><span><b>{path.split("/").pop()}</b><small>{parent(path, labels.home)}</small></span></button>)}
       {favorites.length > 8 && <small className="sf-sidebar-overflow">+{favorites.length - 8} {labels.more}</small>}
       <a className={`sf-sidebar-section-link${favoritesActive ? " active" : ""}`} href={favoritesHref} onClick={event => { event.preventDefault(); onOpenFavorites(); }}><span>{labels.favorites}</span><UiIcon name="chevron-right"/></a>
       </SectionContent>
-    </div>}
+    </div>;
+}
+
+export default function MetadataSidebarPanels(props: MetadataSidebarProps) {
+  return <>
+    {props.showQuickAccess && <QuickAccessPanel {...props}/>}
+    {props.showFavorites && <FavoritesPanel {...props}/>}
   </>;
 }
 

@@ -1,7 +1,7 @@
 import { t as e } from "./jsx-runtime-CmCsaYvT.js";
 import { t } from "./react-B5TC723I.js";
 import { n } from "./api-Cq-FmALq.js";
-import { t as r } from "./UiIcon-TSKzVe_e.js";
+import { t as r } from "./UiIcon-JdLj8VHV.js";
 import { n as i, t as a } from "./EntryVisuals-COz6M0oc.js";
 import { t as o } from "./format-GD3_dnvn.js";
 //#region src/components/AssetPropertiesPanel.tsx

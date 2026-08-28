@@ -50,38 +50,52 @@ final class MetadataManagerTest extends TestCase
         self::assertSame([], $store->get('actor', 'Files')['recent']);
     }
 
-    public function testQuickAccessAcceptsFilesAndFoldersAndEnforcesItsLimit(): void
+    public function testQuickAccessAcceptsFoldersAndEnforcesItsLimit(): void
     {
         $store = new JsonMetadataStore($this->metadataFile);
-        file_put_contents($this->directory . '/file.txt', 'x');
-        $this->manager($store)->quickAccess('Files', 'file.txt', true);
-        self::assertSame(['file.txt'], $store->get('actor', 'Files')['quickAccess']);
-
         foreach (range(1, 12) as $index) mkdir($this->directory . "/folder-$index");
-        foreach (range(1, 11) as $index) $this->manager($store)->quickAccess('Files', "folder-$index", true);
+        foreach (range(1, 12) as $index) $this->manager($store)->quickAccess('Files', "folder-$index", true);
         $this->expectException(SoFinderException::class);
         $this->expectExceptionMessage('limited to 12');
-        $this->manager($store)->quickAccess('Files', 'folder-12', true);
+        mkdir($this->directory . '/folder-13');
+        $this->manager($store)->quickAccess('Files', 'folder-13', true);
     }
 
-    public function testQuickAccessFilePolicyRejectsAddingButAllowsRemovingFiles(): void
+    public function testQuickAccessRejectsAddingButAllowsRemovingLegacyFiles(): void
     {
         $store = new JsonMetadataStore($this->metadataFile);
         file_put_contents($this->directory . '/file.txt', 'x');
         $store->setQuickAccess('actor', 'Files', 'file.txt', true);
 
         try {
-            $this->manager($store, false)->quickAccess('Files', 'file.txt', true);
-            self::fail('The host policy must reject adding a file.');
+            $this->manager($store)->quickAccess('Files', 'file.txt', true);
+            self::fail('Quick access must reject adding a file.');
         } catch (SoFinderException $exception) {
             self::assertSame('quick_access_file_disabled', $exception->errorCode);
         }
 
-        $this->manager($store, false)->quickAccess('Files', 'file.txt', false);
+        $this->manager($store)->quickAccess('Files', 'file.txt', false);
         self::assertSame([], $store->get('actor', 'Files')['quickAccess']);
     }
 
-    public function testQuickAccessEntriesDescribeFilesFoldersAndStalePaths(): void
+    public function testFavoritesAcceptFilesButRejectFolders(): void
+    {
+        $store = new JsonMetadataStore($this->metadataFile);
+        file_put_contents($this->directory . '/file.txt', 'x');
+        mkdir($this->directory . '/folder');
+
+        $this->manager($store)->favorite('Files', 'file.txt', true);
+        self::assertSame(['file.txt'], $store->get('actor', 'Files')['favorites']);
+
+        try {
+            $this->manager($store)->favorite('Files', 'folder', true);
+            self::fail('Favorites must reject folders.');
+        } catch (SoFinderException $exception) {
+            self::assertSame('favorite_folder_unsupported', $exception->errorCode);
+        }
+    }
+
+    public function testQuickAccessEntriesDescribeFoldersAndStalePathsAndHideLegacyFiles(): void
     {
         $store = new JsonMetadataStore($this->metadataFile);
         file_put_contents($this->directory . '/manual.txt', 'text');
@@ -91,11 +105,10 @@ final class MetadataManagerTest extends TestCase
         $entries = $this->manager($store)->quickAccessEntries('Files');
         $byPath = array_column($entries, null, 'path');
 
-        self::assertCount(3, $byPath);
-        self::assertArrayHasKey('manual.txt', $byPath);
+        self::assertCount(2, $byPath);
+        self::assertArrayNotHasKey('manual.txt', $byPath);
         self::assertArrayHasKey('manuals', $byPath);
         self::assertArrayHasKey('missing.txt', $byPath);
-        self::assertFalse($byPath['manual.txt']['directory']);
         self::assertTrue($byPath['manuals']['directory']);
         self::assertFalse($byPath['missing.txt']['exists']);
         self::assertNull($byPath['missing.txt']['directory']);
@@ -118,7 +131,7 @@ final class MetadataManagerTest extends TestCase
         $this->manager($store)->quickAccess('Files', 'folder', true);
     }
 
-    private function manager(MetadataStoreInterface $store, bool $allowQuickAccessFiles = true): MetadataManager
+    private function manager(MetadataStoreInterface $store): MetadataManager
     {
         $guard = new PathGuard();
         $resource = new ResourceType('Files', $this->directory, '/files', ['txt'], [], []);
@@ -131,6 +144,6 @@ final class MetadataManagerTest extends TestCase
             public function actorId(): string { return 'actor'; }
         };
 
-        return new MetadataManager(new FileManager($registry, $authorization, new EventDispatcher(), $guard), $store, $actors, $allowQuickAccessFiles);
+        return new MetadataManager(new FileManager($registry, $authorization, new EventDispatcher(), $guard), $store, $actors);
     }
 }

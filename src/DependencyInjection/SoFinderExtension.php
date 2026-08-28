@@ -79,6 +79,7 @@ use SohoPHP\SoFinder\Image\HybridImageProcessor;
 use SohoPHP\SoFinder\Image\ImageFormatRegistry;
 use SohoPHP\SoFinder\Image\ImagickImageProcessor;
 use SohoPHP\SoFinder\Image\ImageManager;
+use SohoPHP\SoFinder\Image\WatermarkFontResolver;
 use SohoPHP\SoFinder\Metadata\JsonMetadataStore;
 use SohoPHP\SoFinder\Health\HealthManager;
 use SohoPHP\SoFinder\Health\RuntimeHealthCheck;
@@ -280,6 +281,11 @@ final class SoFinderExtension extends Extension
             ]));
         $imageConfig = $config['image_processing'];
         $container->setDefinition(ImageFormatRegistry::class, new Definition(ImageFormatRegistry::class));
+        $container->setDefinition(WatermarkFontResolver::class, (new Definition(WatermarkFontResolver::class))->setArguments([
+            $imageConfig['watermark_font'],
+            $config['cache_dir'],
+            $imageConfig['watermark_font_auto_download'],
+        ]));
         $container->setDefinition(ImageProcessingLimits::class, (new Definition(ImageProcessingLimits::class))->setArguments([
             $imageConfig['max_width'],
             $imageConfig['max_height'],
@@ -295,9 +301,10 @@ final class SoFinderExtension extends Extension
         $container->setDefinition(GdImageProcessor::class, (new Definition(GdImageProcessor::class))
             ->setArgument('$maximumPixels', $imageConfig['max_single_frame_pixels'])
             ->setArgument('$formats', new Reference(ImageFormatRegistry::class))
-            ->setArgument('$watermarkFont', $imageConfig['watermark_font']));
+            ->setArgument('$watermarkFont', $imageConfig['watermark_font'])
+            ->setArgument('$watermarkFontResolver', new Reference(WatermarkFontResolver::class)));
         $container->setDefinition(ImagickImageProcessor::class, (new Definition(ImagickImageProcessor::class))
-            ->setArguments([new Reference(ImageFormatRegistry::class), new Reference(ImageProcessingLimits::class), $imageConfig['watermark_font']]));
+            ->setArguments([new Reference(ImageFormatRegistry::class), new Reference(ImageProcessingLimits::class), $imageConfig['watermark_font'], new Reference(WatermarkFontResolver::class)]));
         $container->setDefinition(HybridImageProcessor::class, (new Definition(HybridImageProcessor::class))
             ->setArguments([
                 new Reference(ImageFormatRegistry::class),

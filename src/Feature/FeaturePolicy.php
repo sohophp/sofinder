@@ -44,7 +44,7 @@ final readonly class FeaturePolicy
             'recent' => $this->enabled('recent'),
             'favorites' => $this->enabled('favorites'),
             'quickAccess' => $this->enabled('quick_access'),
-            'quickAccessFiles' => $this->enabled('quick_access_files'),
+            'quickAccessFiles' => false,
             'tags' => $this->enabled('tags'),
             'archive' => $this->enabled('archive'),
             'trash' => $this->enabled('trash'),

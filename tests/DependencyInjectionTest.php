@@ -27,9 +27,25 @@ use SohoPHP\SoFinder\Contract\AssetUsageStoreInterface;
 use SohoPHP\SoFinder\Contract\AssetAccessSessionStoreInterface;
 use SohoPHP\SoFinder\Contract\WorkspaceResolverInterface;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
+use SohoPHP\SoFinder\Image\WatermarkFontResolver;
 
 final class DependencyInjectionTest extends TestCase
 {
+    public function testWatermarkFontResolverUsesCacheAndAutoDownloadByDefault(): void
+    {
+        $cache = sys_get_temp_dir() . '/sofinder-di-font-cache';
+        $container = new ContainerBuilder();
+        (new SoFinderExtension())->load([[
+            'cache_dir' => $cache,
+            'resources' => ['Files' => ['root' => sys_get_temp_dir() . '/sofinder-di-files']],
+        ]], $container);
+
+        $definition = $container->getDefinition(WatermarkFontResolver::class);
+        self::assertNull($definition->getArgument(0));
+        self::assertSame($cache, $definition->getArgument(1));
+        self::assertTrue($definition->getArgument(2));
+    }
+
     public function testEnabledMalwareScanningRegistersUploadAndHealthServices(): void
     {
         $container = new ContainerBuilder();

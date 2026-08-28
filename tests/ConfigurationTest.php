@@ -43,7 +43,7 @@ final class ConfigurationTest extends TestCase
             'recent' => true,
             'favorites' => true,
             'quick_access' => true,
-            'quick_access_files' => true,
+            'quick_access_files' => false,
             'tags' => true,
             'archive' => true,
             'trash' => true,

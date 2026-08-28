@@ -3,9 +3,9 @@ import type { EntrySize, FeaturePreferences, FolderTreePlacement, ListColumnName
 
 export const defaultTools: ToolPreferences = { resize: false, crop: false, rotate: false, presets: false, process: false, batchRename: false };
 export const defaultViewSizes: ViewSizePreferences = { grid: "medium", list: "medium" };
-export const defaultFeatures: FeaturePreferences = { recent: false, favorites: false, sidebarFavorites: true, sidebarQuickAccess: true, quickAccessFiles: true, tags: false, archive: false, trash: true, folderTree: false, qrCode: false, autoCollapseUploads: true };
+export const defaultFeatures: FeaturePreferences = { recent: false, favorites: false, sidebarFavorites: true, sidebarQuickAccess: true, quickAccessFiles: false, tags: false, archive: false, trash: true, folderTree: false, qrCode: false, autoCollapseUploads: true };
 export const defaultListColumns: ListColumnPreferences = { size: true, modified: true, type: false };
-export const defaultFeatureAvailability = { recent: true, favorites: true, quickAccess: true, quickAccessFiles: true, tags: true, archive: true, trash: true, folderTree: true, batchRename: true, imageEditing: true, imageProcessing: true, documentPreview: true, securityStatus: true, folderUpload: true, textPreview: true, checksum: true, qrCode: true } as const;
+export const defaultFeatureAvailability = { recent: true, favorites: true, quickAccess: true, quickAccessFiles: false, tags: true, archive: true, trash: true, folderTree: true, batchRename: true, imageEditing: true, imageProcessing: true, documentPreview: true, securityStatus: true, folderUpload: true, textPreview: true, checksum: true, qrCode: true } as const;
 
 export const loadPreferences = <T extends object>(key: string, defaults: T): T => {
   try {

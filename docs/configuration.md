@@ -224,7 +224,7 @@ so_finder:
     recent: true
     favorites: true
     quick_access: true
-    quick_access_files: true
+    quick_access_files: false
     tags: true
     archive: true
     trash: true
@@ -239,7 +239,7 @@ so_finder:
     qr_code: true
 ```
 
-`quick_access` controls Quick access independently from Favorites. `quick_access_files` is the host-controlled upper bound for adding files to Quick access. When enabled, each user can still disable file additions in Settings. Disabling it at the host level hides that user preference and rejects new file shortcuts; existing shortcuts remain removable.
+`favorites` stores files only. `quick_access` independently controls folders pinned to the sidebar, up to 12 per resource. `quick_access_files` is retained only so older configuration files remain valid; it has no effect and defaults to `false`. Known legacy file shortcuts are hidden but can still be removed through the metadata API.
 
 ## Theme
 

@@ -3,6 +3,51 @@ import { t as e } from "./jsx-runtime-CmCsaYvT.js";
 var t = e(), n = {
 	file: /* @__PURE__ */ (0, t.jsxs)(t.Fragment, { children: [/* @__PURE__ */ (0, t.jsx)("path", { d: "M6 3h8l4 4v14H6z" }), /* @__PURE__ */ (0, t.jsx)("path", { d: "M14 3v5h5" })] }),
 	folder: /* @__PURE__ */ (0, t.jsx)("path", { d: "M3 6.5h6l2 2h10v10.5H3z" }),
+	pin: /* @__PURE__ */ (0, t.jsxs)(t.Fragment, { children: [/* @__PURE__ */ (0, t.jsx)("path", { d: "m9 4 6 6M8 9l7-4 4 4-4 7-3-3-6 6" }), /* @__PURE__ */ (0, t.jsx)("path", { d: "m6 18-2 2" })] }),
+	grip: /* @__PURE__ */ (0, t.jsxs)(t.Fragment, { children: [
+		/* @__PURE__ */ (0, t.jsx)("circle", {
+			cx: "9",
+			cy: "6",
+			r: "1",
+			fill: "currentColor",
+			stroke: "none"
+		}),
+		/* @__PURE__ */ (0, t.jsx)("circle", {
+			cx: "15",
+			cy: "6",
+			r: "1",
+			fill: "currentColor",
+			stroke: "none"
+		}),
+		/* @__PURE__ */ (0, t.jsx)("circle", {
+			cx: "9",
+			cy: "12",
+			r: "1",
+			fill: "currentColor",
+			stroke: "none"
+		}),
+		/* @__PURE__ */ (0, t.jsx)("circle", {
+			cx: "15",
+			cy: "12",
+			r: "1",
+			fill: "currentColor",
+			stroke: "none"
+		}),
+		/* @__PURE__ */ (0, t.jsx)("circle", {
+			cx: "9",
+			cy: "18",
+			r: "1",
+			fill: "currentColor",
+			stroke: "none"
+		}),
+		/* @__PURE__ */ (0, t.jsx)("circle", {
+			cx: "15",
+			cy: "18",
+			r: "1",
+			fill: "currentColor",
+			stroke: "none"
+		})
+	] }),
 	warning: /* @__PURE__ */ (0, t.jsxs)(t.Fragment, { children: [/* @__PURE__ */ (0, t.jsx)("path", { d: "m12 3 9 17H3z" }), /* @__PURE__ */ (0, t.jsx)("path", { d: "M12 9v5M12 17h.01" })] }),
 	"add-folder": /* @__PURE__ */ (0, t.jsxs)(t.Fragment, { children: [/* @__PURE__ */ (0, t.jsx)("path", { d: "M3 6.5h6l2 2h10v10.5H3z" }), /* @__PURE__ */ (0, t.jsx)("path", { d: "M12 11v6M9 14h6" })] }),
 	upload: /* @__PURE__ */ (0, t.jsxs)(t.Fragment, { children: [/* @__PURE__ */ (0, t.jsx)("path", { d: "M12 16V4M7.5 8.5 12 4l4.5 4.5" }), /* @__PURE__ */ (0, t.jsx)("path", { d: "M4 15v5h16v-5" })] }),

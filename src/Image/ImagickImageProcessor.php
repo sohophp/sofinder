@@ -16,6 +16,7 @@ final readonly class ImagickImageProcessor implements ImageProcessorInterface, I
         private ImageFormatRegistry $formats = new ImageFormatRegistry(),
         private ImageProcessingLimits $limits = new ImageProcessingLimits(),
         private ?string $watermarkFont = null,
+        private ?WatermarkFontResolver $watermarkFontResolver = null,
     ) {
     }
 
@@ -219,7 +220,7 @@ final readonly class ImagickImageProcessor implements ImageProcessorInterface, I
         });
     }
 
-    public function textWatermark(string $source, string $destination, string $text, string $position, int $opacity, int $scale, string $color, int $quality): void
+    public function textWatermark(string $source, string $destination, string $text, string $position, int $opacity, int $scale, string $color, int $quality, ?int $x = null, ?int $y = null, string $font = 'interface'): void
     {
         $text = trim($text);
         if ($text === '' || mb_strlen($text) > 200) {
@@ -228,9 +229,9 @@ final readonly class ImagickImageProcessor implements ImageProcessorInterface, I
         if (preg_match('/^#[0-9a-fA-F]{6}$/D', $color) !== 1) {
             throw new SoFinderException('Watermark color must be a six-digit hexadecimal color.', 'invalid_watermark_color', 422);
         }
-        $this->assertWatermarkSettings($position, $opacity, $scale);
+        $this->assertWatermarkSettings($position, $opacity, $scale, $x, $y);
         $this->assertQuality($quality);
-        $this->withResourceLimits(function () use ($source, $destination, $text, $position, $opacity, $scale, $color, $quality): void {
+        $this->withResourceLimits(function () use ($source, $destination, $text, $position, $opacity, $scale, $color, $quality, $x, $y, $font): void {
             $probe = $this->probe($source);
             $this->assertEditableFrames($probe['frames']);
             $image = $this->read($source, $probe['coder'], true);
@@ -240,8 +241,9 @@ final readonly class ImagickImageProcessor implements ImageProcessorInterface, I
                 $this->orient($image);
                 $draw->setFillColor(new \ImagickPixel($color));
                 $draw->setFillOpacity($opacity / 100);
-                if ($this->watermarkFont !== null && is_readable($this->watermarkFont)) {
-                    $draw->setFont($this->watermarkFont);
+                $watermarkFont = $this->watermarkFontResolver?->resolve($font) ?? $this->watermarkFont;
+                if ($watermarkFont !== null && is_readable($watermarkFont)) {
+                    $draw->setFont($watermarkFont);
                 } elseif (preg_match('/[^\x20-\x7E]/', $text) === 1) {
                     throw new SoFinderException('A configured TrueType font is required for Unicode watermark text.', 'watermark_font_unavailable', 503);
                 }
@@ -249,8 +251,8 @@ final readonly class ImagickImageProcessor implements ImageProcessorInterface, I
                 $metrics = $image->queryFontMetrics($draw, $text);
                 $markWidth = max(1, (int) ceil((float) ($metrics['textWidth'] ?? 1)));
                 $markHeight = max(1, (int) ceil((float) ($metrics['textHeight'] ?? 1)));
-                [$x, $top] = $this->watermarkCoordinates($image->getImageWidth(), $image->getImageHeight(), $markWidth, $markHeight, $position);
-                $image->annotateImage($draw, $x, $top + $markHeight, 0, $text);
+                [$left, $top] = $this->watermarkCoordinates($image->getImageWidth(), $image->getImageHeight(), $markWidth, $markHeight, $position, $x, $y);
+                $image->annotateImage($draw, $left, $top + $markHeight, 0, $text);
                 $image->setImageFormat($format);
                 $image->setImageCompressionQuality($quality);
                 $image->stripImage();
@@ -264,11 +266,11 @@ final readonly class ImagickImageProcessor implements ImageProcessorInterface, I
         });
     }
 
-    public function imageWatermark(string $source, string $watermark, string $destination, string $position, int $opacity, int $scale, int $quality): void
+    public function imageWatermark(string $source, string $watermark, string $destination, string $position, int $opacity, int $scale, int $quality, ?int $x = null, ?int $y = null): void
     {
-        $this->assertWatermarkSettings($position, $opacity, $scale);
+        $this->assertWatermarkSettings($position, $opacity, $scale, $x, $y);
         $this->assertQuality($quality);
-        $this->withResourceLimits(function () use ($source, $watermark, $destination, $position, $opacity, $scale, $quality): void {
+        $this->withResourceLimits(function () use ($source, $watermark, $destination, $position, $opacity, $scale, $quality, $x, $y): void {
             $probe = $this->probe($source);
             $markProbe = $this->probe($watermark);
             $this->assertEditableFrames($probe['frames']);
@@ -288,8 +290,8 @@ final readonly class ImagickImageProcessor implements ImageProcessorInterface, I
                 $mark->resizeImage($targetWidth, $targetHeight, \Imagick::FILTER_LANCZOS, 1);
                 $mark->setImageAlphaChannel(\Imagick::ALPHACHANNEL_ACTIVATE);
                 $mark->evaluateImage(\Imagick::EVALUATE_MULTIPLY, $opacity / 100, \Imagick::CHANNEL_ALPHA);
-                [$x, $y] = $this->watermarkCoordinates($image->getImageWidth(), $image->getImageHeight(), $targetWidth, $targetHeight, $position);
-                $image->compositeImage($mark, \Imagick::COMPOSITE_OVER, $x, $y);
+                [$left, $top] = $this->watermarkCoordinates($image->getImageWidth(), $image->getImageHeight(), $targetWidth, $targetHeight, $position, $x, $y);
+                $image->compositeImage($mark, \Imagick::COMPOSITE_OVER, $left, $top);
                 $image->setImageFormat($format);
                 $image->setImageCompressionQuality($quality);
                 $image->stripImage();
@@ -303,10 +305,13 @@ final readonly class ImagickImageProcessor implements ImageProcessorInterface, I
         });
     }
 
-    private function assertWatermarkSettings(string $position, int $opacity, int $scale): void
+    private function assertWatermarkSettings(string $position, int $opacity, int $scale, ?int $x, ?int $y): void
     {
-        if (!in_array($position, ['top-left', 'top-right', 'center', 'bottom-left', 'bottom-right'], true)) {
+        if (!in_array($position, ['top-left', 'top-right', 'center', 'bottom-left', 'bottom-right', 'custom'], true)) {
             throw new SoFinderException('The watermark position is invalid.', 'invalid_watermark_position', 422);
+        }
+        if ($position === 'custom' && ($x === null || $y === null || $x < 0 || $x > 100 || $y < 0 || $y > 100)) {
+            throw new SoFinderException('Custom watermark coordinates must be percentages between 0 and 100.', 'invalid_watermark_position', 422);
         }
         if ($opacity < 1 || $opacity > 100 || $scale < 5 || $scale > 80) {
             throw new SoFinderException('Watermark opacity or scale is outside the allowed range.', 'invalid_watermark_settings', 422);
@@ -314,10 +319,11 @@ final readonly class ImagickImageProcessor implements ImageProcessorInterface, I
     }
 
     /** @return array{int,int} */
-    private function watermarkCoordinates(int $width, int $height, int $markWidth, int $markHeight, string $position): array
+    private function watermarkCoordinates(int $width, int $height, int $markWidth, int $markHeight, string $position, ?int $x, ?int $y): array
     {
         $margin = max(4, (int) round(min($width, $height) * 0.02));
         return match ($position) {
+            'custom' => [(int) round(max(0, $width - $markWidth) * (int) $x / 100), (int) round(max(0, $height - $markHeight) * (int) $y / 100)],
             'top-left' => [$margin, $margin],
             'top-right' => [max(0, $width - $markWidth - $margin), $margin],
             'bottom-left' => [$margin, max(0, $height - $markHeight - $margin)],

@@ -85,8 +85,9 @@ Settings can enable:
 The **Preference profiles** section saves the current tools, optional features, list columns, grid/list sizes, folder-navigation position, Quick access scope, interface scale and same-name upload strategy as a named profile. Up to 10 profiles are stored in the current browser; saving the same name updates it, and applying a profile changes the interface immediately. **Restore system defaults** resets the complete preference set, including panel and list-column widths; it is separate from layout presets.
 
 - **Recent**: records recently selected paths for your account.
-- **Favorites**: marks one selected item and lists up to eight shortcuts in the sidebar. The Favorites heading links to a dedicated, searchable page at `collection=favorites`, where every saved link can be opened or removed.
-- **Quick access**: operates independently from Favorites. Folders can always be pinned; each user can decide whether it accepts files when the host permits it. It shows links from all storage roots by default, can be limited to the current root, uses distinct file/folder icons, marks stale links, and supports opening or right-click removal. Its sidebar display remains bounded to 12 links.
+- **Favorite files**: marks files only and lists up to eight shortcuts in the sidebar. The heading links to a dedicated, searchable page at `collection=favorites`, where every saved file can be opened or removed.
+- **Pinned folders**: operates independently from Favorites and accepts folders only. It shows folders from all storage roots by default, can be limited to the current root, marks stale folders, and supports opening or right-click removal. Its sidebar display remains bounded to 12 folders.
+- **Sidebar layout**: drag the six-dot handle on Pinned folders, Favorite files, Recent or Folder navigation to move it between the left and right sidebars or change its order. The arrangement is saved in the current browser. Focus a handle and use the arrow keys as a keyboard alternative.
 - **Tags**: assigns up to 10 tags, each 1–30 visible characters. In tag search, separate terms with `,` or `，`; every term must match at least one tag.
 - **Folder navigation**, which can be placed in the left or right sidebar per user, plus **Download ZIP** and **Recycle bin** controls.
 

@@ -79,6 +79,57 @@ final class GdImageProcessorTest extends TestCase
         self::assertSame('image/png', $size['mime']);
     }
 
+    public function testPlacesImageWatermarkAtCustomPercentageCoordinates(): void
+    {
+        $watermark = tempnam(sys_get_temp_dir(), 'sofinder-watermark-') ?: throw new \RuntimeException('Unable to create watermark fixture.');
+        $mark = imagecreatetruecolor(20, 10);
+        imagefill($mark, 0, 0, imagecolorallocate($mark, 240, 20, 20));
+        imagepng($mark, $watermark);
+        unset($mark);
+
+        try {
+            (new GdImageProcessor())->imageWatermark($this->source, $watermark, $this->destination, 'custom', 100, 10, 88, 100, 100);
+            $result = imagecreatefrompng($this->destination);
+            self::assertInstanceOf(\GdImage::class, $result);
+            $bottomRight = imagecolorsforindex($result, imagecolorat($result, 399, 199));
+            $topLeft = imagecolorsforindex($result, imagecolorat($result, 0, 0));
+            self::assertGreaterThan($bottomRight['blue'], $bottomRight['red']);
+            self::assertGreaterThan($topLeft['red'], $topLeft['blue']);
+            unset($result);
+        } finally {
+            @unlink($watermark);
+        }
+    }
+
+    public function testTallImageWatermarkIsScaledToFitTheImageHeight(): void
+    {
+        $watermark = tempnam(sys_get_temp_dir(), 'sofinder-watermark-tall-') ?: throw new \RuntimeException('Unable to create watermark fixture.');
+        $mark = imagecreatetruecolor(100, 800);
+        imagefill($mark, 0, 0, imagecolorallocate($mark, 240, 20, 20));
+        imagepng($mark, $watermark);
+        unset($mark);
+
+        try {
+            (new GdImageProcessor())->imageWatermark($this->source, $watermark, $this->destination, 'custom', 100, 25, 95, 0, 0);
+            $result = imagecreatefrompng($this->destination);
+            self::assertInstanceOf(\GdImage::class, $result);
+            $inside = imagecolorsforindex($result, imagecolorat($result, 24, 100));
+            $outside = imagecolorsforindex($result, imagecolorat($result, 25, 100));
+            self::assertGreaterThan($inside['blue'], $inside['red']);
+            self::assertGreaterThan($outside['red'], $outside['blue']);
+            unset($result);
+        } finally {
+            @unlink($watermark);
+        }
+    }
+
+    public function testRejectsIncompleteCustomWatermarkCoordinates(): void
+    {
+        $this->expectException(SoFinderException::class);
+        $this->expectExceptionMessage('percentages between 0 and 100');
+        (new GdImageProcessor())->textWatermark($this->source, $this->destination, 'mark', 'custom', 60, 25, '#ffffff', 88, 50, null);
+    }
+
     public function testRejectsCropOutsideImage(): void
     {
         $this->expectException(SoFinderException::class);

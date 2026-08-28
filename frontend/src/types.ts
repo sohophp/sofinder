@@ -281,10 +281,11 @@ export type ImageAction =
   | { type: "resize"; width: number; height: number; quality?: number }
   | { type: "preset"; name: string }
   | { type: "optimize"; format: "original" | string; quality: number }
-  | { type: "watermarkText"; text: string; position: WatermarkPosition; opacity: number; scale: number; color: string; quality: number }
-  | { type: "watermarkImage"; resource: string; path: string; position: WatermarkPosition; opacity: number; scale: number; quality: number };
+  | { type: "watermarkText"; text: string; font?: WatermarkFont; position: WatermarkPosition; x?: number; y?: number; opacity: number; scale: number; color: string; quality: number }
+  | { type: "watermarkImage"; resource: string; path: string; position: WatermarkPosition; x?: number; y?: number; opacity: number; scale: number; quality: number };
 
-export type WatermarkPosition = "top-left" | "top-right" | "center" | "bottom-left" | "bottom-right";
+export type WatermarkPosition = "top-left" | "top-right" | "center" | "bottom-left" | "bottom-right" | "custom";
+export type WatermarkFont = "interface" | "sans" | "serif";
 
 export interface ImageBatchResult {
   total: number;

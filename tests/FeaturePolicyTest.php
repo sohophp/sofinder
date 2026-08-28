@@ -10,9 +10,9 @@ use SohoPHP\SoFinder\Feature\FeaturePolicy;
 
 final class FeaturePolicyTest extends TestCase
 {
-    public function testDefaultsRemainBackwardCompatible(): void
+    public function testDefaultsExposeFolderOnlyQuickAccess(): void
     {
-        self::assertSame([], array_filter((new FeaturePolicy())->browserAvailability(), static fn (bool $enabled): bool => !$enabled));
+        self::assertSame(['quickAccessFiles' => false], array_filter((new FeaturePolicy())->browserAvailability(), static fn (bool $enabled): bool => !$enabled));
     }
 
     public function testDisabledFeatureIsNotPublishedAndCannotBeInvoked(): void

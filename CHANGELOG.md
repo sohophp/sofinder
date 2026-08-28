@@ -2,6 +2,40 @@
 
 ## Unreleased
 
+## 0.1.0-beta.27 - 2026-08-28
+
+- Make pinned folders, favorite files, recent items and folder navigation
+  draggable between the left and right sidebars and sortable within each side,
+  with persistent layout and keyboard arrow-key controls.
+- Separate saved navigation by purpose: Favorites now accepts files only, while
+  Quick access is presented as pinned sidebar folders and accepts folders only.
+  Legacy configuration and removable stale metadata remain compatible.
+- Consolidate single-image crop, rotation, resize, preset, optimization and
+  watermark actions in a responsive editor with accurate image-watermark
+  previews and freely draggable percentage-based placement.
+- Add compact Interface Sans, Clean Sans and Elegant Serif watermark choices,
+  resolving each from explicit configuration or installed CJK fonts with an
+  optional locked and SHA-256-verified, on-demand Noto CJK cache download.
+- Refresh the editor source after image changes and on every reopen so an
+  overwritten watermarked image cannot be replaced by a stale browser copy.
+- Encode watermark-only output at quality 100; lower quality is now applied
+  only when image optimization is explicitly enabled.
+- Open grouping choices in a compact right-side fly-out, automatically moving
+  it to the left when the available viewport space is insufficient.
+- Restore the batch-rename dialog's structured form and bordered preview table,
+  with full-width pattern input, readable guidance and responsive spacing.
+- Align right-side folder navigation with the left sidebar using the same
+  outlined folder icons, compact rows, indentation and selection feedback.
+- Match adaptive image-watermark previews to the server's aspect-ratio and
+  height-cap calculations, and avoid unnecessary quality loss across chained
+  image actions by encoding intermediate results at maximum quality.
+- Consolidate Windows-inspired large, medium and small icon layouts, list,
+  details and content rows, compact density, panes and list columns into one
+  accessible, persistent View menu.
+- Move the supported name, modified-time, type and size ordering controls,
+  direction choices and local grouping into an accessible Windows-inspired
+  Sort menu while omitting metadata the file API does not provide.
+
 ## 0.1.0-beta.26 - 2026-08-28
 
 - Return a constructible CKEditor 5 upload plugin compatible with current

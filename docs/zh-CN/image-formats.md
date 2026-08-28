@@ -29,8 +29,9 @@ so_finder:
     disk_bytes: 1073741824
     threads: 1
     timeout_seconds: 30
-    # 非 ASCII 文字水印必须配置；仅使用 ASCII 时可保持 null。
+    # 可选覆盖；否则使用系统 CJK 字体或经过校验的字体缓存。
     watermark_font: /usr/share/fonts/truetype/noto/NotoSansCJK-Regular.ttc
+    watermark_font_auto_download: true
 ```
 
 Imagick 只会接收由 Registry 产生的固定 Coder，永远不执行自动 SVG、PDF、PostScript、URL 或 Pseudo-protocol Dispatch。Memory、Map、Disk、Thread 与 Time Limit 仅套用于各次操作，完成后恢复。公开 Edit Capability 前，会通过有界 Round Trip 验证 Encoder Availability。
@@ -39,7 +40,7 @@ Imagick 只会接收由 Registry 产生的固定 Coder，永远不执行自动 S
 
 “压缩 / 水印”图片工具在用户工具栏中默认关闭，可在“设置”中启用。它提供质量可调的重新压缩、运行时支持的 JPEG/PNG/WebP/AVIF 转换、文字水印和图片水印。单批最多处理 100 张选中图片，并为每项返回独立结果。
 
-格式转换始终另存副本；同格式压缩和水印可以另存或覆盖。动画和多页图片会被拒绝以免静默丢帧，水印图片仍经过正常资源权限检查。Unicode 文字必须配置可读的绝对路径 `watermark_font`；否则 API 返回 `watermark_font_unavailable`，不会生成乱码。
+格式转换始终另存副本；同格式压缩和水印可以另存或覆盖。动画和多页图片会被拒绝以免静默丢帧，水印图片仍经过正常资源权限检查。文字水印提供紧凑的“界面黑体、清晰黑体、典雅宋体”三种选择；默认使用界面黑体，保持最初编辑界面的字体风格。所选字体优先使用显式配置的 `watermark_font`（仅默认样式）或系统 CJK 字体；如果都不存在且启用了 `watermark_font_auto_download`，只会从官方仓库下载当前选中的固定版本 Noto CJK 字体，校验 SHA-256 后缓存到 `cache_dir/fonts`，并用文件锁避免并发重复下载。将该选项设为 `false` 可禁止自动联网。最终仍无可用字体时，Unicode 文字会返回 `watermark_font_unavailable`，不会生成乱码。
 
 ## 一般非 Web 图片文件
 

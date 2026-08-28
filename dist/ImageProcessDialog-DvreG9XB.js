@@ -1,15 +1,15 @@
 import { t as e } from "./jsx-runtime-CmCsaYvT.js";
 import { t } from "./react-B5TC723I.js";
-import { t as n } from "./Modal-Dw1vVt5K.js";
+import { t as n } from "./Modal-ClPLM5jI.js";
 //#region src/components/ImageProcessDialog.tsx
 var r = t(), i = e();
 function a({ entries: e, resource: t, formats: a, labels: o, onClose: s, onApply: c }) {
-	let [l, u] = (0, r.useState)("optimize"), [d, f] = (0, r.useState)(82), [p, m] = (0, r.useState)("original"), [h, g] = (0, r.useState)("SoFinder"), [_, v] = (0, r.useState)("#ffffff"), [y, b] = (0, r.useState)(t), [x, S] = (0, r.useState)(""), [C, w] = (0, r.useState)("bottom-right"), [T, E] = (0, r.useState)(60), [D, O] = (0, r.useState)(25), [k, A] = (0, r.useState)("copy"), [j, M] = (0, r.useState)(!1), [N, P] = (0, r.useState)(""), F = l === "optimize" && p !== "original" ? "copy" : k, I = e.length === 0 || l === "text" && h.trim() === "" || l === "image" && x.trim() === "", L = async () => {
+	let [l, u] = (0, r.useState)("optimize"), [d, f] = (0, r.useState)(82), [p, m] = (0, r.useState)("original"), [h, g] = (0, r.useState)("SoFinder"), [_, v] = (0, r.useState)("interface"), [y, b] = (0, r.useState)("#ffffff"), [x, S] = (0, r.useState)(t), [C, w] = (0, r.useState)(""), [T, E] = (0, r.useState)("bottom-right"), [D, O] = (0, r.useState)(60), [k, A] = (0, r.useState)(25), [j, M] = (0, r.useState)("copy"), [N, P] = (0, r.useState)(!1), [F, I] = (0, r.useState)(""), L = l === "optimize" && p !== "original" ? "copy" : j, R = e.length === 0 || l === "text" && h.trim() === "" || l === "image" && C.trim() === "", z = async () => {
 		let e = {
-			position: C,
-			opacity: T,
-			scale: D,
-			quality: d
+			position: T,
+			opacity: D,
+			scale: k,
+			quality: 100
 		}, n = l === "optimize" ? {
 			type: "optimize",
 			format: p,
@@ -17,21 +17,22 @@ function a({ entries: e, resource: t, formats: a, labels: o, onClose: s, onApply
 		} : l === "text" ? {
 			type: "watermarkText",
 			text: h.trim(),
-			color: _,
+			font: _,
+			color: y,
 			...e
 		} : {
 			type: "watermarkImage",
-			resource: y.trim() || t,
-			path: x.trim(),
+			resource: x.trim() || t,
+			path: C.trim(),
 			...e
 		};
-		M(!0), P("");
+		P(!0), I("");
 		try {
-			await c([n], { mode: F });
+			await c([n], { mode: L });
 		} catch (e) {
-			P(e instanceof Error ? e.message : String(e));
+			I(e instanceof Error ? e.message : String(e));
 		} finally {
-			M(!1);
+			P(!1);
 		}
 	};
 	return /* @__PURE__ */ (0, i.jsxs)(n, {
@@ -47,9 +48,9 @@ function a({ entries: e, resource: t, formats: a, labels: o, onClose: s, onApply
 			}),
 			/* @__PURE__ */ (0, i.jsx)("button", {
 				className: "primary",
-				disabled: j || I,
-				onClick: () => void L(),
-				children: j ? o.processing : o.apply
+				disabled: N || R,
+				onClick: () => void z(),
+				children: N ? o.processing : o.apply
 			})
 		] }),
 		children: [
@@ -85,33 +86,54 @@ function a({ entries: e, resource: t, formats: a, labels: o, onClose: s, onApply
 							children: e.toUpperCase()
 						}, e))]
 					})] }),
-					l === "text" && /* @__PURE__ */ (0, i.jsxs)(i.Fragment, { children: [/* @__PURE__ */ (0, i.jsxs)("label", {
-						className: "sf-process-wide",
-						children: [o.watermarkText, /* @__PURE__ */ (0, i.jsx)("input", {
-							value: h,
-							maxLength: 200,
-							onChange: (e) => g(e.target.value)
-						})]
-					}), /* @__PURE__ */ (0, i.jsxs)("label", { children: [o.color, /* @__PURE__ */ (0, i.jsx)("input", {
-						type: "color",
-						value: _,
-						onChange: (e) => v(e.target.value)
-					})] })] }),
+					l === "text" && /* @__PURE__ */ (0, i.jsxs)(i.Fragment, { children: [
+						/* @__PURE__ */ (0, i.jsxs)("label", {
+							className: "sf-process-wide",
+							children: [o.watermarkText, /* @__PURE__ */ (0, i.jsx)("input", {
+								value: h,
+								maxLength: 200,
+								onChange: (e) => g(e.target.value)
+							})]
+						}),
+						/* @__PURE__ */ (0, i.jsxs)("label", { children: [o.watermarkFont, /* @__PURE__ */ (0, i.jsxs)("select", {
+							value: _,
+							onChange: (e) => v(e.target.value),
+							children: [
+								/* @__PURE__ */ (0, i.jsx)("option", {
+									value: "interface",
+									children: o.interfaceFont
+								}),
+								/* @__PURE__ */ (0, i.jsx)("option", {
+									value: "sans",
+									children: o.sansFont
+								}),
+								/* @__PURE__ */ (0, i.jsx)("option", {
+									value: "serif",
+									children: o.serifFont
+								})
+							]
+						})] }),
+						/* @__PURE__ */ (0, i.jsxs)("label", { children: [o.color, /* @__PURE__ */ (0, i.jsx)("input", {
+							type: "color",
+							value: y,
+							onChange: (e) => b(e.target.value)
+						})] })
+					] }),
 					l === "image" && /* @__PURE__ */ (0, i.jsxs)(i.Fragment, { children: [/* @__PURE__ */ (0, i.jsxs)("label", { children: [o.watermarkResource, /* @__PURE__ */ (0, i.jsx)("input", {
-						value: y,
-						onChange: (e) => b(e.target.value)
+						value: x,
+						onChange: (e) => S(e.target.value)
 					})] }), /* @__PURE__ */ (0, i.jsxs)("label", {
 						className: "sf-process-wide",
 						children: [o.watermarkPath, /* @__PURE__ */ (0, i.jsx)("input", {
-							value: x,
+							value: C,
 							placeholder: "branding/logo.png",
-							onChange: (e) => S(e.target.value)
+							onChange: (e) => w(e.target.value)
 						})]
 					})] }),
 					l !== "optimize" && /* @__PURE__ */ (0, i.jsxs)(i.Fragment, { children: [
 						/* @__PURE__ */ (0, i.jsxs)("label", { children: [o.position, /* @__PURE__ */ (0, i.jsxs)("select", {
-							value: C,
-							onChange: (e) => w(e.target.value),
+							value: T,
+							onChange: (e) => E(e.target.value),
 							children: [
 								/* @__PURE__ */ (0, i.jsx)("option", {
 									value: "top-left",
@@ -138,31 +160,31 @@ function a({ entries: e, resource: t, formats: a, labels: o, onClose: s, onApply
 						/* @__PURE__ */ (0, i.jsxs)("label", { children: [
 							o.opacity,
 							": ",
-							T,
+							D,
 							"%",
 							/* @__PURE__ */ (0, i.jsx)("input", {
 								type: "range",
 								min: "1",
 								max: "100",
-								value: T,
-								onChange: (e) => E(Number(e.target.value))
+								value: D,
+								onChange: (e) => O(Number(e.target.value))
 							})
 						] }),
 						/* @__PURE__ */ (0, i.jsxs)("label", { children: [
 							o.scale,
 							": ",
-							D,
+							k,
 							"%",
 							/* @__PURE__ */ (0, i.jsx)("input", {
 								type: "range",
 								min: "5",
 								max: "80",
-								value: D,
-								onChange: (e) => O(Number(e.target.value))
+								value: k,
+								onChange: (e) => A(Number(e.target.value))
 							})
 						] })
 					] }),
-					/* @__PURE__ */ (0, i.jsxs)("label", { children: [
+					l === "optimize" && /* @__PURE__ */ (0, i.jsxs)("label", { children: [
 						o.quality,
 						": ",
 						d,
@@ -175,9 +197,9 @@ function a({ entries: e, resource: t, formats: a, labels: o, onClose: s, onApply
 						})
 					] }),
 					/* @__PURE__ */ (0, i.jsxs)("label", { children: [o.saveMode, /* @__PURE__ */ (0, i.jsxs)("select", {
-						value: F,
+						value: L,
 						disabled: l === "optimize" && p !== "original",
-						onChange: (e) => A(e.target.value),
+						onChange: (e) => M(e.target.value),
 						children: [/* @__PURE__ */ (0, i.jsx)("option", {
 							value: "copy",
 							children: o.saveCopy
@@ -192,14 +214,14 @@ function a({ entries: e, resource: t, formats: a, labels: o, onClose: s, onApply
 				className: "sf-configured-limits",
 				children: o.conversionCopyHint
 			}),
-			F === "overwrite" && /* @__PURE__ */ (0, i.jsx)("p", {
+			L === "overwrite" && /* @__PURE__ */ (0, i.jsx)("p", {
 				className: "sf-warning",
 				children: o.overwriteWarning
 			}),
-			N && /* @__PURE__ */ (0, i.jsx)("p", {
+			F && /* @__PURE__ */ (0, i.jsx)("p", {
 				className: "sf-warning",
 				role: "alert",
-				children: N
+				children: F
 			})
 		]
 	});

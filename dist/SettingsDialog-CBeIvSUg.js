@@ -1,6 +1,6 @@
 import { t as e } from "./jsx-runtime-CmCsaYvT.js";
 import { t } from "./react-B5TC723I.js";
-import { t as n } from "./Modal-Dw1vVt5K.js";
+import { t as n } from "./Modal-ClPLM5jI.js";
 //#region src/components/PreferenceProfiles.tsx
 var r = t(), i = e(), a = "sofinder.preferenceProfiles.v1", o = 10, s = {
 	en: {
@@ -115,7 +115,7 @@ var r = t(), i = e(), a = "sofinder.preferenceProfiles.v1", o = 10, s = {
 					...e.settings.features,
 					sidebarFavorites: e.settings.features.sidebarFavorites !== !1,
 					sidebarQuickAccess: e.settings.features.sidebarQuickAccess !== !1,
-					quickAccessFiles: e.settings.features.quickAccessFiles !== !1
+					quickAccessFiles: !1
 				},
 				quickAccessScope: e.settings.quickAccessScope === "resource" ? "resource" : "all"
 			}
@@ -270,32 +270,29 @@ function f({ current: e, onApply: t, onReset: n }) {
 //#region src/components/SettingsDialog.tsx
 function p({ resource: e, tools: t, features: r, columns: a, viewSizes: o, folderTreePlacement: s, quickAccessScope: c, availability: l, scale: u, uploadConflictStrategy: d, translate: p, onToolChange: m, onFeatureChange: h, onColumnChange: g, onViewSizeChange: _, onFolderTreePlacementChange: v, onQuickAccessScopeChange: y, onScaleChange: b, onUploadConflictStrategyChange: x, onReset: S, onClose: C }) {
 	let w = p, T = document.documentElement.lang.toLowerCase(), E = T === "zh-tw" ? {
-		title: "快速存取顯示範圍",
+		title: "固定資料夾顯示範圍",
 		all: "全部根目錄",
 		resource: "目前根目錄"
 	} : T.startsWith("zh") ? {
-		title: "快速访问显示范围",
+		title: "固定文件夹显示范围",
 		all: "全部根目录",
 		resource: "当前根目录"
 	} : {
-		title: "Quick access scope",
+		title: "Pinned folder scope",
 		all: "All storage roots",
 		resource: "Current storage root"
 	}, D = T === "zh-tw" ? {
 		title: "側邊欄內容",
-		favorites: "顯示收藏夾",
-		quick: "顯示快速存取",
-		files: "快速存取包含檔案"
+		favorites: "顯示收藏檔案",
+		quick: "顯示固定資料夾"
 	} : T.startsWith("zh") ? {
 		title: "侧边栏内容",
-		favorites: "显示收藏夹",
-		quick: "显示快速访问",
-		files: "快速访问包含文件"
+		favorites: "显示收藏文件",
+		quick: "显示固定文件夹"
 	} : {
 		title: "Sidebar content",
-		favorites: "Show Favorites",
-		quick: "Show Quick access",
-		files: "Include files in Quick access"
+		favorites: "Show favorite files",
+		quick: "Show pinned folders"
 	}, O = T === "zh-tw" ? {
 		appearance: "外觀",
 		operations: "檔案操作",
@@ -519,29 +516,18 @@ function p({ resource: e, tools: t, features: r, columns: a, viewSizes: o, folde
 								onChange: (e) => h("sidebarFavorites", e.target.checked)
 							}), /* @__PURE__ */ (0, i.jsx)("span", { children: D.favorites })]
 						}),
-						l.quickAccess !== !1 && r.sidebarQuickAccess && /* @__PURE__ */ (0, i.jsxs)(i.Fragment, { children: [
-							l.quickAccessFiles !== !1 && /* @__PURE__ */ (0, i.jsxs)("label", {
-								className: "sf-setting",
-								children: [/* @__PURE__ */ (0, i.jsx)("input", {
-									type: "checkbox",
-									checked: r.quickAccessFiles,
-									onChange: (e) => h("quickAccessFiles", e.target.checked)
-								}), /* @__PURE__ */ (0, i.jsx)("span", { children: D.files })]
-							}),
-							/* @__PURE__ */ (0, i.jsx)("h3", { children: E.title }),
-							/* @__PURE__ */ (0, i.jsx)("div", {
-								className: "sf-scale-options",
-								role: "radiogroup",
-								"aria-label": E.title,
-								children: ["all", "resource"].map((e) => /* @__PURE__ */ (0, i.jsxs)("label", { children: [/* @__PURE__ */ (0, i.jsx)("input", {
-									type: "radio",
-									name: "sofinder-quick-access-scope",
-									value: e,
-									checked: c === e,
-									onChange: () => y(e)
-								}), /* @__PURE__ */ (0, i.jsx)("span", { children: e === "all" ? E.all : E.resource })] }, e))
-							})
-						] })
+						l.quickAccess !== !1 && r.sidebarQuickAccess && /* @__PURE__ */ (0, i.jsxs)(i.Fragment, { children: [/* @__PURE__ */ (0, i.jsx)("h3", { children: E.title }), /* @__PURE__ */ (0, i.jsx)("div", {
+							className: "sf-scale-options",
+							role: "radiogroup",
+							"aria-label": E.title,
+							children: ["all", "resource"].map((e) => /* @__PURE__ */ (0, i.jsxs)("label", { children: [/* @__PURE__ */ (0, i.jsx)("input", {
+								type: "radio",
+								name: "sofinder-quick-access-scope",
+								value: e,
+								checked: c === e,
+								onChange: () => y(e)
+							}), /* @__PURE__ */ (0, i.jsx)("span", { children: e === "all" ? E.all : E.resource })] }, e))
+						})] })
 					] })
 				]
 			})

@@ -235,7 +235,7 @@ Action 為 `crop`、`resize`、`rotate`、`preset`、`optimize`、`watermarkText
 
 返回名為 `sofinder-download.zip` 的 `application/zip`，受資源選擇數量、遞迴項目數和容量限制。
 
-`GET /api/metadata?resource=Files` 返回 `favorites`、最多 12 個檔案或資料夾的 `quickAccess` 路徑、相容新增的 `quickAccessEntries` 顯示資訊（`name`、`directory`、`mimeType`、`exists`）、按 Path 組織的 `tags`，以及最多 50 條 `recent {path,touchedAt}`。失效快速項目以 `exists: false` 保留顯示，直到使用者開啟或移除。使用 `PATCH /api/metadata` 更新：
+`GET /api/metadata?resource=Files` 返回僅含檔案的 `favorites`、最多 12 個僅含資料夾的 `quickAccess` 路徑、相容新增的 `quickAccessEntries` 顯示資訊（`name`、`directory`、`mimeType`、`exists`）、按 Path 組織的 `tags`，以及最多 50 條 `recent {path,touchedAt}`。失效的固定資料夾以 `exists: false` 保留顯示，直到使用者開啟或移除。使用 `PATCH /api/metadata` 更新：
 
 ```json
 {"resource":"Files","path":"manual.pdf","action":"favorite","favorite":true}
@@ -244,7 +244,7 @@ Action 為 `crop`、`resize`、`rotate`、`preset`、`optimize`、`watermarkText
 {"resource":"Files","path":"manual.pdf","action":"touch"}
 ```
 
-Host 設定關閉 `features.quick_access_files` 後，新增檔案快速項目會返回 `422 quick_access_file_disabled`；資料夾仍可使用，既有檔案快速項目仍可移除。
+把資料夾加入收藏會返回 `422 favorite_folder_unsupported`；把檔案固定到側欄會返回 `422 quick_access_file_disabled`。舊的 `features.quick_access_files` 設定不再生效，既有檔案快速項目仍可移除。
 
 Client 確認最近路徑已在 SoFinder 外部消失後，可傳送 `action: "forget"`，從收藏、標籤和
 最近狀態中清理該路徑。Host 關閉某項功能後，其專用操作回傳 `feature_disabled` 及 HTTP

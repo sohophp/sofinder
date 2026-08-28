@@ -14,6 +14,7 @@ final readonly class GdImageProcessor implements ImageProcessorInterface, ImageE
         private int $maximumPixels = 50_000_000,
         private ImageFormatRegistry $formats = new ImageFormatRegistry(),
         private ?string $watermarkFont = null,
+        private ?WatermarkFontResolver $watermarkFontResolver = null,
     )
     {
     }
@@ -160,7 +161,7 @@ final readonly class GdImageProcessor implements ImageProcessorInterface, ImageE
         }
     }
 
-    public function textWatermark(string $source, string $destination, string $text, string $position, int $opacity, int $scale, string $color, int $quality): void
+    public function textWatermark(string $source, string $destination, string $text, string $position, int $opacity, int $scale, string $color, int $quality, ?int $x = null, ?int $y = null, string $font = 'interface'): void
     {
         $text = trim($text);
         if ($text === '' || mb_strlen($text) > 200) {
@@ -168,7 +169,7 @@ final readonly class GdImageProcessor implements ImageProcessorInterface, ImageE
         }
         [$image, $mimeType] = $this->load($source);
         try {
-            [$opacity, $scale] = $this->watermarkSettings($position, $opacity, $scale);
+            [$opacity, $scale] = $this->watermarkSettings($position, $opacity, $scale, $x, $y);
             if (preg_match('/^#[0-9a-fA-F]{6}$/D', $color) !== 1) {
                 throw new SoFinderException('Watermark color must be a six-digit hexadecimal color.', 'invalid_watermark_color', 422);
             }
@@ -180,16 +181,17 @@ final readonly class GdImageProcessor implements ImageProcessorInterface, ImageE
             if ($ink === false) {
                 throw new SoFinderException('Unable to draw the text watermark.', 'image_processing_failed', 500);
             }
-            if ($this->watermarkFont !== null && is_readable($this->watermarkFont) && function_exists('imagettfbbox') && function_exists('imagettftext')) {
+            $watermarkFont = $this->watermarkFontResolver?->resolve($font) ?? $this->watermarkFont;
+            if ($watermarkFont !== null && is_readable($watermarkFont) && function_exists('imagettfbbox') && function_exists('imagettftext')) {
                 $fontSize = max(10, (int) round(min(imagesx($image), imagesy($image)) * $scale / 500));
-                $box = imagettfbbox($fontSize, 0, $this->watermarkFont, $text);
+                $box = imagettfbbox($fontSize, 0, $watermarkFont, $text);
                 if (!is_array($box)) {
                     throw new SoFinderException('Unable to measure the text watermark.', 'image_processing_failed', 500);
                 }
                 $textWidth = abs($box[4] - $box[0]);
                 $textHeight = abs($box[5] - $box[1]);
-                [$x, $top] = $this->watermarkCoordinates(imagesx($image), imagesy($image), $textWidth, $textHeight, $position);
-                if (imagettftext($image, $fontSize, 0, $x, $top + $textHeight, $ink, $this->watermarkFont, $text) === false) {
+                [$left, $top] = $this->watermarkCoordinates(imagesx($image), imagesy($image), $textWidth, $textHeight, $position, $x, $y);
+                if (imagettftext($image, $fontSize, 0, $left, $top + $textHeight, $ink, $watermarkFont, $text) === false) {
                     throw new SoFinderException('Unable to draw the text watermark.', 'image_processing_failed', 500);
                 }
             } else {
@@ -199,8 +201,8 @@ final readonly class GdImageProcessor implements ImageProcessorInterface, ImageE
                 $font = max(1, min(5, (int) round($scale / 20)));
                 $textWidth = imagefontwidth($font) * strlen($text);
                 $textHeight = imagefontheight($font);
-                [$x, $y] = $this->watermarkCoordinates(imagesx($image), imagesy($image), $textWidth, $textHeight, $position);
-                if (!imagestring($image, $font, $x, $y, $text, $ink)) {
+                [$left, $top] = $this->watermarkCoordinates(imagesx($image), imagesy($image), $textWidth, $textHeight, $position, $x, $y);
+                if (!imagestring($image, $font, $left, $top, $text, $ink)) {
                     throw new SoFinderException('Unable to draw the text watermark.', 'image_processing_failed', 500);
                 }
             }
@@ -210,12 +212,12 @@ final readonly class GdImageProcessor implements ImageProcessorInterface, ImageE
         }
     }
 
-    public function imageWatermark(string $source, string $watermark, string $destination, string $position, int $opacity, int $scale, int $quality): void
+    public function imageWatermark(string $source, string $watermark, string $destination, string $position, int $opacity, int $scale, int $quality, ?int $x = null, ?int $y = null): void
     {
         [$image, $mimeType] = $this->load($source);
         [$mark] = $this->load($watermark);
         try {
-            [$opacity, $scale] = $this->watermarkSettings($position, $opacity, $scale);
+            [$opacity, $scale] = $this->watermarkSettings($position, $opacity, $scale, $x, $y);
             $targetWidth = max(1, (int) round(imagesx($image) * $scale / 100));
             $targetHeight = max(1, (int) round(imagesy($mark) * $targetWidth / imagesx($mark)));
             if ($targetHeight > imagesy($image)) {
@@ -235,9 +237,9 @@ final readonly class GdImageProcessor implements ImageProcessorInterface, ImageE
             imagefill($resized, 0, 0, $transparent);
             imagecopyresampled($resized, $mark, 0, 0, 0, 0, $targetWidth, $targetHeight, imagesx($mark), imagesy($mark));
             imagefilter($resized, IMG_FILTER_COLORIZE, 0, 0, 0, 127 - (int) round($opacity * 127 / 100));
-            [$x, $y] = $this->watermarkCoordinates(imagesx($image), imagesy($image), $targetWidth, $targetHeight, $position);
+            [$left, $top] = $this->watermarkCoordinates(imagesx($image), imagesy($image), $targetWidth, $targetHeight, $position, $x, $y);
             imagealphablending($image, true);
-            if (!imagecopy($image, $resized, $x, $y, 0, 0, $targetWidth, $targetHeight)) {
+            if (!imagecopy($image, $resized, $left, $top, 0, 0, $targetWidth, $targetHeight)) {
                 throw new SoFinderException('Unable to composite the image watermark.', 'image_processing_failed', 500);
             }
             $this->save($image, $mimeType, $destination, $quality);
@@ -370,10 +372,13 @@ final readonly class GdImageProcessor implements ImageProcessorInterface, ImageE
     }
 
     /** @return array{int,int} */
-    private function watermarkSettings(string $position, int $opacity, int $scale): array
+    private function watermarkSettings(string $position, int $opacity, int $scale, ?int $x, ?int $y): array
     {
-        if (!in_array($position, ['top-left', 'top-right', 'center', 'bottom-left', 'bottom-right'], true)) {
+        if (!in_array($position, ['top-left', 'top-right', 'center', 'bottom-left', 'bottom-right', 'custom'], true)) {
             throw new SoFinderException('The watermark position is invalid.', 'invalid_watermark_position', 422);
+        }
+        if ($position === 'custom' && ($x === null || $y === null || $x < 0 || $x > 100 || $y < 0 || $y > 100)) {
+            throw new SoFinderException('Custom watermark coordinates must be percentages between 0 and 100.', 'invalid_watermark_position', 422);
         }
         if ($opacity < 1 || $opacity > 100 || $scale < 5 || $scale > 80) {
             throw new SoFinderException('Watermark opacity or scale is outside the allowed range.', 'invalid_watermark_settings', 422);
@@ -382,10 +387,11 @@ final readonly class GdImageProcessor implements ImageProcessorInterface, ImageE
     }
 
     /** @return array{int,int} */
-    private function watermarkCoordinates(int $width, int $height, int $markWidth, int $markHeight, string $position): array
+    private function watermarkCoordinates(int $width, int $height, int $markWidth, int $markHeight, string $position, ?int $x, ?int $y): array
     {
         $margin = max(4, (int) round(min($width, $height) * 0.02));
         return match ($position) {
+            'custom' => [(int) round(max(0, $width - $markWidth) * (int) $x / 100), (int) round(max(0, $height - $markHeight) * (int) $y / 100)],
             'top-left' => [$margin, $margin],
             'top-right' => [max(0, $width - $markWidth - $margin), $margin],
             'bottom-left' => [$margin, max(0, $height - $markHeight - $margin)],

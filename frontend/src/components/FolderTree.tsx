@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
 import type { Api } from "../api";
 import type { Entry } from "../types";
+import { UiIcon } from "./UiIcon";
 
 interface NodeState { loading: boolean; loaded: boolean; expanded: boolean; children: Entry[] }
 
@@ -40,16 +41,16 @@ export function FolderTree({ api, resource, currentPath, rootLabel, onNavigate }
     const node = nodes[parent];
     if (!node?.expanded) return null;
     return node.children.map(folder => <div key={folder.path}>
-      <div className={`sf-tree-row ${currentPath === folder.path ? "active" : ""}`} style={{ paddingInlineStart: `${8 + level * 16}px` }}>
-        <button className="sf-tree-toggle" onClick={() => toggle(folder.path)} aria-expanded={nodes[folder.path]?.expanded || false} aria-label={folder.name}>{nodes[folder.path]?.loading ? "…" : nodes[folder.path]?.expanded ? "⌄" : "›"}</button>
-        <button className="sf-tree-name" onClick={() => onNavigate(folder.path)} title={folder.path}>▰ {folder.name}</button>
+      <div className={`sf-tree-row ${currentPath === folder.path ? "active" : ""}`} style={{ paddingInlineStart: `${4 + level * 14}px` }}>
+        <button className="sf-tree-toggle" onClick={() => toggle(folder.path)} aria-expanded={nodes[folder.path]?.expanded || false} aria-label={folder.name}>{nodes[folder.path]?.loading ? <span className="sf-tree-loading">…</span> : <UiIcon name={nodes[folder.path]?.expanded ? "chevron-down" : "chevron-right"}/>}</button>
+        <button className="sf-tree-name" onClick={() => onNavigate(folder.path)} title={folder.path}><UiIcon name="folder"/><span>{folder.name}</span></button>
       </div>
       {branch(folder.path, level + 1)}
     </div>);
   };
 
   return <nav className="sf-folder-tree" aria-label={rootLabel}>
-    <div className={`sf-tree-row ${currentPath === "" ? "active" : ""}`}><button className="sf-tree-toggle" onClick={() => toggle("")} aria-expanded={nodes[""]?.expanded || false}>⌄</button><button className="sf-tree-name" onClick={() => onNavigate("")}>⌂ {rootLabel}</button></div>
+    <div className={`sf-tree-row ${currentPath === "" ? "active" : ""}`}><button className="sf-tree-toggle" onClick={() => toggle("")} aria-expanded={nodes[""]?.expanded || false} aria-label={rootLabel}>{nodes[""]?.loading ? <span className="sf-tree-loading">…</span> : <UiIcon name={nodes[""]?.expanded ? "chevron-down" : "chevron-right"}/>}</button><button className="sf-tree-name" onClick={() => onNavigate("")}><UiIcon name="folder"/><span>{rootLabel}</span></button></div>
     {branch("", 1)}
   </nav>;
 }

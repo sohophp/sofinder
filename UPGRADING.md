@@ -1,5 +1,20 @@
 # Upgrading SoFinder
 
+## From 0.1.0-beta.26 to 0.1.0-beta.27
+
+Deploy the complete rebuilt `dist/` directory. Stored files require no
+migration. Favorites now accepts files only, while Quick access is presented as
+pinned sidebar folders and accepts folders only. Known legacy file shortcuts
+are hidden but remain removable through the metadata API; the retained
+`features.quick_access_files` setting no longer enables file shortcuts.
+
+Text-watermark fonts can now be downloaded from a pinned official Noto CJK
+source, SHA-256 verified and cached under `cache_dir/fonts` when no configured or
+supported system font exists. This is enabled by default; set
+`image_processing.watermark_font_auto_download: false` where production network
+egress is prohibited. Watermark-only output now uses quality 100. Sidebar layout
+preferences are browser-local and need no backend migration.
+
 ## From 0.1.0-beta.25 to 0.1.0-beta.26
 
 Deploy the complete rebuilt `dist/` directory. CKEditor 5 integrations can keep

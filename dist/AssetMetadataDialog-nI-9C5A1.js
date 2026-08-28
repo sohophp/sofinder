@@ -1,6 +1,6 @@
 import { t as e } from "./jsx-runtime-CmCsaYvT.js";
 import { t } from "./react-B5TC723I.js";
-import { t as n } from "./Modal-Dw1vVt5K.js";
+import { t as n } from "./Modal-ClPLM5jI.js";
 //#region src/components/AssetMetadataDialog.tsx
 var r = t(), i = e();
 function a({ asset: e, metadata: t, locales: a, labels: o, onClose: s, onSave: c }) {

@@ -37,8 +37,9 @@ so_finder:
     disk_bytes: 1073741824
     threads: 1
     timeout_seconds: 30
-    # Required for non-ASCII text watermarks; keep null for ASCII-only text.
+    # Optional override; otherwise a system CJK font or the verified cache is used.
     watermark_font: /usr/share/fonts/truetype/noto/NotoSansCJK-Regular.ttc
+    watermark_font_auto_download: true
 ```
 
 Imagick receives a fixed coder derived from the registry and never performs
@@ -51,7 +52,7 @@ edit capability is advertised.
 
 The **Optimize / watermark** image tool is disabled in each user's toolbar by default and can be enabled in Settings. It provides quality-controlled recompression, supported JPEG/PNG/WebP/AVIF conversion, text watermarks and image watermarks. A batch handles up to 100 selected images and returns an individual result for every item.
 
-Conversion always creates a copy. Same-format compression and watermarking can create a copy or overwrite. Animated and multi-page images are rejected to prevent silent frame loss, and watermark images pass through normal resource permissions. Unicode text requires an absolute readable `watermark_font`; otherwise the API returns `watermark_font_unavailable` instead of producing corrupted text.
+Conversion always creates a copy. Same-format compression and watermarking can create a copy or overwrite. Animated and multi-page images are rejected to prevent silent frame loss, and watermark images pass through normal resource permissions. Text watermarks offer compact Interface Sans, Clean Sans, and Elegant Serif choices; Interface Sans is the default and keeps the original editor UI style. The selected CJK font is resolved from the explicit `watermark_font` (for the default style) or a supported system font. If neither exists and `watermark_font_auto_download` is enabled, only the selected pinned Noto CJK font is downloaded from the official repository, verified by SHA-256, and stored in `cache_dir/fonts`; concurrent requests share a file lock. Set the option to `false` to prohibit automatic network access. If no usable font remains, Unicode text returns `watermark_font_unavailable` instead of producing corrupted text.
 
 ## Ordinary non-web image files
 

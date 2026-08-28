@@ -229,6 +229,7 @@ final class Configuration implements ConfigurationInterface
                                 ->thenInvalid('SoFinder image_processing.watermark_font must be null or an absolute font path.')
                             ->end()
                         ->end()
+                        ->booleanNode('watermark_font_auto_download')->defaultTrue()->end()
                     ->end()
                 ->end()
                 ->arrayNode('image_variants')
@@ -284,7 +285,8 @@ final class Configuration implements ConfigurationInterface
                         ->booleanNode('recent')->defaultTrue()->end()
                         ->booleanNode('favorites')->defaultTrue()->end()
                         ->booleanNode('quick_access')->defaultTrue()->end()
-                        ->booleanNode('quick_access_files')->defaultTrue()->end()
+                        // Retained for configuration compatibility; pinned sidebar items are folders only.
+                        ->booleanNode('quick_access_files')->defaultFalse()->end()
                         ->booleanNode('tags')->defaultTrue()->end()
                         ->booleanNode('archive')->defaultTrue()->end()
                         ->booleanNode('trash')->defaultTrue()->end()

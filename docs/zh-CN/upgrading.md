@@ -5,6 +5,17 @@ description: 各 SoFinder 预发布版本的兼容性、配置与 adapter 升级
 
 # 升级 SoFinder
 
+## 从 0.1.0-beta.26 升级至 0.1.0-beta.27
+
+请完整部署重新构建的 `dist/`，无需迁移存储文件。收藏现在仅接受文件，快速访问改为仅接受
+文件夹的“已固定文件夹”。已知的旧文件快捷项不再显示，但仍可通过 Metadata API 移除；
+保留的 `features.quick_access_files` 设置不再允许文件快捷项。
+
+找不到已配置或支持的系统字体时，文字水印现在可从固定的 Noto CJK 官方来源下载字体，
+经过 SHA-256 校验后缓存到 `cache_dir/fonts`。此功能默认启用；禁止生产环境访问外网时，请
+设置 `image_processing.watermark_font_auto_download: false`。仅加水印时使用 100 质量输出。
+侧栏布局偏好只保存在浏览器中，无需后端迁移。
+
 ## 从 0.1.0-beta.25 升级至 0.1.0-beta.26
 
 请完整部署重新构建的 `dist/`。CKEditor 5 集成可继续把
