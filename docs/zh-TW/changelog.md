@@ -7,6 +7,10 @@ description: SoFinder 每個公開版本的重要變更。
 
 ## 尚未發佈
 
+## 0.1.0-beta.31 - 2026-08-29
+
+- 新增 Jodit 4 選擇器與原生上傳 Adapter、型別宣告、體積檢查、測試、文件及可執行的 Symfony 示範頁籤。
+
 ## 0.1.0-beta.30 - 2026-08-28
 
 - 新增 wangEditor 5 選擇器與上傳 Adapter、型別宣告、體積檢查、整合測試、文件及可執行的 Symfony 示範頁籤。

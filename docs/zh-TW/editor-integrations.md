@@ -1,6 +1,6 @@
 ---
 title: 主流編輯器整合
-description: 透過通用 Picker SDK 連接 CKEditor 5、TinyMCE、TipTap、Quill、wangEditor 與一般表單。
+description: 透過通用 Picker SDK 連接 CKEditor 5、TinyMCE、TipTap、Quill、wangEditor、Jodit 與一般表單。
 ---
 
 # 主流編輯器整合
@@ -122,6 +122,28 @@ button.addEventListener('click', () => selectForWangEditor(editor, {
 Adapter 遵循 wangEditor 5 公開的 `insertNode`、`customUpload` 與
 `customBrowseAndUpload` 介面，不會把編輯器 Runtime 打入 SoFinder。
 
+## Jodit 4
+
+將上傳設定交給 Jodit，並以外部按鈕開啟素材選擇器：
+
+```js
+import { selectForJodit } from '/sofinder/assets/sofinder-picker.js'
+import { createJoditUploadIntegration } from '/sofinder/assets/sofinder-jodit.js'
+
+const editor = Jodit.make('#editor', {
+  uploader: createJoditUploadIntegration({
+    apiBase: '/sofinder/api', csrfToken, resource: 'Images'
+  })
+})
+
+button.addEventListener('click', () => selectForJodit(editor, {
+  baseUrl: '/sofinder/browser', resource: 'Images', language: 'zh-tw'
+}))
+```
+
+Jodit 內建圖片對話框、貼上及拖入會使用公開的自訂上傳介面；Picker 與上傳均透過
+`createInside.element()` 和 `s.insertImage()` 插入完整資產屬性，不會將 Jodit 打入 SoFinder 套件。
+
 ## 一般表單與 Markdown
 
 一般輸入框使用 `selectForInput(input, options)`；它會寫入 URL 並觸發可冒泡的
@@ -131,7 +153,7 @@ Adapter 遵循 wangEditor 5 公開的 `insertNode`、`customUpload` 與
 
 啟動 `examples/symfony`，以 `demo` / `demo` 登入後開啟 `/integrations`。頁面會用
 本機 SoFinder 後端及 Picker SDK 實際連接 CKEditor 5、TinyMCE 8、TipTap、Quill 2、
-wangEditor 5 和一般表單。第三方編輯器從其文件列出的 CDN 載入；部署前必須檢查各編輯器授權並
+wangEditor 5、Jodit 4 和一般表單。第三方編輯器從其文件列出的 CDN 載入；部署前必須檢查各編輯器授權並
 替換示範 Key。
 
 目錄深層連結可以直接收藏：

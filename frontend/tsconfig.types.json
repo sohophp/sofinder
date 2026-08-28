@@ -17,6 +17,7 @@
     "src/tinymce.ts",
     "src/tiptap.ts",
     "src/quill.ts",
-    "src/wangeditor.ts"
+    "src/wangeditor.ts",
+    "src/jodit.ts"
   ]
 }

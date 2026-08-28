@@ -1,2 +1,2 @@
-import { f as e, l as t } from "./editorAdapters-C0mpkoCs.js";
+import { p as e, u as t } from "./editorAdapters-TSPP7BUN.js";
 export { t as installTiptapUploads, e as uploadForTiptap };

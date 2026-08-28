@@ -204,6 +204,68 @@ export const createWangEditorUploadIntegration = (options: EditorAdapterOptions)
   },
 });
 
+export interface JoditEditor {
+  createInside: { element(tagName: "img"): HTMLImageElement };
+  s: { insertImage(image: HTMLImageElement): void };
+}
+
+interface JoditUploaderContext {
+  j?: JoditEditor;
+  jodit?: JoditEditor;
+  createInside?: JoditEditor["createInside"];
+  s?: JoditEditor["s"];
+}
+
+interface JoditUploadAnswer {
+  success: boolean;
+  data: { assets: AssetReference[] };
+}
+
+const insertForJodit = (editor: JoditEditor, asset: AssetReference, options: EditorAdapterOptions): void => {
+  const image = editor.createInside.element("img");
+  for (const [name, value] of Object.entries(attributesFor(asset, options))) image.setAttribute(name, value);
+  editor.s.insertImage(image);
+};
+
+const joditFiles = (requestData: unknown): File[] => {
+  if (typeof FormData !== "undefined" && requestData instanceof FormData) {
+    return Array.from(requestData.values()).filter((value): value is File => typeof File !== "undefined" && value instanceof File);
+  }
+  if (Array.isArray(requestData)) return requestData.filter((value): value is File => typeof File !== "undefined" && value instanceof File);
+  return typeof File !== "undefined" && requestData instanceof File ? [requestData] : [];
+};
+
+/**
+ * Create the uploader configuration accepted by Jodit 4. The native image
+ * dialog, paste and drop paths all use this same uploader contract.
+ */
+export const createJoditUploadIntegration = (options: EditorAdapterOptions) => ({
+  async customUploadFunction(requestData: unknown, showProgress: (progress: number) => void): Promise<JoditUploadAnswer> {
+    const files = joditFiles(requestData);
+    if (files.length === 0) throw new Error("Jodit did not provide a file to upload.");
+    const assets: AssetReference[] = [];
+    for (let index = 0; index < files.length; index += 1) {
+      const task = uploadForEditor(files[index], {
+        ...options,
+        onTaskChange: snapshot => {
+          showProgress(Math.round(((index + snapshot.progress / 100) / files.length) * 100));
+          options.onTaskChange?.(snapshot);
+        },
+      });
+      assets.push(embeddable(await task.completion));
+    }
+    showProgress(100);
+    return { success: true, data: { assets } };
+  },
+  isSuccess(response: JoditUploadAnswer): boolean { return response.success; },
+  process(response: JoditUploadAnswer): JoditUploadAnswer["data"] { return response.data; },
+  defaultHandlerSuccess(this: JoditUploaderContext, data: JoditUploadAnswer["data"]): void {
+    const editor = this.j ?? this.jodit ?? this;
+    if (!editor.createInside || !editor.s) throw new Error("Jodit uploader context does not expose an editor instance.");
+    for (const asset of data.assets) insertForJodit(editor as JoditEditor, asset, options);
+  },
+});
+
 export const bindMarkdownUploads = (input: HTMLTextAreaElement, options: EditorAdapterOptions): (() => void) => {
   const insert = async (file: File, source: "paste" | "drop") => {
     const asset = embeddable(await uploadForEditor(file, options, source).completion);

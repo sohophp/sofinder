@@ -12,7 +12,7 @@ SoFinder 是原创、采 MIT 授权的网页文件管理器，支持 PHP 8.2 至
 
 完整文件站位于 <https://sofinder.sohophp.app/zh-CN/>。注册 `SohoPHP\SoFinder\SoFinderBundle`，导入 `@SoFinderBundle/Resources/config/routes.yaml`，并在 `so_finder.resources` 配置一个或多个资源类型。完整示例请见[简体中文 Symfony 整合](https://sofinder.sohophp.app/zh-CN/symfony)。
 
-已实现功能包含：登录后浏览、搜索、上传、文件夹上传、下载、新建文件夹、重新命名、批量重命名、可恢复删除、自动冲突命名的复制／移动、服务器限制的分页、名称／大小／日期排序、网格／列表视图、多选、具数量上限及逐项结果的批次操作、文件夹树、右键／长按菜单、文本预览、SHA-256、一般／分块上传、图片处理、ZIP 下载、响应式三语界面，以及 CKEditor 4 与适用于 CKEditor 5、TinyMCE、TipTap、Quill、wangEditor、普通表单的弹窗 SDK。
+已实现功能包含：登录后浏览、搜索、上传、文件夹上传、下载、新建文件夹、重新命名、批量重命名、可恢复删除、自动冲突命名的复制／移动、服务器限制的分页、名称／大小／日期排序、网格／列表视图、多选、具数量上限及逐项结果的批次操作、文件夹树、右键／长按菜单、文本预览、SHA-256、一般／分块上传、图片处理、ZIP 下载、响应式三语界面，以及 CKEditor 4 与适用于 CKEditor 5、TinyMCE、TipTap、Quill、wangEditor、Jodit、普通表单的弹窗 SDK。
 
 资源可配置 byte 配额、必要 Symfony roles 及各操作专用 roles。成功变更会产生结构化 PSR-3 audit log。每位用户的收藏、标签及最近 50 笔记录会通过可替换的 metadata store 原子化保存。
 

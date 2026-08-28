@@ -216,6 +216,15 @@ export const createWangEditorPickerIntegration = (options: EditorPickerOptions):
   },
 });
 
+/** Select an image and insert a fully attributed image through Jodit's public selection API. */
+export const selectForJodit = async (editor: { createInside: { element(tagName: "img"): HTMLImageElement }; s: { insertImage(image: HTMLImageElement): void } }, options: EditorPickerOptions): Promise<PickerEntry> => {
+  const entry = await openPicker({ ...options, kind: "image" });
+  const image = editor.createInside.element("img");
+  for (const [name, value] of Object.entries(pickerAttributes(entry, options))) image.setAttribute(name, value);
+  editor.s.insertImage(image);
+  return entry;
+};
+
 /** Bind a picker result to a plain URL input and emit normal input/change events. */
 export const selectForInput = async (input: HTMLInputElement, options: PickerOptions): Promise<PickerEntry> => {
   const entry = await openPicker(options);

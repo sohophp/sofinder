@@ -26,6 +26,7 @@ export default defineConfig({
         "sofinder-tiptap": resolve(currentDirectory, "src/tiptap.ts"),
         "sofinder-quill": resolve(currentDirectory, "src/quill.ts"),
         "sofinder-wangeditor": resolve(currentDirectory, "src/wangeditor.ts"),
+        "sofinder-jodit": resolve(currentDirectory, "src/jodit.ts"),
       },
       formats: ["es"],
       fileName: (_format, entryName) => `${entryName}.js`,

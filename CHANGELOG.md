@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+## 0.1.0-beta.31 - 2026-08-29
+
+- Add Jodit 4 picker and native uploader adapters, declarations, bundle-size
+  checks, tests, documentation and a runnable Symfony demo pane.
+
 ## 0.1.0-beta.30 - 2026-08-28
 
 - Add wangEditor 5 picker and upload adapters, declarations, bundle-size checks,

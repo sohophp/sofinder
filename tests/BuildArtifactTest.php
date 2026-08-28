@@ -25,6 +25,13 @@ final class BuildArtifactTest extends TestCase
         self::assertDoesNotMatchRegularExpression('/\bfrom\s+["\']\.\//', $bundle, 'The picker asset route must remain a self-contained ES module.');
     }
 
+    public function testJoditAdapterIsShippedAsAnIndependentModule(): void
+    {
+        $bundle = file_get_contents(dirname(__DIR__) . '/dist/sofinder-jodit.js');
+        self::assertIsString($bundle);
+        self::assertStringContainsString('createJoditUploadIntegration', $bundle);
+    }
+
     public function testOnlyManifestChunksCanBeServedWithoutPathTraversal(): void
     {
         $package = dirname(__DIR__);

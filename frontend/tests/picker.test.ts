@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { createWangEditorPickerIntegration, openPicker, pickerUrl, registerTinyMce, selectForCkeditor5, selectForInput, selectForMarkdown, selectForWangEditor } from "../src/picker";
+import { createWangEditorPickerIntegration, openPicker, pickerUrl, registerTinyMce, selectForCkeditor5, selectForInput, selectForJodit, selectForMarkdown, selectForWangEditor } from "../src/picker";
 
 afterEach(() => vi.restoreAllMocks());
 
@@ -92,5 +92,21 @@ describe("picker SDK", () => {
 
   it("provides wangEditor's public custom picker contract", () => {
     expect(createWangEditorPickerIntegration({ baseUrl: "/sofinder/browser" }).customBrowseAndUpload).toBeTypeOf("function");
+  });
+
+  it("inserts a selected image through Jodit's public selection API", async () => {
+    const popup = { closed: false } as Window;
+    vi.spyOn(window, "open").mockReturnValue(popup);
+    const image = document.createElement("img");
+    const editor = { createInside: { element: vi.fn(() => image) }, s: { insertImage: vi.fn() } };
+    const promise = selectForJodit(editor, { baseUrl: "/sofinder/browser", language: "zh-cn" });
+    const opened = new URL(String(vi.mocked(window.open).mock.calls.at(-1)?.[0]), window.location.href);
+    const entry = { resource: "Images", path: "photo.png", name: "photo.png", directory: false, size: 12, modifiedAt: 1, mimeType: "image/png", url: "/files/photo.png", width: 320, height: 180, assetId: "00000000-0000-4000-8000-000000000001", altTranslations: { "zh-cn": "产品照片" }, capabilities: {} };
+    window.dispatchEvent(new MessageEvent("message", { source: popup, origin: window.location.origin, data: { type: "sofinder:select", version: "1.0", requestId: opened.searchParams.get("pickerRequestId"), entry } }));
+    await expect(promise).resolves.toEqual(entry);
+    expect(image.getAttribute("src")).toBe(entry.url);
+    expect(image.getAttribute("alt")).toBe("产品照片");
+    expect(image.getAttribute("data-sofinder-asset-id")).toBe(entry.assetId);
+    expect(editor.s.insertImage).toHaveBeenCalledWith(image);
   });
 });

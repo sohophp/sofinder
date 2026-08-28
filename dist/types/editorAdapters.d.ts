@@ -125,6 +125,36 @@ export declare const uploadForWangEditor: (file: File, insert: WangEditorInsertI
 export declare const createWangEditorUploadIntegration: (options: EditorAdapterOptions) => {
     customUpload(file: File, insert: WangEditorInsertImage): Promise<void>;
 };
+export interface JoditEditor {
+    createInside: {
+        element(tagName: "img"): HTMLImageElement;
+    };
+    s: {
+        insertImage(image: HTMLImageElement): void;
+    };
+}
+interface JoditUploaderContext {
+    j?: JoditEditor;
+    jodit?: JoditEditor;
+    createInside?: JoditEditor["createInside"];
+    s?: JoditEditor["s"];
+}
+interface JoditUploadAnswer {
+    success: boolean;
+    data: {
+        assets: AssetReference[];
+    };
+}
+/**
+ * Create the uploader configuration accepted by Jodit 4. The native image
+ * dialog, paste and drop paths all use this same uploader contract.
+ */
+export declare const createJoditUploadIntegration: (options: EditorAdapterOptions) => {
+    customUploadFunction(requestData: unknown, showProgress: (progress: number) => void): Promise<JoditUploadAnswer>;
+    isSuccess(response: JoditUploadAnswer): boolean;
+    process(response: JoditUploadAnswer): JoditUploadAnswer["data"];
+    defaultHandlerSuccess(this: JoditUploaderContext, data: JoditUploadAnswer["data"]): void;
+};
 export declare const bindMarkdownUploads: (input: HTMLTextAreaElement, options: EditorAdapterOptions) => (() => void);
 export declare const bindAssetInput: (fileInput: HTMLInputElement, output: HTMLInputElement | HTMLTextAreaElement, options: EditorAdapterOptions, outputMode?: "url" | "json") => (() => void);
 export {};

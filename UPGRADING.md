@@ -1,6 +1,6 @@
 # Upgrading SoFinder
 
-## From 0.1.0-beta.26 to 0.1.0-beta.30
+## From 0.1.0-beta.26 to 0.1.0-beta.31
 
 Deploy the complete rebuilt `dist/` directory. Stored files require no
 migration. Favorites now accepts files only, while Quick access is presented as
@@ -18,6 +18,10 @@ preferences are browser-local and need no backend migration.
 Beta.30 adds the `sofinder-wangeditor.js` picker/upload bridge without backend
 or stored-data changes. Deploy the complete rebuilt `dist/` directory so the
 new entry and its hashed shared adapter chunk remain in sync.
+
+Beta.31 adds the `sofinder-jodit.js` picker/upload bridge without backend or
+stored-data changes. Deploy the complete rebuilt `dist/` directory so the new
+entry and its hashed shared adapter chunk remain in sync.
 
 ## From 0.1.0-beta.25 to 0.1.0-beta.26
 

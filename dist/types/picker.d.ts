@@ -112,6 +112,15 @@ export declare const selectForWangEditor: (editor: {
 export declare const createWangEditorPickerIntegration: (options: EditorPickerOptions) => {
     customBrowseAndUpload(insert: WangEditorInsertImage): void;
 };
+/** Select an image and insert a fully attributed image through Jodit's public selection API. */
+export declare const selectForJodit: (editor: {
+    createInside: {
+        element(tagName: "img"): HTMLImageElement;
+    };
+    s: {
+        insertImage(image: HTMLImageElement): void;
+    };
+}, options: EditorPickerOptions) => Promise<PickerEntry>;
 /** Bind a picker result to a plain URL input and emit normal input/change events. */
 export declare const selectForInput: (input: HTMLInputElement, options: PickerOptions) => Promise<PickerEntry>;
 /** Insert a Markdown image or link at the current textarea selection. */

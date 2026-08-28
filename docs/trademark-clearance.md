@@ -164,3 +164,14 @@ No new package-identity conflict was introduced, so beta.29 retains the name.
   documentation and notices.
 
 No new package-identity conflict was introduced, so beta.30 retains the name.
+
+## 2026-08-29 beta.31 engineering delta check
+
+- This release adds an integration for the separately named third-party Jodit
+  project and does not change SoFinder's project name, package identities,
+  positioning or visual branding.
+- The beta.27 SoFinder identity checks remain current. The Jodit name is used
+  only to describe compatibility, links to the upstream project documentation,
+  and the editor runtime is not bundled with SoFinder.
+
+No new package-identity conflict was introduced, so beta.31 retains the name.

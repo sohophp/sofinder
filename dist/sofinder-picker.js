@@ -103,11 +103,18 @@ var e = "1.0", t = () => typeof crypto < "u" && typeof crypto.randomUUID == "fun
 		kind: "image"
 	}).then((n) => t(n.url, a(n, e), ""));
 } }), g = async (e, t) => {
+	let n = await r({
+		...t,
+		kind: "image"
+	}), i = e.createInside.element("img");
+	for (let [e, r] of Object.entries(o(n, t))) i.setAttribute(e, r);
+	return e.s.insertImage(i), n;
+}, _ = async (e, t) => {
 	let n = await r(t);
 	return e.value = n.url, e.dispatchEvent(new Event("input", { bubbles: !0 })), e.dispatchEvent(new Event("change", { bubbles: !0 })), n;
-}, _ = async (e, t) => {
+}, v = async (e, t) => {
 	let n = await r(t), i = t.kind === "image" || n.mimeType?.startsWith("image/") === !0, o = (i ? a(n, t) : n.name).replace(/([\\\[\]])/g, "\\$1"), s = n.url.replace(/</g, "%3C").replace(/>/g, "%3E"), c = `${i ? "!" : ""}[${o}](<${s}>)`, l = e.selectionStart ?? e.value.length, u = e.selectionEnd ?? l;
 	return e.setRangeText(c, l, u, "end"), e.dispatchEvent(new Event("input", { bubbles: !0 })), e.dispatchEvent(new Event("change", { bubbles: !0 })), e.focus(), n;
 };
 //#endregion
-export { e as PICKER_PROTOCOL_VERSION, h as createWangEditorPickerIntegration, r as openPicker, n as pickerUrl, p as registerQuill, d as registerTinyMce, u as replaceSelectedForCkeditor5, l as selectForCkeditor5, g as selectForInput, _ as selectForMarkdown, f as selectForTiptap, m as selectForWangEditor };
+export { e as PICKER_PROTOCOL_VERSION, h as createWangEditorPickerIntegration, r as openPicker, n as pickerUrl, p as registerQuill, d as registerTinyMce, u as replaceSelectedForCkeditor5, l as selectForCkeditor5, _ as selectForInput, g as selectForJodit, v as selectForMarkdown, f as selectForTiptap, m as selectForWangEditor };

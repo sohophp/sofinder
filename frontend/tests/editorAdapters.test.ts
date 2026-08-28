@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
-import { attributesFor, ckeditorUploadResult, createCkeditor5UploadPlugin, createWangEditorUploadIntegration, imageHtml, resourceForUpload } from "../src/editorAdapters";
+import { attributesFor, ckeditorUploadResult, createCkeditor5UploadPlugin, createJoditUploadIntegration, createWangEditorUploadIntegration, imageHtml, resourceForUpload } from "../src/editorAdapters";
 import { altForAsset, attributesForAsset, imageHtmlForAsset } from "../src/assetPresentation";
 import type { AssetReference } from "../src/types";
 
@@ -52,5 +52,18 @@ describe("editor adapters", () => {
   it("provides wangEditor 5's public custom upload contract", () => {
     const integration = createWangEditorUploadIntegration({ apiBase: "/api", csrfToken: "token", resource: "Images" });
     expect(integration.customUpload).toBeTypeOf("function");
+  });
+
+  it("provides Jodit's public custom uploader contract", () => {
+    const integration = createJoditUploadIntegration({ apiBase: "/api", csrfToken: "token", resource: "Images" });
+    expect(integration.customUploadFunction).toBeTypeOf("function");
+    expect(integration.isSuccess({ success: true, data: { assets: [] } })).toBe(true);
+    expect(integration.process({ success: true, data: { assets: [asset] } })).toEqual({ assets: [asset] });
+    const image = { setAttribute: vi.fn() } as unknown as HTMLImageElement;
+    const editor = { createInside: { element: vi.fn(() => image) }, s: { insertImage: vi.fn() } };
+    integration.defaultHandlerSuccess.call({ j: editor }, { assets: [asset] });
+    expect(image.setAttribute).toHaveBeenCalledWith("alt", "A photo");
+    expect(image.setAttribute).toHaveBeenCalledWith("data-sofinder-asset-id", asset.assetId);
+    expect(editor.s.insertImage).toHaveBeenCalledWith(image);
   });
 });

@@ -1,6 +1,6 @@
 ---
 title: Editor integrations
-description: Connect SoFinder to CKEditor 5, TinyMCE, TipTap, Quill, wangEditor or a plain form through the picker SDK.
+description: Connect SoFinder to CKEditor 5, TinyMCE, TipTap, Quill, wangEditor, Jodit or a plain form through the picker SDK.
 ---
 
 # Editor integrations
@@ -101,7 +101,7 @@ Direct upload adapters are separate ESM entries:
 
 ```js
 import { createTinyMceUploadIntegration } from '/sofinder/assets/sofinder-tinymce.js'
-// TipTap: sofinder-tiptap.js; Quill: sofinder-quill.js; wangEditor: sofinder-wangeditor.js
+// TipTap: sofinder-tiptap.js; Quill: sofinder-quill.js; wangEditor: sofinder-wangeditor.js; Jodit: sofinder-jodit.js
 ```
 
 Create the TinyMCE integration in its `setup` callback and forward
@@ -166,6 +166,30 @@ instead. The bridge follows wangEditor 5's documented `insertNode`,
 `customUpload` and `customBrowseAndUpload` contracts and does not bundle the
 editor runtime.
 
+## Jodit 4
+
+Pass the SoFinder uploader configuration to Jodit, then use an external button
+for the asset picker:
+
+```js
+import { selectForJodit } from '/sofinder/assets/sofinder-picker.js'
+import { createJoditUploadIntegration } from '/sofinder/assets/sofinder-jodit.js'
+
+const editor = Jodit.make('#editor', {
+  uploader: createJoditUploadIntegration({
+    apiBase: '/sofinder/api', csrfToken, resource: 'Images'
+  })
+})
+
+button.addEventListener('click', () => selectForJodit(editor, {
+  baseUrl: '/sofinder/browser', resource: 'Images', language: 'en'
+}))
+```
+
+Jodit's native image dialog, paste and drop paths use its documented custom
+uploader hooks. Picker and upload insertion use `createInside.element()` and
+`s.insertImage()` so full asset attributes are retained without bundling Jodit.
+
 ## Plain forms
 
 `selectForInput(input, options)` writes the selected URL and emits bubbling
@@ -181,7 +205,7 @@ selections use `![name](<url>)`; other files use `[name](<url>)`. It emits norma
 ## Local integration matrix
 
 Run the project under `examples/symfony`, sign in with `demo` / `demo`, then
-open `/integrations`. It exercises CKEditor 5, TinyMCE 8, TipTap, Quill 2, wangEditor 5 and a
+open `/integrations`. It exercises CKEditor 5, TinyMCE 8, TipTap, Quill 2, wangEditor 5, Jodit 4 and a
 plain input against the local SoFinder checkout. Third-party editors load from
 their documented CDN endpoints; the picker SDK and backend remain local. Review
 each editor's license and replace demonstration keys before deployment.

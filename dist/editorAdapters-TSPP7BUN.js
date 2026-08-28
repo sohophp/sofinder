@@ -156,7 +156,41 @@ var r = (e, t) => {
 	return t(i.url, d(i, n), ""), i;
 }, w = (e) => ({ async customUpload(t, n) {
 	await C(t, n, e);
-} }), T = (e, t) => {
+} }), T = (e, t, n) => {
+	let r = e.createInside.element("img");
+	for (let [e, i] of Object.entries(p(t, n))) r.setAttribute(e, i);
+	e.s.insertImage(r);
+}, E = (e) => typeof FormData < "u" && e instanceof FormData ? Array.from(e.values()).filter((e) => typeof File < "u" && e instanceof File) : Array.isArray(e) ? e.filter((e) => typeof File < "u" && e instanceof File) : typeof File < "u" && e instanceof File ? [e] : [], D = (e) => ({
+	async customUploadFunction(t, n) {
+		let r = E(t);
+		if (r.length === 0) throw Error("Jodit did not provide a file to upload.");
+		let i = [];
+		for (let t = 0; t < r.length; t += 1) {
+			let a = u(r[t], {
+				...e,
+				onTaskChange: (i) => {
+					n(Math.round((t + i.progress / 100) / r.length * 100)), e.onTaskChange?.(i);
+				}
+			});
+			i.push(f(await a.completion));
+		}
+		return n(100), {
+			success: !0,
+			data: { assets: i }
+		};
+	},
+	isSuccess(e) {
+		return e.success;
+	},
+	process(e) {
+		return e.data;
+	},
+	defaultHandlerSuccess(t) {
+		let n = this.j ?? this.jodit ?? this;
+		if (!n.createInside || !n.s) throw Error("Jodit uploader context does not expose an editor instance.");
+		for (let r of t.assets) T(n, r, e);
+	}
+}), O = (e, t) => {
 	let n = async (n, r) => {
 		let i = f(await u(n, t, r).completion), a = `![${d(i, t).replace(/([\\\[\]])/g, "\\$1")}](<${i.url.replace(/</g, "%3C").replace(/>/g, "%3E")}>)`;
 		e.setRangeText(a, e.selectionStart, e.selectionEnd, "end"), e.dispatchEvent(new Event("input", { bubbles: !0 }));
@@ -170,7 +204,7 @@ var r = (e, t) => {
 	return e.addEventListener("paste", r), e.addEventListener("drop", i), () => {
 		e.removeEventListener("paste", r), e.removeEventListener("drop", i);
 	};
-}, E = (e, t, n, r = "url") => {
+}, k = (e, t, n, r = "url") => {
 	let i = async () => {
 		let i = e.files?.[0];
 		if (!i) return;
@@ -180,4 +214,4 @@ var r = (e, t) => {
 	return e.addEventListener("change", i), () => e.removeEventListener("change", i);
 };
 //#endregion
-export { y as a, S as c, u as d, b as f, _ as i, x as l, E as n, w as o, C as p, T as r, m as s, p as t, v as u };
+export { D as a, m as c, v as d, u as f, _ as i, S as l, C as m, k as n, y as o, b as p, O as r, w as s, p as t, x as u };
