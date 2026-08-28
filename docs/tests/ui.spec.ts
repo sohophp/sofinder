@@ -56,12 +56,14 @@ test('desktop documentation keeps the three-column layout', async ({ page }) => 
   await page.locator('.sf-site-footer').scrollIntoViewIfNeeded()
   await expect.poll(() => page.evaluate(() => {
     const footer = document.querySelector<HTMLElement>('.sf-site-footer')
-    if (!footer) return false
-    const rect = footer.getBoundingClientRect()
-    const y = Math.max(1, Math.min(window.innerHeight - 1, rect.top + 20))
-    return [8, window.innerWidth - 8].every((x) =>
-      document.elementFromPoint(x, y)?.closest('.sf-site-footer') === footer,
-    )
+    const sidebar = document.querySelector<HTMLElement>('.VPSidebar')
+    if (!footer || !sidebar) return false
+    const footerRect = footer.getBoundingClientRect()
+    const sidebarRect = sidebar.getBoundingClientRect()
+    const y = Math.max(1, Math.min(window.innerHeight - 1, footerRect.top + 20))
+    return Math.abs(footerRect.left - sidebarRect.right) < 1
+      && document.elementFromPoint(8, y)?.closest('.VPSidebar') === sidebar
+      && document.elementFromPoint(window.innerWidth - 8, y)?.closest('.sf-site-footer') === footer
   })).toBe(true)
 })
 
@@ -75,12 +77,14 @@ test('compact footer is not covered by the fixed documentation rails', async ({ 
   await expect.poll(() => footer.evaluate((element) => element.getBoundingClientRect().height)).toBeLessThan(360)
   await expect.poll(() => page.evaluate(() => {
     const element = document.querySelector<HTMLElement>('.sf-site-footer')
-    if (!element) return false
+    const sidebar = document.querySelector<HTMLElement>('.VPSidebar')
+    if (!element || !sidebar) return false
     const rect = element.getBoundingClientRect()
+    const sidebarRect = sidebar.getBoundingClientRect()
     const y = Math.max(1, Math.min(window.innerHeight - 1, rect.top + 20))
-    return [8, window.innerWidth - 8].every((x) =>
-      document.elementFromPoint(x, y)?.closest('.sf-site-footer') === element,
-    )
+    return Math.abs(rect.left - sidebarRect.right) < 1
+      && document.elementFromPoint(8, y)?.closest('.VPSidebar') === sidebar
+      && document.elementFromPoint(window.innerWidth - 8, y)?.closest('.sf-site-footer') === element
   })).toBe(true)
 })
 

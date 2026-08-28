@@ -257,6 +257,17 @@ a, button { -webkit-tap-highlight-color: transparent; }
   .VPNavBarExtra { order: 6; }
   .VPNavBarHamburger { order: 7; }
   .VPNavBarSearch .DocSearch-Button { width: 100%; min-width: 0; }
+  .sf-site-footer--docs {
+    --sf-doc-sidebar-offset: max(var(--vp-sidebar-width), calc((100vw - var(--vp-layout-max-width)) / 2 + var(--vp-sidebar-width)));
+    width: calc(100% - var(--sf-doc-sidebar-offset));
+    margin-left: var(--sf-doc-sidebar-offset);
+  }
+}
+@media (min-width: 960px) and (max-width: 1199px) {
+  .sf-site-footer--docs .sf-site-footer__inner { grid-template-columns: minmax(170px,1.25fr) repeat(3,minmax(88px,.7fr)); gap: 22px 18px; }
+  .sf-site-footer--docs .sf-footer-star { display: grid; grid-column: 1 / -1; grid-template-columns: auto minmax(0,1fr) auto; align-items: center; gap: 14px; padding: 12px 14px; }
+  .sf-site-footer--docs .sf-footer-star strong { margin: 0; }
+  .sf-site-footer--docs .sf-footer-star p { margin: 0; }
 }
 @media (max-width: 959px) {
   .VPHome .VPHero { padding-top: 78px; }

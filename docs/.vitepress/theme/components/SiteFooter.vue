@@ -3,7 +3,8 @@ import { computed } from 'vue'
 import { useData } from 'vitepress'
 
 const repository = 'https://github.com/sohophp/sofinder'
-const { lang } = useData()
+const { frontmatter, lang } = useData()
+const isDocumentationPage = computed(() => frontmatter.value.layout !== 'home')
 const prefix = computed(() => lang.value.startsWith('zh-Hant') ? '/zh-TW' : lang.value.startsWith('zh') ? '/zh-CN' : '')
 const labels = computed(() => lang.value.startsWith('zh-Hant')
   ? { description: '適用於 PHP 與 Symfony 的安全檔案管理。', resources: '資源', docs: '文件', guides: '使用指南', api: 'API 參考', community: '社群', issues: 'Issues', discussions: 'Discussions', project: '專案', changelog: '更新紀錄', security: '安全', contributing: '參與貢獻', license: '授權', message: '依 MIT 授權條款發布。', openSource: 'GitHub 上的開放原始碼', follow: '關注開發進度、回報問題並檢視每次發布。' }
@@ -13,7 +14,7 @@ const labels = computed(() => lang.value.startsWith('zh-Hant')
 </script>
 
 <template>
-  <footer class="sf-site-footer">
+  <footer class="sf-site-footer" :class="{ 'sf-site-footer--docs': isDocumentationPage }">
     <div class="sf-site-footer__inner">
       <div class="sf-footer-brand">
         <a :href="`${prefix}/`" aria-label="SoFinder home"><img src="/logo.svg" alt="" width="30" height="30"><strong>SoFinder</strong></a>
