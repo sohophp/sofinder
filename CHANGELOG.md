@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+## 0.1.0-beta.28 - 2026-08-28
+
+- Keep free watermark dragging active at the window level so Firefox continues
+  tracking the pointer after it leaves the watermark element.
+
 ## 0.1.0-beta.27 - 2026-08-28
 
 - Make pinned folders, favorite files, recent items and folder navigation

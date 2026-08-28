@@ -1266,6 +1266,13 @@ function ee({ entry: e, info: t, imageUrl: n, resource: r, watermarkUrl: s, pres
 		K(Math.round(Math.max(0, Math.min(100, t.x + (e.clientX - t.clientX) * 100 / i)))), J(Math.round(Math.max(0, Math.min(100, t.y + (e.clientY - t.clientY) * 100 / a)))), G("custom");
 	};
 	(0, c.useEffect)(() => {
+		let e = (e) => xt(e), t = () => {
+			N.current = null;
+		};
+		return window.addEventListener("pointermove", e), window.addEventListener("pointerup", t), window.addEventListener("pointercancel", t), () => {
+			window.removeEventListener("pointermove", e), window.removeEventListener("pointerup", t), window.removeEventListener("pointercancel", t);
+		};
+	}, []), (0, c.useEffect)(() => {
 		if (!E.current) return;
 		let e = new l.default(E.current, {
 			viewMode: 1,

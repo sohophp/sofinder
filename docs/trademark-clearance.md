@@ -135,3 +135,13 @@ engineering rechecks remain unchanged.
 No new package-identity conflict was identified in this release delta check, so
 beta.27 retains the name. The limitations and non-legal nature of the earlier
 engineering rechecks remain unchanged.
+
+## 2026-08-28 beta.28 engineering delta check
+
+- This release only makes watermark pointer tracking consistent in Firefox and
+  does not change the project name, package identities, positioning or visual
+  branding.
+- The beta.27 identity checks above remain current for this same-day corrective
+  release.
+
+No new package-identity conflict was introduced, so beta.28 retains the name.

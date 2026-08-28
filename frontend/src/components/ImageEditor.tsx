@@ -61,7 +61,7 @@ export function ImageEditor({ entry, info, imageUrl, resource, watermarkUrl, pre
   const ratioValue = (value = ratio) => value === "original" ? info.width / info.height : value === "1:1" ? 1 : value === "4:3" ? 4 / 3 : value === "16:9" ? 16 / 9 : NaN;
   const positionCoordinates = (value: WatermarkPosition): [number, number] => value === "top-left" ? [0, 0] : value === "top-right" ? [100, 0] : value === "center" ? [50, 50] : value === "bottom-left" ? [0, 100] : value === "bottom-right" ? [100, 100] : [watermarkX, watermarkY];
   const changeWatermarkPosition = (value: WatermarkPosition) => { const [x, y] = positionCoordinates(value); setPosition(value); setWatermarkX(x); setWatermarkY(y); };
-  const moveWatermark = (event: ReactPointerEvent<HTMLDivElement>) => {
+  const moveWatermark = (event: Pick<PointerEvent, "clientX" | "clientY"> | ReactPointerEvent<HTMLDivElement>) => {
     const drag = watermarkDrag.current, layer = watermarkLayer.current, marker = watermarkMarker.current;
     if (!drag || !layer || !marker) return;
     const availableX = Math.max(1, layer.clientWidth - marker.offsetWidth), availableY = Math.max(1, layer.clientHeight - marker.offsetHeight);
@@ -69,6 +69,21 @@ export function ImageEditor({ entry, info, imageUrl, resource, watermarkUrl, pre
     setWatermarkY(Math.round(Math.max(0, Math.min(100, drag.y + (event.clientY - drag.clientY) * 100 / availableY))));
     setPosition("custom");
   };
+
+  useEffect(() => {
+    const move = (event: PointerEvent) => moveWatermark(event);
+    const stop = () => { watermarkDrag.current = null; };
+    window.addEventListener("pointermove", move);
+    window.addEventListener("pointerup", stop);
+    window.addEventListener("pointercancel", stop);
+    return () => {
+      window.removeEventListener("pointermove", move);
+      window.removeEventListener("pointerup", stop);
+      window.removeEventListener("pointercancel", stop);
+    };
+  // The drag calculation reads mutable element/gesture refs, so one stable window listener is sufficient.
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   useEffect(() => {
     if (!source.current) return;
