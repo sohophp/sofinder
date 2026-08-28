@@ -32,6 +32,7 @@ test('desktop home keeps its primary hierarchy', async ({ page }) => {
   await expect(page.getByRole('link', { name: 'Get started' })).toBeVisible()
   await expect(page.locator('.VPFeature')).toHaveCount(6)
   await expect(page.locator('.sf-hero-terminal')).toBeVisible()
+  await expect(page.locator('.sf-site-footer .sf-footer-brand')).toBeVisible()
   await expect.poll(() => page.locator('.VPHome .sf-code-panel pre').evaluateAll((panels) =>
     panels.every((panel) => panel.scrollWidth <= panel.clientWidth && panel.scrollHeight <= panel.clientHeight),
   )).toBe(true)
@@ -54,6 +55,7 @@ test('desktop documentation keeps the three-column layout', async ({ page }) => 
   await expect(page).toHaveScreenshot('documentation-desktop.png')
 
   await page.locator('.sf-site-footer').scrollIntoViewIfNeeded()
+  await expect(page.locator('.sf-site-footer .sf-footer-brand')).toBeHidden()
   await expect.poll(() => page.evaluate(() => {
     const footer = document.querySelector<HTMLElement>('.sf-site-footer')
     const sidebar = document.querySelector<HTMLElement>('.VPSidebar')
@@ -74,7 +76,8 @@ test('compact footer is not covered by the fixed documentation rails', async ({ 
   await page.locator('.sf-site-footer').scrollIntoViewIfNeeded()
   const footer = page.locator('.sf-site-footer')
   await expect(footer).toBeVisible()
-  await expect.poll(() => footer.evaluate((element) => element.getBoundingClientRect().height)).toBeLessThan(360)
+  await expect(page.locator('.sf-site-footer .sf-footer-brand')).toBeHidden()
+  await expect.poll(() => footer.evaluate((element) => element.getBoundingClientRect().height)).toBeLessThan(280)
   await expect.poll(() => page.evaluate(() => {
     const element = document.querySelector<HTMLElement>('.sf-site-footer')
     const sidebar = document.querySelector<HTMLElement>('.VPSidebar')
@@ -112,6 +115,7 @@ test('mobile documentation uses the native drawer and page outline', async ({ pa
   await expect(page.locator('.VPNavBarHamburger')).toBeVisible()
   await expect(page.locator('.VPLocalNavOutlineDropdown')).toBeVisible()
   await expect(page.getByRole('heading', { name: '安装与快速开始' })).toBeVisible()
+  await expect(page.locator('.sf-site-footer .sf-footer-brand')).toBeVisible()
   await expect(page).toHaveScreenshot('documentation-mobile-dark.png', { maxDiffPixelRatio: 0.025 })
 })
 
