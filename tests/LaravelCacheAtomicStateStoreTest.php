@@ -55,18 +55,7 @@ final class LaravelCacheAtomicStateStoreTest extends TestCase
 
     public function testCacheDriversWithoutAtomicLocksAreRejectedAtBootstrap(): void
     {
-        $store = new class implements Store {
-            public function get($key): mixed { return null; }
-            public function many(array $keys): array { return []; }
-            public function put($key, $value, $seconds): bool { return true; }
-            public function putMany(array $values, $seconds): bool { return true; }
-            public function increment($key, $value = 1): int|bool { return false; }
-            public function decrement($key, $value = 1): int|bool { return false; }
-            public function forever($key, $value): bool { return true; }
-            public function forget($key): bool { return true; }
-            public function flush(): bool { return true; }
-            public function getPrefix(): string { return ''; }
-        };
+        $store = $this->createMock(Store::class);
 
         $this->expectException(\InvalidArgumentException::class);
         $this->expectExceptionMessage('must support atomic locks');
