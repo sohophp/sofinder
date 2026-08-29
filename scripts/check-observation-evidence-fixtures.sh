@@ -9,9 +9,9 @@ fixture_dir=$(mktemp -d "$repository_root/var/observation-fixtures.XXXXXX")
 trap 'rm -rf -- "$fixture_dir"' EXIT
 
 "$php_bin" -r 'file_put_contents($argv[1], json_encode([
-    "tag_name" => "1.0.0",
+    "tag_name" => "v1.0.0",
     "published_at" => "2026-01-01T00:00:00Z",
-    "html_url" => "https://github.com/sohophp/sofinder/releases/tag/1.0.0",
+    "html_url" => "https://github.com/sohophp/sofinder/releases/tag/v1.0.0",
 ], JSON_THROW_ON_ERROR));' "$fixture_dir/release.json"
 "$php_bin" -r 'file_put_contents($argv[1], "[]");' "$fixture_dir/issues.json"
 

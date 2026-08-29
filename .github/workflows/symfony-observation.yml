@@ -25,7 +25,7 @@ jobs:
       - name: Detect the 1.0.0 release
         id: release
         run: |
-          if gh api "repos/$GITHUB_REPOSITORY/releases/tags/1.0.0" > release.json 2>/dev/null; then
+          if gh api "repos/$GITHUB_REPOSITORY/releases/tags/v1.0.0" > release.json 2>/dev/null; then
             echo 'published=true' >> "$GITHUB_OUTPUT"
           else
             echo 'published=false' >> "$GITHUB_OUTPUT"

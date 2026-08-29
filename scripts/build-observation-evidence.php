@@ -12,8 +12,8 @@ $failOnDefects = ($argv[4] ?? null) === '--fail-on-defects';
 $release = json_decode((string) file_get_contents($releaseFile), true, 32, JSON_THROW_ON_ERROR);
 $issues = json_decode((string) file_get_contents($issuesFile), true, 32, JSON_THROW_ON_ERROR);
 
-if (!is_array($release) || ($release['tag_name'] ?? null) !== '1.0.0') {
-    throw new InvalidArgumentException('Observation requires the immutable 1.0.0 GitHub release.');
+if (!is_array($release) || ($release['tag_name'] ?? null) !== 'v1.0.0') {
+    throw new InvalidArgumentException('Observation requires the immutable v1.0.0 GitHub release.');
 }
 if (!is_string($release['published_at'] ?? null) || !is_string($release['html_url'] ?? null)) {
     throw new InvalidArgumentException('Release evidence requires published_at and html_url.');
