@@ -10,6 +10,7 @@ use Psr\Http\Message\StreamFactoryInterface;
 use SohoPHP\SoFinder\Contract\ActorProviderInterface;
 use SohoPHP\SoFinder\Contract\AuthorizationInterface;
 use SohoPHP\SoFinder\Contract\CsrfTokenProviderInterface;
+use SohoPHP\SoFinder\Contract\RoleAuthorizationInterface;
 use SohoPHP\SoFinder\Psr15\HostServices;
 use SohoPHP\SoFinder\Psr15\LocalApplicationFactory;
 use SohoPHP\SoFinder\Psr15\NativeSessionCsrfTokenProvider;
@@ -37,6 +38,10 @@ final class RuntimeFactory
         $events = new class implements EventDispatcherInterface {
             public function dispatch(object $event): object { return $event; }
         };
+        $roles = new class($authorized) implements RoleAuthorizationInterface {
+            public function __construct(private readonly bool $authorized) {}
+            public function isGranted(string $role): bool { return $this->authorized; }
+        };
         $csrf = $authorized
             ? new class implements CsrfTokenProviderInterface {
                 public function token(\SohoPHP\SoFinder\Value\RequestContext $context): string { return 'sofinder-host-contract-token'; }
@@ -48,13 +53,23 @@ final class RuntimeFactory
             $actor,
             $csrf,
             $events,
+            $roles,
         );
 
         return (new LocalApplicationFactory(
             $responses,
             $streams,
             $services,
-            [],
+            [
+                // Match the Symfony example for executable cross-host
+                // contracts; framework-neutral defaults remain disabled.
+                'signed_urls' => ['enabled' => true],
+                'asset_catalog' => ['enabled' => true],
+                'image_variants' => ['enabled' => true],
+                'resources' => [
+                    'Files' => ['delivery_mode' => 'public'],
+                ],
+            ],
             dirname(__DIR__) . '/var/state',
             dirname(__DIR__) . '/var/files',
             dirname(__DIR__, 3),

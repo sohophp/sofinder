@@ -39,6 +39,7 @@ use SohoPHP\SoFinder\Asset\JsonAssetUsageStore;
 use SohoPHP\SoFinder\FileManager;
 use SohoPHP\SoFinder\Feature\FeaturePolicy;
 use SohoPHP\SoFinder\Health\HealthManager;
+use SohoPHP\SoFinder\Http\LocalHealthManagerFactory;
 use SohoPHP\SoFinder\Http\AdvancedEndpointActions;
 use SohoPHP\SoFinder\Http\EndpointActionInterface;
 use SohoPHP\SoFinder\Http\BrowserPage;
@@ -277,7 +278,22 @@ final class SoFinderServiceProvider extends ServiceProvider
             (bool) $app->make(LaravelConfiguration::class)->get('asset_access_sessions.enabled'), (int) $app->make(LaravelConfiguration::class)->get('asset_access_sessions.default_ttl_seconds'),
             (int) $app->make(LaravelConfiguration::class)->get('asset_access_sessions.max_ttl_seconds'), (int) $app->make(LaravelConfiguration::class)->get('asset_access_sessions.max_assets'),
         ));
-        $this->app->singleton(HealthManager::class, static fn (): HealthManager => new HealthManager([]));
+        $this->app->singleton(HealthManager::class, static function ($app): HealthManager {
+            $packageDirectory = dirname(__DIR__);
+            if (!is_dir($packageDirectory . '/dist')) {
+                $packageDirectory = dirname(__DIR__, 3);
+            }
+
+            return (new LocalHealthManagerFactory())->create(
+                $app->make(LaravelConfiguration::class)->all(),
+                $app->make(ResourceRegistry::class),
+                $app->make(ImageCapabilityProviderInterface::class),
+                $app->make(ImageFormatRegistry::class),
+                $app->make(LocalMetricsStore::class),
+                $packageDirectory,
+                true,
+            );
+        });
         $this->app->singleton(MalwareScanStatusStore::class, static fn ($app): MalwareScanStatusStore => new MalwareScanStatusStore(rtrim((string) $app->make(LaravelConfiguration::class)->get('cache_dir'), '/') . '/malware-scans.json', (int) $app->make(LaravelConfiguration::class)->get('malware_scanning.history_limit')));
         $this->app->alias(MalwareScanStatusStore::class, MalwareScanStatusStoreInterface::class);
         $this->app->singleton(StandardEndpointActions::class, static fn ($app): StandardEndpointActions => new StandardEndpointActions(

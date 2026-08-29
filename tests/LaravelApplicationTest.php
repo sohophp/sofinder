@@ -54,7 +54,9 @@ final class LaravelApplicationTest extends TestCase
             ->assertJsonPath('error.code', 'access_denied');
         $this->get('/sofinder/health')
             ->assertOk()
-            ->assertJsonPath('success', true);
+            ->assertJsonPath('success', true)
+            ->assertJsonPath('data.checks.0.name', 'document-preview')
+            ->assertJsonCount(5, 'data.checks');
 
         $routes = $this->app->make(Router::class)->getRoutes();
         $routes->refreshNameLookups();

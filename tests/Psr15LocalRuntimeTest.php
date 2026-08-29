@@ -95,7 +95,15 @@ final class Psr15LocalRuntimeTest extends TestCase
 
         $health = $middleware->process(new ServerRequest('GET', '/sofinder/health'), $fallback);
         self::assertSame(200, $health->getStatusCode());
-        self::assertNotSame('endpoint_not_implemented', json_decode((string) $health->getBody(), true, 32, JSON_THROW_ON_ERROR)['error']['code'] ?? null);
+        $healthPayload = json_decode((string) $health->getBody(), true, 32, JSON_THROW_ON_ERROR);
+        self::assertNotSame('endpoint_not_implemented', $healthPayload['error']['code'] ?? null);
+        self::assertSame([
+            'document-preview',
+            'image',
+            'maintenance-queue',
+            'runtime',
+            'storage',
+        ], array_column($healthPayload['data']['checks'], 'name'));
     }
 
     private function services(): HostServices

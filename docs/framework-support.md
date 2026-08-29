@@ -20,8 +20,10 @@ and 7.4 LTS.
 
 The experimental PSR-15 package supplies middleware, a `RouteRegistrar` and a
 local runtime factory for all 51 non-presentation endpoints. Real Slim 4,
-Mezzio 3 and plain PHP front controllers execute liveness, capabilities, health,
-denial and mutation paths on PHP 8.2 and 8.5. `/browser` remains host-rendered.
+Mezzio 3 and plain PHP front controllers execute all 51 routes plus liveness,
+capabilities, health, denial and mutation paths on PHP 8.2 and 8.5. The shared
+inventory compares status/error contracts and security headers against Symfony;
+`/browser` remains host-rendered.
 Only the Symfony row is supported today; the PSR row does not become supported
 until the complete black-box suite and release gate pass.
 
@@ -33,8 +35,10 @@ and normalized configuration adapters are present. The shared browser bootstrap,
 four Artisan maintenance commands, Laravel Queue dispatcher and synchronized
 release assets are also wired. A runnable Laravel 12/13 application now verifies
 auto-discovery, configuration and route caches, browser boot, CSRF, upload,
-download, Range and frontend assets. The package remains experimental while its
-full cross-host black-box contract suite is being completed.
+download, Range and frontend assets. Its real-host suite also executes all 51
+non-presentation routes against the Symfony status/error and security-header
+contract. The package remains experimental while the remaining success-lifecycle
+snapshots and observation gate are being completed.
 
 The gate is recorded in `config/framework-support.json` and validated in CI.
 It cannot become eligible until the recorded main release is `1.0.0`, its UTC

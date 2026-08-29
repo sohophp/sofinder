@@ -7,6 +7,11 @@ description: SoFinder 每个公开版本的重要变更。
 
 ## 尚未发布
 
+- 在真实 Symfony、Laravel、Slim、Mezzio 和纯 PHP 宿主执行中央 51 路由清单，并比较
+  状态／错误 Envelope、响应结构和安全响应头，同时保留写操作与 Stream 生命周期测试。
+- Laravel 与无框架 PSR Runtime 现执行与 Symfony 同级的 Runtime、Storage、图片、文档预览
+  和维护就绪检查，不再以空检查集合返回 Readiness。
+
 ## 0.1.0-beta.31 - 2026-08-29
 
 - 新增 Jodit 4 选择器与原生上传适配器、类型声明、体积检查、测试、文档及可运行的 Symfony 演示页签。

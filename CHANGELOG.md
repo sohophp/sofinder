@@ -2,6 +2,13 @@
 
 ## Unreleased
 
+- Execute the canonical 51-route inventory against real Symfony, Laravel,
+  Slim, Mezzio and plain PHP hosts, comparing status/error envelopes, response
+  shape and security headers while retaining lifecycle tests for mutations and
+  streams.
+- Give Laravel and framework-neutral PSR runtimes the same runtime, storage,
+  image, document-preview and maintenance readiness probes as Symfony instead
+  of returning readiness from an empty check collection.
 - Make every PHP 8 package conflict with `sohophp/sofinder-legacy`, preventing
   Composer from mixing the independent PHP 7 and PHP 8 product lines.
 - Add the framework-neutral `ConfigurationNormalizer`, make Symfony pass its

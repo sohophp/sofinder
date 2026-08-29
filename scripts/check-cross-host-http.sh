@@ -69,6 +69,95 @@ canonical_json()
     ' "$1"
 }
 
+response_signature()
+{
+    local status=$1
+    local headers=$2
+    local body=$3
+    "$php_bin" -r '
+        [$status,$headersFile,$bodyFile]=array_slice($argv,1);
+        $headers=file($headersFile,FILE_IGNORE_NEW_LINES)?:[];
+        $values=[];
+        foreach($headers as $line){
+            if(!str_contains($line,":")) continue;
+            [$name,$value]=explode(":",$line,2);
+            $values[strtolower(trim($name))]=trim($value);
+        }
+        $type=strtolower(trim(explode(";",$values["content-type"]??"")[0]));
+        $success="";$code="";$bodyContract="";
+        if($type==="application/json"){
+            $payload=json_decode(file_get_contents($bodyFile),true);
+            if(!is_array($payload)) { fwrite(STDERR,"Invalid JSON contract response.\n"); exit(1); }
+            $success=array_key_exists("success",$payload)?($payload["success"]?"true":"false"):"missing";
+            $code=(string)($payload["error"]["code"]??"");
+            if($success==="false"){
+                $bodyContract=hash("sha256",json_encode($payload,JSON_THROW_ON_ERROR|JSON_UNESCAPED_SLASHES));
+            } else {
+                $envelope=array_keys($payload); sort($envelope);
+                $data=is_array($payload["data"]??null)?array_keys($payload["data"]):[]; sort($data);
+                $bodyContract=hash("sha256",json_encode([
+                    "envelope"=>$envelope,
+                    "data"=>$data,
+                ],JSON_THROW_ON_ERROR|JSON_UNESCAPED_SLASHES));
+            }
+        }
+        $required=[
+            "x-content-type-options"=>"nosniff",
+            "x-frame-options"=>"SAMEORIGIN",
+            "x-sofinder-api-version"=>"1.0",
+            "cross-origin-resource-policy"=>"same-origin",
+        ];
+        foreach($required as $name=>$expected){
+            if(($values[$name]??null)!==$expected){
+                fwrite(STDERR,"Missing or invalid $name response header.\n"); exit(1);
+            }
+        }
+        if(!str_contains($values["content-security-policy"]??"","default-src")){
+            fwrite(STDERR,"Missing restrictive Content-Security-Policy response header.\n"); exit(1);
+        }
+        echo implode("|",[
+            $status,$type,$success,$code,$bodyContract,
+            $values["x-content-type-options"]??"",
+            $values["x-frame-options"]??"",
+            $values["x-sofinder-api-version"]??"",
+            $values["cross-origin-resource-policy"]??"",
+            $values["content-security-policy"]??"",
+        ]),"\n";
+    ' "$status" "$headers" "$body"
+}
+
+verify_endpoint_inventory()
+{
+    local host=$1
+    local inventory="$test_dir/endpoint-contract-cases.tsv"
+    local signatures="$test_dir/$host-endpoints.signatures"
+    : > "$signatures"
+    while IFS=$'\t' read -r endpoint method path; do
+        local key=${endpoint#sofinder_}
+        local headers="$test_dir/$host-$key.headers"
+        local body="$test_dir/$host-$key.body"
+        local status
+        local signature
+        local request=(--silent --show-error "${auth[@]}" "${cookie[@]}" --request "$method" --dump-header "$headers" --output "$body" --write-out '%{http_code}')
+        if [[ "$method" != GET ]]; then
+            request+=(--header 'Content-Type: application/json' --data '{}')
+        fi
+        status=$(curl "${request[@]}" "$base_url/sofinder$path")
+        signature=$(response_signature "$status" "$headers" "$body") \
+            || fail "$host returned an invalid contract response for $endpoint."
+        printf '%s\t%s\n' "$endpoint" "$signature" >> "$signatures"
+    done < "$inventory"
+    [[ "$(wc -l < "$signatures")" == 51 ]] || fail "$host did not exercise all 51 non-presentation endpoints."
+
+    if [[ "$host" == symfony ]]; then
+        cp "$signatures" "$test_dir/reference-endpoints.signatures"
+    else
+        if ! diff -u "$test_dir/reference-endpoints.signatures" "$signatures" >&2; then
+            fail "$host endpoint inventory differs from the Symfony contract."
+        fi
+    fi
+}
+
 start_host()
 {
     local host=$1
@@ -95,6 +184,8 @@ stop_host()
 }
 
 reference=''
+"$php_bin" "$repository_root/scripts/export-cross-host-contract-cases.php" > "$test_dir/endpoint-contract-cases.tsv"
+[[ "$(wc -l < "$test_dir/endpoint-contract-cases.tsv")" == 51 ]] || fail 'Endpoint contract inventory must contain all 51 non-presentation endpoints.'
 for specification in 'symfony 18100' 'laravel 18101' 'slim 18102' 'mezzio 18103' 'plain 18104'; do
     read -r host port <<< "$specification"
     base_url="http://127.0.0.1:$port"
@@ -128,6 +219,8 @@ for specification in 'symfony 18100' 'laravel 18101' 'slim 18102' 'mezzio 18103'
 
     cookie=()
     if [[ -s "$test_dir/$host.cookies" ]]; then cookie=(--cookie "$test_dir/$host.cookies"); fi
+
+    verify_endpoint_inventory "$host"
 
     status=$(curl --silent --show-error "${auth[@]}" "${cookie[@]}" \
         --dump-header "$test_dir/$host-csrf.headers" \

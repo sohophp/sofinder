@@ -18,7 +18,8 @@ API、命令、安全和依赖注入的完整稳定目标。
 
 实验性 PSR-15 包现已提供 Middleware、`RouteRegistrar` 和全部 51 个非展示端点的本地
 Runtime Factory。真实 Slim 4、Mezzio 3 与纯 PHP Front Controller 已在 PHP 8.2 和 8.5 上
-执行 Liveness、Capabilities、Health、拒绝和写操作路径；`/browser` 仍由宿主渲染。当前只有
+执行全部 51 条路由以及 Liveness、Capabilities、Health、拒绝和写操作路径；共享清单会把
+状态／错误契约和安全响应头与 Symfony 比较，`/browser` 仍由宿主渲染。当前只有
 Symfony 属于支持安装；PSR Bridge 必须在完整黑盒 Suite 和发布门禁通过后才能升级。
 
 受门禁保护的 Laravel 包已在真实 Laravel 12/13 应用中通过自动发现启动，注册中央 51 个
@@ -26,7 +27,8 @@ Symfony 属于支持安装；PSR Bridge 必须在完整黑盒 Suite 和发布门
 Session CSRF、Event Dispatcher、请求上下文、路由 URL 和统一配置 Adapter 已完成；浏览器
 外壳、四个 Artisan 维护命令、Laravel Queue Dispatcher 和同步发布资源也已接入。可运行的
 Laravel 12/13 应用现已验证自动发现、配置与路由缓存、浏览器启动、CSRF、上传、下载、Range
-及前端资源；完整跨框架黑盒契约仍待完成，因此继续标记为实验性。
+及前端资源；真实宿主套件也会执行全部 51 条非展示路由，并与 Symfony 比较状态／错误及
+安全响应头契约。剩余成功生命周期 Snapshot 与观察门禁完成前仍标记为实验性。
 
 门禁证据记录在 `config/framework-support.json` 并由 CI 校验。只有记录的主线版本为
 `1.0.0`、UTC 发布日期已满 30 天且未关闭的 P0/P1 缺陷数为零时，才允许设为 eligible。
