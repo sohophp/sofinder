@@ -44,6 +44,7 @@ test "$(wc -l < "$split_dir/SPLIT_MANIFEST.tsv")" = 6
 for package in sofinder-core sofinder-http sofinder-symfony sofinder-s3 sofinder-psr15 sofinder-laravel; do
     grep -Fq "sohophp/$package" "$split_dir/SPLIT_MANIFEST.tsv"
 done
-bash "$repository_root/scripts/check-package-split-publication.sh" "$split_dir"
+relative_split_dir=${split_dir#"$repository_root/"}
+(cd "$repository_root" && bash scripts/check-package-split-publication.sh "$relative_split_dir")
 
 echo 'Gated Laravel and PSR-15 release archive, split and clean-consumer fixtures passed.'

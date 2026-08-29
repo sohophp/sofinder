@@ -8,6 +8,7 @@ if [[ -z "$split_dir" || ! -s "$split_dir/SPLIT_MANIFEST.tsv" ]]; then
     echo 'Usage: check-package-split-publication.sh SPLIT_DIRECTORY' >&2
     exit 2
 fi
+split_dir=$(cd "$split_dir" && pwd)
 mkdir -p "$repository_root/var"
 happy_dir=$(mktemp -d "$repository_root/var/package-publish-happy.XXXXXX")
 conflict_dir=$(mktemp -d "$repository_root/var/package-publish-conflict.XXXXXX")
