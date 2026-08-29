@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- Clarify the non-negotiable compatibility boundary: PHP 8 main never
+  downgrades for PHP 7.2, whose development feasibility remains an independent
+  Legacy product decision.
 - Establish the independent public `sohophp/sofinder-legacy` repository and
   green PHP 7.2.5/7.3/7.4 baseline CI, while leaving runtime porting paused and
   explicitly unreleased.

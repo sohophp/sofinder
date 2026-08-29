@@ -135,6 +135,13 @@ constraint. The current code intentionally uses PHP 8.1/8.2 language features,
 and current Symfony, PHPUnit and PSR dependency versions do not form a safe
 drop-in PHP 7.2 matrix.
 
+The compatibility boundary is non-negotiable: the PHP 8.2–8.5 main line is
+never downgraded in syntax, dependencies, architecture or tests to make PHP 7.2
+possible. Whether PHP 7.2 runtime development is feasible or worth continuing
+is a separate product decision made only inside the Legacy repository. A
+Legacy feasibility result cannot require changes that weaken or constrain the
+PHP 8 main line.
+
 The independent [`sohophp/sofinder-legacy`](https://github.com/sohophp/sofinder-legacy)
 repository now contains a `7.2.x` compatibility baseline, its own lock file,
 PHP 7.2.5/7.3/7.4 CI and security policy. Runtime porting is currently paused

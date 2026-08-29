@@ -101,6 +101,10 @@ PHP 7.2 已停止维护，不能加入 `main` 或 1.x 的 Composer 约束。当�
 8.1／8.2 语法，现行 Symfony、PHPUnit 和 PSR 依赖也无法直接形成安全的 PHP 7.2
 矩阵。
 
+兼容边界不可改变：PHP 8.2～8.5 主线绝不会为了实现 PHP 7.2 而降低语法、依赖、架构
+或测试标准。PHP 7.2 Runtime 是否具备开发可行性、是否值得继续，是只能在 Legacy
+仓库内另行作出的产品决策。任何 Legacy 可行性结论都不能要求削弱或限制 PHP 8 主线。
+
 独立的 [`sohophp/sofinder-legacy`](https://github.com/sohophp/sofinder-legacy)
 仓库现已建立 `7.2.x` 兼容基线，并拥有独立 lock file、PHP 7.2.5／7.3／7.4 CI
 和安全政策。Runtime 移植目前暂停，尚无 `7.2.0` Release 或 Packagist 包；它不会与

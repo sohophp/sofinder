@@ -7,6 +7,8 @@ description: SoFinder 每個公開版本的重要變更。
 
 ## 尚未發佈
 
+- 明確不可改變的相容邊界：PHP 8 主線絕不為 PHP 7.2 降級；PHP 7.2 是否繼續開發，
+  始終是獨立的 Legacy 產品決策。
 - 建立獨立公開的 `sohophp/sofinder-legacy` Repository 及通過的 PHP 7.2.5／7.3／7.4
   基線 CI；Runtime 移植維持暫停，且明確不發布版本。
 
