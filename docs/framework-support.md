@@ -14,7 +14,7 @@ and 7.4 LTS.
 | --- | --- | --- |
 | Symfony 6.4/7.4 | Full, stable target | Complete PHP 8.2–8.5 CI matrix |
 | Plain PHP / any container | Experimental complete headless HTTP runtime | Host supplies explicit authorization, CSRF, actor, events and PSR factories |
-| Laravel 12/13 | Experimental full-stack bridge: browser, 51 shared handlers, Artisan/Queue, Auth/Gate and session CSRF | Runnable example, full black-box parity and the Symfony observation gate |
+| Laravel 12/13 | Experimental full-stack bridge: browser, 51 shared handlers, Artisan/Queue, Auth/Gate and session CSRF | Full black-box parity and the Symfony observation gate |
 | Slim / Mezzio | Experimental PSR-15 bridge with all 51 shared handlers and executable hosts | Full black-box parity and the Symfony 1.0 observation gate |
 | Other frameworks | Headless core only | Implement the same public contracts; do not subclass internal controllers |
 
@@ -31,8 +31,10 @@ wires all of them to shared HTTP actions through the PSR dispatcher. Its
 Laravel Auth/Gate, session CSRF, event dispatcher, request context, route URL
 and normalized configuration adapters are present. The shared browser bootstrap,
 four Artisan maintenance commands, Laravel Queue dispatcher and synchronized
-release assets are also wired. The package remains experimental while its
-runnable example and full black-box contract suite are being completed.
+release assets are also wired. A runnable Laravel 12/13 application now verifies
+auto-discovery, configuration and route caches, browser boot, CSRF, upload,
+download, Range and frontend assets. The package remains experimental while its
+full cross-host black-box contract suite is being completed.
 
 The gate is recorded in `config/framework-support.json` and validated in CI.
 It cannot become eligible until the recorded main release is `1.0.0`, its UTC

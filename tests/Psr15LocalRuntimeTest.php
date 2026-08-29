@@ -73,6 +73,8 @@ final class Psr15LocalRuntimeTest extends TestCase
         $live = $middleware->process(new ServerRequest('GET', '/sofinder/live'), $fallback);
         self::assertSame(200, $live->getStatusCode());
         self::assertSame('ready', json_decode((string) $live->getBody(), true, 32, JSON_THROW_ON_ERROR)['data']['status']);
+        self::assertSame('1.0', $live->getHeaderLine('X-SoFinder-API-Version'));
+        self::assertSame('same-origin', $live->getHeaderLine('Cross-Origin-Resource-Policy'));
 
         $created = $middleware->process(
             (new ServerRequest('POST', '/sofinder/api/folders'))->withParsedBody(['resource' => 'Files', 'path' => '', 'name' => 'documents', '_token' => 'csrf']),
@@ -80,6 +82,16 @@ final class Psr15LocalRuntimeTest extends TestCase
         );
         self::assertSame(201, $created->getStatusCode(), (string) $created->getBody());
         self::assertDirectoryExists($this->directory . '/files/documents');
+
+        $rawJson = (new ServerRequest(
+            'POST',
+            '/sofinder/api/folders',
+            ['Content-Type' => 'application/json', 'X-CSRF-TOKEN' => 'csrf'],
+            json_encode(['resource' => 'Files', 'path' => '', 'name' => 'raw-json'], JSON_THROW_ON_ERROR),
+        ))->withParsedBody([]);
+        $rawCreated = $middleware->process($rawJson, $fallback);
+        self::assertSame(201, $rawCreated->getStatusCode(), (string) $rawCreated->getBody());
+        self::assertDirectoryExists($this->directory . '/files/raw-json');
 
         $health = $middleware->process(new ServerRequest('GET', '/sofinder/health'), $fallback);
         self::assertSame(200, $health->getStatusCode());

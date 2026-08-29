@@ -24,3 +24,7 @@ Each successful response uses the shared JSON contract and security headers.
 `/sofinder/api/capabilities` and `/sofinder/health` also exercise non-liveness
 handlers; protected endpoints return `403 access_denied`, never an anonymous
 allow default.
+
+`SOFINDER_EXAMPLE_AUTHORIZED=1` enables only the repository's isolated
+cross-host fixture with a fixed CSRF token. It is not an authentication mode
+and must never be enabled in deployment.

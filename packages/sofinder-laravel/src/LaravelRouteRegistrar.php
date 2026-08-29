@@ -10,6 +10,12 @@ use SohoPHP\SoFinder\Http\EndpointDefinition;
 
 final readonly class LaravelRouteRegistrar
 {
+    /** Shared actions validate the Laravel session token and own the stable JSON error contract. */
+    private const FRAMEWORK_CSRF_MIDDLEWARE = [
+        'Illuminate\\Foundation\\Http\\Middleware\\PreventRequestForgery',
+        'Illuminate\\Foundation\\Http\\Middleware\\ValidateCsrfToken',
+    ];
+
     /** @param array<string,mixed> $config */
     public function __construct(private Router $router, private array $config)
     {
@@ -32,7 +38,8 @@ final readonly class LaravelRouteRegistrar
                 $controller = $endpoint->name === 'sofinder_browser' ? LaravelBrowserController::class : LaravelEndpointController::class;
                 $route = $router->match($endpoint->methods, ltrim($endpoint->path, '/'), $controller)
                     ->name(LaravelRouteName::fromEndpoint($endpoint->name))
-                    ->middleware($endpoint->public ? $middleware : $authenticated);
+                    ->middleware($endpoint->public ? $middleware : $authenticated)
+                    ->withoutMiddleware(self::FRAMEWORK_CSRF_MIDDLEWARE);
                 foreach ($endpoint->requirements as $parameter => $requirement) {
                     $route->where($parameter, $requirement);
                 }

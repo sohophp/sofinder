@@ -49,6 +49,7 @@ final class HttpContractTest extends TestCase
         (new SecurityResponseSubscriber())->onResponse($event);
 
         self::assertSame('nosniff', $response->headers->get('X-Content-Type-Options'));
+        self::assertSame('SAMEORIGIN', $response->headers->get('X-Frame-Options'));
         self::assertSame('1.0', $response->headers->get('X-SoFinder-API-Version'));
         self::assertSame('same-origin', $response->headers->get('Cross-Origin-Resource-Policy'));
         self::assertStringContainsString('no-store', (string) $response->headers->get('Cache-Control'));

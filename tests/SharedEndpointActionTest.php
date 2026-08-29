@@ -116,6 +116,6 @@ final class SharedEndpointActionTest extends TestCase
             json_decode((string) $psr->getBody(), true, 32, JSON_THROW_ON_ERROR),
         );
         self::assertSame('application/json; charset=utf-8', $psr->getHeaderLine('Content-Type'));
-        self::assertSame('no-store', $psr->getHeaderLine('Cache-Control'));
+        self::assertSame('no-store, private', $psr->getHeaderLine('Cache-Control'));
     }
 }

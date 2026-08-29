@@ -58,7 +58,7 @@ final class Psr15BridgeTest extends TestCase
 
         self::assertSame(403, $response->getStatusCode());
         self::assertSame(['success' => false, 'error' => ['code' => 'access_denied', 'message' => 'No access.']], $payload);
-        self::assertSame('no-store', $response->getHeaderLine('Cache-Control'));
+        self::assertSame('no-store, private', $response->getHeaderLine('Cache-Control'));
     }
 
     public function testDispatcherPreservesStableRetryHeaders(): void

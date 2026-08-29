@@ -1,0 +1,12 @@
+/.env
+/bootstrap/cache/*.php
+/storage/app/sofinder/
+/storage/framework/cache/*
+!/storage/framework/cache/.gitignore
+/storage/framework/sessions/*
+!/storage/framework/sessions/.gitignore
+/storage/framework/views/*
+!/storage/framework/views/.gitignore
+/vendor/
+/composer.lock
+/composer-*.lock

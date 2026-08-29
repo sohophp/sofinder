@@ -18,11 +18,9 @@ final class SecurityResponseSubscriber implements EventSubscriberInterface
 
         $response = $event->getResponse();
         $headers = $response->headers;
-        $headers->set('X-Content-Type-Options', 'nosniff');
-        $headers->set('X-SoFinder-API-Version', '1.0');
-        $headers->set('Referrer-Policy', 'no-referrer');
-        $headers->set('Permissions-Policy', 'camera=(), microphone=(), geolocation=(), payment=()');
-        $headers->set('Cross-Origin-Resource-Policy', 'same-origin');
+        foreach (SecurityHeaders::defaults() as $name => $value) {
+            if (!$headers->has($name)) $headers->set($name, $value);
+        }
         $deprecatedFields = $event->getRequest()->attributes->get('_sofinder_deprecated_fields');
         if (is_string($deprecatedFields) && $deprecatedFields !== '') {
             $headers->set('Deprecation', 'true');
@@ -30,17 +28,16 @@ final class SecurityResponseSubscriber implements EventSubscriberInterface
             $headers->set('X-SoFinder-Deprecated-Fields', $deprecatedFields);
             $headers->set('Link', '</docs/upgrading>; rel="deprecation"');
         }
-        if (!$headers->has('Content-Security-Policy')) {
-            $headers->set('Content-Security-Policy', "default-src 'none'; script-src 'self'; style-src 'self'; img-src 'self' data: blob: http: https:; connect-src 'self'; frame-src 'self'; frame-ancestors 'self'; base-uri 'none'; form-action 'self'");
-        }
         if (str_starts_with((string) $response->headers->get('Content-Type'), 'application/json')) {
-            $response->setPrivate();
-            $headers->set('Cache-Control', 'private, no-store');
+            $headers->remove('Cache-Control');
+            $headers->set('Cache-Control', 'no-store, private');
         }
     }
 
     public static function getSubscribedEvents(): array
     {
-        return [KernelEvents::RESPONSE => 'onResponse'];
+        // Run after Symfony's session listener so its cache directives cannot
+        // weaken or change the cross-host no-store contract.
+        return [KernelEvents::RESPONSE => ['onResponse', -2048]];
     }
 }

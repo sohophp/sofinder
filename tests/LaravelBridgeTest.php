@@ -55,6 +55,14 @@ final class LaravelBridgeTest extends TestCase
         $browser = $router->getRoutes()->getByName('sofinder.browser');
         self::assertNotNull($browser);
         self::assertSame(\SohoPHP\SoFinder\Laravel\LaravelBrowserController::class, $browser->getActionName());
+        self::assertContains(
+            'Illuminate\\Foundation\\Http\\Middleware\\ValidateCsrfToken',
+            $browser->excludedMiddleware(),
+        );
+        self::assertContains(
+            'Illuminate\\Foundation\\Http\\Middleware\\PreventRequestForgery',
+            $browser->excludedMiddleware(),
+        );
         self::assertSame(['web', 'tenant', 'auth'], $browser->getAction('middleware'));
         $config = $router->getRoutes()->getByName('sofinder.api.config');
         self::assertNotNull($config);

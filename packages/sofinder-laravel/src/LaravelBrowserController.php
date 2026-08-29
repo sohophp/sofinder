@@ -8,6 +8,7 @@ use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use SohoPHP\SoFinder\Contract\RequestContextProviderInterface;
 use SohoPHP\SoFinder\Http\BrowserPage;
+use SohoPHP\SoFinder\Http\SecurityHeaders;
 
 final readonly class LaravelBrowserController
 {
@@ -23,9 +24,6 @@ final readonly class LaravelBrowserController
         return new Response($this->page->render($context), 200, [
             'Content-Type' => 'text/html; charset=UTF-8',
             'Cache-Control' => 'no-store, private',
-            'X-Frame-Options' => 'SAMEORIGIN',
-            'X-Content-Type-Options' => 'nosniff',
-            'Referrer-Policy' => 'same-origin',
-        ]);
+        ] + SecurityHeaders::defaults());
     }
 }

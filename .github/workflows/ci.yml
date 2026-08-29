@@ -224,6 +224,64 @@ jobs:
       - run: ./scripts/php-bin.sh vendor/bin/phpunit tests/LaravelBridgeTest.php tests/LaravelApplicationTest.php
       - run: COMPOSER=composer.laravel.json ./scripts/composer.sh audit
 
+  laravel-example:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - php: '8.2'
+            composer: composer-12.json
+          - php: '8.5'
+            composer: composer-12.json
+          - php: '8.3'
+            composer: composer-13.json
+          - php: '8.5'
+            composer: composer-13.json
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: shivammathur/setup-php@f3e473d116dcccaddc5834248c87452386958240 # v2
+        with:
+          php-version: ${{ matrix.php }}
+          coverage: none
+          extensions: gd
+      - run: cp ${{ matrix.composer }} composer.json
+        working-directory: examples/laravel
+      - run: bash scripts/check-laravel-example-http.sh
+      - run: ../../scripts/composer.sh audit
+        working-directory: examples/laravel
+
+  cross-host-contract:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - php: '8.2'
+            symfony: composer-6.4.json
+            laravel: composer-12.json
+          - php: '8.5'
+            symfony: composer-7.4.json
+            laravel: composer-13.json
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: shivammathur/setup-php@f3e473d116dcccaddc5834248c87452386958240 # v2
+        with:
+          php-version: ${{ matrix.php }}
+          coverage: none
+          extensions: gd
+      - run: cp ${{ matrix.symfony }} composer.json
+        working-directory: examples/symfony
+      - run: ../../scripts/composer.sh install --no-interaction --prefer-dist --no-progress
+        working-directory: examples/symfony
+      - run: cp ${{ matrix.laravel }} composer.json
+        working-directory: examples/laravel
+      - run: ../../scripts/composer.sh install --no-interaction --prefer-dist --no-progress
+        working-directory: examples/laravel
+      - run: ../../scripts/composer.sh install --no-interaction --prefer-dist --no-progress
+        working-directory: examples/psr15
+      - run: bash scripts/check-cross-host-http.sh
+
   s3-adapter:
     runs-on: ubuntu-latest
     strategy:

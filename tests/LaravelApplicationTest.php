@@ -43,6 +43,8 @@ final class LaravelApplicationTest extends TestCase
         $this->get('/sofinder/live')
             ->assertOk()
             ->assertHeader('X-Content-Type-Options', 'nosniff')
+            ->assertHeader('X-SoFinder-API-Version', '1.0')
+            ->assertHeader('Cross-Origin-Resource-Policy', 'same-origin')
             ->assertExactJson(['success' => true, 'data' => ['status' => 'ready']]);
         $this->get('/sofinder/api/capabilities')
             ->assertOk()
