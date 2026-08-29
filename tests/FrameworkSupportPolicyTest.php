@@ -24,7 +24,7 @@ final class FrameworkSupportPolicyTest extends TestCase
             'approvedBy' => 'project-maintainer',
             'reason' => 'The maintainer approved immediate bridge promotion after the complete compatibility, security, split-publication and clean-consumer matrices passed.',
         ], $policy['promotionGate']['observationWaiver']);
-        self::assertSame('1.0.2', $policy['promotionGate']['releasedMainVersion']);
+        self::assertSame('1.1.0', $policy['promotionGate']['releasedMainVersion']);
         self::assertSame('2026-08-29', $policy['promotionGate']['releaseDate']);
         self::assertSame(0, $policy['promotionGate']['openP0P1Defects']);
         self::assertSame([
@@ -35,8 +35,8 @@ final class FrameworkSupportPolicyTest extends TestCase
             'observationCompletedAt',
             'priorityDefectAuditUrl',
         ], array_keys($policy['promotionGate']['evidence']));
-        self::assertSame('56f8b596932236c9c2a1767e96e1c5d25854a4cf', $policy['promotionGate']['evidence']['symfonyMatrixCommit']);
-        self::assertSame('https://github.com/sohophp/sofinder/actions/runs/33263241130', $policy['promotionGate']['evidence']['symfonyMatrixWorkflowUrl']);
+        self::assertSame('35a27b9db8900930b097abc48ad0e59d4da8b579', $policy['promotionGate']['evidence']['symfonyMatrixCommit']);
+        self::assertSame('https://github.com/sohophp/sofinder/actions/runs/33264304546', $policy['promotionGate']['evidence']['symfonyMatrixWorkflowUrl']);
         self::assertSame('2026-08-29', $policy['promotionGate']['evidence']['symfonyMatrixVerifiedAt']);
         self::assertSame('2026-08-29', $policy['promotionGate']['evidence']['observationStartedAt']);
         self::assertNull($policy['promotionGate']['evidence']['observationCompletedAt']);
@@ -45,11 +45,13 @@ final class FrameworkSupportPolicyTest extends TestCase
         self::assertArrayNotHasKey('experimental', $policy);
         self::assertArrayNotHasKey('gated', $policy);
         self::assertSame('sohophp/sofinder-legacy', $policy['legacy']['package']);
+        self::assertSame('https://github.com/sohophp/sofinder-legacy', $policy['legacy']['repository']);
         self::assertSame('7.2.x', $policy['legacy']['branch']);
         self::assertSame('>=7.2.5 <8.0', $policy['legacy']['php']);
         self::assertSame('^5.4', $policy['legacy']['symfony']);
         self::assertTrue($policy['legacy']['repositoryMustBeSeparate']);
         self::assertSame('best-effort', $policy['legacy']['support']);
+        self::assertSame('paused-unreleased', $policy['legacy']['status']);
         self::assertSame([
             '12' => ['8.2', '8.3', '8.4', '8.5'],
             '13' => ['8.3', '8.4', '8.5'],

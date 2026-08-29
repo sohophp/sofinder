@@ -7,6 +7,9 @@ description: SoFinder 每个公开版本的重要变更。
 
 ## 尚未发布
 
+- 建立独立公开的 `sohophp/sofinder-legacy` 仓库及通过的 PHP 7.2.5／7.3／7.4
+  基线 CI；Runtime 移植保持暂停，且明确不发布版本。
+
 ## 1.1.0 - 2026-08-30
 
 - 将 Laravel 12／13，以及供 Slim 4、Mezzio 3 和纯 PHP 使用的共享 PSR-15 Bridge

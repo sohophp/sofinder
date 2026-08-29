@@ -135,11 +135,11 @@ constraint. The current code intentionally uses PHP 8.1/8.2 language features,
 and current Symfony, PHPUnit and PSR dependency versions do not form a safe
 drop-in PHP 7.2 matrix.
 
-After the Symfony/PHP 8.2–8.5 line is stable, feasibility may be assessed in a
-separate repository and Composer package (for example,
-`sohophp/sofinder-legacy`), with its own version namespace, lock file, CI and
-security policy. It must not share release tags or dependency resolution with
-`sohophp/sofinder` 1.x. A port is released only if supported dependencies and a
-maintainable security-update path can be demonstrated. Every PHP 8 package
-declares a Composer conflict with `sohophp/sofinder-legacy`, so Composer rejects
-mixed PHP 7/PHP 8 installations before dependency resolution can install them.
+The independent [`sohophp/sofinder-legacy`](https://github.com/sohophp/sofinder-legacy)
+repository now contains a `7.2.x` compatibility baseline, its own lock file,
+PHP 7.2.5/7.3/7.4 CI and security policy. Runtime porting is currently paused
+and no `7.2.0` release or Packagist package exists. It does not share tags or
+dependency resolution with `sohophp/sofinder` 1.x. A port is released only if
+supported dependencies and a maintainable security-update path can be
+demonstrated. Every PHP 8 package declares a Composer conflict with
+`sohophp/sofinder-legacy`, so Composer rejects mixed product lines.

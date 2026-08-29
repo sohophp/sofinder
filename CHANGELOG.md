@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+- Establish the independent public `sohophp/sofinder-legacy` repository and
+  green PHP 7.2.5/7.3/7.4 baseline CI, while leaving runtime porting paused and
+  explicitly unreleased.
+
 ## 1.1.0 - 2026-08-30
 
 - Promote Laravel 12/13 and the shared PSR-15 bridge for Slim 4, Mezzio 3 and

@@ -82,10 +82,10 @@ base path；後續 Bridge 必須沿用此模式，避免安全設定產生差異
 
 ## PHP 7.2 必須使用獨立產品線
 
-PHP 7.2 已停止維護，不能加入 `main` 或 1.x Composer 約束。待 Symfony／PHP
-8.2～8.5 穩定後，可在獨立 Repository 及獨立 Composer Package（例如
-`sohophp/sofinder-legacy`）評估移植。它必須有自己的版本空間、lock file、CI 及
-安全政策，不得與 `sohophp/sofinder` 1.x 共用 tag 或依賴解析。只有能證明依賴仍受
-支援且具可持續安全更新路徑時才發布。所有 PHP 8 Package 都聲明了與
-`sohophp/sofinder-legacy` 的 Composer 衝突，因此依賴解析階段便會拒絕 PHP 7／PHP 8
-產品線混裝。
+PHP 7.2 已停止維護，不能加入 `main` 或 1.x Composer 約束。獨立的
+[`sohophp/sofinder-legacy`](https://github.com/sohophp/sofinder-legacy) Repository
+現已建立 `7.2.x` 相容基線，並有獨立 lock file、PHP 7.2.5／7.3／7.4 CI 與安全政策。
+Runtime 移植目前暫停，尚無 `7.2.0` Release 或 Packagist Package；它不會與
+`sohophp/sofinder` 1.x 共用 tag 或相依解析。只有證明相依組合及安全更新路徑可維護後
+才會發布。所有 PHP 8 Package 都聲明與 `sohophp/sofinder-legacy` 衝突，因此 Composer
+會拒絕混裝。
