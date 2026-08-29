@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- Validate the canonical endpoint catalog and OpenAPI document in both
+  directions, rejecting undocumented runtime routes and phantom documented
+  operations before any framework bridge is released.
 - Preflight the still-gated Laravel and PSR-15 synchronized release path with
   seven immutable archives, six split repositories, atomic local publication
   and a clean consumer that installs all PHP 8 packages at one RC version.

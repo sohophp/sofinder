@@ -5,7 +5,8 @@ description: 自定义客户端使用的 SoFinder HTTP Endpoint、请求、响�
 
 # HTTP API 参考
 
-机器可读的 [OpenAPI 3.1 文档](/openapi.json)会在 PHP 测试中逐项核对全部公开 API Route。
+PHP 测试会把机器可读的 [OpenAPI 3.1 文档](/openapi.json)与中央端点清单双向核对：
+每个运行时 API 操作都必须被记录，每个已记录操作也必须真实存在。
 
 以下路径都相对于 SoFinder 路由导入前缀，例如 `/sofinder`。API 面向同源、已登录的应用客户端，不是匿名对象存储 API。
 

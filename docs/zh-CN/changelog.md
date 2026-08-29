@@ -7,6 +7,8 @@ description: SoFinder 每个公开版本的重要变更。
 
 ## 尚未发布
 
+- 中央端点清单与 OpenAPI 文档现在执行双向校验，在发布任何框架 Bridge 前同时阻止
+  未记录的运行时路由和不存在的文档端点。
 - 在真实 Symfony、Laravel、Slim、Mezzio 和纯 PHP 宿主执行中央 51 路由清单，并比较
   状态／错误 Envelope、响应结构和安全响应头，同时保留写操作与 Stream 生命周期测试。
 - 在 Laravel 12／13 边界示例运行真实 Chromium UI Smoke，验证浏览器 Bootstrap、Session

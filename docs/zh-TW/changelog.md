@@ -7,6 +7,9 @@ description: SoFinder 每個公開版本的重要變更。
 
 ## 尚未發佈
 
+- 中央端點清單與 OpenAPI 文件現在執行雙向校驗，在發佈任何框架 Bridge 前同時阻止
+  未記錄的 Runtime Route 和不存在的文件端點。
+
 ## 0.1.0-beta.31 - 2026-08-29
 
 - 新增 Jodit 4 選擇器與原生上傳 Adapter、型別宣告、體積檢查、測試、文件及可執行的 Symfony 示範頁籤。

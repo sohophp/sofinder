@@ -5,7 +5,8 @@ description: 自定義客戶端使用的 SoFinder HTTP Endpoint、請求、回�
 
 # HTTP API 參考
 
-機器可讀的 [OpenAPI 3.1 文件](/openapi.json)會在 PHP 測試中逐項核對全部公開 API Route。
+PHP 測試會把機器可讀的 [OpenAPI 3.1 文件](/openapi.json)與中央端點清單雙向核對：
+每個 Runtime API 操作都必須被記錄，每個已記錄操作也必須真實存在。
 
 以下路徑都相對於 SoFinder 路由匯入前綴，例如 `/sofinder`。API 面向同源、已登入的應用客戶端，不是匿名物件儲存 API。
 

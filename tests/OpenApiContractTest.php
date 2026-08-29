@@ -5,21 +5,39 @@ declare(strict_types=1);
 namespace SohoPHP\SoFinder\Tests;
 
 use PHPUnit\Framework\TestCase;
+use SohoPHP\SoFinder\Http\EndpointCatalog;
 
 final class OpenApiContractTest extends TestCase
 {
-    public function testPublishedOpenApiCoversEveryPublicHttpOperation(): void
+    public function testPublishedOpenApiExactlyMatchesTheCanonicalHttpCatalog(): void
     {
         $root = dirname(__DIR__);
         $spec = json_decode((string) file_get_contents($root . '/docs/public/openapi.json'), true, 512, JSON_THROW_ON_ERROR);
         self::assertSame('3.1.0', $spec['openapi']);
-        $yaml = (string) file_get_contents($root . '/packages/sofinder-symfony/src/Resources/config/routes.yaml');
-        preg_match_all('/\n[^\s][^\n]*:\n\s+path: ([^\n]+)\n\s+controller:[^\n]+\n\s+methods: \[([A-Z]+)\]/', $yaml, $matches, PREG_SET_ORDER);
-        foreach ($matches as $route) {
-            if (!str_starts_with($route[1], '/api/') && !str_starts_with($route[1], '/compat/') && !in_array($route[1], ['/health', '/live', '/metrics'], true)) continue;
-            self::assertArrayHasKey($route[1], $spec['paths'], $route[2] . ' ' . $route[1] . ' is missing from OpenAPI.');
-            self::assertArrayHasKey(strtolower($route[2]), $spec['paths'][$route[1]], $route[2] . ' ' . $route[1] . ' is missing from OpenAPI.');
+
+        $expected = [];
+        foreach (EndpointCatalog::all() as $endpoint) {
+            if (in_array($endpoint->name, ['sofinder_browser', 'sofinder_asset'], true)) {
+                continue;
+            }
+            foreach ($endpoint->methods as $method) {
+                $expected[] = $method . ' ' . $endpoint->path;
+            }
         }
+
+        $actual = [];
+        $httpMethods = ['get', 'post', 'put', 'patch', 'delete', 'options', 'head', 'trace'];
+        foreach ($spec['paths'] as $path => $pathItem) {
+            foreach (array_keys($pathItem) as $method) {
+                if (in_array(strtolower((string) $method), $httpMethods, true)) {
+                    $actual[] = strtoupper((string) $method) . ' ' . $path;
+                }
+            }
+        }
+
+        sort($expected);
+        sort($actual);
+        self::assertSame($expected, $actual, 'OpenAPI and EndpointCatalog must not omit or invent HTTP operations.');
     }
 
     public function testPublishedJsonSchemasDefineThePickerAndImageContracts(): void

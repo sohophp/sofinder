@@ -5,7 +5,9 @@ description: Complete SoFinder HTTP endpoint, request, response, upload, image a
 
 # HTTP API reference
 
-The machine-readable [OpenAPI 3.1 document](/openapi.json) is checked against every published API route during the PHP test suite.
+The PHP test suite checks the machine-readable [OpenAPI 3.1 document](/openapi.json)
+against the canonical endpoint catalog in both directions: every runtime API
+operation must be documented, and every documented operation must exist at runtime.
 
 All paths below are relative to the prefix used when importing SoFinder routes, for example `/sofinder`. The API is intended for same-origin, authenticated application clients. It is not an anonymous object-storage API.
 
