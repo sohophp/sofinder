@@ -56,13 +56,20 @@ features:
 ## Install in a Symfony application
 
 ```bash
-composer require sohophp/sofinder:^0.1@beta
+composer require sohophp/sofinder-symfony:^1.0
 ```
 
-Register the bundle, import its routes and define at least one storage resource. The [installation guide](/getting-started) provides a working minimal configuration; the [Symfony guide](/symfony) covers authorization, delivery modes, UI options and host-generated URLs.
+Existing applications may keep `sohophp/sofinder:^1.0`, the compatible Meta
+Package. Both package names expose the same namespace. Register the bundle,
+import its routes and define at least one storage resource. The [installation
+guide](/getting-started) provides a working minimal configuration; the
+[Symfony guide](/symfony) covers authorization, delivery modes, UI options and
+host-generated URLs.
 
-::: warning Beta release
-SoFinder is currently in public beta. Pin an explicit beta constraint, read the [changelog](/changelog) before upgrading and treat public extension interfaces according to the [versioning policy](/versioning).
+::: tip Stable Symfony line
+Symfony 6.4/7.4 on PHP 8.2–8.5 is the stable full-stack integration. Laravel
+and PSR-15 hosts remain gated until the recorded observation period completes;
+see the [framework support policy](/framework-support).
 :::
 
 ## Choose a storage model

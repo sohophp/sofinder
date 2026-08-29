@@ -19,10 +19,12 @@ This guide creates an authenticated file browser at `/sofinder/browser` backed b
 ## 1. Install the package
 
 ```bash
-composer require sohophp/sofinder:^0.1@beta
+composer require sohophp/sofinder-symfony:^1.0
 ```
 
-During the beta period, keep the beta constraint explicit and review the [upgrade guide](/upgrading) before changing versions.
+Existing applications may keep the compatible `sohophp/sofinder:^1.0` Meta
+Package. Both package names expose the same namespace and Bundle entry point.
+Review the [upgrade guide](/upgrading) before changing an existing installation.
 
 ## 2. Register the bundle
 

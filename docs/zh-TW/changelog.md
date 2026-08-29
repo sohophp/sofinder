@@ -7,8 +7,10 @@ description: SoFinder 每個公開版本的重要變更。
 
 ## 尚未發佈
 
-- 在 30 天觀察期內持續以 PHP 8.2 與 8.5 將不可變的 Core、HTTP、Symfony 1.0.0
-  由 Packagist 安裝到使用獨立 Cache 的乾淨專案，並驗證拆分 Repository 來源、Runtime 邊界與相依稽核狀態。
+- 將三種語言文件與 Repository README 中已退役的 Beta 安裝命令替換為穩定 Symfony
+  Bridge 1.x Package，同時明確保留原 Package 名稱作為相容選項。
+- 在 30 天觀察期內持續以 PHP 8.2 與 8.5 將五個不可變的穩定 1.0.0 Package 由
+  Packagist 安裝到使用獨立 Cache 的乾淨專案，並驗證 Repository 來源、Framework 邊界與相依稽核狀態。
 - 未來 PSR-15 拆分 Package 現在會安裝到無框架的乾淨 Consumer，明確斷言不會帶入
   Symfony 或 Laravel，並分別使用 Nyholm 與 Guzzle PSR-7 Factory 啟動完整瀏覽器／資源 Runtime。
 - 發佈演練現在會把未來 Laravel 拆分 Repository 安裝到全新的 Laravel 12／PHP 8.2 與

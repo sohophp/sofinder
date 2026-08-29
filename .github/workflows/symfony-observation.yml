@@ -12,6 +12,7 @@ permissions:
 env:
   PHP_BIN: php
   GH_TOKEN: ${{ github.token }}
+  SOFINDER_PUBLISHED_VERSION: 1.0.1
 
 jobs:
   observe:
@@ -67,5 +68,5 @@ jobs:
           php-version: ${{ matrix.php }}
           coverage: none
           extensions: fileinfo, mbstring
-      - name: Install immutable 1.0.0 packages from Packagist
+      - name: Install immutable stable packages from Packagist
         run: bash scripts/check-published-package-install.sh

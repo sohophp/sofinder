@@ -8,6 +8,7 @@ const sourcePages = readdirSync(docsRoot)
   .sort()
 const sourceRoutes = new Set(sourcePages.map((name) => name === 'index.md' ? '' : basename(name, '.md')))
 const errors = []
+const stableSymfonyInstall = 'composer require sohophp/sofinder-symfony:^1.0'
 
 const openApi = JSON.parse(readFileSync(join(docsRoot, 'public', 'openapi.json'), 'utf8'))
 const httpRoutes = []
@@ -60,6 +61,26 @@ for (const locale of locales) {
 for (const readme of ['README.zh-TW.md', 'README.zh-CN.md']) {
   if (!existsSync(join(docsRoot, '..', readme))) {
     errors.push(`missing ${readme}`)
+  }
+}
+
+for (const prefix of ['', ...locales]) {
+  for (const page of ['index.md', 'getting-started.md']) {
+    const relativePath = join(prefix, page)
+    const content = readFileSync(join(docsRoot, relativePath), 'utf8')
+    if (!content.includes(stableSymfonyInstall)) {
+      errors.push(`${relativePath}: missing stable Symfony install command`)
+    }
+    if (content.includes('composer require sohophp/sofinder:^0.1@beta')) {
+      errors.push(`${relativePath}: still recommends the retired beta line`)
+    }
+  }
+}
+
+for (const readme of ['README.md', 'README.zh-TW.md', 'README.zh-CN.md']) {
+  const content = readFileSync(join(docsRoot, '..', readme), 'utf8')
+  if (!content.includes(stableSymfonyInstall)) {
+    errors.push(`${readme}: missing stable Symfony install command`)
   }
 }
 

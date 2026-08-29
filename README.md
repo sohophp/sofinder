@@ -22,6 +22,16 @@ Users can start with the [file manager guide](https://sofinder.sohophp.app/user-
 
 ## Symfony installation
 
+New Symfony applications should install the stable bridge directly:
+
+```bash
+composer require sohophp/sofinder-symfony:^1.0
+```
+
+Existing applications may keep using the compatible
+`sohophp/sofinder:^1.0` Meta Package. Both package names expose the same
+`SohoPHP\SoFinder` namespace.
+
 Register `SohoPHP\SoFinder\SoFinderBundle`, import
 `@SoFinderBundle/Resources/config/routes.yaml`, and configure one or more
 resource types under `so_finder.resources`. Follow the

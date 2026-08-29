@@ -24,8 +24,9 @@ for an intentional compatibility run:
 6. Install the exact version into an empty Symfony project and run the security
    audit before announcing the release.
 
-The current beta's exact Composer constraint is
-`sohophp/sofinder:0.1.0-beta.31`. Published tags must never be moved.
+The current stable Symfony Bridge's exact Composer constraint is
+`sohophp/sofinder-symfony:1.0.1`; existing applications may use the compatible
+`sohophp/sofinder:1.0.1` Meta Package. Published tags must never be moved.
 
 ## Synchronized 1.x packages
 
@@ -78,9 +79,10 @@ not need this override.
 
 The daily `Symfony 1.0 observation` workflow starts only after the immutable
 `1.0.0` GitHub Release exists. In addition to collecting defect evidence, it
-installs the exact Core, HTTP and Symfony versions from Packagist into empty
-projects on PHP 8.2 and 8.5, verifies their split-repository provenance and
-runtime boundaries, and audits the resulting Symfony dependency lock.
+installs the exact Core, HTTP, Symfony, compatibility Meta and S3 versions from
+Packagist into empty projects on PHP 8.2 and 8.5, verifies their repository
+provenance and runtime boundaries, and audits the resulting Symfony and S3
+dependency locks.
 Maintainers must apply the exact `priority:p0` or `priority:p1` label to
 qualifying issues. Each run uploads a 90-day JSON artifact with the release
 timestamp, covered days, open count and every P0/P1 issue created during

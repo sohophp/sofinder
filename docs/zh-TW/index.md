@@ -56,13 +56,16 @@ features:
 ## 安裝
 
 ```bash
-composer require sohophp/sofinder:^0.1@beta
+composer require sohophp/sofinder-symfony:^1.0
 ```
 
-接著註冊 Bundle、匯入路由並建立至少一個儲存資源。請從[安裝與快速開始](/zh-TW/getting-started)開始，完整選項可參考[設定參考](/zh-TW/configuration)。
+既有應用程式可以繼續使用相容 Meta Package `sohophp/sofinder:^1.0`；兩個 Package 名稱
+都公開相同的 namespace。接著註冊 Bundle、匯入路由並建立至少一個儲存資源。請從
+[安裝與快速開始](/zh-TW/getting-started)開始，完整選項可參考[設定參考](/zh-TW/configuration)。
 
-::: warning Beta 版本
-SoFinder 目前是公開 Beta。請明確指定 Beta 版本條件，升級前閱讀[更新紀錄](/zh-TW/changelog)及[升級指南](/zh-TW/upgrading)。
+::: tip Symfony 穩定版本線
+Symfony 6.4／7.4 與 PHP 8.2～8.5 是穩定的 Full-stack 整合。Laravel 與 PSR-15 Host
+仍需等待觀察期門禁；詳見[Framework 支援策略](/zh-TW/framework-support)。
 :::
 
 已經在使用 SoFinder？請閱讀[檔案管理器指南](/zh-TW/user-guide)、[圖片管理](/zh-TW/image-guide)和[主流編輯器整合](/zh-TW/editor-integrations)。開發整合請查看[開發者指南](/zh-TW/developer-guide)及 [HTTP API 參考](/zh-TW/api-reference)。

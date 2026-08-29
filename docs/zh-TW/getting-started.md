@@ -19,10 +19,11 @@ description: 在 Symfony 6.4 或 7.4 安裝 SoFinder，並設定安全的本機�
 ## 1. 安裝套件
 
 ```bash
-composer require sohophp/sofinder:^0.1@beta
+composer require sohophp/sofinder-symfony:^1.0
 ```
 
-Beta 期間請明確保留 beta 版本限制；變更版本前先閱讀[升級指南](/zh-TW/upgrading)。
+既有應用程式可以繼續使用相容 Meta Package `sohophp/sofinder:^1.0`；兩個 Package 名稱
+都公開相同的 namespace 與 Bundle 入口。變更既有安裝版本前先閱讀[升級指南](/zh-TW/upgrading)。
 
 ## 2. 註冊 Bundle
 

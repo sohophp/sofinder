@@ -20,7 +20,9 @@ description: SoFinder 维护者测试、建立标签与发布软件包的检查�
 5. 将 `https://github.com/sohophp/sofinder` 提交至 Packagist，并配置 GitHub 更新 hook。
 6. 在全新的 Symfony 项目安装确切版本，执行安全审计后才宣布发布。
 
-当前 beta 的确切 Composer 版本限制是 `sohophp/sofinder:0.1.0-beta.31`。已发布的标签不得移动。
+当前稳定 Symfony Bridge 的确切 Composer 版本限制是
+`sohophp/sofinder-symfony:1.0.1`；现有应用可以使用兼容 Meta Package
+`sohophp/sofinder:1.0.1`。已发布的标签不得移动。
 
 ## 同步发布 1.x 软件包
 
@@ -61,8 +63,9 @@ Monorepo。
 
 每日 `Symfony 1.0 observation` Workflow 只会在不可变的 `1.0.0` GitHub Release
 存在后开始。除了收集缺陷证据，它还会在 PHP 8.2 与 8.5 的空项目中从 Packagist 安装精确的
-Core、HTTP 与 Symfony 版本，校验拆分仓库来源、运行时边界，并审计 Symfony 消费项目的
-依赖锁。维护者必须为符合条件的 Issue 加上精确 `priority:p0` 或 `priority:p1` Label。
+Core、HTTP、Symfony、兼容 Meta 与 S3 版本，校验仓库来源、运行时边界，并审计 Symfony
+与 S3 消费项目的依赖锁。维护者必须为符合条件的 Issue 加上精确 `priority:p0` 或
+`priority:p1` Label。
 每次运行都会上传保留 90 天的 JSON Artifact，包含发布时间、覆盖天数、未关闭数量以及观察期内
 建立的全部 P0/P1 Issue；即使 Issue 已关闭也会令运行失败。开启框架晋级门禁时，使用包含两个
 公开包安装任务的最终成功 Workflow Run 作为缺陷审计 URL。本地可运行

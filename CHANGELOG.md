@@ -2,10 +2,13 @@
 
 ## Unreleased
 
-- Continuously install the immutable Core, HTTP and Symfony 1.0.0 packages
-  from Packagist into cache-isolated clean projects on PHP 8.2 and 8.5,
-  verifying split-repository provenance, runtime boundaries and dependency
-  audit status throughout the 30-day observation period.
+- Replace retired beta install commands across the three documentation locales
+  and repository READMEs with the stable Symfony Bridge 1.x package, while
+  retaining the original package name as an explicit compatibility option.
+- Continuously install all five immutable stable 1.0.0 packages from Packagist
+  into cache-isolated clean projects on PHP 8.2 and 8.5, verifying repository
+  provenance, framework boundaries and dependency audit status throughout the
+  30-day observation period.
 - Install the future PSR-15 split package in a framework-free clean consumer,
   assert that it pulls neither Symfony nor Laravel, and boot the complete
   browser/asset runtime independently with Nyholm and Guzzle PSR-7 factories.
