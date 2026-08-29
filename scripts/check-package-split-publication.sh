@@ -84,6 +84,14 @@ if [[ "$with_bridges" == true ]]; then
     mkdir -p "$runtime_dir/state" "$runtime_dir/files"
     "$repository_root/scripts/php-bin.sh" "$repository_root/tests/fixtures/verify-installed-psr-browser.php" "$runtime_dir"
 
+    laravel_major=${SOFINDER_LARAVEL_CONSUMER_MAJOR:-13}
+    case "$laravel_major" in
+        12|13) ;;
+        *)
+            echo "SOFINDER_LARAVEL_CONSUMER_MAJOR must be 12 or 13, got: $laravel_major" >&2
+            exit 2
+            ;;
+    esac
     laravel_dir="$happy_dir/laravel-consumer"
     mkdir -p "$laravel_dir/bootstrap/cache" "$laravel_dir/storage/app" \
         "$laravel_dir/storage/framework/cache" "$laravel_dir/storage/framework/sessions" \
@@ -97,7 +105,7 @@ if [[ "$with_bridges" == true ]]; then
     cp "$repository_root/examples/laravel/artisan" "$laravel_dir/artisan"
     cp "$repository_root/examples/laravel/.env.example" "$laravel_dir/.env.example"
     cp "$repository_root/examples/laravel/README.md" "$laravel_dir/README.md"
-    cp "$repository_root/examples/laravel/composer-13.json" "$laravel_dir/composer.json"
+    cp "$repository_root/examples/laravel/composer-$laravel_major.json" "$laravel_dir/composer.json"
     cd "$laravel_dir"
     "$repository_root/scripts/composer.sh" config --unset repositories
     while IFS=$'\t' read -r package_name repository _commit _tag _bundle; do
@@ -109,7 +117,7 @@ if [[ "$with_bridges" == true ]]; then
     stable_version=${release_version%%-*}
     release_minor=${stable_version%.*}
     "$repository_root/scripts/composer.sh" require --no-update \
-        "laravel/framework:13.*" "sohophp/sofinder-laravel:^$release_minor@RC"
+        "laravel/framework:$laravel_major.*" "sohophp/sofinder-laravel:^$release_minor@RC"
     "$repository_root/scripts/composer.sh" update --no-interaction --prefer-dist --no-progress
     "$repository_root/scripts/composer.sh" show "sohophp/sofinder-laravel" "$release_version" --no-interaction >/dev/null
     cd "$repository_root"

@@ -2,8 +2,8 @@
 
 ## Unreleased
 
-- Install the future Laravel split repository into a clean Laravel 13
-  application during publication rehearsal and execute package discovery,
+- Install the future Laravel split repository into clean Laravel 12/PHP 8.2
+  and Laravel 13/PHP 8.5 applications during publication rehearsal and execute package discovery,
   config/route caches, all 52 routes, Artisan, browser, CSRF, upload, download,
   Range and frontend-asset checks against the installed package.
 - Let the PSR-15 local application factory discover its packaged frontend
