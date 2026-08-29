@@ -116,7 +116,57 @@ final class Psr15LocalRuntimeTest extends TestCase
         ], array_column($healthPayload['data']['checks'], 'name'));
     }
 
-    private function services(): HostServices
+    public function testRequiredHostSecurityPortsHaveNoConstructorDefaults(): void
+    {
+        $parameters = (new \ReflectionMethod(HostServices::class, '__construct'))->getParameters();
+        $required = [
+            'authorization' => AuthorizationInterface::class,
+            'actor' => ActorProviderInterface::class,
+            'csrf' => CsrfTokenProviderInterface::class,
+            'events' => EventDispatcherInterface::class,
+        ];
+
+        $position = 0;
+        foreach ($required as $name => $type) {
+            self::assertSame($name, $parameters[$position]->getName());
+            self::assertFalse($parameters[$position]->isDefaultValueAvailable(), "$name must be provided explicitly.");
+            self::assertSame($type, (string) $parameters[$position]->getType());
+            ++$position;
+        }
+
+        $factoryServices = (new \ReflectionMethod(LocalApplicationFactory::class, '__construct'))->getParameters()[2];
+        self::assertSame('services', $factoryServices->getName());
+        self::assertFalse($factoryServices->isDefaultValueAvailable());
+        self::assertSame(HostServices::class, (string) $factoryServices->getType());
+    }
+
+    public function testMissingRoleProviderFailsClosedWhenAnEndpointRequiresARole(): void
+    {
+        $psr17 = new Psr17Factory();
+        $application = (new LocalApplicationFactory(
+            $psr17,
+            $psr17,
+            $this->services(withRoles: false),
+            ['malware_scanning' => ['status_roles' => ['ROLE_ADMIN']]],
+            $this->directory . '/state',
+            $this->directory . '/files',
+        ))->create();
+        $fallback = new class($psr17) implements RequestHandlerInterface {
+            public function __construct(private Psr17Factory $responses) {}
+            public function handle(ServerRequestInterface $request): ResponseInterface { return $this->responses->createResponse(404); }
+        };
+
+        $response = $application->middleware()->process(
+            new ServerRequest('GET', '/sofinder/api/security/status'),
+            $fallback,
+        );
+        $payload = json_decode((string) $response->getBody(), true, 32, JSON_THROW_ON_ERROR);
+
+        self::assertSame(403, $response->getStatusCode(), (string) $response->getBody());
+        self::assertSame('access_denied', $payload['error']['code']);
+    }
+
+    private function services(bool $withRoles = true): HostServices
     {
         $authorization = new class implements AuthorizationInterface {
             public function isAuthenticated(): bool { return true; }
@@ -130,6 +180,6 @@ final class Psr15LocalRuntimeTest extends TestCase
         $events = new class implements EventDispatcherInterface { public function dispatch(object $event): object { return $event; } };
         $roles = new class implements RoleAuthorizationInterface { public function isGranted(string $role): bool { return true; } };
 
-        return new HostServices($authorization, $actor, $csrf, $events, $roles);
+        return new HostServices($authorization, $actor, $csrf, $events, $withRoles ? $roles : null);
     }
 }

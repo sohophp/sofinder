@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- Lock the framework-free startup contract with tests proving authorization,
+  actor, CSRF and event services cannot be omitted, while an omitted optional
+  role provider denies every endpoint configured with required roles.
 - Declare the Laravel and PSR-15 bridges' direct PSR and HttpFoundation
   dependencies explicitly instead of relying on Core/HTTP transitive packages,
   and allow Laravel 13 installations to resolve the Symfony 8 PSR bridge.
