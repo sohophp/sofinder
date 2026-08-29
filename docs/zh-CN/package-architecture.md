@@ -33,7 +33,8 @@ Core、HTTP 和 PSR-15 已通过不安装 Symfony 的 Composer 独立安装验�
 Archive 中排除。
 
 可执行的 Slim 4、Mezzio 3 和纯 PHP Front Controller 会在 PHP 8.2 与 8.5 上调用真实
-Router 和 Response Emitter。正式入口要求构造时显式提供 Authorization、Actor、CSRF
+Router 和 Response Emitter；它们与 Symfony、Laravel 在 CI 中执行同一真实上传、
+Range/ETag Stream、文件变更与回收站生命周期。正式入口要求构造时显式提供 Authorization、Actor、CSRF
 及 Event Dispatcher；示例对受保护操作默认拒绝，不提供匿名全放行配置。
 
 Core 中的 `ConfigurationNormalizer` 是框架配置数组的统一入口，负责默认值、列表替换、

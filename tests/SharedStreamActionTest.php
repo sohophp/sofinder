@@ -101,6 +101,10 @@ final class SharedStreamActionTest extends TestCase
         self::assertSame(304, $symfony->getStatusCode());
         self::assertSame(304, $psr->getStatusCode());
         self::assertSame($etag, $psr->getHeaderLine('ETag'));
+        self::assertSame('text/plain', $symfony->headers->get('Content-Type'));
+        self::assertSame('text/plain', $psr->getHeaderLine('Content-Type'));
+        self::assertSame($symfony->headers->get('Content-Disposition'), $psr->getHeaderLine('Content-Disposition'));
+        self::assertSame('10', $psr->getHeaderLine('Content-Length'));
     }
 
     public function testUnicodeDownloadDispositionAndBodyMatch(): void

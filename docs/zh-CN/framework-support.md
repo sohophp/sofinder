@@ -31,7 +31,8 @@ Dispatcher 和同步发布资源也已接入。Laravel 宿主启用恶意软件�
 可运行的 Laravel 12/13 应用现已验证自动发现、配置与路由缓存、浏览器启动、CSRF、上传、下载、Range
 及前端资源；Chromium 还会加载真实 Laravel 12／13 浏览器外壳，验证共享 API Bootstrap
 且不产生运行时错误。真实宿主套件也会执行全部 51 条非展示路由，并与 Symfony 比较状态／错误及
-安全响应头契约。剩余成功生命周期 Snapshot 与观察门禁完成前仍标记为实验性。
+安全响应头契约；同时在五个宿主运行真实 multipart 上传、完整/Range 内容、ETag 重新验证、Range
+下载、重命名、复制、移动、回收站恢复和永久删除生命周期。观察门禁完成前仍标记为实验性。
 
 门禁证据记录在 `config/framework-support.json` 并由 CI 校验。只有记录的主线版本为
 `1.0.0`、UTC 发布日期已满 30 天且未关闭的 P0/P1 缺陷数为零时，才允许设为 eligible。

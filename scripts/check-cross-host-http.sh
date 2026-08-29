@@ -8,6 +8,8 @@ mkdir -p "$repository_root/var"
 test_dir=$(mktemp -d "$repository_root/var/cross-host-http.XXXXXX")
 server_pid=''
 folder="host-contract-$RANDOM-$RANDOM"
+upload_name='lifecycle.txt'
+upload_payload='0123456789-sofinder-cross-host-lifecycle'
 folder_created=false
 base_url=''
 csrf_token=''
@@ -127,6 +129,92 @@ response_signature()
     ' "$status" "$headers" "$body"
 }
 
+entry_signature()
+{
+    local label=$1
+    local status=$2
+    local body=$3
+    "$php_bin" -r '
+        [$label,$status,$bodyFile]=array_slice($argv,1);
+        $payload=json_decode(file_get_contents($bodyFile),true,64,JSON_THROW_ON_ERROR);
+        $entry=$payload["data"]["entry"]??null;
+        if(($payload["success"]??null)!==true || !is_array($entry)){
+            fwrite(STDERR,"$label did not return a successful entry contract.\n"); exit(1);
+        }
+        echo implode("|",[
+            $label,$status,(string)($entry["path"]??""),(string)($entry["name"]??""),
+            ($entry["directory"]??null)===true?"directory":"file",(string)($entry["size"]??""),
+            (string)($entry["mimeType"]??""),
+        ]),"\n";
+    ' "$label" "$status" "$body"
+}
+
+delete_signature()
+{
+    local label=$1
+    local status=$2
+    local body=$3
+    "$php_bin" -r '
+        [$label,$status,$bodyFile]=array_slice($argv,1);
+        $payload=json_decode(file_get_contents($bodyFile),true,64,JSON_THROW_ON_ERROR);
+        $item=$payload["data"]["trash"]["item"]??null;
+        if(($payload["success"]??null)!==true || !is_array($item)){
+            fwrite(STDERR,"$label did not return a recycle-bin contract.\n"); exit(1);
+        }
+        echo implode("|",[$label,$status,(string)($item["resource"]??""),(string)($item["path"]??""),($item["directory"]??null)===true?"directory":"file",(string)($item["size"]??"")]),"\n";
+    ' "$label" "$status" "$body"
+}
+
+success_signature()
+{
+    local label=$1
+    local status=$2
+    local body=$3
+    "$php_bin" -r '
+        [$label,$status,$bodyFile]=array_slice($argv,1);
+        $payload=json_decode(file_get_contents($bodyFile),true,32,JSON_THROW_ON_ERROR);
+        if(($payload["success"]??null)!==true){fwrite(STDERR,"$label did not return success.\n");exit(1);}
+        echo "$label|$status|success\n";
+    ' "$label" "$status" "$body"
+}
+
+header_value()
+{
+    local name=$1
+    local headers=$2
+    "$php_bin" -r '
+        [$name,$file]=array_slice($argv,1); $value="";
+        foreach(file($file,FILE_IGNORE_NEW_LINES)?:[] as $line){
+            if(!str_contains($line,":"))continue; [$key,$candidate]=explode(":",$line,2);
+            if(strcasecmp(trim($key),$name)===0)$value=trim($candidate);
+        }
+        echo $value;
+    ' "$name" "$headers"
+}
+
+stream_signature()
+{
+    local label=$1
+    local status=$2
+    local headers=$3
+    local body=$4
+    "$php_bin" -r '
+        [$label,$status,$headersFile,$bodyFile]=array_slice($argv,1);
+        $headers=[];
+        foreach(file($headersFile,FILE_IGNORE_NEW_LINES)?:[] as $line){
+            if(!str_contains($line,":"))continue; [$name,$value]=explode(":",$line,2); $headers[strtolower(trim($name))]=trim($value);
+        }
+        foreach(["x-content-type-options"=>"nosniff","x-frame-options"=>"SAMEORIGIN","x-sofinder-api-version"=>"1.0","cross-origin-resource-policy"=>"same-origin"] as $name=>$expected){
+            if(($headers[$name]??null)!==$expected){fwrite(STDERR,"$label has an invalid $name header.\n");exit(1);}
+        }
+        echo implode("|",[
+            $label,$status,strtolower(trim(explode(";",$headers["content-type"]??"")[0])),
+            $headers["content-range"]??"",$headers["accept-ranges"]??"",($headers["etag"]??"")===""?"":"etag",
+            $headers["content-disposition"]??"",hash("sha256",file_get_contents($bodyFile)),
+        ]),"\n";
+    ' "$label" "$status" "$headers" "$body"
+}
+
 verify_endpoint_inventory()
 {
     local host=$1
@@ -185,6 +273,7 @@ stop_host()
 }
 
 reference=''
+printf '%s' "$upload_payload" > "$test_dir/upload.txt"
 "$php_bin" "$repository_root/scripts/export-cross-host-contract-cases.php" > "$test_dir/endpoint-contract-cases.tsv"
 [[ "$(wc -l < "$test_dir/endpoint-contract-cases.tsv")" == 51 ]] || fail 'Endpoint contract inventory must contain all 51 non-presentation endpoints.'
 for specification in 'symfony 18100' 'laravel 18101' 'slim 18102' 'mezzio 18103' 'plain 18104'; do
@@ -253,6 +342,155 @@ for specification in 'symfony 18100' 'laravel 18101' 'slim 18102' 'mezzio 18103'
         reference="$test_dir/$host-create.canonical.json"
     else
         cmp "$reference" "$test_dir/$host-create.canonical.json" || fail "$host folder response differs from the Symfony contract."
+    fi
+
+    lifecycle_signatures="$test_dir/$host-lifecycle.signatures"
+    : > "$lifecycle_signatures"
+
+    status=$(curl --silent --show-error "${auth[@]}" "${cookie[@]}" \
+        --dump-header "$test_dir/$host-upload.headers" \
+        --header "X-CSRF-TOKEN: $csrf_token" \
+        --form 'resource=Files' \
+        --form "path=$folder" \
+        --form "upload=@$test_dir/upload.txt;filename=$upload_name;type=text/plain" \
+        --output "$test_dir/$host-upload.json" \
+        --write-out '%{http_code}' \
+        "$base_url/sofinder/api/uploads")
+    [[ "$status" == 201 ]] || fail "$host returned $status instead of 201 for multipart upload."
+    entry_signature upload "$status" "$test_dir/$host-upload.json" >> "$lifecycle_signatures" \
+        || fail "$host returned an invalid upload entry."
+
+    content_path="$folder/$upload_name"
+    status=$(curl --silent --show-error "${auth[@]}" "${cookie[@]}" \
+        --get --data-urlencode 'resource=Files' --data-urlencode "path=$content_path" \
+        --dump-header "$test_dir/$host-content.headers" \
+        --output "$test_dir/$host-content.body" \
+        --write-out '%{http_code}' \
+        "$base_url/sofinder/api/content")
+    [[ "$status" == 200 ]] || fail "$host returned $status instead of 200 for uploaded content."
+    [[ "$(< "$test_dir/$host-content.body")" == "$upload_payload" ]] || fail "$host returned different uploaded content."
+    stream_signature content "$status" "$test_dir/$host-content.headers" "$test_dir/$host-content.body" >> "$lifecycle_signatures" \
+        || fail "$host returned an invalid content stream contract."
+    etag=$(header_value ETag "$test_dir/$host-content.headers")
+    [[ -n "$etag" ]] || fail "$host content response is missing ETag."
+
+    status=$(curl --silent --show-error "${auth[@]}" "${cookie[@]}" \
+        --get --data-urlencode 'resource=Files' --data-urlencode "path=$content_path" \
+        --header 'Range: bytes=3-8' \
+        --dump-header "$test_dir/$host-range.headers" \
+        --output "$test_dir/$host-range.body" \
+        --write-out '%{http_code}' \
+        "$base_url/sofinder/api/content")
+    [[ "$status" == 206 ]] || fail "$host returned $status instead of 206 for a content range."
+    [[ "$(< "$test_dir/$host-range.body")" == "${upload_payload:3:6}" ]] || fail "$host returned an invalid content range body."
+    [[ "$(header_value Content-Range "$test_dir/$host-range.headers")" == "bytes 3-8/${#upload_payload}" ]] || fail "$host returned an invalid Content-Range header."
+    stream_signature content-range "$status" "$test_dir/$host-range.headers" "$test_dir/$host-range.body" >> "$lifecycle_signatures" \
+        || fail "$host returned an invalid content range contract."
+
+    status=$(curl --silent --show-error "${auth[@]}" "${cookie[@]}" \
+        --get --data-urlencode 'resource=Files' --data-urlencode "path=$content_path" \
+        --header "If-None-Match: $etag" \
+        --dump-header "$test_dir/$host-not-modified.headers" \
+        --output "$test_dir/$host-not-modified.body" \
+        --write-out '%{http_code}' \
+        "$base_url/sofinder/api/content")
+    [[ "$status" == 304 ]] || fail "$host returned $status instead of 304 for If-None-Match."
+    [[ ! -s "$test_dir/$host-not-modified.body" ]] || fail "$host returned a body for 304 Not Modified."
+    [[ "$(header_value ETag "$test_dir/$host-not-modified.headers")" == "$etag" ]] || fail "$host changed ETag during conditional content."
+    not_modified_type=$(header_value Content-Type "$test_dir/$host-not-modified.headers")
+    [[ -z "$not_modified_type" || "${not_modified_type%%;*}" == text/plain ]] || fail "$host substituted invalid representation metadata on 304."
+    not_modified_disposition=$(header_value Content-Disposition "$test_dir/$host-not-modified.headers")
+    [[ -z "$not_modified_disposition" || "$not_modified_disposition" == 'attachment; filename=lifecycle.txt' ]] || fail "$host returned an invalid 304 Content-Disposition."
+    not_modified_length=$(header_value Content-Length "$test_dir/$host-not-modified.headers")
+    [[ -z "$not_modified_length" || "$not_modified_length" == "${#upload_payload}" ]] || fail "$host returned an invalid 304 Content-Length."
+    stream_signature content-not-modified "$status" "$test_dir/$host-not-modified.headers" "$test_dir/$host-not-modified.body" > /dev/null \
+        || fail "$host returned an invalid 304 stream contract."
+    printf '%s\n' 'content-not-modified|304|representation-metadata-valid|etag' >> "$lifecycle_signatures"
+
+    status=$(curl --silent --show-error "${auth[@]}" "${cookie[@]}" \
+        --get --data-urlencode 'resource=Files' --data-urlencode "path=$content_path" \
+        --header 'Range: bytes=0-6' \
+        --dump-header "$test_dir/$host-download.headers" \
+        --output "$test_dir/$host-download.body" \
+        --write-out '%{http_code}' \
+        "$base_url/sofinder/api/download")
+    [[ "$status" == 206 ]] || fail "$host returned $status instead of 206 for a download range."
+    [[ "$(< "$test_dir/$host-download.body")" == "${upload_payload:0:7}" ]] || fail "$host returned an invalid download range body."
+    stream_signature download-range "$status" "$test_dir/$host-download.headers" "$test_dir/$host-download.body" >> "$lifecycle_signatures" \
+        || fail "$host returned an invalid download range contract."
+
+    status=$(curl --silent --show-error "${auth[@]}" "${cookie[@]}" \
+        --header "X-CSRF-TOKEN: $csrf_token" --header 'Content-Type: application/json' \
+        --request PATCH --data "{\"resource\":\"Files\",\"path\":\"$content_path\",\"name\":\"renamed.txt\"}" \
+        --output "$test_dir/$host-rename.json" --write-out '%{http_code}' \
+        "$base_url/sofinder/api/entries/rename")
+    [[ "$status" == 200 ]] || fail "$host returned $status instead of 200 for rename."
+    entry_signature rename "$status" "$test_dir/$host-rename.json" >> "$lifecycle_signatures" || fail "$host returned an invalid rename entry."
+
+    for destination in copies moved; do
+        status=$(curl --silent --show-error "${auth[@]}" "${cookie[@]}" \
+            --header "X-CSRF-TOKEN: $csrf_token" --header 'Content-Type: application/json' \
+            --data "{\"resource\":\"Files\",\"path\":\"$folder\",\"name\":\"$destination\"}" \
+            --output "$test_dir/$host-create-$destination.json" --write-out '%{http_code}' \
+            "$base_url/sofinder/api/folders")
+        [[ "$status" == 201 ]] || fail "$host returned $status instead of 201 for $destination folder creation."
+        entry_signature "create-$destination" "$status" "$test_dir/$host-create-$destination.json" >> "$lifecycle_signatures" || fail "$host returned an invalid $destination folder."
+    done
+
+    status=$(curl --silent --show-error "${auth[@]}" "${cookie[@]}" \
+        --header "X-CSRF-TOKEN: $csrf_token" --header 'Content-Type: application/json' \
+        --data "{\"resource\":\"Files\",\"path\":\"$folder/renamed.txt\",\"destination\":\"$folder/copies\"}" \
+        --output "$test_dir/$host-copy.json" --write-out '%{http_code}' \
+        "$base_url/sofinder/api/entries/copy")
+    [[ "$status" == 200 ]] || fail "$host returned $status instead of 200 for copy."
+    entry_signature copy "$status" "$test_dir/$host-copy.json" >> "$lifecycle_signatures" || fail "$host returned an invalid copy entry."
+
+    status=$(curl --silent --show-error "${auth[@]}" "${cookie[@]}" \
+        --header "X-CSRF-TOKEN: $csrf_token" --header 'Content-Type: application/json' \
+        --data "{\"resource\":\"Files\",\"path\":\"$folder/renamed.txt\",\"destination\":\"$folder/moved\"}" \
+        --output "$test_dir/$host-move.json" --write-out '%{http_code}' \
+        "$base_url/sofinder/api/entries/move")
+    [[ "$status" == 200 ]] || fail "$host returned $status instead of 200 for move."
+    entry_signature move "$status" "$test_dir/$host-move.json" >> "$lifecycle_signatures" || fail "$host returned an invalid move entry."
+
+    status=$(curl --silent --show-error "${auth[@]}" "${cookie[@]}" \
+        --header "X-CSRF-TOKEN: $csrf_token" --header 'Content-Type: application/json' \
+        --request DELETE --data "{\"resource\":\"Files\",\"path\":\"$folder/copies/renamed.txt\"}" \
+        --output "$test_dir/$host-delete.json" --write-out '%{http_code}' \
+        "$base_url/sofinder/api/entries")
+    [[ "$status" == 200 ]] || fail "$host returned $status instead of 200 for recycle-bin delete."
+    delete_signature delete "$status" "$test_dir/$host-delete.json" >> "$lifecycle_signatures" || fail "$host returned an invalid recycle-bin delete contract."
+    trash_id=$("$php_bin" -r '$p=json_decode(file_get_contents($argv[1]),true,32,JSON_THROW_ON_ERROR);echo $p["data"]["trash"]["item"]["id"]??"";' "$test_dir/$host-delete.json")
+    [[ "$trash_id" =~ ^[a-f0-9]{32}$ ]] || fail "$host did not return a valid recycle-bin id."
+
+    status=$(curl --silent --show-error "${auth[@]}" "${cookie[@]}" \
+        --header "X-CSRF-TOKEN: $csrf_token" --header 'Content-Type: application/json' \
+        --request POST --data '{"resource":"Files"}' \
+        --output "$test_dir/$host-restore.json" --write-out '%{http_code}' \
+        "$base_url/sofinder/api/trash/$trash_id/restore")
+    [[ "$status" == 200 ]] || fail "$host returned $status instead of 200 for recycle-bin restore."
+    entry_signature restore "$status" "$test_dir/$host-restore.json" >> "$lifecycle_signatures" || fail "$host returned an invalid restore entry."
+
+    status=$(curl --silent --show-error "${auth[@]}" "${cookie[@]}" \
+        --header "X-CSRF-TOKEN: $csrf_token" --header 'Content-Type: application/json' \
+        --request DELETE --data "{\"resource\":\"Files\",\"path\":\"$folder/copies/renamed.txt\"}" \
+        --output "$test_dir/$host-delete-again.json" --write-out '%{http_code}' \
+        "$base_url/sofinder/api/entries")
+    [[ "$status" == 200 ]] || fail "$host returned $status instead of 200 for the restored entry delete."
+    trash_id=$("$php_bin" -r '$p=json_decode(file_get_contents($argv[1]),true,32,JSON_THROW_ON_ERROR);echo $p["data"]["trash"]["item"]["id"]??"";' "$test_dir/$host-delete-again.json")
+    [[ "$trash_id" =~ ^[a-f0-9]{32}$ ]] || fail "$host did not return a second recycle-bin id."
+    status=$(curl --silent --show-error "${auth[@]}" "${cookie[@]}" \
+        --header "X-CSRF-TOKEN: $csrf_token" --header 'Content-Type: application/json' \
+        --request DELETE --data '{"resource":"Files"}' \
+        --output "$test_dir/$host-purge.json" --write-out '%{http_code}' \
+        "$base_url/sofinder/api/trash/$trash_id")
+    [[ "$status" == 200 ]] || fail "$host returned $status instead of 200 for permanent recycle-bin delete."
+    success_signature purge "$status" "$test_dir/$host-purge.json" >> "$lifecycle_signatures" || fail "$host returned an invalid permanent-delete contract."
+
+    if [[ "$host" == symfony ]]; then
+        cp "$lifecycle_signatures" "$test_dir/reference-lifecycle.signatures"
+    elif ! diff -u "$test_dir/reference-lifecycle.signatures" "$lifecycle_signatures" >&2; then
+        fail "$host successful lifecycle differs from the Symfony contract."
     fi
 
     cleanup_folder

@@ -18,6 +18,11 @@ Core、HTTP 與 PSR-15 已完成實體子目錄，並通過不安裝 Symfony 的
 Symfony 6.4 `prefer-lowest`；PHP 8.5／Symfony 7.4 最新依賴則使用不含 Platform Override
 的暫時清單，絕不改寫 Repository 中的最低版本設定。
 
+可執行的 Slim 4、Mezzio 3 與純 PHP Front Controller 會在 PHP 8.2 及 8.5 上呼叫真實
+Router 與 Response Emitter；它們與 Symfony、Laravel 在 CI 中執行同一真實上傳、
+Range/ETag Stream、檔案變更及回收筒生命週期。正式入口必須明確提供 Authorization、
+Actor、CSRF 與 Event Dispatcher，示例不提供匿名全放行預設值。
+
 設定、檔案列表、健康、存活與能力 Endpoint 已使用 Symfony 和 PSR-7 共用 Action；
 建立資料夾、重新命名、複製、移動與刪除也已使用共用 Mutation Action。Mutation
 Action 必須明確注入授權與 CSRF Provider，並在解析 JSON 前完成安全檢查。

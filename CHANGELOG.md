@@ -6,6 +6,11 @@
   framework-neutral Core `SecurityAuditor`, retain the Symfony Console surface,
   expose the identical JSON contract through Laravel Artisan, and wire Laravel's
   malware-scanning configuration into the shared fail-closed ClamAV pipeline.
+- Run one real upload-to-purge lifecycle through Symfony, Laravel, Slim, Mezzio
+  and plain PHP, comparing multipart upload, content/download Range streams,
+  ETag revalidation, rename, copy, move, recycle-bin restore and permanent delete.
+- Preserve selected-representation type, disposition and length metadata on
+  conditional 304 stream responses so Slim does not substitute `text/html`.
 - Execute the canonical 51-route inventory against real Symfony, Laravel,
   Slim, Mezzio and plain PHP hosts, comparing status/error envelopes, response
   shape and security headers while retaining lifecycle tests for mutations and

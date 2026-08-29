@@ -42,7 +42,8 @@ Executable Slim 4, Mezzio 3 and plain PHP front controllers exercise the real
 host routers and emitters on PHP 8.2 and 8.5. Their official entry point requires
 authorization, actor, CSRF and event-dispatcher services at construction time;
 the example denies protected operations instead of supplying an anonymous
-allow-all default.
+allow-all default. Together with Symfony and Laravel, these hosts run the same
+real upload, Range/ETag stream, mutation and recycle-bin lifecycle in CI.
 
 `ConfigurationNormalizer` lives in Core and is the canonical array entry point
 for framework defaults, list replacement, the legacy upload-naming alias and

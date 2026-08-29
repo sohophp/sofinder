@@ -41,8 +41,10 @@ download, Range and frontend assets. Chromium also loads the real Laravel 12
 and 13 browser shell and verifies its shared API bootstrap without runtime
 errors. Its real-host suite also executes all 51
 non-presentation routes against the Symfony status/error and security-header
-contract. The package remains experimental while the remaining success-lifecycle
-snapshots and observation gate are being completed.
+contract. The same suite runs a real multipart upload through full/range content,
+ETag revalidation, range download, rename, copy, move, recycle-bin restore and
+permanent deletion on all five hosts. The package remains experimental until
+the observation gate is complete.
 
 The gate is recorded in `config/framework-support.json` and validated in CI.
 It cannot become eligible until the recorded main release is `1.0.0`, its UTC
