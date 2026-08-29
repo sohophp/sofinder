@@ -30,6 +30,8 @@ $date = static function (mixed $value): \DateTimeImmutable|false {
         ? \DateTimeImmutable::createFromFormat('!Y-m-d', $value, new \DateTimeZone('UTC'))
         : false;
 };
+$stableVersion = static fn (mixed $value): bool => is_string($value)
+    && preg_match('/^[0-9]+\.[0-9]+\.[0-9]+$/D', $value) === 1;
 
 if (!is_bool($eligible)) {
     $errors[] = 'promotionGate.eligible must be boolean.';
@@ -37,9 +39,17 @@ if (!is_bool($eligible)) {
 if (!is_int($minimumDays) || $minimumDays < 30) {
     $errors[] = 'promotionGate.minimumStableDays must be at least 30.';
 }
+if (!$stableVersion($requiredVersion)) {
+    $errors[] = 'promotionGate.requiresMainVersion must be a stable semantic version.';
+}
+if ($releasedVersion !== null && !$stableVersion($releasedVersion)) {
+    $errors[] = 'promotionGate.releasedMainVersion must be null or a stable semantic version.';
+}
 if ($eligible === true) {
-    if ($releasedVersion !== $requiredVersion) {
-        $errors[] = 'The recorded released main version does not satisfy the promotion gate.';
+    if (!$stableVersion($requiredVersion)
+        || !$stableVersion($releasedVersion)
+        || version_compare($releasedVersion, $requiredVersion, '<')) {
+        $errors[] = 'The recorded released main version is older than the promotion gate minimum.';
     }
     if (!is_int($defects) || $defects !== 0) {
         $errors[] = 'Promotion requires zero open P0/P1 defects.';

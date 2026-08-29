@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- Treat the framework promotion version as a stable minimum rather than an
+  exact tag, recording 1.0.1 truthfully without resetting the observation
+  clock anchored to the immutable 1.0.0 release.
 - Replace retired beta install commands across the three documentation locales
   and repository READMEs with the stable Symfony Bridge 1.x package, while
   retaining the original package name as an explicit compatibility option.

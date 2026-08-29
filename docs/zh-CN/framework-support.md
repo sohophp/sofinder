@@ -38,8 +38,10 @@ PHP 8.3～8.5），并验证自动发现、配置与路由缓存、浏览器启�
 401 Challenge，并比较 Laravel、Slim、Mezzio 与纯 PHP 在未认证及“已认证但未授权”两种状态下
 共享的 403 `access_denied` 响应体与安全响应头契约。观察门禁完成前仍标记为实验性。
 
-门禁证据记录在 `config/framework-support.json` 并由 CI 校验。只有记录的主线版本为
+门禁证据记录在 `config/framework-support.json` 并由 CI 校验。只有记录的主线版本不低于
 `1.0.0`、UTC 发布日期已满 30 天且未关闭的 P0/P1 缺陷数为零时，才允许设为 eligible。
+稳定补丁版本满足该版本下限；当前记录的稳定版本为 `1.0.1`，观察时钟仍以不可变的
+`1.0.0` Release 为起点。
 同时必须记录最终 Symfony 矩阵的 Commit 与 Workflow URL、观察起止日期，以及安全的
 P0/P1 缺陷审计链接。
 `1.0.0` 发布后，每日 `Symfony 1.0 observation` Workflow 会记录观察期内建立且带有

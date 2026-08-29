@@ -39,8 +39,10 @@ multipart 上傳、完整／Range 內容、ETag 重新驗證、Range 下載、�
 Mezzio 與純 PHP 在未認證及「已認證但未授權」兩種狀態下共用的 403 `access_denied` Response Body
 與安全 Response Header Contract。觀察門禁完成前仍維持實驗性。
 
-門禁證據記錄於 `config/framework-support.json` 並由 CI 驗證。只有記錄的主線版本為
+門禁證據記錄於 `config/framework-support.json` 並由 CI 驗證。只有記錄的主線版本不低於
 `1.0.0`、UTC 發布日期已滿 30 天且未關閉的 P0/P1 缺陷數為零時，才能設為 eligible。
+穩定 Patch 版本符合該版本下限；目前記錄的穩定版本為 `1.0.1`，觀察時鐘仍以不可變的
+`1.0.0` Release 為起點。
 同時必須記錄最終 Symfony Matrix 的 Commit 與 Workflow URL、觀察起訖日期，以及安全的
 P0/P1 缺陷稽核連結。
 `1.0.0` 發布後，每日 `Symfony 1.0 observation` Workflow 會記錄觀察期內建立且帶有

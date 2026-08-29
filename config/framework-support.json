@@ -20,7 +20,7 @@
     "requiresMainVersion": "1.0.0",
     "minimumStableDays": 30,
     "requiresZeroOpenPriorityDefects": true,
-    "releasedMainVersion": "1.0.0",
+    "releasedMainVersion": "1.0.1",
     "releaseDate": "2026-08-29",
     "openP0P1Defects": 0,
     "evidence": {

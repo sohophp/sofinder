@@ -7,6 +7,8 @@ description: SoFinder 每個公開版本的重要變更。
 
 ## 尚未發佈
 
+- 將 Framework 晉級版本視為穩定最低版本而非完全相同的 Tag，使政策可如實記錄 1.0.1，
+  同時不重設以不可變 1.0.0 Release 為起點的觀察時鐘。
 - 將三種語言文件與 Repository README 中已退役的 Beta 安裝命令替換為穩定 Symfony
   Bridge 1.x Package，同時明確保留原 Package 名稱作為相容選項。
 - 在 30 天觀察期內持續以 PHP 8.2 與 8.5 將五個不可變的穩定 1.0.0 Package 由

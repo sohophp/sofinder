@@ -16,7 +16,7 @@ cp "$repository_root/config/framework-support.json" "$fixture"
     $releasedAt = $today->modify("-31 days");
     $completedAt = $releasedAt->modify("+30 days");
     $gate = &$policy["promotionGate"];
-    $gate["releasedMainVersion"] = "1.0.0";
+    $gate["releasedMainVersion"] = "1.0.1";
     $gate["releaseDate"] = $releasedAt->format("Y-m-d");
     $gate["openP0P1Defects"] = 0;
     $gate["eligible"] = true;
@@ -36,6 +36,19 @@ cp "$repository_root/config/framework-support.json" "$fixture"
 "$php_bin" -r '
     $file = $argv[1];
     $policy = json_decode(file_get_contents($file), true, 32, JSON_THROW_ON_ERROR);
+    $policy["promotionGate"]["releasedMainVersion"] = "0.9.9";
+    file_put_contents($file, json_encode($policy, JSON_THROW_ON_ERROR));
+' "$fixture"
+
+if "$php_bin" "$repository_root/scripts/check-framework-release-gate.php" "$fixture" > /dev/null 2>&1; then
+    printf '%s\n' 'The promotion gate accepted a release older than its minimum.' >&2
+    exit 1
+fi
+
+"$php_bin" -r '
+    $file = $argv[1];
+    $policy = json_decode(file_get_contents($file), true, 32, JSON_THROW_ON_ERROR);
+    $policy["promotionGate"]["releasedMainVersion"] = "1.0.1";
     $policy["promotionGate"]["evidence"]["priorityDefectAuditUrl"] = null;
     file_put_contents($file, json_encode($policy, JSON_THROW_ON_ERROR));
 ' "$fixture"
