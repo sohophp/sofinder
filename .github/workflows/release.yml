@@ -2,10 +2,17 @@ name: Release
 
 env:
   PHP_BIN: php
+  RELEASE_TAG: ${{ inputs.tag || github.ref_name }}
 
 on:
   push:
     tags: ['v*']
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: Existing immutable release tag to recover
+        required: true
+        type: string
 
 permissions:
   contents: write
@@ -20,10 +27,14 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           fetch-depth: 0
+          ref: ${{ inputs.tag || github.ref }}
       - name: Verify annotated immutable release tag
         run: |
-          test "$(git cat-file -t "$GITHUB_REF_NAME")" = tag
-          test "$(git rev-list -n 1 "$GITHUB_REF_NAME")" = "$GITHUB_SHA"
+          test "$RELEASE_TAG" != main
+          test "$(git cat-file -t "$RELEASE_TAG")" = tag
+          release_sha=$(git rev-list -n 1 "$RELEASE_TAG")
+          test "$release_sha" = "$(git rev-parse HEAD)"
+          echo "RELEASE_SHA=$release_sha" >> "$GITHUB_ENV"
       - uses: shivammathur/setup-php@f3e473d116dcccaddc5834248c87452386958240 # v2
         with:
           php-version: '8.5'
@@ -58,9 +69,9 @@ jobs:
       - run: diff -qr dist packages/sofinder-symfony/dist
       - name: Create synchronized immutable package archives and checksums
         run: |
-          version=${GITHUB_REF_NAME#v}
-          bash scripts/build-release-archives.sh "$version" "$GITHUB_SHA" release-artifacts
-          bash scripts/prepare-package-splits.sh "$version" "$GITHUB_SHA" package-splits
+          version=${RELEASE_TAG#v}
+          bash scripts/build-release-archives.sh "$version" "$RELEASE_SHA" release-artifacts
+          bash scripts/prepare-package-splits.sh "$version" "$RELEASE_SHA" package-splits
       - name: Generate CycloneDX SBOM
         uses: anchore/sbom-action@e22c389904149dbc22b58101806040fa8d37a610 # v0
         with:
@@ -93,5 +104,5 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: |
           release_type=(--latest)
-          if [[ "$GITHUB_REF_NAME" == *-* ]]; then release_type=(--prerelease); fi
-          gh release create "$GITHUB_REF_NAME" release-artifacts/* --verify-tag "${release_type[@]}" --generate-notes --title "$GITHUB_REF_NAME"
+          if [[ "$RELEASE_TAG" == *-* ]]; then release_type=(--prerelease); fi
+          gh release create "$RELEASE_TAG" release-artifacts/* --verify-tag "${release_type[@]}" --generate-notes --title "$RELEASE_TAG"

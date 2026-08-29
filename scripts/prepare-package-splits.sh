@@ -35,7 +35,7 @@ prepare_split()
     local split_commit
 
     git -C "$repository_root" cat-file -e "$source_ref:$directory/composer.json"
-    git clone --quiet --no-local "$repository_root" "$split_repository"
+    git clone --quiet --no-local --no-tags "$repository_root" "$split_repository"
     git -C "$split_repository" config user.name 'SoFinder Release Automation'
     git -C "$split_repository" config user.email 'release@sofinder.sohophp.app'
     git -C "$split_repository" checkout --quiet -B source-release "$source_ref"
