@@ -22,7 +22,10 @@ The source-level `FrameworkBoundaryTest` rejects Symfony, Illuminate, Slim or
 Mezzio imports from the physical Core package. Symfony now builds its 52-route
 collection directly from the framework-neutral catalog; its compatibility YAML
 file only imports that generated collection. `EndpointCatalogTest` verifies the
-resulting path, method, requirement, controller and special-default contract.
+resulting path, method, requirement, adapter and special-default contract. The
+host-rendered `/browser` page retains its Symfony controller; every other route
+uses one HttpFoundation-to-PSR adapter and the same `EndpointDispatcher` as
+Laravel, Slim, Mezzio and plain PHP.
 These gates stay active while files are physically moved into package subtrees.
 
 The compatibility matrix keeps the committed Composer platform at PHP 8.2 for

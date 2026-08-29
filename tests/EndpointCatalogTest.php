@@ -5,8 +5,10 @@ declare(strict_types=1);
 namespace SohoPHP\SoFinder\Tests;
 
 use PHPUnit\Framework\TestCase;
+use SohoPHP\SoFinder\Http\BrowserController;
 use SohoPHP\SoFinder\Http\EndpointCatalog;
 use SohoPHP\SoFinder\Routing\SymfonyRouteCollectionFactory;
+use SohoPHP\SoFinder\Symfony\SymfonyEndpointController;
 
 final class EndpointCatalogTest extends TestCase
 {
@@ -26,7 +28,11 @@ final class EndpointCatalogTest extends TestCase
             self::assertNotNull($route);
             self::assertSame($definition, [$route->getPath(), $route->getMethods(), $route->getRequirements()]);
             self::assertTrue($route->getDefault('_sofinder'));
-            self::assertIsString($route->getDefault('_controller'));
+            self::assertSame($name, $route->getDefault('_sofinder_endpoint'));
+            self::assertSame(
+                $name === 'sofinder_browser' ? BrowserController::class : SymfonyEndpointController::class,
+                $route->getDefault('_controller'),
+            );
         }
         self::assertSame('copy', $published->get('sofinder_api_copy')?->getDefault('operation'));
         self::assertSame('move', $published->get('sofinder_api_move')?->getDefault('operation'));

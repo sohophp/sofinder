@@ -8,7 +8,8 @@ description: SoFinder 每个公开版本的重要变更。
 ## 尚未发布
 
 - Symfony 路由集合现在直接由框架无关的中央端点清单生成，同时保持原有 Bundle YAML
-  导入方式、路由名称、Controller、参数约束和宿主前缀行为。
+  导入方式、路由名称、参数约束和宿主前缀行为；`/browser` 继续由宿主渲染，其余 51 个
+  HTTP 操作统一通过共享 PSR Dispatcher，不再由各功能 Controller 重复解析请求。
 - 中央端点清单与 OpenAPI 文档现在执行双向校验，在发布任何框架 Bridge 前同时阻止
   未记录的运行时路由和不存在的文档端点。
 - 在真实 Symfony、Laravel、Slim、Mezzio 和纯 PHP 宿主执行中央 51 路由清单，并比较

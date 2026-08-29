@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace SohoPHP\SoFinder\DependencyInjection;
 
+use Nyholm\Psr7\Factory\Psr17Factory;
 use Psr\EventDispatcher\EventDispatcherInterface;
 use Psr\Log\LoggerInterface;
 use SohoPHP\SoFinder\Command\SecurityAuditCommand;
@@ -151,6 +152,8 @@ use SohoPHP\SoFinder\Http\SecurityStatusController;
 use SohoPHP\SoFinder\Http\SignedUrlController;
 use SohoPHP\SoFinder\Http\DocumentPreviewController;
 use SohoPHP\SoFinder\Http\DocumentPreviewJobController;
+use SohoPHP\SoFinder\Http\EndpointDispatcher;
+use SohoPHP\SoFinder\Http\PsrEndpointHandler;
 use SohoPHP\SoFinder\ResourceRegistry;
 use SohoPHP\SoFinder\Image\GdImageProcessor;
 use SohoPHP\SoFinder\Image\HybridImageProcessor;
@@ -207,6 +210,7 @@ use SohoPHP\SoFinder\Symfony\SymfonyAuthorization;
 use SohoPHP\SoFinder\Symfony\SymfonyRoleAuthorization;
 use SohoPHP\SoFinder\Symfony\SymfonyEntryUrlGenerator;
 use SohoPHP\SoFinder\Symfony\SymfonyEndpointUrlGenerator;
+use SohoPHP\SoFinder\Symfony\SymfonyEndpointController;
 use SohoPHP\SoFinder\Symfony\SymfonyRequestContextProvider;
 use SohoPHP\SoFinder\Trash\TrashManager;
 use SohoPHP\SoFinder\Usage\PersistentUsageTracker;
@@ -242,9 +246,66 @@ use Symfony\Component\Routing\RouterInterface;
 use Symfony\Component\Security\Core\Authorization\AuthorizationCheckerInterface;
 use Symfony\Component\Security\Core\Authentication\Token\Storage\TokenStorageInterface;
 use Symfony\Component\Security\Csrf\CsrfTokenManagerInterface;
+use Symfony\Bridge\PsrHttpMessage\Factory\HttpFoundationFactory;
+use Symfony\Bridge\PsrHttpMessage\Factory\PsrHttpFactory;
 
 final class SoFinderExtension extends Extension
 {
+    /** @var list<string> */
+    private const SHARED_ACTION_SERVICES = [
+        FrontendAssetAction::class,
+        ConfigAction::class,
+        CapabilityAction::class,
+        HealthAction::class,
+        LivenessAction::class,
+        MetricsAction::class,
+        SecurityStatusAction::class,
+        EntriesAction::class,
+        AssetResolveAction::class,
+        AssetSearchAction::class,
+        AssetGetAction::class,
+        AssetUpdateAction::class,
+        AssetUsageListAction::class,
+        AssetUsagePutAction::class,
+        AssetUsageRemoveAction::class,
+        AssetDeleteCheckAction::class,
+        AssetSessionCreateAction::class,
+        AssetSessionRevokeAction::class,
+        AssetSessionContentAction::class,
+        CreateFolderAction::class,
+        UploadAction::class,
+        ChunkUploadAction::class,
+        CancelChunkAction::class,
+        ChunkStatusAction::class,
+        RenameAction::class,
+        'sofinder.http.action.copy',
+        'sofinder.http.action.move',
+        DeleteAction::class,
+        BatchAction::class,
+        BatchRenameAction::class,
+        DownloadAction::class,
+        ContentAction::class,
+        SignedUrlIssueAction::class,
+        SignedContentAction::class,
+        ChecksumAction::class,
+        TextPreviewAction::class,
+        DocumentPreviewAction::class,
+        DocumentPreviewJobCreateAction::class,
+        DocumentPreviewJobStatusAction::class,
+        TrashListAction::class,
+        RestoreTrashAction::class,
+        DeleteTrashAction::class,
+        ImageThumbnailAction::class,
+        ImageInfoAction::class,
+        ImageVariantAction::class,
+        ImageEditAction::class,
+        ImageBatchAction::class,
+        ArchiveDownloadAction::class,
+        MetadataGetAction::class,
+        MetadataUpdateAction::class,
+        QuickUploadAction::class,
+    ];
+
     /** @param array<int, array<string, mixed>> $configs */
     public function load(array $configs, ContainerBuilder $container): void
     {
@@ -941,6 +1002,32 @@ final class SoFinderExtension extends Extension
         $container->setDefinition(AssetSessionContentAction::class, new Definition(AssetSessionContentAction::class, [new Reference(AssetAccessSessionManager::class), new Reference(EntryStreamResponseBuilder::class)]));
         $container->setDefinition(AssetAccessSessionActions::class, new Definition(AssetAccessSessionActions::class, [new Reference(AssetSessionCreateAction::class), new Reference(AssetSessionRevokeAction::class), new Reference(AssetSessionContentAction::class)]));
         $this->controller($container, AssetAccessSessionController::class, [new Reference(AssetAccessSessionManager::class), new Reference(CsrfGuard::class), new Reference(RouterInterface::class), new Reference(ContentController::class), new Reference(AssetAccessSessionActions::class)]);
+
+        $container->setDefinition(Psr17Factory::class, new Definition(Psr17Factory::class));
+        $container->setDefinition(PsrHttpFactory::class, new Definition(PsrHttpFactory::class, [
+            new Reference(Psr17Factory::class),
+            new Reference(Psr17Factory::class),
+            new Reference(Psr17Factory::class),
+            new Reference(Psr17Factory::class),
+        ]));
+        $container->setDefinition(HttpFoundationFactory::class, new Definition(HttpFoundationFactory::class));
+        foreach (self::SHARED_ACTION_SERVICES as $index => $actionService) {
+            $container->setDefinition('sofinder.http.endpoint_handler.' . $index, (new Definition(PsrEndpointHandler::class, [
+                new Reference($actionService),
+                new Reference(Psr17Factory::class),
+                new Reference(Psr17Factory::class),
+            ]))->addTag('sofinder.http.endpoint_handler'));
+        }
+        $container->setDefinition(EndpointDispatcher::class, new Definition(EndpointDispatcher::class, [
+            new Reference(Psr17Factory::class),
+            new Reference(Psr17Factory::class),
+            new TaggedIteratorArgument('sofinder.http.endpoint_handler'),
+        ]));
+        $this->controller($container, SymfonyEndpointController::class, [
+            new Reference(EndpointDispatcher::class),
+            new Reference(PsrHttpFactory::class),
+            new Reference(HttpFoundationFactory::class),
+        ]);
 
         $container->setDefinition(ExceptionSubscriber::class, (new Definition(ExceptionSubscriber::class))
             ->addTag('kernel.event_subscriber'));

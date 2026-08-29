@@ -13,7 +13,9 @@ Core、HTTP 與 PSR-15 已完成實體子目錄，並通過不安裝 Symfony 的
 安裝驗證。Symfony Bridge 也已完成實體拆分、發佈資源與獨立安裝驗證。
 `FrameworkBoundaryTest` 會禁止 Core 引入 Symfony、Illuminate、Slim 或 Mezzio；Symfony
 現在直接從框架無關的中央清單產生 52 條 Route，兼容 YAML 檔案只負責匯入該集合，測試會核對
-Path、Method、參數約束、Controller 與特殊預設值。
+Path、Method、參數約束、Adapter 與特殊預設值。Host 呈現的 `/browser` 保留 Symfony
+Controller，其餘 Route 使用單一 HttpFoundation-to-PSR Adapter，並與 Laravel、Slim、
+Mezzio 和純 PHP 共用 `EndpointDispatcher`。
 
 相容 Matrix 保留已提交的 PHP 8.2 Composer Platform 作為最低解析目標，執行 PHP 8.2／
 Symfony 6.4 `prefer-lowest`；PHP 8.5／Symfony 7.4 最新依賴則使用不含 Platform Override

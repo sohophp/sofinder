@@ -47,4 +47,4 @@ jobs:
       - run: ./scripts/composer.sh audit
       - run: find src -type f -name '*.php' -print0 | xargs -0 -n1 ./scripts/php-bin.sh -l
       - run: |
-          ./scripts/php-bin.sh -r 'require "vendor/autoload.php"; exit(class_exists("SohoPHP\\SoFinder\\SoFinderBundle") ? 0 : 1);'
+          ./scripts/php-bin.sh -r 'require "vendor/autoload.php"; $routes = SohoPHP\SoFinder\Routing\SymfonyRouteCollectionFactory::create(); exit(class_exists("SohoPHP\\SoFinder\\SoFinderBundle") && class_exists("SohoPHP\\SoFinder\\Symfony\\SymfonyEndpointController") && count($routes) === 52 && $routes->get("sofinder_api_config")?->getDefault("_controller") === "SohoPHP\\SoFinder\\Symfony\\SymfonyEndpointController" ? 0 : 1);'

@@ -4,7 +4,9 @@
 
 - Generate the Symfony route collection directly from the framework-neutral
   endpoint catalog while preserving the existing Bundle YAML import,
-  route names, controllers, requirements and host prefix behavior.
+  route names, requirements and host prefix behavior. Keep `/browser` host
+  rendered while routing all 51 HTTP operations through the shared PSR
+  dispatcher instead of legacy per-feature Controller parsing.
 - Validate the canonical endpoint catalog and OpenAPI document in both
   directions, rejecting undocumented runtime routes and phantom documented
   operations before any framework bridge is released.
