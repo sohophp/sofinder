@@ -60,10 +60,13 @@ Monorepo。
 使用者无需这个覆盖。
 
 每日 `Symfony 1.0 observation` Workflow 只会在不可变的 `1.0.0` GitHub Release
-存在后开始。维护者必须为符合条件的 Issue 加上精确 `priority:p0` 或 `priority:p1`
-Label。每次运行都会上传保留 90 天的 JSON Artifact，包含发布时间、覆盖天数、未关闭数量
-以及观察期内建立的全部 P0/P1 Issue；即使 Issue 已关闭也会令运行失败。开启框架晋级门禁时，
-使用最终成功的 Workflow Run 作为缺陷审计 URL。
+存在后开始。除了收集缺陷证据，它还会在 PHP 8.2 与 8.5 的空项目中从 Packagist 安装精确的
+Core、HTTP 与 Symfony 版本，校验拆分仓库来源、运行时边界，并审计 Symfony 消费项目的
+依赖锁。维护者必须为符合条件的 Issue 加上精确 `priority:p0` 或 `priority:p1` Label。
+每次运行都会上传保留 90 天的 JSON Artifact，包含发布时间、覆盖天数、未关闭数量以及观察期内
+建立的全部 P0/P1 Issue；即使 Issue 已关闭也会令运行失败。开启框架晋级门禁时，使用包含两个
+公开包安装任务的最终成功 Workflow Run 作为缺陷审计 URL。本地可运行
+`scripts/check-published-package-install.sh`，以独立 Composer 缓存重复 Registry 校验。
 
 S3 Adapter 位于 `packages/sofinder-s3`，由同步 Workflow 发布到独立 Repository。
 其历史预发布版本为 `v0.1.0-beta.2`；1.x 与 Core 使用相同版本。启用宿主资源前必须确认

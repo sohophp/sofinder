@@ -61,10 +61,14 @@ Project 設定 `minimum-stability: RC` 並啟用 `prefer-stable: true`，或等�
 穩定 1.x 使用者不需要此 Override。
 
 每日 `Symfony 1.0 observation` Workflow 只會在不可變的 `1.0.0` GitHub Release
-存在後開始。維護者必須為符合條件的 Issue 加上精確 `priority:p0` 或 `priority:p1`
-Label。每次執行都會上傳保留 90 天的 JSON Artifact，包含發布時間、覆蓋日數、未關閉數量
-及觀察期內建立的全部 P0/P1 Issue；即使 Issue 已關閉也會令執行失敗。開啟 Framework
-晉級門禁時，使用最終成功的 Workflow Run 作為缺陷稽核 URL。
+存在後開始。除了收集缺陷證據，它也會在 PHP 8.2 與 8.5 的空白專案中由 Packagist 安裝
+精確的 Core、HTTP 與 Symfony 版本，驗證拆分 Repository 來源、Runtime 邊界，並稽核
+Symfony Consumer 的相依鎖。維護者必須為符合條件的 Issue 加上精確 `priority:p0` 或
+`priority:p1` Label。每次執行都會上傳保留 90 天的 JSON Artifact，包含發布時間、覆蓋日數、
+未關閉數量及觀察期內建立的全部 P0/P1 Issue；即使 Issue 已關閉也會令執行失敗。開啟
+Framework 晉級門禁時，使用包含兩個公開 Package 安裝工作的最終成功 Workflow Run 作為
+缺陷稽核 URL。本機可執行 `scripts/check-published-package-install.sh`，以獨立 Composer Cache
+重複 Registry 驗證。
 
 S3 Adapter 位於 `packages/sofinder-s3`，由同步 Workflow 發布至獨立 Repository。
 其歷史預發布版本為 `v0.1.0-beta.2`；1.x 與 Core 使用相同版本。啟用 Host Resource 前

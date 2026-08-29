@@ -7,6 +7,8 @@ description: SoFinder 每个公开版本的重要变更。
 
 ## 尚未发布
 
+- 在 30 天观察期内持续用 PHP 8.2 与 8.5 把不可变的 Core、HTTP、Symfony 1.0.0
+  从 Packagist 安装到使用独立缓存的干净项目，并校验拆分仓库来源、运行时边界与依赖审计状态。
 - 未来 PSR-15 拆分包现在会安装到无框架的干净消费者，明确断言不会拉入 Symfony 或
   Laravel，并分别使用 Nyholm 与 Guzzle PSR-7 Factory 启动完整浏览器／资源 Runtime。
 - 发布演练现在把未来 Laravel 拆分仓库安装到全新的 Laravel 12／PHP 8.2 与 Laravel 13／PHP 8.5

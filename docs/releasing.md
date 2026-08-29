@@ -77,12 +77,18 @@ with `prefer-stable: true`, or wait for the stable tag. Stable 1.x consumers do
 not need this override.
 
 The daily `Symfony 1.0 observation` workflow starts only after the immutable
-`1.0.0` GitHub Release exists. Maintainers must apply the exact `priority:p0` or
-`priority:p1` label to qualifying issues. Each run uploads a 90-day JSON
-artifact with the release timestamp, covered days, open count and every P0/P1
-issue created during observation; any such issue fails the run, even when it is
-already closed. Use the final successful workflow run as the defect-audit URL
-when opening the framework promotion gate.
+`1.0.0` GitHub Release exists. In addition to collecting defect evidence, it
+installs the exact Core, HTTP and Symfony versions from Packagist into empty
+projects on PHP 8.2 and 8.5, verifies their split-repository provenance and
+runtime boundaries, and audits the resulting Symfony dependency lock.
+Maintainers must apply the exact `priority:p0` or `priority:p1` label to
+qualifying issues. Each run uploads a 90-day JSON artifact with the release
+timestamp, covered days, open count and every P0/P1 issue created during
+observation; any such issue fails the run, even when it is already closed. Use
+the final successful workflow run, including both published-package jobs, as
+the defect-audit URL when opening the framework promotion gate. Run
+`scripts/check-published-package-install.sh` locally to repeat the registry
+check with an isolated Composer cache.
 
 The S3 adapter is maintained in `packages/sofinder-s3` and released to its
 independent repository by the synchronized workflow. Its historical prerelease
