@@ -27,11 +27,19 @@ for specification in 'slim 18080' 'mezzio 18081' 'plain 18082'; do
         [[ -n "$response" ]] && break
         sleep 1
     done
+    capabilities=$(curl -si "http://127.0.0.1:$port/sofinder/api/capabilities")
+    health=$(curl -si "http://127.0.0.1:$port/sofinder/health")
+    denied=$(curl -si "http://127.0.0.1:$port/sofinder/api/config")
     cleanup
     server_pid=''
 
     grep -Eq '^HTTP/1\.[01] 200' <<< "$response"
     grep -Eiq '^X-Content-Type-Options: nosniff' <<< "$response"
     grep -Fq '"status":"ready"' <<< "$response"
+    grep -Eq '^HTTP/1\.[01] 200' <<< "$capabilities"
+    grep -Fq '"success":true' <<< "$capabilities"
+    grep -Eq '^HTTP/1\.[01] 200' <<< "$health"
+    grep -Eq '^HTTP/1\.[01] 403' <<< "$denied"
+    grep -Fq '"code":"access_denied"' <<< "$denied"
     echo "$host PSR-15 host smoke passed."
 done

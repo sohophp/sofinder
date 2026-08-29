@@ -1,8 +1,8 @@
 # SoFinder PSR-15 hosts
 
 This executable example exercises the same shared endpoint dispatcher through
-Slim 4, Mezzio 3 and a framework-free PSR-15 front controller. It deliberately
-implements only the public liveness endpoint and denies protected operations;
+Slim 4, Mezzio 3 and a framework-free PSR-15 front controller. It builds all
+51 shared non-browser handlers, while deliberately denying protected operations;
 real hosts must replace the four explicit services in `RuntimeFactory` with
 their authorization, actor, CSRF and event-dispatcher implementations.
 
@@ -21,3 +21,6 @@ Start one host and request `http://127.0.0.1:8080/sofinder/live`:
 ```
 
 Each successful response uses the shared JSON contract and security headers.
+`/sofinder/api/capabilities` and `/sofinder/health` also exercise non-liveness
+handlers; protected endpoints return `403 access_denied`, never an anonymous
+allow default.

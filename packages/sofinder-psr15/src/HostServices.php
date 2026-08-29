@@ -8,6 +8,7 @@ use Psr\EventDispatcher\EventDispatcherInterface;
 use SohoPHP\SoFinder\Contract\ActorProviderInterface;
 use SohoPHP\SoFinder\Contract\AuthorizationInterface;
 use SohoPHP\SoFinder\Contract\CsrfTokenProviderInterface;
+use SohoPHP\SoFinder\Contract\RoleAuthorizationInterface;
 
 /** Required host-owned security and identity services for a PSR-15 runtime. */
 final readonly class HostServices
@@ -17,6 +18,7 @@ final readonly class HostServices
         public ActorProviderInterface $actor,
         public CsrfTokenProviderInterface $csrf,
         public EventDispatcherInterface $events,
+        public ?RoleAuthorizationInterface $roles = null,
     ) {
     }
 }

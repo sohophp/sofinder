@@ -21,12 +21,25 @@ use SohoPHP\SoFinder\Laravel\LaravelEndpointController;
 use SohoPHP\SoFinder\Laravel\LaravelRouteName;
 use SohoPHP\SoFinder\Laravel\LaravelRouteRegistrar;
 use SohoPHP\SoFinder\Laravel\SoFinderServiceProvider;
+use SohoPHP\SoFinder\Laravel\Queue\LaravelMaintenanceDispatcher;
+use SohoPHP\SoFinder\Laravel\Queue\LaravelMaintenanceJob;
+use SohoPHP\SoFinder\Maintenance\MaintenanceTask;
 use SohoPHP\SoFinder\Value\RequestContext;
 use Symfony\Bridge\PsrHttpMessage\Factory\HttpFoundationFactory;
 use Symfony\Bridge\PsrHttpMessage\Factory\PsrHttpFactory;
 
 final class LaravelBridgeTest extends TestCase
 {
+    public function testLaravelQueueDispatcherUsesTheSharedMaintenanceTask(): void
+    {
+        $bus = $this->createMock(\Illuminate\Contracts\Bus\Dispatcher::class);
+        $bus->expects(self::once())->method('dispatch')->with(self::callback(
+            static fn (mixed $job): bool => $job instanceof LaravelMaintenanceJob && $job->task === 'uploads',
+        ));
+
+        (new LaravelMaintenanceDispatcher($bus))->dispatch(MaintenanceTask::Uploads);
+    }
+
     public function testRegistrarCreatesCanonicalLaravelRoutesAndMiddleware(): void
     {
         $router = $this->router();
@@ -38,8 +51,11 @@ final class LaravelBridgeTest extends TestCase
         ]))->register();
         $router->getRoutes()->refreshNameLookups();
 
-        self::assertCount(51, $router->getRoutes());
-        self::assertNull($router->getRoutes()->getByName('sofinder.browser'));
+        self::assertCount(52, $router->getRoutes());
+        $browser = $router->getRoutes()->getByName('sofinder.browser');
+        self::assertNotNull($browser);
+        self::assertSame(\SohoPHP\SoFinder\Laravel\LaravelBrowserController::class, $browser->getActionName());
+        self::assertSame(['web', 'tenant', 'auth'], $browser->getAction('middleware'));
         $config = $router->getRoutes()->getByName('sofinder.api.config');
         self::assertNotNull($config);
         self::assertSame('manager/api/config', $config->uri());

@@ -56,12 +56,12 @@ final class LaravelApplicationTest extends TestCase
 
         $routes = $this->app->make(Router::class)->getRoutes();
         $routes->refreshNameLookups();
-        self::assertCount(51, array_filter(
+        self::assertCount(52, array_filter(
             iterator_to_array($routes),
             static fn ($route): bool => is_string($route->getAction('_sofinder_endpoint')),
         ));
         self::assertSame('sofinder/api/config', $routes->getByName('sofinder.api.config')?->uri());
-        self::assertNull($routes->getByName('sofinder.browser'));
+        self::assertSame('sofinder/browser', $routes->getByName('sofinder.browser')?->uri());
     }
 
     public function testProviderBuildsNormalizedLaravelPaths(): void
@@ -71,6 +71,28 @@ final class LaravelApplicationTest extends TestCase
         self::assertSame('/sofinder', $configuration->get('route_prefix'));
         self::assertStringEndsWith('/storage/app/sofinder/files', (string) $configuration->get('resources.Files.root'));
         self::assertSame('proxy', $configuration->get('resources.Files.delivery_mode'));
+    }
+
+    public function testProviderRegistersSharedMaintenanceArtisanCommands(): void
+    {
+        $this->artisan('sofinder:maintenance:status', ['--json' => true])
+            ->expectsOutputToContain('"status":"ready"')
+            ->assertExitCode(0);
+
+        $commands = $this->app->make(\Illuminate\Contracts\Console\Kernel::class)->all();
+        foreach (['sofinder:uploads:cleanup', 'sofinder:trash:cleanup', 'sofinder:usage:recalculate', 'sofinder:maintenance:status'] as $name) {
+            self::assertArrayHasKey($name, $commands);
+        }
+    }
+
+    public function testProviderPublishesConfigurationAndFrontendAssets(): void
+    {
+        $config = SoFinderServiceProvider::pathsToPublish(SoFinderServiceProvider::class, 'sofinder-config');
+        self::assertSame(config_path('sofinder.php'), reset($config));
+
+        $assets = SoFinderServiceProvider::pathsToPublish(SoFinderServiceProvider::class, 'sofinder-assets');
+        self::assertSame(public_path('vendor/sofinder'), reset($assets));
+        self::assertFileExists((string) key($assets) . '/manifest.json');
     }
 
     public function testProviderRegistersFrameworkNeutralHostContracts(): void

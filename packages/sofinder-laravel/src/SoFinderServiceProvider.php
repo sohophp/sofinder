@@ -26,6 +26,7 @@ use SohoPHP\SoFinder\Contract\RoleAuthorizationInterface;
 use SohoPHP\SoFinder\Contract\WorkspaceResolverInterface;
 use SohoPHP\SoFinder\Contract\ImageCapabilityProviderInterface;
 use SohoPHP\SoFinder\Contract\MalwareScanStatusStoreInterface;
+use SohoPHP\SoFinder\Contract\MaintenanceDispatcherInterface;
 use SohoPHP\SoFinder\Contract\MetricsStoreInterface;
 use SohoPHP\SoFinder\Archive\ArchiveManager;
 use SohoPHP\SoFinder\Asset\AssetAccessSessionManager;
@@ -36,9 +37,11 @@ use SohoPHP\SoFinder\Asset\JsonAssetAccessSessionStore;
 use SohoPHP\SoFinder\Asset\JsonAssetCatalog;
 use SohoPHP\SoFinder\Asset\JsonAssetUsageStore;
 use SohoPHP\SoFinder\FileManager;
+use SohoPHP\SoFinder\Feature\FeaturePolicy;
 use SohoPHP\SoFinder\Health\HealthManager;
 use SohoPHP\SoFinder\Http\AdvancedEndpointActions;
 use SohoPHP\SoFinder\Http\EndpointActionInterface;
+use SohoPHP\SoFinder\Http\BrowserPage;
 use SohoPHP\SoFinder\Http\EndpointDispatcher;
 use SohoPHP\SoFinder\Http\PsrEndpointHandler;
 use SohoPHP\SoFinder\Http\StandardEndpointActions;
@@ -50,6 +53,11 @@ use SohoPHP\SoFinder\Metadata\JsonMetadataStore;
 use SohoPHP\SoFinder\Metadata\MetadataManager;
 use SohoPHP\SoFinder\Maintenance\MaintenanceCoordinator;
 use SohoPHP\SoFinder\Maintenance\MaintenanceRunner;
+use SohoPHP\SoFinder\Laravel\Console\CleanupTrashCommand;
+use SohoPHP\SoFinder\Laravel\Console\CleanupUploadsCommand;
+use SohoPHP\SoFinder\Laravel\Console\MaintenanceStatusCommand;
+use SohoPHP\SoFinder\Laravel\Console\RecalculateUsageCommand;
+use SohoPHP\SoFinder\Laravel\Queue\LaravelMaintenanceDispatcher;
 use SohoPHP\SoFinder\Observability\LocalMetricsStore;
 use SohoPHP\SoFinder\Preview\DocumentPreviewJobManager;
 use SohoPHP\SoFinder\Preview\DocumentPreviewManager;
@@ -65,6 +73,7 @@ use SohoPHP\SoFinder\Trash\TrashManager;
 use SohoPHP\SoFinder\Upload\ChunkUploadManager;
 use SohoPHP\SoFinder\Upload\UploadNamePolicy;
 use SohoPHP\SoFinder\Usage\PersistentUsageTracker;
+use SohoPHP\SoFinder\Value\Theme;
 use SohoPHP\SoFinder\Workspace\DefaultWorkspaceResolver;
 use SohoPHP\SoFinder\Workspace\WorkspaceProvider;
 use Symfony\Bridge\PsrHttpMessage\Factory\HttpFoundationFactory;
@@ -168,6 +177,8 @@ final class SoFinderServiceProvider extends ServiceProvider
             (int) $app->make(LaravelConfiguration::class)->get('max_upload_chunks'),
         ));
         $this->app->alias(ChunkUploadManager::class, ChunkUploadStoreInterface::class);
+        $this->app->singleton(LaravelMaintenanceDispatcher::class);
+        $this->app->alias(LaravelMaintenanceDispatcher::class, MaintenanceDispatcherInterface::class);
         $this->app->singleton(MaintenanceRunner::class, static fn ($app): MaintenanceRunner => new MaintenanceRunner(
             rtrim((string) $app->make(LaravelConfiguration::class)->get('cache_dir'), '/') . '/maintenance',
             $app->make(ChunkUploadStoreInterface::class),
@@ -175,13 +186,17 @@ final class SoFinderServiceProvider extends ServiceProvider
             $app->make(PersistentUsageTracker::class),
             $app->make(ResourceRegistry::class),
         ));
-        $this->app->singleton(MaintenanceCoordinator::class, static fn ($app): MaintenanceCoordinator => new MaintenanceCoordinator(
-            rtrim((string) $app->make(LaravelConfiguration::class)->get('cache_dir'), '/') . '/maintenance',
-            (string) $app->make(LaravelConfiguration::class)->get('maintenance.mode'),
-            (int) $app->make(LaravelConfiguration::class)->get('maintenance.min_interval_seconds'),
-            (int) $app->make(LaravelConfiguration::class)->get('maintenance.max_items_per_run'),
-            $app->make(MaintenanceRunner::class),
-        ));
+        $this->app->singleton(MaintenanceCoordinator::class, static function ($app): MaintenanceCoordinator {
+            $mode = (string) $app->make(LaravelConfiguration::class)->get('maintenance.mode');
+            return new MaintenanceCoordinator(
+                rtrim((string) $app->make(LaravelConfiguration::class)->get('cache_dir'), '/') . '/maintenance',
+                $mode,
+                (int) $app->make(LaravelConfiguration::class)->get('maintenance.min_interval_seconds'),
+                (int) $app->make(LaravelConfiguration::class)->get('maintenance.max_items_per_run'),
+                $app->make(MaintenanceRunner::class),
+                $mode === 'messenger' ? $app->make(MaintenanceDispatcherInterface::class) : null,
+            );
+        });
         $this->app->singleton(UploadPipeline::class, static fn ($app): UploadPipeline => new UploadPipeline(
             new DefaultFileInspector($app->make(HybridImageProcessor::class), $app->make(ImageFormatRegistry::class)),
             (string) $app->make(LaravelConfiguration::class)->get('quarantine_dir'),
@@ -288,6 +303,32 @@ final class SoFinderServiceProvider extends ServiceProvider
                 $app->make(HealthManager::class), $app->make(MetricsStoreInterface::class), $app->make(MalwareScanStatusStoreInterface::class), $packageDirectory, $app->make(LaravelConfiguration::class)->all(),
             );
         });
+        $this->app->singleton(BrowserPage::class, static function ($app): BrowserPage {
+            $configuration = $app->make(LaravelConfiguration::class)->all();
+            $packageDirectory = dirname(__DIR__);
+            if (!is_dir($packageDirectory . '/dist')) {
+                $packageDirectory = dirname(__DIR__, 3);
+            }
+            $fingerprint = hash_init('sha256');
+            foreach (['sofinder.js', 'sofinder-picker.js', 'sofinder.css'] as $file) {
+                $path = $packageDirectory . '/dist/' . $file;
+                if (is_file($path)) hash_update_file($fingerprint, $path);
+            }
+
+            return new BrowserPage(
+                $app->make(FileManager::class),
+                $app->make(EndpointUrlGeneratorInterface::class),
+                $app->make(CsrfTokenProviderInterface::class),
+                substr(hash_final($fingerprint), 0, 12),
+                new Theme((array) ($configuration['theme'] ?? [])),
+                (array) ($configuration['ui'] ?? []),
+                new FeaturePolicy((array) ($configuration['features'] ?? [])),
+                $app->make(RoleAuthorizationInterface::class),
+                array_values(array_filter((array) ($configuration['malware_scanning']['status_roles'] ?? []), 'is_string')),
+                array_values(array_filter((array) ($configuration['picker']['allowed_origins'] ?? []), 'is_string')),
+                $app->make(WorkspaceProvider::class),
+            );
+        });
         $this->app->singleton(EndpointDispatcher::class, static function ($app): EndpointDispatcher {
             $responses = $app->make(ResponseFactoryInterface::class);
             $streams = $app->make(StreamFactoryInterface::class);
@@ -310,9 +351,22 @@ final class SoFinderServiceProvider extends ServiceProvider
             $routes->register();
         }
         if ($this->app->runningInConsole()) {
+            $assetDirectory = dirname(__DIR__) . '/dist';
+            if (!is_dir($assetDirectory)) {
+                $assetDirectory = dirname(__DIR__, 3) . '/dist';
+            }
+            $this->commands([
+                CleanupUploadsCommand::class,
+                CleanupTrashCommand::class,
+                RecalculateUsageCommand::class,
+                MaintenanceStatusCommand::class,
+            ]);
             $this->publishes([
                 dirname(__DIR__) . '/config/sofinder.php' => config_path('sofinder.php'),
             ], 'sofinder-config');
+            $this->publishes([
+                $assetDirectory => public_path('vendor/sofinder'),
+            ], 'sofinder-assets');
         }
     }
 }

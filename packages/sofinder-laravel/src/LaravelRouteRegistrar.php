@@ -29,10 +29,8 @@ final readonly class LaravelRouteRegistrar
 
         $this->router->group($attributes, function (Router $router) use ($middleware, $authenticated, $basePath): void {
             foreach (EndpointCatalog::all() as $endpoint) {
-                if ($endpoint->name === 'sofinder_browser') {
-                    continue;
-                }
-                $route = $router->match($endpoint->methods, ltrim($endpoint->path, '/'), LaravelEndpointController::class)
+                $controller = $endpoint->name === 'sofinder_browser' ? LaravelBrowserController::class : LaravelEndpointController::class;
+                $route = $router->match($endpoint->methods, ltrim($endpoint->path, '/'), $controller)
                     ->name(LaravelRouteName::fromEndpoint($endpoint->name))
                     ->middleware($endpoint->public ? $middleware : $authenticated);
                 foreach ($endpoint->requirements as $parameter => $requirement) {

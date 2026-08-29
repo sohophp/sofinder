@@ -41,7 +41,7 @@ prepare_split()
     git -C "$split_repository" checkout --quiet -B source-release "$source_ref"
     FILTER_BRANCH_SQUELCH_WARNING=1 git -C "$split_repository" filter-branch --force --prune-empty \
         --subdirectory-filter "$directory" -- source-release >/dev/null
-    if [[ "$directory" == packages/sofinder-laravel ]]; then
+    if [[ "$directory" == packages/sofinder-laravel || "$directory" == packages/sofinder-psr15 ]]; then
         git -C "$repository_root" archive "$source_ref" dist | tar -x -C "$split_repository"
         git -C "$split_repository" add dist
         GIT_AUTHOR_DATE="$tag_date" GIT_COMMITTER_DATE="$tag_date" \
@@ -52,7 +52,7 @@ prepare_split()
         $composer = json_decode(stream_get_contents(STDIN), true, 32, JSON_THROW_ON_ERROR);
         exit(($composer["name"] ?? null) === $argv[1] ? 0 : 1);
     ' "$package_name"
-    if [[ "$directory" == packages/sofinder-laravel ]]; then
+    if [[ "$directory" == packages/sofinder-laravel || "$directory" == packages/sofinder-psr15 ]]; then
         git -C "$split_repository" cat-file -e "$split_commit:dist/manifest.json"
     fi
     git -C "$split_repository" branch -f package-release-main "$split_commit" >/dev/null

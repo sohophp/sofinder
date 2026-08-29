@@ -46,7 +46,7 @@ archive_package()
         files+=(config)
     fi
 
-    if [[ "$directory" == sofinder-laravel ]]; then
+    if [[ "$directory" == sofinder-laravel || "$directory" == sofinder-psr15 ]]; then
         local staging
         staging=$(mktemp -d "$repository_root/var/laravel-release.XXXXXX")
         mkdir -p "$staging/$prefix"
@@ -74,7 +74,9 @@ archive_package()
         listing=$(tar -tzf "$archive")
         grep -Fxq "$prefix/dist/manifest.json" <<< "$listing"
         grep -Fxq "$prefix/THIRD_PARTY_NOTICES.md" <<< "$listing"
-    elif [[ "$directory" == sofinder-laravel ]]; then
+    elif [[ "$directory" == sofinder-laravel || "$directory" == sofinder-psr15 ]]; then
+        local listing
+        listing=$(tar -tzf "$archive")
         grep -Fxq "$prefix/dist/manifest.json" <<< "$listing"
     fi
 }

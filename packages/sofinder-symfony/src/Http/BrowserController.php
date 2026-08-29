@@ -34,11 +34,21 @@ final readonly class BrowserController
         /** @var list<string> */ private array $pickerAllowedOrigins = [],
         private ?WorkspaceProvider $workspaces = null,
         private ?WorkspaceOptionProviderInterface $workspaceOptions = null,
+        private ?BrowserPage $page = null,
     ) {
     }
 
     public function __invoke(Request $request): Response
     {
+        if ($this->page !== null) {
+            return new Response($this->page->render(SymfonyRequestContextProvider::fromRequest($request)), headers: [
+                'Content-Type' => 'text/html; charset=UTF-8',
+                'Cache-Control' => 'no-store, private',
+                'X-Frame-Options' => 'SAMEORIGIN',
+                'X-Content-Type-Options' => 'nosniff',
+                'Referrer-Policy' => 'same-origin',
+            ]);
+        }
         $this->files->resources();
         $initialPath = $this->safePath($request->query->getString('path'));
         $pickerRequestId = $this->pickerRequestId($request->query->getString('pickerRequestId'));

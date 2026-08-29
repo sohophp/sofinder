@@ -9195,11 +9195,12 @@
             "dist": {
                 "type": "path",
                 "url": "packages/sofinder-laravel",
-                "reference": "8f41003fce3644a1febada17e6b40792a76acca3"
+                "reference": "e4313a318547e11680a3df4daa9c6205bf40cabf"
             },
             "require": {
                 "illuminate/auth": "^12.0 || ^13.0",
                 "illuminate/console": "^12.0 || ^13.0",
+                "illuminate/contracts": "^12.0 || ^13.0",
                 "illuminate/http": "^12.0 || ^13.0",
                 "illuminate/routing": "^12.0 || ^13.0",
                 "illuminate/session": "^12.0 || ^13.0",

@@ -9,10 +9,8 @@ use Psr\Http\Message\ResponseFactoryInterface;
 use Psr\Http\Message\StreamFactoryInterface;
 use SohoPHP\SoFinder\Contract\ActorProviderInterface;
 use SohoPHP\SoFinder\Contract\AuthorizationInterface;
-use SohoPHP\SoFinder\Http\Action\LivenessAction;
-use SohoPHP\SoFinder\Http\EndpointDispatcher;
-use SohoPHP\SoFinder\Http\PsrEndpointHandler;
 use SohoPHP\SoFinder\Psr15\HostServices;
+use SohoPHP\SoFinder\Psr15\LocalApplicationFactory;
 use SohoPHP\SoFinder\Psr15\NativeSessionCsrfTokenProvider;
 use SohoPHP\SoFinder\Psr15\SoFinderApplication;
 use SohoPHP\SoFinder\Value\ResourceType;
@@ -24,13 +22,6 @@ final class RuntimeFactory
         StreamFactoryInterface $streams,
         string $prefix = '/sofinder',
     ): SoFinderApplication {
-        $action = new LivenessAction();
-        $dispatcher = new EndpointDispatcher(
-            $responses,
-            $streams,
-            [new PsrEndpointHandler($action, $responses, $streams)],
-        );
-
         // Deliberately deny protected operations until the host replaces this
         // with its authenticated authorization service.
         $authorization = new class implements AuthorizationInterface {
@@ -50,6 +41,15 @@ final class RuntimeFactory
             $events,
         );
 
-        return new SoFinderApplication($dispatcher, $services, $prefix);
+        return (new LocalApplicationFactory(
+            $responses,
+            $streams,
+            $services,
+            [],
+            dirname(__DIR__) . '/var/state',
+            dirname(__DIR__) . '/var/files',
+            dirname(__DIR__, 3),
+            $prefix,
+        ))->create();
     }
 }

@@ -112,6 +112,7 @@ use SohoPHP\SoFinder\Http\AssetSearchController;
 use SohoPHP\SoFinder\Http\AssetUsageController;
 use SohoPHP\SoFinder\Http\AssetAccessSessionController;
 use SohoPHP\SoFinder\Http\BrowserController;
+use SohoPHP\SoFinder\Http\BrowserPage;
 use SohoPHP\SoFinder\Http\ChunkUploadController;
 use SohoPHP\SoFinder\Http\ContentController;
 use SohoPHP\SoFinder\Http\ExceptionSubscriber;
@@ -572,6 +573,20 @@ final class SoFinderExtension extends Extension
             ->setArgument('$plugins', new TaggedIteratorArgument('sofinder.plugin')));
         $container->setDefinition(FeaturePolicy::class, (new Definition(FeaturePolicy::class))
             ->setArgument('$features', $config['features']));
+        $container->setDefinition(BrowserPage::class, new Definition(BrowserPage::class, [
+            new Reference(FileManager::class),
+            new Reference(EndpointUrlGeneratorInterface::class),
+            new Reference(CsrfTokenProviderInterface::class),
+            $container->getParameter('so_finder.asset_version'),
+            new Reference(Theme::class),
+            $config['ui'],
+            new Reference(FeaturePolicy::class),
+            new Reference(RoleAuthorizationInterface::class),
+            $malwareConfig['status_roles'],
+            $config['picker']['allowed_origins'],
+            $workspaceConfig['enabled'] ? new Reference(WorkspaceProvider::class) : null,
+            $workspaceConfig['enabled'] && $workspaceConfig['option_provider_service'] !== null ? new Reference((string) $workspaceConfig['option_provider_service']) : null,
+        ]));
         $container->setDefinition(EntriesAction::class, new Definition(EntriesAction::class, [
             new Reference(FileManager::class),
             new Reference(MetadataManager::class),
@@ -793,6 +808,7 @@ final class SoFinderExtension extends Extension
             $config['picker']['allowed_origins'],
             $workspaceConfig['enabled'] ? new Reference(WorkspaceProvider::class) : null,
             $workspaceConfig['enabled'] && $workspaceConfig['option_provider_service'] !== null ? new Reference((string) $workspaceConfig['option_provider_service']) : null,
+            new Reference(BrowserPage::class),
         ]);
         $this->controller($container, ApiController::class, [
             new Reference(FileManager::class),

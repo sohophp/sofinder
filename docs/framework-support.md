@@ -13,26 +13,26 @@ and 7.4 LTS.
 | Host | Current level | Release gate |
 | --- | --- | --- |
 | Symfony 6.4/7.4 | Full, stable target | Complete PHP 8.2–8.5 CI matrix |
-| Plain PHP / any container | Experimental headless HTTP bridge | Host supplies explicit authorization, CSRF, actor, events and PSR factories |
-| Laravel 12/13 | Experimental bridge: Provider, all 51 non-browser shared handlers, Auth/Gate, session CSRF and PSR conversion | Browser shell, commands/queue adapter, full black-box parity and the Symfony observation gate |
-| Slim / Mezzio | Experimental PSR-15 API bridge with executable hosts | Full endpoint parity and the Symfony 1.0 observation gate |
+| Plain PHP / any container | Experimental complete headless HTTP runtime | Host supplies explicit authorization, CSRF, actor, events and PSR factories |
+| Laravel 12/13 | Experimental full-stack bridge: browser, 51 shared handlers, Artisan/Queue, Auth/Gate and session CSRF | Runnable example, full black-box parity and the Symfony observation gate |
+| Slim / Mezzio | Experimental PSR-15 bridge with all 51 shared handlers and executable hosts | Full black-box parity and the Symfony 1.0 observation gate |
 | Other frameworks | Headless core only | Implement the same public contracts; do not subclass internal controllers |
 
-The experimental PSR-15 package now supplies middleware and a `RouteRegistrar`
-for all 51 non-presentation endpoints. It can register the canonical paths and
-requirements in Slim or Mezzio, while `/browser` remains a host-rendered page.
-Real Slim 4, Mezzio 3 and plain PHP front controllers now run on PHP 8.2 and
-8.5. Only the Symfony row is a supported full-stack installation today; the
-PSR row does not become supported until the complete contract suite and release
-gate pass.
+The experimental PSR-15 package supplies middleware, a `RouteRegistrar` and a
+local runtime factory for all 51 non-presentation endpoints. Real Slim 4,
+Mezzio 3 and plain PHP front controllers execute liveness, capabilities, health,
+denial and mutation paths on PHP 8.2 and 8.5. `/browser` remains host-rendered.
+Only the Symfony row is supported today; the PSR row does not become supported
+until the complete black-box suite and release gate pass.
 
 The gated Laravel package now boots through package discovery in real Laravel
 12 and 13 applications, registers the canonical 51 non-browser routes, and
 wires all of them to shared HTTP actions through the PSR dispatcher. Its
 Laravel Auth/Gate, session CSRF, event dispatcher, request context, route URL
-and normalized configuration adapters are present. The package remains
-experimental while the browser shell, commands/queue adapter, full black-box
-contract suite and release asset injection are being completed.
+and normalized configuration adapters are present. The shared browser bootstrap,
+four Artisan maintenance commands, Laravel Queue dispatcher and synchronized
+release assets are also wired. The package remains experimental while its
+runnable example and full black-box contract suite are being completed.
 
 The gate is recorded in `config/framework-support.json` and validated in CI.
 It cannot become eligible until the recorded main release is `1.0.0`, its UTC

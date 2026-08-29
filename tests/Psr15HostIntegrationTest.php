@@ -29,10 +29,8 @@ use Slim\Psr7\Factory\StreamFactory as SlimStreamFactory;
 use SohoPHP\SoFinder\Contract\ActorProviderInterface;
 use SohoPHP\SoFinder\Contract\AuthorizationInterface;
 use SohoPHP\SoFinder\Contract\CsrfTokenProviderInterface;
-use SohoPHP\SoFinder\Http\Action\LivenessAction;
-use SohoPHP\SoFinder\Http\EndpointDispatcher;
-use SohoPHP\SoFinder\Http\PsrEndpointHandler;
 use SohoPHP\SoFinder\Psr15\HostServices;
+use SohoPHP\SoFinder\Psr15\LocalApplicationFactory;
 use SohoPHP\SoFinder\Psr15\NativeSessionCsrfTokenProvider;
 use SohoPHP\SoFinder\Psr15\SoFinderApplication;
 use SohoPHP\SoFinder\Value\RequestContext;
@@ -40,6 +38,22 @@ use SohoPHP\SoFinder\Value\ResourceType;
 
 final class Psr15HostIntegrationTest extends TestCase
 {
+    private string $directory;
+
+    protected function setUp(): void
+    {
+        $this->directory = sys_get_temp_dir() . '/sofinder-host-' . bin2hex(random_bytes(6));
+        mkdir($this->directory . '/files', 0770, true);
+    }
+
+    protected function tearDown(): void
+    {
+        if (!is_dir($this->directory)) return;
+        $iterator = new \RecursiveIteratorIterator(new \RecursiveDirectoryIterator($this->directory, \FilesystemIterator::SKIP_DOTS), \RecursiveIteratorIterator::CHILD_FIRST);
+        foreach ($iterator as $item) { if ($item->isDir()) rmdir($item->getPathname()); else unlink($item->getPathname()); }
+        rmdir($this->directory);
+    }
+
     public function testRealSlimApplicationDispatchesSharedEndpoint(): void
     {
         $responses = new SlimResponseFactory();
@@ -53,6 +67,10 @@ final class Psr15HostIntegrationTest extends TestCase
         self::assertSame(200, $response->getStatusCode());
         self::assertSame(['success' => true, 'data' => ['status' => 'ready']], json_decode((string) $response->getBody(), true, 32, JSON_THROW_ON_ERROR));
         self::assertSame('nosniff', $response->getHeaderLine('X-Content-Type-Options'));
+        self::assertSame(200, $app->handle((new SlimServerRequestFactory())->createServerRequest('GET', '/sofinder/api/capabilities'))->getStatusCode());
+        $denied = $app->handle((new SlimServerRequestFactory())->createServerRequest('GET', '/sofinder/api/config'));
+        self::assertSame(403, $denied->getStatusCode());
+        self::assertSame('access_denied', json_decode((string) $denied->getBody(), true, 32, JSON_THROW_ON_ERROR)['error']['code']);
     }
 
     public function testRealMezzioApplicationDispatchesSharedEndpoint(): void
@@ -82,6 +100,7 @@ final class Psr15HostIntegrationTest extends TestCase
         self::assertSame(200, $response->getStatusCode());
         self::assertSame(['success' => true, 'data' => ['status' => 'ready']], json_decode((string) $response->getBody(), true, 32, JSON_THROW_ON_ERROR));
         self::assertSame('nosniff', $response->getHeaderLine('X-Content-Type-Options'));
+        self::assertSame(200, $app->handle(new ServerRequest(uri: '/manager/health', method: 'GET'))->getStatusCode());
     }
 
     public function testOfficialRuntimeRetainsAllRequiredHostServices(): void
@@ -117,8 +136,6 @@ final class Psr15HostIntegrationTest extends TestCase
 
     private function runtime(ResponseFactoryInterface $responses, StreamFactoryInterface $streams, string $prefix = '/sofinder'): SoFinderApplication
     {
-        $action = new LivenessAction();
-        $dispatcher = new EndpointDispatcher($responses, $streams, [new PsrEndpointHandler($action, $responses, $streams)]);
         $authorization = new class implements AuthorizationInterface {
             public function isAuthenticated(): bool { return false; }
             public function isGranted(string $operation, ResourceType $resource, string $path): bool { return false; }
@@ -130,6 +147,15 @@ final class Psr15HostIntegrationTest extends TestCase
         };
         $events = new class implements EventDispatcherInterface { public function dispatch(object $event): object { return $event; } };
 
-        return new SoFinderApplication($dispatcher, new HostServices($authorization, $actor, $csrf, $events), $prefix);
+        return (new LocalApplicationFactory(
+            $responses,
+            $streams,
+            new HostServices($authorization, $actor, $csrf, $events),
+            [],
+            $this->directory . '/state',
+            $this->directory . '/files',
+            dirname(__DIR__),
+            $prefix,
+        ))->create();
     }
 }
