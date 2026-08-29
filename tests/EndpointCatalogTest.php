@@ -6,25 +6,31 @@ namespace SohoPHP\SoFinder\Tests;
 
 use PHPUnit\Framework\TestCase;
 use SohoPHP\SoFinder\Http\EndpointCatalog;
+use SohoPHP\SoFinder\Routing\SymfonyRouteCollectionFactory;
 
 final class EndpointCatalogTest extends TestCase
 {
     public function testCatalogMatchesEveryPublishedSymfonyRoute(): void
     {
-        $yaml = (string) file_get_contents(__DIR__ . '/../packages/sofinder-symfony/src/Resources/config/routes.yaml');
-        preg_match_all('/^(sofinder_[a-z0-9_]+):\R  path: ([^\r\n]+)\R(?:  controller:[^\r\n]+\R)?  methods: \[([A-Z]+)]/m', $yaml, $matches, PREG_SET_ORDER);
-        $published = [];
-        foreach ($matches as $match) {
-            $published[$match[1]] = [$match[2], $match[3]];
-        }
+        $published = SymfonyRouteCollectionFactory::create();
         $catalog = [];
         foreach (EndpointCatalog::all() as $endpoint) {
             self::assertArrayNotHasKey($endpoint->name, $catalog, 'Endpoint names must be unique.');
-            $catalog[$endpoint->name] = [$endpoint->path, $endpoint->methods[0]];
+            $catalog[$endpoint->name] = [$endpoint->path, $endpoint->methods, $endpoint->requirements];
         }
 
         self::assertCount(52, $catalog);
-        self::assertSame($published, $catalog, 'Every framework bridge must expose the exact Symfony route surface.');
+        self::assertCount(52, $published);
+        foreach ($catalog as $name => $definition) {
+            $route = $published->get($name);
+            self::assertNotNull($route);
+            self::assertSame($definition, [$route->getPath(), $route->getMethods(), $route->getRequirements()]);
+            self::assertTrue($route->getDefault('_sofinder'));
+            self::assertIsString($route->getDefault('_controller'));
+        }
+        self::assertSame('copy', $published->get('sofinder_api_copy')?->getDefault('operation'));
+        self::assertSame('move', $published->get('sofinder_api_move')?->getDefault('operation'));
+        self::assertTrue($published->get('sofinder_signed_content')?->getDefault('_sofinder_signed_public'));
         self::assertTrue(EndpointCatalog::get('sofinder_liveness')->public);
         self::assertFalse(EndpointCatalog::get('sofinder_api_entries')->public);
     }

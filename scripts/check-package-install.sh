@@ -46,7 +46,7 @@ cd "$symfony_test_dir"
 "$repository_root/scripts/composer.sh" config repositories.http '{"type":"path","url":"../../packages/sofinder-http","options":{"symlink":false,"versions":{"sohophp/sofinder-http":"1.0.0"}}}'
 "$repository_root/scripts/composer.sh" config repositories.symfony '{"type":"path","url":"../../packages/sofinder-symfony","options":{"symlink":false,"versions":{"sohophp/sofinder-symfony":"1.0.0"}}}'
 "$repository_root/scripts/composer.sh" require sohophp/sofinder-symfony:1.0.0 --no-interaction --prefer-dist "${preference_args[@]}"
-"$repository_root/scripts/php-bin.sh" -r 'require "vendor/autoload.php"; $class = new ReflectionClass("SohoPHP\\SoFinder\\SoFinderBundle"); $package = dirname((string) $class->getFileName(), 2); exit(is_file($package . "/dist/manifest.json") && str_contains((string) $class->getFileName(), "/vendor/sohophp/sofinder-symfony/src/") ? 0 : 1);'
+"$repository_root/scripts/php-bin.sh" -r 'require "vendor/autoload.php"; $class = new ReflectionClass("SohoPHP\\SoFinder\\SoFinderBundle"); $package = dirname((string) $class->getFileName(), 2); $routes = SohoPHP\SoFinder\Routing\SymfonyRouteCollectionFactory::create(); exit(is_file($package . "/dist/manifest.json") && is_file($package . "/src/Resources/config/routes.php") && count($routes) === 52 && str_contains((string) $class->getFileName(), "/vendor/sohophp/sofinder-symfony/src/") ? 0 : 1);'
 test -s vendor/sohophp/sofinder-symfony/LICENSE
 test -s vendor/sohophp/sofinder-symfony/README.md
 test -s vendor/sohophp/sofinder-symfony/THIRD_PARTY_NOTICES.md

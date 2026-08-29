@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- Generate the Symfony route collection directly from the framework-neutral
+  endpoint catalog while preserving the existing Bundle YAML import,
+  route names, controllers, requirements and host prefix behavior.
 - Validate the canonical endpoint catalog and OpenAPI document in both
   directions, rejecting undocumented runtime routes and phantom documented
   operations before any framework bridge is released.

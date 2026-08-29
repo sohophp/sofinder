@@ -9,17 +9,17 @@ const sourcePages = readdirSync(docsRoot)
 const sourceRoutes = new Set(sourcePages.map((name) => name === 'index.md' ? '' : basename(name, '.md')))
 const errors = []
 
-const routeLines = readFileSync(join(docsRoot, '..', 'packages', 'sofinder-symfony', 'src', 'Resources', 'config', 'routes.yaml'), 'utf8').split('\n')
+const openApi = JSON.parse(readFileSync(join(docsRoot, 'public', 'openapi.json'), 'utf8'))
 const httpRoutes = []
-let routePath = ''
-for (const line of routeLines) {
-  const pathMatch = /^\s*path:\s*(\S+)/.exec(line)
-  if (pathMatch) routePath = pathMatch[1]
-  const methodMatch = /^\s*methods:\s*\[([A-Z]+)\]/.exec(line)
-  if (methodMatch && (routePath.startsWith('/api/') || routePath.startsWith('/compat/'))) {
-    httpRoutes.push(`${methodMatch[1]} ${routePath}`)
+const httpMethods = new Set(['get', 'post', 'put', 'patch', 'delete', 'options', 'head', 'trace'])
+for (const [routePath, pathItem] of Object.entries(openApi.paths ?? {})) {
+  if (!routePath.startsWith('/api/') && !routePath.startsWith('/compat/')) continue
+  for (const method of Object.keys(pathItem)) {
+    if (httpMethods.has(method.toLowerCase())) httpRoutes.push(`${method.toUpperCase()} ${routePath}`)
   }
 }
+httpRoutes.sort()
+if (httpRoutes.length === 0) errors.push('openapi.json: no documented API routes found')
 
 for (const [prefix, apiPage] of [['', 'api-reference.md'], ['zh-TW', 'api-reference.md'], ['zh-CN', 'api-reference.md']]) {
   const content = readFileSync(join(docsRoot, prefix, apiPage), 'utf8')

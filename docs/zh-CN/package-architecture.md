@@ -18,7 +18,8 @@ SoFinder 正从 1.0 前的 Symfony Bundle 迁移为同步版本的多个 Compose
 | `sofinder-psr15` | Slim、Mezzio 和纯 PHP Middleware | 已完成独立安装、真实宿主冒烟及路由/Action 覆盖；完整端点一致性仍受门禁约束 |
 
 `FrameworkBoundaryTest` 会禁止物理 Core 包引入 Symfony、Illuminate、Slim 或 Mezzio；
-`EndpointCatalogTest` 会校验框架无关 Catalog 与 Symfony 当前 52 条路由完全一致。
+Symfony 现在直接从框架无关的中央清单生成 52 条路由，兼容 YAML 文件只负责导入该集合，
+测试会核对路径、方法、参数约束、Controller 和特殊默认值。
 
 兼容矩阵保留已提交的 PHP 8.2 Composer Platform 作为最低解析目标，执行 PHP 8.2／
 Symfony 6.4 `prefer-lowest`；PHP 8.5／Symfony 7.4 最新依赖则使用不带 Platform Override

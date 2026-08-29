@@ -19,10 +19,11 @@ isolated install test passes.
 | `sohophp/sofinder-psr15` | Slim, Mezzio and plain PSR-15 middleware | Isolated install, real-host smoke and route/action coverage complete; full endpoint parity remains gated |
 
 The source-level `FrameworkBoundaryTest` rejects Symfony, Illuminate, Slim or
-Mezzio imports from the physical Core package. `EndpointCatalogTest` rejects
-route drift between the framework-neutral catalog and the 52-route Symfony
-surface. These gates stay active while files are physically moved into package
-subtrees.
+Mezzio imports from the physical Core package. Symfony now builds its 52-route
+collection directly from the framework-neutral catalog; its compatibility YAML
+file only imports that generated collection. `EndpointCatalogTest` verifies the
+resulting path, method, requirement, controller and special-default contract.
+These gates stay active while files are physically moved into package subtrees.
 
 The compatibility matrix keeps the committed Composer platform at PHP 8.2 for
 minimum resolution, adds a PHP 8.2/Symfony 6.4 `prefer-lowest` run, and uses a

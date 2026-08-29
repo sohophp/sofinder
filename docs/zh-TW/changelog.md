@@ -7,6 +7,8 @@ description: SoFinder 每個公開版本的重要變更。
 
 ## 尚未發佈
 
+- Symfony Route 集合現在直接由框架無關的中央端點清單產生，同時維持原有 Bundle YAML
+  匯入方式、Route 名稱、Controller、參數約束與 Host Prefix 行為。
 - 中央端點清單與 OpenAPI 文件現在執行雙向校驗，在發佈任何框架 Bridge 前同時阻止
   未記錄的 Runtime Route 和不存在的文件端點。
 
