@@ -7,11 +7,13 @@ namespace SohoPHP\SoFinder\Tests;
 use PHPUnit\Framework\TestCase;
 use SohoPHP\SoFinder\Contract\ActorProviderInterface;
 use SohoPHP\SoFinder\Contract\AuthorizationInterface;
+use SohoPHP\SoFinder\Contract\DocumentPreviewDispatcherInterface;
 use SohoPHP\SoFinder\FileManager;
 use SohoPHP\SoFinder\Preview\DocumentPreviewJobManager;
 use SohoPHP\SoFinder\Preview\DocumentPreviewManager;
 use SohoPHP\SoFinder\Preview\DocumentPreviewMessage;
 use SohoPHP\SoFinder\Preview\DocumentPreviewMessageHandler;
+use SohoPHP\SoFinder\Preview\MessengerDocumentPreviewDispatcher;
 use SohoPHP\SoFinder\ResourceRegistry;
 use SohoPHP\SoFinder\Storage\LocalStorageAdapter;
 use SohoPHP\SoFinder\Value\ResourceStorage;
@@ -51,7 +53,7 @@ final class DocumentPreviewJobTest extends TestCase
 
     public function testAutoModeQueuesOnceAndBecomesReadyAfterTheMessageRuns(): void
     {
-        $bus = new class { /** @var list<object> */ public array $messages = []; public function dispatch(object $message): object { $this->messages[] = $message; return $message; } };
+        $bus = new class implements DocumentPreviewDispatcherInterface { /** @var list<DocumentPreviewMessage> */ public array $messages = []; public function available(): bool { return true; } public function dispatch(DocumentPreviewMessage $message): void { $this->messages[] = $message; } };
         $jobs = $this->jobs($bus);
 
         $first = $jobs->prepare('Files', 'report.docx');
@@ -89,7 +91,7 @@ final class DocumentPreviewJobTest extends TestCase
     public function testExpiredJobIsVisibleAndCanBeRetried(): void
     {
         $now = 1_000;
-        $bus = new class { /** @var list<object> */ public array $messages = []; public function dispatch(object $message): object { $this->messages[] = $message; return $message; } };
+        $bus = new class implements DocumentPreviewDispatcherInterface { /** @var list<DocumentPreviewMessage> */ public array $messages = []; public function available(): bool { return true; } public function dispatch(DocumentPreviewMessage $message): void { $this->messages[] = $message; } };
         $jobs = $this->jobs($bus, 'messenger', static function () use (&$now): int { return $now; });
         $job = $jobs->prepare('Files', 'report.docx');
         $now += 61;
@@ -104,7 +106,7 @@ final class DocumentPreviewJobTest extends TestCase
 
     public function testFailedConversionIsRecordedAndPrepareRetriesIt(): void
     {
-        $bus = new class { /** @var list<object> */ public array $messages = []; public function dispatch(object $message): object { $this->messages[] = $message; return $message; } };
+        $bus = new class implements DocumentPreviewDispatcherInterface { /** @var list<DocumentPreviewMessage> */ public array $messages = []; public function available(): bool { return true; } public function dispatch(DocumentPreviewMessage $message): void { $this->messages[] = $message; } };
         $jobs = $this->jobs($bus);
         $job = $jobs->prepare('Files', 'report.docx');
         foreach (glob($this->cache . '/document-previews/jobs/' . $job['id'] . '/source.*') ?: [] as $file) unlink($file);
@@ -120,7 +122,7 @@ final class DocumentPreviewJobTest extends TestCase
 
     public function testExplicitRetryDoesNotDuplicateAnOutstandingJob(): void
     {
-        $bus = new class { /** @var list<object> */ public array $messages = []; public function dispatch(object $message): object { $this->messages[] = $message; return $message; } };
+        $bus = new class implements DocumentPreviewDispatcherInterface { /** @var list<DocumentPreviewMessage> */ public array $messages = []; public function available(): bool { return true; } public function dispatch(DocumentPreviewMessage $message): void { $this->messages[] = $message; } };
         $jobs = $this->jobs($bus);
         $first = $jobs->prepare('Files', 'report.docx');
         $retry = $jobs->prepare('Files', 'report.docx', true);
@@ -130,7 +132,23 @@ final class DocumentPreviewJobTest extends TestCase
         self::assertCount(1, $bus->messages);
     }
 
-    private function jobs(?object $bus, string $mode = 'auto', ?\Closure $clock = null): DocumentPreviewJobManager
+    public function testSymfonyMessengerDispatcherReportsAvailabilityAndForwardsMessages(): void
+    {
+        $message = new DocumentPreviewMessage('preview-job-1');
+        $bus = new class {
+            /** @var list<DocumentPreviewMessage> */
+            public array $messages = [];
+            public function dispatch(DocumentPreviewMessage $message): void { $this->messages[] = $message; }
+        };
+        $dispatcher = new MessengerDocumentPreviewDispatcher($bus);
+
+        self::assertTrue($dispatcher->available());
+        $dispatcher->dispatch($message);
+        self::assertSame([$message], $bus->messages);
+        self::assertFalse((new MessengerDocumentPreviewDispatcher(null))->available());
+    }
+
+    private function jobs(?DocumentPreviewDispatcherInterface $bus, string $mode = 'auto', ?\Closure $clock = null): DocumentPreviewJobManager
     {
         return new DocumentPreviewJobManager($this->previews, $this->actor, $this->cache . '/jobs.json', $mode, 60, 60, $bus, clock: $clock);
     }

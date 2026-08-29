@@ -2,6 +2,19 @@
 
 ## Unreleased
 
+## 1.1.0 - 2026-08-30
+
+- Promote Laravel 12/13 and the shared PSR-15 bridge for Slim 4, Mezzio 3 and
+  framework-free PHP to supported status. Record the maintainer-approved
+  observation waiver explicitly while retaining successful live CI, zero-P0/P1
+  audit, split-publication and clean-consumer evidence.
+- Create the public `sohophp/sofinder-laravel` and
+  `sohophp/sofinder-psr15` split repositories for the synchronized 1.1 line.
+- Add a framework-neutral document-preview dispatcher contract. Symfony,
+  Laravel and PSR-15 now expose the same explicit async-preview seam, and a PSR
+  host configured for messenger mode fails bootstrap when no dispatcher is
+  available.
+
 ## 1.0.2 - 2026-08-30
 
 - Translate framework-neutral document-preview messages into self-handling

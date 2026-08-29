@@ -1,6 +1,6 @@
 {
     "name": "sohophp/sofinder-laravel",
-    "description": "Experimental Laravel 12/13 bridge for SoFinder",
+    "description": "Laravel 12/13 bridge for SoFinder",
     "type": "library",
     "license": "MIT",
     "homepage": "https://sofinder.sohophp.app/",

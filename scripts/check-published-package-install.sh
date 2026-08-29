@@ -80,4 +80,29 @@ fi
 "$repository_root/scripts/php-bin.sh" -r 'require "vendor/autoload.php"; exit(class_exists("SohoPHP\\SoFinderS3\\S3StorageAdapter") && !class_exists("Symfony\\Component\\HttpKernel\\Bundle\\Bundle") && !class_exists("Symfony\\Component\\HttpFoundation\\Request") ? 0 : 1);'
 "$repository_root/scripts/composer.sh" audit --locked --no-interaction
 
-echo "Published SoFinder $version Core, HTTP, Symfony, Meta and S3 packages passed clean-project installation."
+bridge_eligible=$("$repository_root/scripts/php-bin.sh" -r '
+    $policy = json_decode((string) file_get_contents($argv[1]), true, 32, JSON_THROW_ON_ERROR);
+    echo ($policy["promotionGate"]["eligible"] ?? false) === true ? "yes" : "no";
+' "$repository_root/config/framework-support.json")
+
+if [[ "$bridge_eligible" == yes ]]; then
+    psr15_dir="$test_root/psr15"
+    create_consumer "$psr15_dir" sohophp/published-psr15-install-test
+    "$repository_root/scripts/composer.sh" require "sohophp/sofinder-psr15:$version" nyholm/psr7:^1.8 --prefer-dist --no-interaction
+    verify_package sohophp/sofinder-core "$version" https://github.com/sohophp/sofinder-core
+    verify_package sohophp/sofinder-http "$version" https://github.com/sohophp/sofinder-http
+    verify_package sohophp/sofinder-psr15 "$version" https://github.com/sohophp/sofinder-psr15
+    "$repository_root/scripts/php-bin.sh" -r 'require "vendor/autoload.php"; exit(class_exists("SohoPHP\\SoFinder\\Psr15\\SoFinderMiddleware") && class_exists("SohoPHP\\SoFinder\\Psr15\\LocalApplicationFactory") && !class_exists("Symfony\\Component\\HttpFoundation\\Request") && !class_exists("Illuminate\\Foundation\\Application") ? 0 : 1);'
+    "$repository_root/scripts/composer.sh" audit --locked --no-interaction
+
+    laravel_dir="$test_root/laravel"
+    create_consumer "$laravel_dir" sohophp/published-laravel-install-test
+    "$repository_root/scripts/composer.sh" require "sohophp/sofinder-laravel:$version" "laravel/framework:^12.0" --prefer-dist --no-interaction
+    verify_package sohophp/sofinder-core "$version" https://github.com/sohophp/sofinder-core
+    verify_package sohophp/sofinder-http "$version" https://github.com/sohophp/sofinder-http
+    verify_package sohophp/sofinder-laravel "$version" https://github.com/sohophp/sofinder-laravel
+    "$repository_root/scripts/php-bin.sh" -r 'require "vendor/autoload.php"; exit(class_exists("SohoPHP\\SoFinder\\Laravel\\SoFinderServiceProvider") && class_exists("Illuminate\\Foundation\\Application") ? 0 : 1);'
+    "$repository_root/scripts/composer.sh" audit --locked --no-interaction
+fi
+
+echo "Published SoFinder $version synchronized packages passed clean-project installation."

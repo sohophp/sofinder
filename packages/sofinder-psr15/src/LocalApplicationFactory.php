@@ -8,6 +8,7 @@ use Psr\Http\Message\ResponseFactoryInterface;
 use Psr\Http\Message\StreamFactoryInterface;
 use SohoPHP\SoFinder\Configuration\ConfigurationNormalizer;
 use SohoPHP\SoFinder\Contract\MaintenanceDispatcherInterface;
+use SohoPHP\SoFinder\Contract\DocumentPreviewDispatcherInterface;
 use SohoPHP\SoFinder\Contract\StorageAdapterFactoryInterface;
 use SohoPHP\SoFinder\Framework\ScopedRequestContextProvider;
 use SohoPHP\SoFinder\Http\EndpointDispatcher;
@@ -33,6 +34,7 @@ final readonly class LocalApplicationFactory
         private string $baseUrl = '',
         private iterable $storageFactories = [],
         private ?MaintenanceDispatcherInterface $maintenanceDispatcher = null,
+        private ?DocumentPreviewDispatcherInterface $documentPreviewDispatcher = null,
     ) {
         $this->contexts = new ScopedRequestContextProvider();
     }
@@ -75,6 +77,10 @@ final readonly class LocalApplicationFactory
         if (($configuration['maintenance']['mode'] ?? null) === 'messenger' && $this->maintenanceDispatcher === null) {
             throw new \InvalidArgumentException('PSR-15 local runtime requires an explicit maintenance dispatcher for messenger mode.');
         }
+        if (($configuration['document_preview']['mode'] ?? null) === 'messenger'
+            && $this->documentPreviewDispatcher?->available() !== true) {
+            throw new \InvalidArgumentException('PSR-15 local runtime requires an available document preview dispatcher for messenger mode.');
+        }
         $urls = new CatalogUrlGenerator($this->prefix, $this->baseUrl);
         return new LocalRuntime(
             $configuration,
@@ -89,6 +95,7 @@ final readonly class LocalApplicationFactory
             $this->resolvePackageDirectory(),
             $this->storageFactories,
             $this->maintenanceDispatcher,
+            $this->documentPreviewDispatcher,
         );
     }
 

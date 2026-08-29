@@ -50,7 +50,9 @@ final class LaravelBridgeTest extends TestCase
             static fn (mixed $job): bool => $job instanceof LaravelDocumentPreviewJob && $job->jobId === 'preview-job-1',
         ));
 
-        (new LaravelDocumentPreviewDispatcher($bus))->dispatch(new DocumentPreviewMessage('preview-job-1'));
+        $dispatcher = new LaravelDocumentPreviewDispatcher($bus);
+        self::assertTrue($dispatcher->available());
+        $dispatcher->dispatch(new DocumentPreviewMessage('preview-job-1'));
     }
 
     public function testRegistrarCreatesCanonicalLaravelRoutesAndMiddleware(): void

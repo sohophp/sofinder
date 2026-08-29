@@ -21,32 +21,32 @@ description: SoFinder 维护者测试、建立标签与发布软件包的检查�
 6. 在全新的 Symfony 项目安装确切版本，执行安全审计后才宣布发布。
 
 当前稳定 Symfony Bridge 的确切 Composer 版本限制是
-`sohophp/sofinder-symfony:1.0.2`；现有应用可以使用兼容 Meta Package
-`sohophp/sofinder:1.0.2`。已发布的标签不得移动。
+`sohophp/sofinder-symfony:1.1.0`；现有应用可以使用兼容 Meta Package
+`sohophp/sofinder:1.1.0`。已发布的标签不得移动。
 
 ## 同步发布 1.x 软件包
 
 1.x 发布必须从同一 Release Commit 拆分每个可发布子目录，并给本次参与发布的所有软件包
-建立完全相同的版本标签。内部依赖使用 `self.version`，因此按 Core、HTTP、Symfony、S3、
-兼容 Meta Package 的顺序发布并等待索引。PSR-15 和 Laravel 只有在
-`config/framework-support.json` 的 1.0 观察门禁 eligible 后，才能加入同步 Minor。
+建立完全相同的版本标签。内部依赖使用 `self.version`，因此先发布 Core、HTTP，再发布
+Symfony、S3、PSR-15、Laravel，并验证兼容 Meta Package。晋级政策已 eligible，1.1.0
+起七个包全部同步发布。
 
 建立标签前运行 `scripts/check-package-install.sh`；它会使用镜像副本而不是 Symlink 安装，
 并校验每个归档的 README、License、运行时 Autoload 边界及 Symfony 前端第三方声明。
 不得发布依靠 Monorepo 根目录残留文件才能运行的子目录。
 
-可用 `scripts/build-release-archives.sh 1.0.0-rc.1 WORKTREE <output>` 在本地预览
-五个归档。Tag Workflow 会从不可变 Git Object 重新构建，而非直接打包 Checkout；随后校验
+可用 `scripts/build-release-archives.sh 1.1.0-rc.1 WORKTREE <output>` 在本地预览
+七个归档。Tag Workflow 会从不可变 Git Object 重新构建，而非直接打包 Checkout；随后校验
 包身份与运行时内容，并发布排序后的统一 `SHA256SUMS`。`v1.0.0-rc.1` 等带连字符 Tag
 自动成为 Prerelease，`v1.0.0` 自动成为最新正式版。
 
 首次建立 1.x Tag 前，必须创建 `sohophp/sofinder-core`、`sohophp/sofinder-http`、
-`sohophp/sofinder-symfony` 和 `sohophp/sofinder-s3` Repository，将各 Composer 包
+`sohophp/sofinder-symfony`、`sohophp/sofinder-s3`、`sohophp/sofinder-psr15` 和
+`sohophp/sofinder-laravel` Repository，将各 Composer 包
 登记到 Packagist，并配置对这些 Repository 有写权限的 Actions Secret
 `SOFINDER_PACKAGE_PUSH_TOKEN`。发布任务会构建可复现的子目录历史 Bundle，校验包身份与
 Checksum，再以一次原子 Push 建立 `main` 和不可变版本 Tag，且不会 Force Push。Repository／
-Token 缺失或分支无法 Fast-forward 时，会在建立 GitHub Release 前停止。PSR-15 与 Laravel
-只在晋级门禁 eligible 后加入。
+Token 缺失或分支无法 Fast-forward 时，会在建立 GitHub Release 前停止。
 
 CI 还会使用隔离的“仅测试 eligible 策略”运行
 `scripts/check-gated-bridge-release-artifacts.sh`。它会预先生成 Laravel 与 PSR-15 归档及拆分仓库，
@@ -73,10 +73,12 @@ Core、HTTP、Symfony、兼容 Meta 与 S3 版本，校验仓库来源、运行�
 
 政策标记 eligible 后，`scripts/check-live-promotion-evidence.sh` 还会通过 GitHub API 解析
 两个已记录的 Actions URL。Symfony 矩阵必须是成功的 `main` CI，其 SHA 与已记录 Commit
-一致；观察任务也必须成功，且两者不得早于各自记录的观察期后日期。随后脚本会从该观察运行
+一致；观察任务也必须成功，且两者不得早于各自记录的晋级检查点。随后脚本会从该观察运行
 下载唯一且未过期的 `symfony-observation-<audit-run-id>` Artifact，并校验其中的
-`observation-evidence.json`：不可变的 1.0.0 Release、政策日期、完整 30 天覆盖、精确的优先级
-Label，以及观察期内零个已关闭或未关闭的 P0/P1 缺陷必须全部一致。Release Workflow 会在
+`observation-evidence.json`：不可变的 1.0.0 Release、政策日期、精确的优先级 Label，以及
+观察期内零个已关闭或未关闭的 P0/P1 缺陷必须全部一致。正常路径要求完整 30 天覆盖；明确的
+豁免路径则要求记录批准日期、批准者和充分原因，并保留 Artifact 中“观察未完成”的真实状态。
+Release Workflow 会在
 发布 Laravel 或 PSR-15 拆分仓库前执行此校验。Artifact 保留 90 天，因此必须在所选证据过期
 前完成晋级。
 

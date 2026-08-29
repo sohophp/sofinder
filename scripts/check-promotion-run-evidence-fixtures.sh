@@ -17,6 +17,7 @@ trap 'rm -rf -- "$fixture_dir"' EXIT
     $gate["releasedMainVersion"]="1.0.1";
     $gate["releaseDate"]=$today->modify("-31 days")->format("Y-m-d");
     $gate["openP0P1Defects"]=0;
+    $gate["observationWaiver"]["enabled"]=false;
     $gate["evidence"]=[
         "symfonyMatrixCommit" => str_repeat("a", 40),
         "symfonyMatrixWorkflowUrl" => "https://github.com/sohophp/sofinder/actions/runs/101",
@@ -93,6 +94,52 @@ if "$php_bin" "$repository_root/scripts/check-promotion-run-evidence.php" \
     "$fixture_dir/policy.json" "$fixture_dir/matrix.json" "$fixture_dir/audit.json" \
     "$fixture_dir/observation.json" >/dev/null 2>&1; then
     echo 'Live evidence unexpectedly accepted a closed P1 defect.' >&2
+    exit 1
+fi
+
+"$php_bin" -r '
+    $today=new DateTimeImmutable("today", new DateTimeZone("UTC"));
+    $policy=json_decode(file_get_contents($argv[1]), true, 32, JSON_THROW_ON_ERROR);
+    $gate=&$policy["promotionGate"];
+    $gate["releaseDate"]=$today->format("Y-m-d");
+    $gate["observationWaiver"]=[
+        "enabled" => true,
+        "approvedAt" => $today->format("Y-m-d"),
+        "approvedBy" => "fixture-maintainer",
+        "reason" => "The fixture explicitly approves immediate promotion after all required matrices pass.",
+    ];
+    $gate["evidence"]["observationStartedAt"]=$today->format("Y-m-d");
+    $gate["evidence"]["observationCompletedAt"]=null;
+    file_put_contents($argv[1], json_encode($policy, JSON_THROW_ON_ERROR));
+
+    $observation=json_decode(file_get_contents($argv[2]), true, 32, JSON_THROW_ON_ERROR);
+    $observation["release"]["publishedAt"]=$today->format(DATE_ATOM);
+    $observation["observation"]=[
+        "observedAt" => $today->modify("+1 minute")->format(DATE_ATOM),
+        "eligibleAt" => $today->modify("+30 days")->format(DATE_ATOM),
+        "coveredDays" => 0,
+        "periodComplete" => false,
+    ];
+    $observation["openP0P1Defects"]=0;
+    $observation["observedP0P1Defects"]=0;
+    $observation["issues"]=[];
+    file_put_contents($argv[2], json_encode($observation, JSON_THROW_ON_ERROR));
+' "$fixture_dir/policy.json" "$fixture_dir/observation.json"
+
+"$php_bin" "$repository_root/scripts/check-framework-release-gate.php" "$fixture_dir/policy.json" >/dev/null
+"$php_bin" "$repository_root/scripts/check-promotion-run-evidence.php" \
+    "$fixture_dir/policy.json" "$fixture_dir/matrix.json" "$fixture_dir/audit.json" \
+    "$fixture_dir/observation.json" >/dev/null
+
+"$php_bin" -r '
+    $d=json_decode(file_get_contents($argv[1]), true, 32, JSON_THROW_ON_ERROR);
+    $d["observation"]["observedAt"]=(new DateTimeImmutable("yesterday", new DateTimeZone("UTC")))->format(DATE_ATOM);
+    file_put_contents($argv[1], json_encode($d, JSON_THROW_ON_ERROR));
+' "$fixture_dir/observation.json"
+if "$php_bin" "$repository_root/scripts/check-promotion-run-evidence.php" \
+    "$fixture_dir/policy.json" "$fixture_dir/matrix.json" "$fixture_dir/audit.json" \
+    "$fixture_dir/observation.json" >/dev/null 2>&1; then
+    echo 'Live evidence unexpectedly accepted a waiver audit predating the stable release.' >&2
     exit 1
 fi
 

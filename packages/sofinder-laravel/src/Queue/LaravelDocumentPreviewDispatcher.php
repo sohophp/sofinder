@@ -5,21 +5,23 @@ declare(strict_types=1);
 namespace SohoPHP\SoFinder\Laravel\Queue;
 
 use Illuminate\Contracts\Bus\Dispatcher;
+use SohoPHP\SoFinder\Contract\DocumentPreviewDispatcherInterface;
 use SohoPHP\SoFinder\Preview\DocumentPreviewMessage;
 
 /** Translates the shared preview message into a self-handling Laravel queue job. */
-final readonly class LaravelDocumentPreviewDispatcher
+final readonly class LaravelDocumentPreviewDispatcher implements DocumentPreviewDispatcherInterface
 {
     public function __construct(private Dispatcher $bus)
     {
     }
 
-    public function dispatch(object $message): mixed
+    public function available(): bool
     {
-        if (!$message instanceof DocumentPreviewMessage) {
-            throw new \InvalidArgumentException('The Laravel preview dispatcher only accepts document preview messages.');
-        }
+        return true;
+    }
 
-        return $this->bus->dispatch(new LaravelDocumentPreviewJob($message->jobId));
+    public function dispatch(DocumentPreviewMessage $message): void
+    {
+        $this->bus->dispatch(new LaravelDocumentPreviewJob($message->jobId));
     }
 }

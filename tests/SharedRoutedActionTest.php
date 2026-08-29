@@ -8,6 +8,7 @@ use Nyholm\Psr7\Factory\Psr17Factory;
 use Nyholm\Psr7\ServerRequest;
 use PHPUnit\Framework\TestCase;
 use SohoPHP\SoFinder\Contract\ActorProviderInterface;
+use SohoPHP\SoFinder\Contract\DocumentPreviewDispatcherInterface;
 use SohoPHP\SoFinder\Contract\AuthorizationInterface;
 use SohoPHP\SoFinder\Contract\CsrfTokenProviderInterface;
 use SohoPHP\SoFinder\Contract\EndpointUrlGeneratorInterface;
@@ -64,7 +65,10 @@ final class SharedRoutedActionTest extends TestCase
         [$files, $authorization] = $this->files(new ResourceType('Files', $directory, '/files', ['docx']));
         $previews = new DocumentPreviewManager($files, $cache, officeEnabled: true, officeBinary: __DIR__ . '/fixtures/fake-libreoffice');
         $actor = new class implements ActorProviderInterface { public function actorId(): string { return 'actor'; } };
-        $bus = new class { public function dispatch(object $message): object { return $message; } };
+        $bus = new class implements DocumentPreviewDispatcherInterface {
+            public function available(): bool { return true; }
+            public function dispatch(\SohoPHP\SoFinder\Preview\DocumentPreviewMessage $message): void {}
+        };
         $jobs = new DocumentPreviewJobManager($previews, $actor, $cache . '/jobs.json', 'messenger', 60, 60, $bus, clock: static fn (): int => 1000);
         $urls = $this->urls();
         $service = new DocumentPreviewJobService($jobs, $urls, new FeaturePolicy());

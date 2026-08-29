@@ -5,7 +5,7 @@ description: 多框架 Composer 拆包邊界及分階段發布狀態。
 
 # Package 架構
 
-SoFinder 正從 1.0 前的 Symfony Bundle 遷移為同步版本的多個 Composer Package。
+SoFinder 從同一權威 Monorepo 同步發布多個 Composer Package。
 只有當 Package 所需 Source 全部位於可發布子目錄，且獨立安裝測試通過後，才標示為
 可安裝；不會以引用 Repository 外路徑的 `composer.json` 冒充拆包完成。
 
@@ -44,7 +44,7 @@ Range/ETag 串流下載、圖片縮圖與變體、文件預覽、Prometheus Metr
 
 `sohophp/sofinder` 現已轉為依賴 `sohophp/sofinder-symfony` 的相容 Meta Package，
 在不保留根目錄重複原始碼的情況下維持原套件名稱與 `SohoPHP\\SoFinder` namespace。
-Laravel 與 PSR-15 正式發佈仍受 1.0 觀察期門禁約束。
+Laravel 與 PSR-15 已通過正式發布門禁；兩者仍必須在每次同步版本中持續通過完整矩陣。
 每個 Split Repository 都攜帶 Package 內 PHP／Composer Wrapper 及鎖定 Action 版本的
 CI，分別驗證 PHP 8.2 最低相依與 PHP 8.5 穩定相依；這些開發檔案會從使用者
 Distribution Archive 排除。

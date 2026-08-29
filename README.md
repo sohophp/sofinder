@@ -10,10 +10,10 @@ The project is independently designed and does not contain code, artwork,
 translations, styles, or other assets from proprietary file managers.
 Runtime dependency notices are recorded in `THIRD_PARTY_NOTICES.md`.
 
-The complete supported host integration is currently Symfony. A tested
-framework-independent registry and `FileManager` bootstrap seam is available
-for headless use; Laravel and a shared Slim/Mezzio PSR-7 bridge follow only
-after the Symfony/PHP 8.2–8.5 baseline is stable. See
+Supported full-stack integrations include Symfony 6.4/7.4, Laravel 12/13 and
+the shared PSR-15 bridge for Slim 4, Mezzio 3 and framework-free PHP. A tested
+framework-independent registry and `FileManager` bootstrap seam remains
+available for headless use. See
 [`docs/framework-support.md`](docs/framework-support.md) for exact support
 levels. Any PHP 7.2 port will use a separate package and release line, never
 the current branch or 1.x dependency graph.
@@ -31,6 +31,9 @@ composer require sohophp/sofinder-symfony:^1.0
 Existing applications may keep using the compatible
 `sohophp/sofinder:^1.0` Meta Package. Both package names expose the same
 `SohoPHP\SoFinder` namespace.
+
+Laravel applications install `sohophp/sofinder-laravel:^1.1`. Slim, Mezzio and
+framework-free PSR-15 applications install `sohophp/sofinder-psr15:^1.1`.
 
 Register `SohoPHP\SoFinder\SoFinderBundle`, import
 `@SoFinderBundle/Resources/config/routes.yaml`, and configure one or more

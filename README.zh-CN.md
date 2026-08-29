@@ -6,9 +6,9 @@ SoFinder 是原创、采 MIT 授权的网页文件管理器，支持 PHP 8.2 至
 
 本项目采独立设计，不包含专有文件管理器的程序码、美术、翻译、样式或其他资产。Runtime 相依软件包声明记录于 `THIRD_PARTY_NOTICES.md`。
 
-当前完整支持的宿主集成是 Symfony；同时提供已测试的、不依赖框架 Request／Container
-的 Registry 与 `FileManager` headless 入口。Laravel 及共用的 Slim／Mezzio PSR-7
-桥接会在 Symfony／PHP 8.2～8.5 基线稳定后推进。准确支持级别见
+完整支持的宿主包括 Symfony 6.4／7.4、Laravel 12／13，以及供 Slim 4、Mezzio 3 和
+纯 PHP 使用的共享 PSR-15 Bridge；同时保留已测试且不依赖框架 Request／Container
+的 Registry 与 `FileManager` headless 入口。准确支持级别见
 [`docs/zh-CN/framework-support.md`](docs/zh-CN/framework-support.md)。PHP 7.2
 移植只能使用独立包和独立发布线，不进入当前分支或 1.x 依赖图。
 
@@ -24,6 +24,9 @@ composer require sohophp/sofinder-symfony:^1.0
 
 现有应用可以继续使用兼容 Meta Package `sohophp/sofinder:^1.0`；两个包名都公开相同的
 `SohoPHP\SoFinder` namespace。
+
+Laravel 应用安装 `sohophp/sofinder-laravel:^1.1`；Slim、Mezzio 与纯 PHP PSR-15
+应用安装 `sohophp/sofinder-psr15:^1.1`。
 
 完整文件站位于 <https://sofinder.sohophp.app/zh-CN/>。注册 `SohoPHP\SoFinder\SoFinderBundle`，导入 `@SoFinderBundle/Resources/config/routes.yaml`，并在 `so_finder.resources` 配置一个或多个资源类型。完整示例请见[简体中文 Symfony 整合](https://sofinder.sohophp.app/zh-CN/symfony)。
 

@@ -336,7 +336,7 @@ final class SoFinderServiceProvider extends ServiceProvider
         $this->app->singleton(DocumentPreviewJobManager::class, static fn ($app): DocumentPreviewJobManager => new DocumentPreviewJobManager(
             $app->make(DocumentPreviewManager::class), $app->make(ActorProviderInterface::class), rtrim((string) $app->make(LaravelConfiguration::class)->get('cache_dir'), '/') . '/document-preview-jobs.json',
             (string) $app->make(LaravelConfiguration::class)->get('document_preview.mode'), (int) $app->make(LaravelConfiguration::class)->get('document_preview.job_ttl_seconds'),
-            (int) $app->make(LaravelConfiguration::class)->get('document_preview.cache_ttl_seconds'), bus: $app->make(LaravelDocumentPreviewDispatcher::class),
+            (int) $app->make(LaravelConfiguration::class)->get('document_preview.cache_ttl_seconds'), dispatcher: $app->make(LaravelDocumentPreviewDispatcher::class),
             state: $app->make(AtomicStateStoreInterface::class), metrics: $app->make(MetricsStoreInterface::class),
         ));
         $this->app->singleton(SignedUrlManager::class, static fn ($app): SignedUrlManager => new SignedUrlManager(

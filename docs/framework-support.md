@@ -13,20 +13,19 @@ and 7.4 LTS.
 | Host | Current level | Release gate |
 | --- | --- | --- |
 | Symfony 6.4/7.4 | Full, stable target | Complete PHP 8.2–8.5 CI matrix |
-| Plain PHP / any container | Experimental complete browser/API runtime | Host supplies explicit authorization, CSRF, actor, events and PSR factories |
-| Laravel 12/13 | Experimental full-stack bridge: browser, 51 shared handlers, Artisan/Queue, Auth/Gate and session CSRF | Full black-box parity and the Symfony observation gate |
-| Slim / Mezzio | Experimental PSR-15 bridge with all 52 shared handlers and executable hosts | Full black-box parity and the Symfony 1.0 observation gate |
+| Plain PHP / any container | Full browser/API runtime | Host supplies explicit authorization, CSRF, actor, events and PSR factories |
+| Laravel 12/13 | Full-stack supported: browser, 51 shared handlers, Artisan/Queue, Auth/Gate and session CSRF | Complete compatibility and black-box parity matrices |
+| Slim / Mezzio | Full-stack supported through PSR-15 with all 52 shared handlers | Complete compatibility and black-box parity matrices |
 | Other frameworks | Headless core only | Implement the same public contracts; do not subclass internal controllers |
 
-The experimental PSR-15 package supplies middleware, a `RouteRegistrar` and a
+The supported PSR-15 package supplies middleware, a `RouteRegistrar` and a
 local runtime factory for the complete 52-route browser/API surface. Real Slim
 4, Mezzio 3 and plain PHP front controllers serve the shared `/browser` shell
 and frontend assets, and execute all 51 non-presentation routes plus liveness,
 capabilities, health, denial and mutation paths on PHP 8.2 and 8.5. Chromium
 boots the React UI against each real host without runtime errors. The shared API
 inventory compares status/error contracts and security headers against Symfony.
-Only the Symfony row is supported today; the PSR row does not become supported
-until the complete black-box suite and release gate pass.
+The complete black-box suite runs before every synchronized release.
 
 The gated Laravel package now boots through package discovery in real Laravel
 12 and 13 applications, registers the canonical 51 non-browser routes, and
@@ -51,15 +50,17 @@ ETag revalidation, range download, rename, copy, move, recycle-bin restore and
 permanent deletion on all five hosts. It additionally verifies Symfony's native
 unauthenticated 401 challenge and compares the shared 403 `access_denied`
 contract for unauthenticated and authenticated-but-unauthorized actors across
-Laravel, Slim, Mezzio and plain PHP. The package remains experimental until the
-observation gate is complete.
+Laravel, Slim, Mezzio and plain PHP.
 
 The gate is recorded in `config/framework-support.json` and validated in CI.
-It cannot become eligible until the recorded main release is at least `1.0.0`,
-its UTC release date is at least 30 days old, and the open P0/P1 defect count is
-zero. Stable patch releases satisfy that version floor; the currently recorded
-stable line is `1.0.2`, while the observation clock remains anchored to the
-immutable `1.0.0` release.
+The default policy requires the recorded main release to be at least `1.0.0`,
+30 stable days and zero open or closed P0/P1 defects. The maintainer explicitly
+approved an immediate-promotion waiver after the complete compatibility,
+security, split-publication and clean-consumer matrices passed. The waiver date,
+approver and reason are recorded in the policy rather than presenting the
+observation period as complete. Stable patch releases satisfy the version
+floor; the recorded stable line is `1.0.2`, anchored to the immutable `1.0.0`
+release.
 Eligibility also requires the final Symfony matrix commit and workflow URL,
 observation start/completion dates, and a secure priority-defect audit link.
 After `1.0.0` exists, the scheduled `Symfony 1.0 observation` workflow records
@@ -76,6 +77,9 @@ $registrar->registerSlim($slimApp);
 The dispatcher must receive the shared handlers required by the enabled
 features. Missing handlers fail with `501 endpoint_not_implemented`; missing
 authorization or CSRF providers must fail application bootstrap.
+Framework-neutral hosts that select asynchronous document previews must supply
+`DocumentPreviewDispatcherInterface`; messenger mode fails bootstrap when that
+dispatcher is absent or unavailable.
 
 ## Framework-independent bootstrap
 
@@ -119,8 +123,8 @@ bridges and prevents configuration/security behavior from drifting by host.
    boundaries and move full-stack-only code behind bridge packages.
 3. Add Laravel as the first additional full bridge, with an executable example
    and the shared HTTP contract suite.
-4. Promote the shared PSR-7/PSR-15 bridge from experimental after executable
-   Slim and Mezzio examples pass the same contract suite.
+4. Keep the shared PSR-7/PSR-15 bridge supported only while executable Slim and
+   Mezzio examples pass the same contract suite.
 5. Accept other framework bridges only when they run the same HTTP, security
    and storage contract tests.
 

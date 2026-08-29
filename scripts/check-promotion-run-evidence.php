@@ -17,6 +17,8 @@ if (($gate['eligible'] ?? false) !== true) {
 }
 
 $evidence = is_array($gate['evidence'] ?? null) ? $gate['evidence'] : [];
+$waiver = is_array($gate['observationWaiver'] ?? null) ? $gate['observationWaiver'] : [];
+$waiverEnabled = ($waiver['enabled'] ?? false) === true;
 $matrixRun = json_decode((string) file_get_contents($matrixRunFile), true, 32, JSON_THROW_ON_ERROR);
 $auditRun = json_decode((string) file_get_contents($auditRunFile), true, 32, JSON_THROW_ON_ERROR);
 $observation = json_decode((string) file_get_contents($observationFile), true, 32, JSON_THROW_ON_ERROR);
@@ -100,7 +102,9 @@ $validateRun = static function (
     }
 };
 
-$completedAt = $date($evidence['observationCompletedAt'] ?? null, 'observationCompletedAt');
+$completedAt = $waiverEnabled
+    ? $date($waiver['approvedAt'] ?? null, 'observationWaiver.approvedAt')
+    : $date($evidence['observationCompletedAt'] ?? null, 'observationCompletedAt');
 $matrixVerifiedAt = $date($evidence['symfonyMatrixVerifiedAt'] ?? null, 'symfonyMatrixVerifiedAt');
 $matrixStartedAt = $validateRun(
     $matrixRun,
@@ -155,32 +159,43 @@ if (!is_array($observation)) {
         || $publishedAt->setTimezone(new DateTimeZone('UTC'))->format('Y-m-d') !== ($gate['releaseDate'] ?? null)) {
         $errors[] = 'Observation release date does not match the promotion policy.';
     }
-    if (!is_int($minimumStableDays) || $minimumStableDays < 1) {
-        $errors[] = 'Promotion policy minimumStableDays must be a positive integer.';
+    if (!is_int($minimumStableDays) || $minimumStableDays < 30) {
+        $errors[] = 'Promotion policy minimumStableDays must be at least 30.';
     }
-    if (($period['periodComplete'] ?? null) !== true) {
-        $errors[] = 'Observation period must be complete.';
-    }
-    if (!is_int($period['coveredDays'] ?? null)
-        || !is_int($minimumStableDays)
-        || $period['coveredDays'] < $minimumStableDays) {
-        $errors[] = 'Observation evidence does not cover the minimum stable period.';
-    }
-    if ($publishedAt instanceof DateTimeImmutable
-        && $eligibleAt instanceof DateTimeImmutable
-        && is_int($minimumStableDays)
-        && $eligibleAt != $publishedAt->modify(sprintf('+%d days', $minimumStableDays))) {
-        $errors[] = 'Observation eligibleAt does not match the required stable period.';
-    }
-    if ($observedAt instanceof DateTimeImmutable
-        && $eligibleAt instanceof DateTimeImmutable
-        && $observedAt < $eligibleAt) {
-        $errors[] = 'Observation timestamp precedes its eligibility timestamp.';
-    }
-    if ($completedAt instanceof DateTimeImmutable
-        && $eligibleAt instanceof DateTimeImmutable
-        && $eligibleAt->setTimezone(new DateTimeZone('UTC'))->format('Y-m-d') !== $completedAt->format('Y-m-d')) {
-        $errors[] = 'Observation eligibility date does not match observationCompletedAt.';
+    if ($waiverEnabled) {
+        if (!is_int($period['coveredDays'] ?? null) || $period['coveredDays'] < 0) {
+            $errors[] = 'Waived observation evidence requires a non-negative coveredDays value.';
+        }
+        if ($publishedAt instanceof DateTimeImmutable
+            && $observedAt instanceof DateTimeImmutable
+            && $observedAt < $publishedAt) {
+            $errors[] = 'Waived observation evidence predates the stable release.';
+        }
+    } else {
+        if (($period['periodComplete'] ?? null) !== true) {
+            $errors[] = 'Observation period must be complete.';
+        }
+        if (!is_int($period['coveredDays'] ?? null)
+            || !is_int($minimumStableDays)
+            || $period['coveredDays'] < $minimumStableDays) {
+            $errors[] = 'Observation evidence does not cover the minimum stable period.';
+        }
+        if ($publishedAt instanceof DateTimeImmutable
+            && $eligibleAt instanceof DateTimeImmutable
+            && is_int($minimumStableDays)
+            && $eligibleAt != $publishedAt->modify(sprintf('+%d days', $minimumStableDays))) {
+            $errors[] = 'Observation eligibleAt does not match the required stable period.';
+        }
+        if ($observedAt instanceof DateTimeImmutable
+            && $eligibleAt instanceof DateTimeImmutable
+            && $observedAt < $eligibleAt) {
+            $errors[] = 'Observation timestamp precedes its eligibility timestamp.';
+        }
+        if ($completedAt instanceof DateTimeImmutable
+            && $eligibleAt instanceof DateTimeImmutable
+            && $eligibleAt->setTimezone(new DateTimeZone('UTC'))->format('Y-m-d') !== $completedAt->format('Y-m-d')) {
+            $errors[] = 'Observation eligibility date does not match observationCompletedAt.';
+        }
     }
     if ($auditStartedAt instanceof DateTimeImmutable
         && $observedAt instanceof DateTimeImmutable

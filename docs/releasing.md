@@ -25,43 +25,41 @@ for an intentional compatibility run:
    audit before announcing the release.
 
 The current stable Symfony Bridge's exact Composer constraint is
-`sohophp/sofinder-symfony:1.0.2`; existing applications may use the compatible
-`sohophp/sofinder:1.0.2` Meta Package. Published tags must never be moved.
+`sohophp/sofinder-symfony:1.1.0`; existing applications may use the compatible
+`sohophp/sofinder:1.1.0` Meta Package. Published tags must never be moved.
 
 ## Synchronized 1.x packages
 
 For 1.x, split each publishable subtree from the exact release commit and tag
 every package participating in that release with the identical version. Internal
-dependencies use `self.version`, so publish/index in dependency order: Core,
-HTTP, Symfony, S3, then the compatibility Meta Package. PSR-15 and Laravel join
-the synchronized minor only after `config/framework-support.json` reports that
-the 1.0 observation gate is eligible.
+dependencies use `self.version`, so publish/index Core and HTTP before their
+Symfony, S3, PSR-15 and Laravel consumers, then verify the compatibility Meta
+Package. The eligible promotion policy includes all seven packages from 1.1.0.
 
 Before tagging, run `scripts/check-package-install.sh`; it installs mirrored
 copies rather than symlinks and checks every archive's README, license, runtime
 autoload boundary and Symfony frontend notices. Never publish a subtree that
 only works because files remain available in the monorepo root.
 
-`scripts/build-release-archives.sh 1.0.0-rc.1 WORKTREE <output>` previews the
-five archives locally. On a tag, the release workflow rebuilds them from the
+`scripts/build-release-archives.sh 1.1.0-rc.1 WORKTREE <output>` previews the
+seven archives locally. On a tag, the release workflow rebuilds them from the
 immutable Git object rather than the checkout, verifies their package identity
 and runtime contents, then publishes one sorted `SHA256SUMS` file. A hyphenated
 tag such as `v1.0.0-rc.1` becomes a prerelease; `v1.0.0` becomes the latest
 stable release.
 
 Before the first 1.x tag, create the `sohophp/sofinder-core`,
-`sohophp/sofinder-http`, `sohophp/sofinder-symfony` and
-`sohophp/sofinder-s3` repositories, register each Composer package with
+`sohophp/sofinder-http`, `sohophp/sofinder-symfony`, `sohophp/sofinder-s3`,
+`sohophp/sofinder-psr15` and `sohophp/sofinder-laravel` repositories, register each Composer package with
 Packagist, and configure the `SOFINDER_PACKAGE_PUSH_TOKEN` Actions secret with
 write access to those repositories. The release job builds reproducible
 subdirectory-history bundles, verifies their package identity and checksum,
 then atomically pushes `main` and the immutable version tag without force. A
 missing repository/token or a non-fast-forward branch stops the release before
-the GitHub Release is created. PSR-15 and Laravel repositories are included only
-after the promotion gate is eligible.
+the GitHub Release is created.
 
 CI also runs `scripts/check-gated-bridge-release-artifacts.sh` with an isolated
-test-only eligible policy. It builds the future Laravel and PSR-15 archives and
+test policy. It builds the Laravel and PSR-15 archives and
 split repositories, publishes all six package repositories to local bare
 remotes, and installs the synchronized RC into a clean consumer. The policy
 override is rejected unless explicit test mode is enabled and is never used by
@@ -96,11 +94,14 @@ Once the policy is marked eligible, `scripts/check-live-promotion-evidence.sh`
 also resolves both recorded Actions URLs through the GitHub API. It requires a
 successful `main` CI run whose SHA matches the recorded Symfony matrix commit
 and a successful observation run, both started no earlier than their recorded
-post-observation dates. It then downloads the single unexpired
+promotion checkpoint dates. It then downloads the single unexpired
 `symfony-observation-<audit-run-id>` artifact from that exact audit run and
 validates `observation-evidence.json`: the immutable 1.0.0 release, policy
-dates, complete 30-day coverage, exact priority labels, and zero open or closed
-P0/P1 defects must all agree. The release workflow executes this check before
+dates, exact priority labels, and zero open or closed P0/P1 defects must all
+agree. The normal path requires complete 30-day coverage. An explicit waiver
+path instead requires the recorded approval date, approver and substantive
+reason, while preserving the incomplete observation state in the artifact.
+The release workflow executes this check before
 it can publish Laravel or PSR-15 split repositories. Because artifacts are
 retained for 90 days, promotion evidence must be finalized while the selected
 artifact remains available.

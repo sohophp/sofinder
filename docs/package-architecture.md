@@ -5,8 +5,8 @@ description: Enforced package boundaries and the staged Composer split for frame
 
 # Package architecture
 
-SoFinder is migrating from the pre-1.0 Symfony bundle to synchronized Composer
-packages. The migration is deliberately staged: a package is not advertised as
+SoFinder publishes synchronized Composer packages from one authoritative
+monorepo. A package is not advertised as
 installable until all files it needs live below its publishable subtree and its
 isolated install test passes.
 
@@ -15,8 +15,8 @@ isolated install test passes.
 | `sohophp/sofinder-core` | Domain, storage, values and host contracts | Physical subtree and isolated install complete |
 | `sohophp/sofinder-http` | Endpoint catalog, PSR dispatcher and shared handlers | All 52 browser/API endpoints have shared actions |
 | `sohophp/sofinder-symfony` | Bundle and HttpFoundation/Console/Messenger adapters | Physical subtree, release assets and isolated install complete |
-| `sohophp/sofinder-laravel` | Laravel 12/13 provider, auth, CSRF, routes and commands | All shared handlers, maintenance commands and security audit pass real-app tests; release remains gated |
-| `sohophp/sofinder-psr15` | Slim, Mezzio and plain PSR-15 middleware | Isolated install, real-host smoke and route/action coverage complete; full endpoint parity remains gated |
+| `sohophp/sofinder-laravel` | Laravel 12/13 provider, auth, CSRF, routes and commands | Supported full-stack bridge with complete real-app and parity matrices |
+| `sohophp/sofinder-psr15` | Slim, Mezzio and plain PSR-15 middleware | Supported bridge with isolated install, real-host browser smoke and full endpoint parity |
 
 The source-level `FrameworkBoundaryTest` rejects Symfony, Illuminate, Slim or
 Mezzio imports from the physical Core package. Symfony now builds its 52-route

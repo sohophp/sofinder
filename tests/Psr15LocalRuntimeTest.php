@@ -14,10 +14,12 @@ use Psr\Http\Server\RequestHandlerInterface;
 use SohoPHP\SoFinder\Contract\ActorProviderInterface;
 use SohoPHP\SoFinder\Contract\AuthorizationInterface;
 use SohoPHP\SoFinder\Contract\CsrfTokenProviderInterface;
+use SohoPHP\SoFinder\Contract\DocumentPreviewDispatcherInterface;
 use SohoPHP\SoFinder\Contract\RoleAuthorizationInterface;
 use SohoPHP\SoFinder\Http\EndpointCatalog;
 use SohoPHP\SoFinder\Psr15\HostServices;
 use SohoPHP\SoFinder\Psr15\LocalApplicationFactory;
+use SohoPHP\SoFinder\Preview\DocumentPreviewMessage;
 use SohoPHP\SoFinder\Value\RequestContext;
 use SohoPHP\SoFinder\Value\ResourceType;
 
@@ -164,6 +166,61 @@ final class Psr15LocalRuntimeTest extends TestCase
 
         self::assertSame(403, $response->getStatusCode(), (string) $response->getBody());
         self::assertSame('access_denied', $payload['error']['code']);
+    }
+
+    public function testDocumentPreviewMessengerModeRequiresAndUsesAnExplicitDispatcher(): void
+    {
+        $psr17 = new Psr17Factory();
+        $configuration = ['document_preview' => [
+            'mode' => 'messenger',
+            'office' => true,
+            'office_binary' => __DIR__ . '/fixtures/fake-libreoffice',
+        ]];
+        $missing = new LocalApplicationFactory(
+            $psr17,
+            $psr17,
+            $this->services(),
+            $configuration,
+            $this->directory . '/state-missing',
+            $this->directory . '/files',
+        );
+
+        try {
+            $missing->actions();
+            self::fail('PSR-15 messenger preview mode started without a dispatcher.');
+        } catch (\InvalidArgumentException $exception) {
+            self::assertStringContainsString('document preview dispatcher', $exception->getMessage());
+        }
+
+        file_put_contents($this->directory . '/files/report.docx', 'office bytes');
+        $dispatcher = new class implements DocumentPreviewDispatcherInterface {
+            /** @var list<DocumentPreviewMessage> */
+            public array $messages = [];
+            public function available(): bool { return true; }
+            public function dispatch(DocumentPreviewMessage $message): void { $this->messages[] = $message; }
+        };
+        $application = (new LocalApplicationFactory(
+            $psr17,
+            $psr17,
+            $this->services(),
+            $configuration,
+            $this->directory . '/state-dispatched',
+            $this->directory . '/files',
+            documentPreviewDispatcher: $dispatcher,
+        ))->create();
+        $fallback = new class($psr17) implements RequestHandlerInterface {
+            public function __construct(private Psr17Factory $responses) {}
+            public function handle(ServerRequestInterface $request): ResponseInterface { return $this->responses->createResponse(404); }
+        };
+        $body = json_encode(['resource' => 'Files', 'path' => 'report.docx'], JSON_THROW_ON_ERROR);
+        $request = (new ServerRequest('POST', '/sofinder/api/preview/document/jobs', ['Content-Type' => 'application/json', 'X-CSRF-TOKEN' => 'csrf'], $body))
+            ->withParsedBody([]);
+
+        $response = $application->middleware()->process($request, $fallback);
+
+        self::assertSame(202, $response->getStatusCode(), (string) $response->getBody());
+        self::assertCount(1, $dispatcher->messages);
+        self::assertNotSame('', $dispatcher->messages[0]->jobId);
     }
 
     private function services(bool $withRoles = true): HostServices

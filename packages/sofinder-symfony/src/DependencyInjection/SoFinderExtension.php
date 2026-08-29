@@ -184,6 +184,7 @@ use SohoPHP\SoFinder\Preview\DocumentPreviewManager;
 use SohoPHP\SoFinder\Preview\DocumentPreviewPlugin;
 use SohoPHP\SoFinder\Preview\DocumentPreviewJobManager;
 use SohoPHP\SoFinder\Preview\DocumentPreviewMessageHandler;
+use SohoPHP\SoFinder\Preview\MessengerDocumentPreviewDispatcher;
 use SohoPHP\SoFinder\Security\PathGuard;
 use SohoPHP\SoFinder\Security\DefaultFileInspector;
 use SohoPHP\SoFinder\Security\UploadPipeline;
@@ -607,6 +608,8 @@ final class SoFinderExtension extends Extension
                 $documentPreviewConfig['max_bytes'],
                 new Reference(MetricsStoreInterface::class),
             ]));
+        $container->setDefinition(MessengerDocumentPreviewDispatcher::class, (new Definition(MessengerDocumentPreviewDispatcher::class))
+            ->setArgument('$bus', new Reference('messenger.default_bus', ContainerInterface::NULL_ON_INVALID_REFERENCE)));
         $container->setDefinition(DocumentPreviewJobManager::class, (new Definition(DocumentPreviewJobManager::class))
             ->setArguments([
                 new Reference(DocumentPreviewManager::class),
@@ -615,7 +618,7 @@ final class SoFinderExtension extends Extension
                 $documentPreviewConfig['mode'],
                 $documentPreviewConfig['job_ttl_seconds'],
                 $documentPreviewConfig['cache_ttl_seconds'],
-                new Reference('messenger.default_bus', ContainerInterface::NULL_ON_INVALID_REFERENCE),
+                new Reference(MessengerDocumentPreviewDispatcher::class),
                 $sharedState,
                 new Reference(MetricsStoreInterface::class),
             ]));

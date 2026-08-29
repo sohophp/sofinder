@@ -5,7 +5,7 @@ description: 多框架 Composer 拆包边界及分阶段发布状态。
 
 # 包架构
 
-SoFinder 正从 1.0 前的 Symfony Bundle 迁移为同步版本的多个 Composer 包。只有当
+SoFinder 从同一权威 Monorepo 同步发布多个 Composer 包。只有当
 一个包所需源码全部位于可发布子目录、并且独立安装测试通过后，才会把它标记为可安装；
 不会用引用仓库外路径的占位 `composer.json` 冒充拆包完成。
 
@@ -14,8 +14,8 @@ SoFinder 正从 1.0 前的 Symfony Bundle 迁移为同步版本的多个 Compose
 | `sofinder-core` | Domain、Storage、Value 和宿主 Contract | 已完成物理拆分和独立安装验证 |
 | `sofinder-http` | Endpoint Catalog、PSR Dispatcher 和共享 Handler | 全部 52 个浏览器/API 端点均已有共享 Action |
 | `sofinder-symfony` | Bundle、HttpFoundation、Console、Messenger | 已完成物理拆分、发布资源和独立安装验证 |
-| `sofinder-laravel` | Laravel 12/13 Provider、授权、CSRF、路由、命令 | 全部共享 Handler、维护命令和安全审计已通过真实应用测试；正式发布仍受门禁约束 |
-| `sofinder-psr15` | Slim、Mezzio 和纯 PHP Middleware | 已完成独立安装、真实宿主冒烟及路由/Action 覆盖；完整端点一致性仍受门禁约束 |
+| `sofinder-laravel` | Laravel 12/13 Provider、授权、CSRF、路由、命令 | 正式支持的全栈 Bridge，完整真实应用与一致性矩阵持续通过 |
+| `sofinder-psr15` | Slim、Mezzio 和纯 PHP Middleware | 正式支持，独立安装、真实宿主浏览器冒烟与完整端点一致性持续通过 |
 
 `FrameworkBoundaryTest` 会禁止物理 Core 包引入 Symfony、Illuminate、Slim 或 Mezzio；
 Symfony 现在直接从框架无关的中央清单生成 52 条路由，兼容 YAML 文件只负责导入该集合，

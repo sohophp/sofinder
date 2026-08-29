@@ -7,6 +7,16 @@ description: SoFinder 每個公開版本的重要變更。
 
 ## 尚未發佈
 
+## 1.1.0 - 2026-08-30
+
+- 將 Laravel 12／13，以及供 Slim 4、Mezzio 3 與純 PHP 使用的共用 PSR-15 Bridge
+  晉級為正式支援；如實記錄維護者批准的觀察期豁免，同時保留成功的線上 CI、零 P0/P1
+  稽核、拆分發布及乾淨 Consumer 證據。
+- 建立公開的 `sohophp/sofinder-laravel` 與 `sohophp/sofinder-psr15` 拆分 Repository，
+  用於同步 1.1 版本線。
+- 新增框架無關的文件預覽 Dispatcher Contract。Symfony、Laravel 與 PSR-15 現在共用
+  同一明確非同步預覽邊界；PSR Host 選擇 Messenger 模式但未提供 Dispatcher 時會啟動失敗。
+
 ## 1.0.2 - 2026-08-30
 
 - 將框架無關的文件預覽 Message 轉換為可自行處理的 Laravel Queue Job，使

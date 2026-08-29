@@ -66,10 +66,10 @@ guide](/getting-started) provides a working minimal configuration; the
 [Symfony guide](/symfony) covers authorization, delivery modes, UI options and
 host-generated URLs.
 
-::: tip Stable Symfony line
-Symfony 6.4/7.4 on PHP 8.2–8.5 is the stable full-stack integration. Laravel
-and PSR-15 hosts remain gated until the recorded observation period completes;
-see the [framework support policy](/framework-support).
+::: tip Supported framework lines
+Symfony 6.4/7.4, Laravel 12/13 and the shared PSR-15 hosts are supported
+full-stack integrations on their documented PHP 8 matrix. See the
+[framework support policy](/framework-support).
 :::
 
 ## Choose a storage model

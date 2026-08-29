@@ -1,6 +1,6 @@
 {
     "name": "sohophp/sofinder-psr15",
-    "description": "Experimental PSR-15 bridge for SoFinder",
+    "description": "PSR-15 bridge for SoFinder, supporting Slim 4, Mezzio 3 and framework-free PHP",
     "type": "library",
     "license": "MIT",
     "homepage": "https://sofinder.sohophp.app/",

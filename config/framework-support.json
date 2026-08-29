@@ -7,12 +7,17 @@
     },
     "headless-core": {
       "php": ["8.2", "8.3", "8.4", "8.5"]
-    }
-  },
-  "experimental": {
+    },
+    "laravel": {
+      "versions": ["12", "13"],
+      "phpByVersion": {
+        "12": ["8.2", "8.3", "8.4", "8.5"],
+        "13": ["8.3", "8.4", "8.5"]
+      }
+    },
     "psr15": {
       "hosts": ["slim-4", "mezzio-3", "plain-php"],
-      "reason": "Executable Slim, Mezzio and plain PHP hosts serve the complete 52-route browser/API runtime and pass Chromium UI smoke, the 51 non-presentation route inventory, full lifecycle snapshots and authentication/authorization boundary contracts on PHP 8.2 and 8.5; only the Symfony observation gate remains pending."
+      "php": ["8.2", "8.3", "8.4", "8.5"]
     }
   },
   "promotionGate": {
@@ -20,30 +25,24 @@
     "requiresMainVersion": "1.0.0",
     "minimumStableDays": 30,
     "requiresZeroOpenPriorityDefects": true,
+    "observationWaiver": {
+      "enabled": true,
+      "approvedAt": "2026-08-29",
+      "approvedBy": "project-maintainer",
+      "reason": "The maintainer approved immediate bridge promotion after the complete compatibility, security, split-publication and clean-consumer matrices passed."
+    },
     "releasedMainVersion": "1.0.2",
     "releaseDate": "2026-08-29",
     "openP0P1Defects": 0,
     "evidence": {
-      "symfonyMatrixCommit": "4c1a4587634f758b3ce96471898fddcf4b15d26c",
-      "symfonyMatrixWorkflowUrl": "https://github.com/sohophp/sofinder/actions/runs/33241249866",
+      "symfonyMatrixCommit": "56f8b596932236c9c2a1767e96e1c5d25854a4cf",
+      "symfonyMatrixWorkflowUrl": "https://github.com/sohophp/sofinder/actions/runs/33263241130",
       "symfonyMatrixVerifiedAt": "2026-08-29",
       "observationStartedAt": "2026-08-29",
       "observationCompletedAt": null,
-      "priorityDefectAuditUrl": "https://github.com/sohophp/sofinder/actions/runs/33241684671"
+      "priorityDefectAuditUrl": "https://github.com/sohophp/sofinder/actions/runs/33263613569"
     },
-    "eligible": false
-  },
-  "gated": {
-    "laravel": {
-      "versions": ["12", "13"],
-      "phpByVersion": {
-        "12": ["8.2", "8.3", "8.4", "8.5"],
-        "13": ["8.3", "8.4", "8.5"]
-      },
-      "minimumStableDays": 30,
-      "requiresMainVersion": "1.0.0",
-      "requiresZeroOpenPriorityDefects": true
-    }
+    "eligible": true
   },
   "legacy": {
     "package": "sohophp/sofinder-legacy",

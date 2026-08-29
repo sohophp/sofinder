@@ -63,9 +63,9 @@ composer require sohophp/sofinder-symfony:^1.0
 都公開相同的 namespace。接著註冊 Bundle、匯入路由並建立至少一個儲存資源。請從
 [安裝與快速開始](/zh-TW/getting-started)開始，完整選項可參考[設定參考](/zh-TW/configuration)。
 
-::: tip Symfony 穩定版本線
-Symfony 6.4／7.4 與 PHP 8.2～8.5 是穩定的 Full-stack 整合。Laravel 與 PSR-15 Host
-仍需等待觀察期門禁；詳見[Framework 支援策略](/zh-TW/framework-support)。
+::: tip 正式支援的 Framework 版本線
+Symfony 6.4／7.4、Laravel 12／13 與共用 PSR-15 Host 均為正式支援的 Full-stack
+整合，具體 PHP 8 組合詳見[Framework 支援策略](/zh-TW/framework-support)。
 :::
 
 已經在使用 SoFinder？請閱讀[檔案管理器指南](/zh-TW/user-guide)、[圖片管理](/zh-TW/image-guide)和[主流編輯器整合](/zh-TW/editor-integrations)。開發整合請查看[開發者指南](/zh-TW/developer-guide)及 [HTTP API 參考](/zh-TW/api-reference)。

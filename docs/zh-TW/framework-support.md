@@ -11,17 +11,17 @@ API、命令、安全及依賴注入的完整穩定目標。
 | Host | 目前層級 | 發布門檻 |
 | --- | --- | --- |
 | Symfony 6.4／7.4 | 完整、穩定 | PHP 8.2～8.5 CI Matrix 全部通過 |
-| 純 PHP／任意 Container | 實驗性完整瀏覽器/API Runtime | Host 明確提供授權、CSRF、Actor、事件及 PSR Factory |
-| Laravel 12/13 | 實驗性全棧 Bridge：瀏覽器、51 個共用 Handler、Artisan/Queue、Auth/Gate 與 Session CSRF | 完整黑盒一致性及 Symfony 觀察門禁 |
-| Slim／Mezzio | 含全部 52 個共用 Handler 及可執行 Host 的實驗性 PSR-15 Bridge | 完整黑盒一致性及 Symfony 1.0 觀察期門禁 |
+| 純 PHP／任意 Container | 完整瀏覽器/API Runtime | Host 明確提供授權、CSRF、Actor、事件及 PSR Factory |
+| Laravel 12/13 | 全棧支援：瀏覽器、51 個共用 Handler、Artisan/Queue、Auth/Gate 與 Session CSRF | 完整相容 Matrix 與黑盒一致性 Matrix |
+| Slim／Mezzio | 透過 PSR-15 提供全棧支援及全部 52 個共用 Handler | 完整相容 Matrix 與黑盒一致性 Matrix |
 | 其他框架 | 僅 headless 核心 | 實作公開契約，不繼承內部 Controller |
 
-實驗性 PSR-15 Package 現已提供 Middleware、`RouteRegistrar` 及完整 52 Route 瀏覽器/API
+正式支援的 PSR-15 Package 提供 Middleware、`RouteRegistrar` 及完整 52 Route 瀏覽器/API
 的本地 Runtime Factory。真實 Slim 4、Mezzio 3 與純 PHP Front Controller 已在 PHP 8.2 和
 8.5 上提供共用 `/browser` 外殼及前端資源，並執行全部 51 條非展示 Route，以及 Liveness、
 Capabilities、Health、拒絕及寫入路徑；Chromium 會在三個真實 Host 啟動 React UI 且不得
 產生 Runtime Error，共用 API 清單會把狀態／錯誤 Contract 與安全 Response Header 跟 Symfony 比較。
-目前只有 Symfony 屬於支援安裝；PSR Bridge 必須通過完整黑盒 Suite 及發布門禁後才能升級。
+每次同步發布前都會執行完整黑盒 Suite。
 
 受門禁保護的 Laravel Package 已在真實 Laravel 12/13 Application 透過自動探索啟動，
 註冊中央 51 個非瀏覽器 Route，並把全部 Route 經 PSR Dispatcher 接到共用 HTTP Action。
@@ -38,12 +38,13 @@ Route，並與 Symfony 比較狀態／錯誤及安全 Response Header Contract�
 multipart 上傳、完整／Range 內容、ETag 重新驗證、Range 下載、重新命名、複製、移動、回收筒還原
 及永久刪除生命週期。該 Suite 亦驗證 Symfony 原生未認證 401 Challenge，並比較 Laravel、Slim、
 Mezzio 與純 PHP 在未認證及「已認證但未授權」兩種狀態下共用的 403 `access_denied` Response Body
-與安全 Response Header Contract。觀察門禁完成前仍維持實驗性。
+與安全 Response Header Contract。
 
-門禁證據記錄於 `config/framework-support.json` 並由 CI 驗證。只有記錄的主線版本不低於
-`1.0.0`、UTC 發布日期已滿 30 天且未關閉的 P0/P1 缺陷數為零時，才能設為 eligible。
-穩定 Patch 版本符合該版本下限；目前記錄的穩定版本為 `1.0.2`，觀察時鐘仍以不可變的
-`1.0.0` Release 為起點。
+門禁證據記錄於 `config/framework-support.json` 並由 CI 驗證。預設政策要求主線版本不低於
+`1.0.0`、穩定滿 30 日且 P0/P1 缺陷為零。本次在完整相容、安全、拆分發布及乾淨 Consumer
+Matrix 通過後，由維護者明確批准立即晉級豁免；政策如實記錄批准日期、批准者及原因，不會聲稱
+30 日觀察已完成。穩定 Patch 版本符合版本下限；目前記錄的穩定版本為 `1.0.2`，依據仍錨定
+不可變的 `1.0.0` Release。
 同時必須記錄最終 Symfony Matrix 的 Commit 與 Workflow URL、觀察起訖日期，以及安全的
 P0/P1 缺陷稽核連結。
 `1.0.0` 發布後，每日 `Symfony 1.0 observation` Workflow 會記錄觀察期內建立且帶有
@@ -58,6 +59,8 @@ $registrar->registerSlim($slimApp);
 
 Dispatcher 必須注入啟用功能所需的共用 Handler。缺少 Handler 會回傳
 `501 endpoint_not_implemented`；缺少授權或 CSRF Provider 則必須令應用啟動失敗。
+無框架 Host 選擇非同步文件預覽時必須提供 `DocumentPreviewDispatcherInterface`；Dispatcher
+缺少或不可用時，Messenger 模式必須啟動失敗。
 
 ## 不限框架的核心入口
 
@@ -74,7 +77,7 @@ base path；後續 Bridge 必須沿用此模式，避免安全設定產生差異
 1. 保持 Symfony 6.4／7.4 在 PHP 8.2、8.3、8.4、8.5 及可執行範例中全部穩定。
 2. 固化與框架無關的 Request、Response、Upload、Actor 及 Workspace 邊界。
 3. 先加入 Laravel 完整 Bridge、可執行範例及共用 HTTP 契約測試。
-4. 加入可執行 Slim／Mezzio 範例並執行相同 Contract Suite，再將共用 PSR-7／PSR-15 Bridge 自實驗性升級。
+4. 只有可執行 Slim／Mezzio 範例持續通過相同 Contract Suite 時，才維持共用 PSR-7／PSR-15 Bridge 的正式支援。
 5. 其他框架通過相同 HTTP、安全及儲存契約測試後才列為完整支援。
 
 ## PHP 7.2 必須使用獨立產品線

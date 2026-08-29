@@ -18,6 +18,12 @@ final class FrameworkSupportPolicyTest extends TestCase
         self::assertSame('1.0.0', $policy['promotionGate']['requiresMainVersion']);
         self::assertSame(30, $policy['promotionGate']['minimumStableDays']);
         self::assertTrue($policy['promotionGate']['requiresZeroOpenPriorityDefects']);
+        self::assertSame([
+            'enabled' => true,
+            'approvedAt' => '2026-08-29',
+            'approvedBy' => 'project-maintainer',
+            'reason' => 'The maintainer approved immediate bridge promotion after the complete compatibility, security, split-publication and clean-consumer matrices passed.',
+        ], $policy['promotionGate']['observationWaiver']);
         self::assertSame('1.0.2', $policy['promotionGate']['releasedMainVersion']);
         self::assertSame('2026-08-29', $policy['promotionGate']['releaseDate']);
         self::assertSame(0, $policy['promotionGate']['openP0P1Defects']);
@@ -29,15 +35,15 @@ final class FrameworkSupportPolicyTest extends TestCase
             'observationCompletedAt',
             'priorityDefectAuditUrl',
         ], array_keys($policy['promotionGate']['evidence']));
-        self::assertSame('4c1a4587634f758b3ce96471898fddcf4b15d26c', $policy['promotionGate']['evidence']['symfonyMatrixCommit']);
-        self::assertSame('https://github.com/sohophp/sofinder/actions/runs/33241249866', $policy['promotionGate']['evidence']['symfonyMatrixWorkflowUrl']);
+        self::assertSame('56f8b596932236c9c2a1767e96e1c5d25854a4cf', $policy['promotionGate']['evidence']['symfonyMatrixCommit']);
+        self::assertSame('https://github.com/sohophp/sofinder/actions/runs/33263241130', $policy['promotionGate']['evidence']['symfonyMatrixWorkflowUrl']);
         self::assertSame('2026-08-29', $policy['promotionGate']['evidence']['symfonyMatrixVerifiedAt']);
         self::assertSame('2026-08-29', $policy['promotionGate']['evidence']['observationStartedAt']);
         self::assertNull($policy['promotionGate']['evidence']['observationCompletedAt']);
-        self::assertSame('https://github.com/sohophp/sofinder/actions/runs/33241684671', $policy['promotionGate']['evidence']['priorityDefectAuditUrl']);
-        self::assertFalse($policy['promotionGate']['eligible']);
-        self::assertSame(30, $policy['gated']['laravel']['minimumStableDays']);
-        self::assertSame('1.0.0', $policy['gated']['laravel']['requiresMainVersion']);
+        self::assertSame('https://github.com/sohophp/sofinder/actions/runs/33263613569', $policy['promotionGate']['evidence']['priorityDefectAuditUrl']);
+        self::assertTrue($policy['promotionGate']['eligible']);
+        self::assertArrayNotHasKey('experimental', $policy);
+        self::assertArrayNotHasKey('gated', $policy);
         self::assertSame('sohophp/sofinder-legacy', $policy['legacy']['package']);
         self::assertSame('7.2.x', $policy['legacy']['branch']);
         self::assertSame('>=7.2.5 <8.0', $policy['legacy']['php']);
@@ -47,7 +53,9 @@ final class FrameworkSupportPolicyTest extends TestCase
         self::assertSame([
             '12' => ['8.2', '8.3', '8.4', '8.5'],
             '13' => ['8.3', '8.4', '8.5'],
-        ], $policy['gated']['laravel']['phpByVersion']);
+        ], $policy['stable']['laravel']['phpByVersion']);
+        self::assertSame(['slim-4', 'mezzio-3', 'plain-php'], $policy['stable']['psr15']['hosts']);
+        self::assertSame(['8.2', '8.3', '8.4', '8.5'], $policy['stable']['psr15']['php']);
     }
 
     public function testPublishedPackageCheckReadsTheCurrentStableVersionFromPolicy(): void
@@ -63,7 +71,7 @@ final class FrameworkSupportPolicyTest extends TestCase
     {
         $policy = json_decode((string) file_get_contents(__DIR__ . '/../config/framework-support.json'), true, 32, JSON_THROW_ON_ERROR);
         $expected = [];
-        foreach ($policy['gated']['laravel']['phpByVersion'] as $laravel => $versions) {
+        foreach ($policy['stable']['laravel']['phpByVersion'] as $laravel => $versions) {
             foreach ($versions as $php) {
                 $expected[] = $php . '|laravel-' . $laravel;
             }

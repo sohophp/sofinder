@@ -156,8 +156,12 @@ final class PackageReleaseMetadataTest extends TestCase
     {
         $root = dirname(__DIR__);
         $message = new \ReflectionClass(\SohoPHP\SoFinder\Preview\DocumentPreviewMessage::class);
+        $dispatcher = new \ReflectionClass(\SohoPHP\SoFinder\Contract\DocumentPreviewDispatcherInterface::class);
 
         self::assertStringContainsString('/packages/sofinder-core/src/Preview/', (string) $message->getFileName());
+        self::assertStringContainsString('/packages/sofinder-core/src/Contract/', (string) $dispatcher->getFileName());
         self::assertFileDoesNotExist($root . '/packages/sofinder-symfony/src/Preview/DocumentPreviewMessage.php');
+        self::assertFileExists($root . '/packages/sofinder-symfony/src/Preview/MessengerDocumentPreviewDispatcher.php');
+        self::assertFileExists($root . '/packages/sofinder-laravel/src/Queue/LaravelDocumentPreviewDispatcher.php');
     }
 }
