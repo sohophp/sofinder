@@ -26,7 +26,7 @@ cp "$repository_root/config/framework-support.json" "$fixture"
         "symfonyMatrixVerifiedAt" => $today->format("Y-m-d"),
         "observationStartedAt" => $releasedAt->format("Y-m-d"),
         "observationCompletedAt" => $completedAt->format("Y-m-d"),
-        "priorityDefectAuditUrl" => "https://github.com/sohophp/sofinder/issues?q=priority",
+        "priorityDefectAuditUrl" => "https://github.com/sohophp/sofinder/actions/runs/2",
     ];
     file_put_contents($file, json_encode($policy, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_THROW_ON_ERROR));
 ' "$fixture"

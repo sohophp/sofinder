@@ -70,6 +70,10 @@ jobs:
         working-directory: frontend
       - run: bash scripts/check-package-install.sh
       - run: ./scripts/php-bin.sh scripts/check-framework-release-gate.php
+      - name: Verify live framework promotion evidence
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: bash scripts/check-live-promotion-evidence.sh
       - run: pnpm install --frozen-lockfile && pnpm check
         working-directory: docs
       - run: git diff --exit-code -- dist

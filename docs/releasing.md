@@ -92,6 +92,13 @@ the defect-audit URL when opening the framework promotion gate. Run
 `scripts/check-published-package-install.sh` locally to repeat the registry
 check with an isolated Composer cache.
 
+Once the policy is marked eligible, `scripts/check-live-promotion-evidence.sh`
+also resolves both recorded Actions URLs through the GitHub API. It requires a
+successful `main` CI run whose SHA matches the recorded Symfony matrix commit
+and a successful observation run, both started no earlier than their recorded
+post-observation dates. The release workflow executes this check before it can
+publish Laravel or PSR-15 split repositories.
+
 The S3 adapter is maintained in `packages/sofinder-s3` and released to its
 independent repository by the synchronized workflow. Its historical prerelease
 is `v0.1.0-beta.2`; the 1.x line uses the same version as Core. Before enabling

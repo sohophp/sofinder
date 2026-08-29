@@ -71,6 +71,11 @@ Core、HTTP、Symfony、兼容 Meta 与 S3 版本，校验仓库来源、运行�
 公开包安装任务的最终成功 Workflow Run 作为缺陷审计 URL。本地可运行
 `scripts/check-published-package-install.sh`，以独立 Composer 缓存重复 Registry 校验。
 
+政策标记 eligible 后，`scripts/check-live-promotion-evidence.sh` 还会通过 GitHub API 解析
+两个已记录的 Actions URL。Symfony 矩阵必须是成功的 `main` CI，其 SHA 与已记录 Commit
+一致；观察任务也必须成功，且两者不得早于各自记录的观察期后日期。Release Workflow 会在
+发布 Laravel 或 PSR-15 拆分仓库前执行此校验。
+
 S3 Adapter 位于 `packages/sofinder-s3`，由同步 Workflow 发布到独立 Repository。
 其历史预发布版本为 `v0.1.0-beta.2`；1.x 与 Core 使用相同版本。启用宿主资源前必须确认
 Packagist Tag 及全新项目安装，并且不得把凭证写入 Repository 或发布日志。

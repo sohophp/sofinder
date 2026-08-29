@@ -72,6 +72,11 @@ Framework 晉級門禁時，使用包含兩個公開 Package 安裝工作的最�
 缺陷稽核 URL。本機可執行 `scripts/check-published-package-install.sh`，以獨立 Composer Cache
 重複 Registry 驗證。
 
+政策標記 eligible 後，`scripts/check-live-promotion-evidence.sh` 還會透過 GitHub API 解析
+兩個已記錄的 Actions URL。Symfony Matrix 必須是成功的 `main` CI，其 SHA 與記錄的 Commit
+一致；觀察工作亦必須成功，且兩者不得早於各自記錄的觀察期後日期。Release Workflow 會在
+發布 Laravel 或 PSR-15 Split Repository 前執行此驗證。
+
 S3 Adapter 位於 `packages/sofinder-s3`，由同步 Workflow 發布至獨立 Repository。
 其歷史預發布版本為 `v0.1.0-beta.2`；1.x 與 Core 使用相同版本。啟用 Host Resource 前
 必須確認 Packagist Tag 及全新專案安裝，且不得將憑證寫入 Repository 或發布 Log。

@@ -117,6 +117,7 @@ jobs:
       - run: ./scripts/php-bin.sh scripts/check-framework-release-gate.php
       - run: bash scripts/check-framework-release-gate-fixtures.sh
       - run: bash scripts/check-observation-evidence-fixtures.sh
+      - run: bash scripts/check-promotion-run-evidence-fixtures.sh
       - run: bash scripts/check-package-install.sh
       - run: |
           release_output=$(mktemp -d var/release-archives.XXXXXX)

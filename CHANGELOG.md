@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- Verify promotion evidence against live successful GitHub Actions runs before
+  a gated bridge release, matching the Symfony matrix commit, workflow paths,
+  main branch and post-observation execution dates instead of trusting URLs.
 - Treat the framework promotion version as a stable minimum rather than an
   exact tag, recording 1.0.1 truthfully without resetting the observation
   clock anchored to the immutable 1.0.0 release.

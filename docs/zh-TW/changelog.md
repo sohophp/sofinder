@@ -7,6 +7,8 @@ description: SoFinder 每個公開版本的重要變更。
 
 ## 尚未發佈
 
+- 發布受門禁保護的 Bridge 前，線上驗證成功的 GitHub Actions 記錄，匹配 Symfony Matrix
+  Commit、Workflow 路徑、`main` Branch 及觀察期後的執行日期，不再只信任 URL 文字。
 - 將 Framework 晉級版本視為穩定最低版本而非完全相同的 Tag，使政策可如實記錄 1.0.1，
   同時不重設以不可變 1.0.0 Release 為起點的觀察時鐘。
 - 將三種語言文件與 Repository README 中已退役的 Beta 安裝命令替換為穩定 Symfony
