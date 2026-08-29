@@ -16,6 +16,8 @@ use SohoPHP\SoFinder\Laravel\LaravelConfiguration;
 use SohoPHP\SoFinder\Laravel\SoFinderServiceProvider;
 use SohoPHP\SoFinder\ResourceRegistry;
 use SohoPHP\SoFinder\Http\StandardEndpointActions;
+use SohoPHP\SoFinder\Http\AdvancedEndpointActions;
+use SohoPHP\SoFinder\Http\EndpointCatalog;
 use SohoPHP\SoFinder\Workspace\WorkspaceProvider;
 
 final class LaravelApplicationTest extends TestCase
@@ -48,6 +50,9 @@ final class LaravelApplicationTest extends TestCase
         $this->get('/sofinder/api/config')
             ->assertForbidden()
             ->assertJsonPath('error.code', 'access_denied');
+        $this->get('/sofinder/health')
+            ->assertOk()
+            ->assertJsonPath('success', true);
 
         $routes = $this->app->make(Router::class)->getRoutes();
         $routes->refreshNameLookups();
@@ -90,5 +95,15 @@ final class LaravelApplicationTest extends TestCase
         $endpoints = array_map(static fn ($action): string => $action->endpoint(), $this->app->make(StandardEndpointActions::class)->all());
         self::assertCount(22, $endpoints);
         self::assertSame($endpoints, array_values(array_unique($endpoints)));
+        $advanced = array_map(static fn ($action): string => $action->endpoint(), $this->app->make(AdvancedEndpointActions::class)->all());
+        self::assertCount(29, $advanced);
+        $implemented = [...$endpoints, ...$advanced];
+        $expected = array_values(array_map(
+            static fn ($endpoint): string => $endpoint->name,
+            array_filter(EndpointCatalog::all(), static fn ($endpoint): bool => $endpoint->name !== 'sofinder_browser'),
+        ));
+        sort($implemented);
+        sort($expected);
+        self::assertSame($expected, $implemented);
     }
 }

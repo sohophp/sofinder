@@ -14,7 +14,7 @@ and 7.4 LTS.
 | --- | --- | --- |
 | Symfony 6.4/7.4 | Full, stable target | Complete PHP 8.2–8.5 CI matrix |
 | Plain PHP / any container | Experimental headless HTTP bridge | Host supplies explicit authorization, CSRF, actor, events and PSR factories |
-| Laravel 12/13 | Experimental bridge: Provider, 51 API routes, Auth/Gate, session CSRF and PSR conversion | Remaining shared handlers, browser/commands, full parity and the Symfony observation gate |
+| Laravel 12/13 | Experimental bridge: Provider, all 51 non-browser shared handlers, Auth/Gate, session CSRF and PSR conversion | Browser shell, commands/queue adapter, full black-box parity and the Symfony observation gate |
 | Slim / Mezzio | Experimental PSR-15 API bridge with executable hosts | Full endpoint parity and the Symfony 1.0 observation gate |
 | Other frameworks | Headless core only | Implement the same public contracts; do not subclass internal controllers |
 
@@ -27,12 +27,12 @@ PSR row does not become supported until the complete contract suite and release
 gate pass.
 
 The gated Laravel package now boots through package discovery in real Laravel
-12 and 13 applications, registers the canonical 51 non-presentation routes,
-and delegates its liveness endpoint through the shared PSR dispatcher. Its
-Laravel Auth/Gate, session CSRF, event dispatcher and normalized configuration
-adapters are present. The package remains experimental while the rest of the
-shared action graph, browser shell, commands and full contract suite are being
-connected.
+12 and 13 applications, registers the canonical 51 non-browser routes, and
+wires all of them to shared HTTP actions through the PSR dispatcher. Its
+Laravel Auth/Gate, session CSRF, event dispatcher, request context, route URL
+and normalized configuration adapters are present. The package remains
+experimental while the browser shell, commands/queue adapter, full black-box
+contract suite and release asset injection are being completed.
 
 The gate is recorded in `config/framework-support.json` and validated in CI.
 It cannot become eligible until the recorded main release is `1.0.0`, its UTC
