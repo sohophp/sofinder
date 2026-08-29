@@ -15,9 +15,19 @@ use Psr\Http\Message\StreamFactoryInterface;
 use SohoPHP\SoFinder\Contract\ActorProviderInterface;
 use SohoPHP\SoFinder\Contract\AuthorizationInterface;
 use SohoPHP\SoFinder\Contract\CsrfTokenProviderInterface;
+use SohoPHP\SoFinder\Contract\EndpointUrlGeneratorInterface;
+use SohoPHP\SoFinder\Contract\EntryUrlGeneratorInterface;
+use SohoPHP\SoFinder\Contract\RequestContextProviderInterface;
+use SohoPHP\SoFinder\Contract\RoleAuthorizationInterface;
+use SohoPHP\SoFinder\Contract\WorkspaceResolverInterface;
 use SohoPHP\SoFinder\Http\Action\LivenessAction;
 use SohoPHP\SoFinder\Http\EndpointDispatcher;
 use SohoPHP\SoFinder\Http\PsrEndpointHandler;
+use SohoPHP\SoFinder\ResourceRegistry;
+use SohoPHP\SoFinder\Security\PathGuard;
+use SohoPHP\SoFinder\Storage\ResourceRegistryFactory;
+use SohoPHP\SoFinder\Workspace\DefaultWorkspaceResolver;
+use SohoPHP\SoFinder\Workspace\WorkspaceProvider;
 use Symfony\Bridge\PsrHttpMessage\Factory\HttpFoundationFactory;
 use Symfony\Bridge\PsrHttpMessage\Factory\PsrHttpFactory;
 
@@ -43,8 +53,12 @@ final class SoFinderServiceProvider extends ServiceProvider
             $app->make(\Illuminate\Contracts\Auth\Access\Gate::class),
         ));
         $this->app->singleton(ActorProviderInterface::class, static fn ($app): LaravelActorProvider => new LaravelActorProvider($app->make(AuthFactory::class)));
+        $this->app->singleton(RoleAuthorizationInterface::class, static fn ($app): LaravelRoleAuthorization => new LaravelRoleAuthorization($app->make(\Illuminate\Contracts\Auth\Access\Gate::class)));
         $this->app->singleton(CsrfTokenProviderInterface::class, static fn ($app): LaravelCsrfTokenProvider => new LaravelCsrfTokenProvider(static fn (): \Illuminate\Http\Request => $app->make('request')));
         $this->app->singleton(EventDispatcherInterface::class, static fn ($app): LaravelEventDispatcher => new LaravelEventDispatcher($app->make(IlluminateDispatcher::class)));
+        $this->app->singleton(RequestContextProviderInterface::class, static fn ($app): LaravelRequestContextProvider => new LaravelRequestContextProvider(static fn (): \Illuminate\Http\Request => $app->make('request')));
+        $this->app->singleton(EndpointUrlGeneratorInterface::class, LaravelEndpointUrlGenerator::class);
+        $this->app->singleton(EntryUrlGeneratorInterface::class, LaravelEntryUrlGenerator::class);
         $this->app->singleton(LaravelConfiguration::class, static function ($app): LaravelConfiguration {
             $prefix = trim((string) $app->make('config')->get('sofinder.prefix', 'sofinder'), '/');
             $storage = rtrim($app->storagePath(), '/');
@@ -70,6 +84,19 @@ final class SoFinderServiceProvider extends ServiceProvider
                 ],
             );
         });
+        $this->app->singleton(PathGuard::class);
+        $this->app->singleton(ResourceRegistry::class, static fn ($app): ResourceRegistry => (new ResourceRegistryFactory($app->make(PathGuard::class)))->create(
+            (array) $app->make(LaravelConfiguration::class)->get('resources'),
+        ));
+        $this->app->singleton(WorkspaceResolverInterface::class, static fn ($app): DefaultWorkspaceResolver => new DefaultWorkspaceResolver(
+            $app->make(ActorProviderInterface::class),
+            $app->make(ResourceRegistry::class),
+            (string) $app->make(LaravelConfiguration::class)->get('workspaces.default'),
+        ));
+        $this->app->singleton(WorkspaceProvider::class, static fn ($app): WorkspaceProvider => new WorkspaceProvider(
+            $app->make(WorkspaceResolverInterface::class),
+            $app->make(RequestContextProviderInterface::class),
+        ));
         $this->app->singleton(LivenessAction::class);
         $this->app->singleton('sofinder.endpoint_handler.liveness', static fn ($app): PsrEndpointHandler => new PsrEndpointHandler(
             $app->make(LivenessAction::class),

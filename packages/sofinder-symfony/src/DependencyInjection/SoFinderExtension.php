@@ -198,7 +198,7 @@ use SohoPHP\SoFinder\Symfony\CsrfGuard;
 use SohoPHP\SoFinder\Symfony\OperationAuditSubscriber;
 use SohoPHP\SoFinder\Symfony\MetadataOperationSubscriber;
 use SohoPHP\SoFinder\Symfony\SymfonyActorProvider;
-use SohoPHP\SoFinder\Symfony\DefaultWorkspaceResolver;
+use SohoPHP\SoFinder\Workspace\DefaultWorkspaceResolver;
 use SohoPHP\SoFinder\Symfony\AssetCatalogSubscriber;
 use SohoPHP\SoFinder\Symfony\VersionedOperationSubscriber;
 use SohoPHP\SoFinder\Symfony\ResourceRegistryFactory;

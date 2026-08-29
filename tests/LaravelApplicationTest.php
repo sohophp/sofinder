@@ -7,8 +7,15 @@ namespace SohoPHP\SoFinder\Tests;
 use Illuminate\Foundation\Application;
 use Illuminate\Routing\Router;
 use Orchestra\Testbench\TestCase;
+use SohoPHP\SoFinder\Contract\EndpointUrlGeneratorInterface;
+use SohoPHP\SoFinder\Contract\EntryUrlGeneratorInterface;
+use SohoPHP\SoFinder\Contract\RequestContextProviderInterface;
+use SohoPHP\SoFinder\Contract\RoleAuthorizationInterface;
+use SohoPHP\SoFinder\Contract\WorkspaceResolverInterface;
 use SohoPHP\SoFinder\Laravel\LaravelConfiguration;
 use SohoPHP\SoFinder\Laravel\SoFinderServiceProvider;
+use SohoPHP\SoFinder\ResourceRegistry;
+use SohoPHP\SoFinder\Workspace\WorkspaceProvider;
 
 final class LaravelApplicationTest extends TestCase
 {
@@ -52,5 +59,26 @@ final class LaravelApplicationTest extends TestCase
         self::assertSame('/sofinder', $configuration->get('route_prefix'));
         self::assertStringEndsWith('/storage/app/sofinder/files', (string) $configuration->get('resources.Files.root'));
         self::assertSame('proxy', $configuration->get('resources.Files.delivery_mode'));
+    }
+
+    public function testProviderRegistersFrameworkNeutralHostContracts(): void
+    {
+        foreach ([
+            EndpointUrlGeneratorInterface::class,
+            EntryUrlGeneratorInterface::class,
+            RequestContextProviderInterface::class,
+            RoleAuthorizationInterface::class,
+            WorkspaceResolverInterface::class,
+            WorkspaceProvider::class,
+            ResourceRegistry::class,
+        ] as $contract) {
+            self::assertTrue($this->app->bound($contract), $contract);
+        }
+
+        self::assertSame('/sofinder/live', $this->app->make(EndpointUrlGeneratorInterface::class)->generate('sofinder_liveness'));
+        self::assertSame(['Files'], array_map(
+            static fn ($storage): string => $storage->resource->name,
+            $this->app->make(ResourceRegistry::class)->all(),
+        ));
     }
 }

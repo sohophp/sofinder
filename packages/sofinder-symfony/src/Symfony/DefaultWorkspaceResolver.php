@@ -9,15 +9,20 @@ use SohoPHP\SoFinder\Contract\WorkspaceResolverInterface;
 use SohoPHP\SoFinder\ResourceRegistry;
 use SohoPHP\SoFinder\Value\RequestContext;
 use SohoPHP\SoFinder\Value\WorkspaceContext;
+use SohoPHP\SoFinder\Workspace\DefaultWorkspaceResolver as CoreDefaultWorkspaceResolver;
 
+/** @deprecated Use the framework-neutral Workspace\DefaultWorkspaceResolver. */
 final readonly class DefaultWorkspaceResolver implements WorkspaceResolverInterface
 {
-    public function __construct(private ActorProviderInterface $actors, private ResourceRegistry $resources, private string $default = 'main')
+    private CoreDefaultWorkspaceResolver $resolver;
+
+    public function __construct(ActorProviderInterface $actors, ResourceRegistry $resources, string $default = 'main')
     {
+        $this->resolver = new CoreDefaultWorkspaceResolver($actors, $resources, $default);
     }
 
     public function resolve(RequestContext $request): WorkspaceContext
     {
-        return new WorkspaceContext($this->default, $this->actors->actorId(), array_map(static fn (\SohoPHP\SoFinder\Value\ResourceStorage $resource): string => $resource->resource->name, $this->resources->all()));
+        return $this->resolver->resolve($request);
     }
 }
