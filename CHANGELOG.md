@@ -2,13 +2,16 @@
 
 ## Unreleased
 
+- Add the framework-neutral browser action to the PSR-15 local runtime, register
+  all 52 catalog routes by default, and boot the real React UI in Chromium
+  against Slim 4, Mezzio 3 and plain PHP on both PHP matrix boundaries.
 - Make `sohophp/sofinder-s3` a framework-neutral Core adapter library and move
   its backward-compatible Bundle and DI extension into the Symfony bridge, so
   headless S3 installs no longer pull in or expose Symfony integration.
 - Generate the Symfony route collection directly from the framework-neutral
   endpoint catalog while preserving the existing Bundle YAML import,
-  route names, requirements and host prefix behavior. Keep `/browser` host
-  rendered while routing all 51 HTTP operations through the shared PSR
+  route names, requirements and host prefix behavior. Keep Symfony's `/browser`
+  host rendered while routing all 51 HTTP operations through the shared PSR
   dispatcher instead of legacy per-feature Controller parsing.
 - Validate the canonical endpoint catalog and OpenAPI document in both
   directions, rejecting undocumented runtime routes and phantom documented
@@ -109,8 +112,8 @@
   sessions, manifest assets, standard/chunk uploads and CKEditor compatibility
   uploads with origin checks and nonce-protected script responses.
 - Add dependency-free Slim and Mezzio route registration from the canonical
-  endpoint catalog while keeping the host-rendered browser page outside the
-  experimental PSR-15 API bridge.
+  endpoint catalog, with optional API-only registration for hosts that supply
+  their own browser page.
 - Physically extract the Symfony Bundle, adapters, routes and release assets to
   `sofinder-symfony`; turn `sohophp/sofinder` into a compatibility meta package,
   and verify isolated bridge/meta installs plus the real Symfony example.

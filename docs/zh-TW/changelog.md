@@ -7,11 +7,13 @@ description: SoFinder 每個公開版本的重要變更。
 
 ## 尚未發佈
 
+- 將框架無關 Browser Action 加入 PSR-15 本地 Runtime，預設註冊全部 52 條中央 Route，
+  並在 PHP Matrix 兩端透過 Chromium 分別啟動 Slim 4、Mezzio 3 與純 PHP 的真實 React UI。
 - 將 `sohophp/sofinder-s3` 收緊為框架無關的 Core Adapter Library，並將維持類名
   相容的 Bundle 與 DI Extension 移入 Symfony Bridge，使 Headless S3 安裝不再攜帶
   或暴露 Symfony 整合。
 - Symfony Route 集合現在直接由框架無關的中央端點清單產生，同時維持原有 Bundle YAML
-  匯入方式、Route 名稱、參數約束與 Host Prefix 行為；`/browser` 繼續由 Host 呈現，其餘
+  匯入方式、Route 名稱、參數約束與 Host Prefix 行為；Symfony 的 `/browser` 繼續由 Host 呈現，其餘
   51 個 HTTP 操作統一通過共用 PSR Dispatcher，不再由各功能 Controller 重複解析 Request。
 - 中央端點清單與 OpenAPI 文件現在執行雙向校驗，在發佈任何框架 Bridge 前同時阻止
   未記錄的 Runtime Route 和不存在的文件端點。

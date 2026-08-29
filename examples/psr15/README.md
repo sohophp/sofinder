@@ -2,7 +2,7 @@
 
 This executable example exercises the same shared endpoint dispatcher through
 Slim 4, Mezzio 3 and a framework-free PSR-15 front controller. It builds all
-51 shared non-browser handlers, while deliberately denying protected operations;
+52 shared browser/API handlers, while deliberately denying protected operations;
 real hosts must replace the four explicit services in `RuntimeFactory` with
 their authorization, actor, CSRF and event-dispatcher implementations.
 
@@ -12,12 +12,13 @@ Install once:
 ../../scripts/composer.sh install --no-interaction --prefer-dist
 ```
 
-Start one host and request `http://127.0.0.1:8080/sofinder/live`:
+For the interactive browser, set the example-only fixture identity and open
+`http://127.0.0.1:8080/sofinder/browser`:
 
 ```bash
-../../scripts/php-bin.sh -S 127.0.0.1:8080 public/slim.php
-../../scripts/php-bin.sh -S 127.0.0.1:8081 public/mezzio.php
-../../scripts/php-bin.sh -S 127.0.0.1:8082 public/plain.php
+SOFINDER_EXAMPLE_AUTHORIZED=1 ../../scripts/php-bin.sh -S 127.0.0.1:8080 public/slim.php
+SOFINDER_EXAMPLE_AUTHORIZED=1 ../../scripts/php-bin.sh -S 127.0.0.1:8081 public/mezzio.php
+SOFINDER_EXAMPLE_AUTHORIZED=1 ../../scripts/php-bin.sh -S 127.0.0.1:8082 public/plain.php
 ```
 
 Each successful response uses the shared JSON contract and security headers.
@@ -25,6 +26,7 @@ Each successful response uses the shared JSON contract and security headers.
 handlers; protected endpoints return `403 access_denied`, never an anonymous
 allow default.
 
-`SOFINDER_EXAMPLE_AUTHORIZED=1` enables only the repository's isolated
-cross-host fixture with a fixed CSRF token. It is not an authentication mode
-and must never be enabled in deployment.
+Without that variable, liveness and capabilities remain public while the
+browser and protected APIs return `403 access_denied`. The variable enables
+only the repository's isolated fixture with a fixed CSRF token. It is not an
+authentication mode and must never be enabled in deployment.

@@ -9,7 +9,7 @@ use SohoPHP\SoFinder\Http\EndpointCatalog;
 
 final class SharedActionCoverageTest extends TestCase
 {
-    public function testEveryNonPresentationEndpointHasExactlyOneSharedAction(): void
+    public function testEveryEndpointHasExactlyOneSharedAction(): void
     {
         $actions = [];
         $files = glob(dirname(__DIR__) . '/packages/sofinder-http/src/Action/*.php');
@@ -27,15 +27,12 @@ final class SharedActionCoverageTest extends TestCase
             self::assertArrayNotHasKey($match[1], $actions, 'Duplicate shared action for ' . $match[1]);
             $actions[$match[1]] = basename($file);
         }
-        $expected = array_values(array_filter(
-            array_map(static fn ($endpoint): string => $endpoint->name, EndpointCatalog::all()),
-            static fn (string $endpoint): bool => $endpoint !== 'sofinder_browser',
-        ));
+        $expected = array_map(static fn ($endpoint): string => $endpoint->name, EndpointCatalog::all());
         sort($expected);
         $actual = array_keys($actions);
         sort($actual);
 
-        self::assertCount(51, $actual);
+        self::assertCount(52, $actual);
         self::assertSame($expected, $actual);
     }
 }

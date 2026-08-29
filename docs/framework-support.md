@@ -13,17 +13,18 @@ and 7.4 LTS.
 | Host | Current level | Release gate |
 | --- | --- | --- |
 | Symfony 6.4/7.4 | Full, stable target | Complete PHP 8.2–8.5 CI matrix |
-| Plain PHP / any container | Experimental complete headless HTTP runtime | Host supplies explicit authorization, CSRF, actor, events and PSR factories |
+| Plain PHP / any container | Experimental complete browser/API runtime | Host supplies explicit authorization, CSRF, actor, events and PSR factories |
 | Laravel 12/13 | Experimental full-stack bridge: browser, 51 shared handlers, Artisan/Queue, Auth/Gate and session CSRF | Full black-box parity and the Symfony observation gate |
-| Slim / Mezzio | Experimental PSR-15 bridge with all 51 shared handlers and executable hosts | Full black-box parity and the Symfony 1.0 observation gate |
+| Slim / Mezzio | Experimental PSR-15 bridge with all 52 shared handlers and executable hosts | Full black-box parity and the Symfony 1.0 observation gate |
 | Other frameworks | Headless core only | Implement the same public contracts; do not subclass internal controllers |
 
 The experimental PSR-15 package supplies middleware, a `RouteRegistrar` and a
-local runtime factory for all 51 non-presentation endpoints. Real Slim 4,
-Mezzio 3 and plain PHP front controllers execute all 51 routes plus liveness,
-capabilities, health, denial and mutation paths on PHP 8.2 and 8.5. The shared
-inventory compares status/error contracts and security headers against Symfony;
-`/browser` remains host-rendered.
+local runtime factory for the complete 52-route browser/API surface. Real Slim
+4, Mezzio 3 and plain PHP front controllers serve the shared `/browser` shell
+and frontend assets, and execute all 51 non-presentation routes plus liveness,
+capabilities, health, denial and mutation paths on PHP 8.2 and 8.5. Chromium
+boots the React UI against each real host without runtime errors. The shared API
+inventory compares status/error contracts and security headers against Symfony.
 Only the Symfony row is supported today; the PSR row does not become supported
 until the complete black-box suite and release gate pass.
 

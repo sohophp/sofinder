@@ -13,7 +13,7 @@ isolated install test passes.
 | Package | Responsibility | Current release state |
 | --- | --- | --- |
 | `sohophp/sofinder-core` | Domain, storage, values and host contracts | Physical subtree and isolated install complete |
-| `sohophp/sofinder-http` | Endpoint catalog, PSR dispatcher and shared handlers | All 51 non-presentation endpoints have shared actions; `/browser` remains a host bridge page |
+| `sohophp/sofinder-http` | Endpoint catalog, PSR dispatcher and shared handlers | All 52 browser/API endpoints have shared actions |
 | `sohophp/sofinder-symfony` | Bundle and HttpFoundation/Console/Messenger adapters | Physical subtree, release assets and isolated install complete |
 | `sohophp/sofinder-laravel` | Laravel 12/13 provider, auth, CSRF, routes and commands | All shared handlers, maintenance commands and security audit pass real-app tests; release remains gated |
 | `sohophp/sofinder-psr15` | Slim, Mezzio and plain PSR-15 middleware | Isolated install, real-host smoke and route/action coverage complete; full endpoint parity remains gated |
@@ -23,9 +23,10 @@ Mezzio imports from the physical Core package. Symfony now builds its 52-route
 collection directly from the framework-neutral catalog; its compatibility YAML
 file only imports that generated collection. `EndpointCatalogTest` verifies the
 resulting path, method, requirement, adapter and special-default contract. The
-host-rendered `/browser` page retains its Symfony controller; every other route
-uses one HttpFoundation-to-PSR adapter and the same `EndpointDispatcher` as
-Laravel, Slim, Mezzio and plain PHP.
+Symfony retains a thin `/browser` controller around the shared `BrowserPage`;
+the PSR-15 runtime dispatches the corresponding shared action directly. Every
+other Symfony route uses one HttpFoundation-to-PSR adapter and the same
+`EndpointDispatcher` as Laravel, Slim, Mezzio and plain PHP.
 These gates stay active while files are physically moved into package subtrees.
 
 The compatibility matrix keeps the committed Composer platform at PHP 8.2 for
@@ -43,7 +44,8 @@ for PHP 8.2 lowest plus PHP 8.5 stable dependencies. Those development files are
 export-ignored from consumer distribution archives.
 
 Executable Slim 4, Mezzio 3 and plain PHP front controllers exercise the real
-host routers and emitters on PHP 8.2 and 8.5. Their official entry point requires
+host routers and emitters on PHP 8.2 and 8.5, including Chromium boot of the
+shared React browser against each host. Their official entry point requires
 authorization, actor, CSRF and event-dispatcher services at construction time;
 the example denies protected operations instead of supplying an anonymous
 allow-all default. Together with Symfony and Laravel, these hosts run the same
@@ -60,11 +62,12 @@ Mutation actions require both an `AuthorizationInterface` and a
 body is decoded; a host cannot construct a permissive mutation stack by omitting
 either dependency.
 
-All 51 non-presentation endpoints now execute through framework-neutral actions, including
+All 52 catalog endpoints now have framework-neutral actions. The 51 API and
+stream endpoints include
 metadata, bounded content reads, Range/ETag streaming, image thumbnail/variant
 delivery, document previews, Prometheus metrics, uploads, access sessions, archives,
-chunk status/cancellation and image dimensions. The remaining `/browser` route is the host-rendered
-HTML shell and intentionally belongs to each full-stack bridge.
+chunk status/cancellation and image dimensions; the remaining action renders
+the shared `/browser` HTML shell for PSR hosts.
 Asset references, details, metadata, search and the complete usage lifecycle are
 included, together with document-preview jobs, signed URL issuance and security
 status. Endpoint URLs and role authorization use Core contracts implemented by

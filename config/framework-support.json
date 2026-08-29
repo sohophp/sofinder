@@ -12,7 +12,7 @@
   "experimental": {
     "psr15": {
       "hosts": ["slim-4", "mezzio-3", "plain-php"],
-      "reason": "Executable Slim, Mezzio and plain PHP hosts pass the complete 51-route inventory, full lifecycle snapshots and authentication/authorization boundary contracts on PHP 8.2 and 8.5; only the Symfony observation gate remains pending."
+      "reason": "Executable Slim, Mezzio and plain PHP hosts serve the complete 52-route browser/API runtime and pass Chromium UI smoke, the 51 non-presentation route inventory, full lifecycle snapshots and authentication/authorization boundary contracts on PHP 8.2 and 8.5; only the Symfony observation gate remains pending."
     }
   },
   "promotionGate": {

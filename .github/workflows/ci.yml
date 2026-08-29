@@ -184,6 +184,16 @@ jobs:
           php-version: ${{ matrix.php }}
           coverage: none
       - run: bash scripts/check-psr15-hosts.sh
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: '22'
+      - run: corepack enable
+      - run: pnpm install --frozen-lockfile
+        working-directory: frontend
+      - run: pnpm exec playwright install --with-deps chromium
+        working-directory: frontend
+      - run: pnpm exec playwright test --config playwright.psr15.config.ts
+        working-directory: frontend
 
   laravel-bridge:
     runs-on: ubuntu-latest

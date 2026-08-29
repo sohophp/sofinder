@@ -16,7 +16,7 @@ final readonly class RouteRegistrar
     public function __construct(
         private RequestHandlerInterface $dispatcher,
         private string $prefix = '/sofinder',
-        private bool $includeBrowser = false,
+        private bool $includeBrowser = true,
     ) {
     }
 

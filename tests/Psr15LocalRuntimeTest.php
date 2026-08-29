@@ -54,13 +54,10 @@ final class Psr15LocalRuntimeTest extends TestCase
             dirname(__DIR__),
         );
         $implemented = array_map(static fn ($action): string => $action->endpoint(), $factory->actions());
-        $expected = array_values(array_map(
-            static fn ($endpoint): string => $endpoint->name,
-            array_filter(EndpointCatalog::all(), static fn ($endpoint): bool => $endpoint->name !== 'sofinder_browser'),
-        ));
+        $expected = array_map(static fn ($endpoint): string => $endpoint->name, EndpointCatalog::all());
         sort($implemented);
         sort($expected);
-        self::assertCount(51, $implemented);
+        self::assertCount(52, $implemented);
         self::assertSame($expected, $implemented);
 
         $application = $factory->create();
@@ -69,6 +66,20 @@ final class Psr15LocalRuntimeTest extends TestCase
             public function handle(ServerRequestInterface $request): ResponseInterface { return $this->responses->createResponse(404); }
         };
         $middleware = $application->middleware();
+
+        $browser = $middleware->process(new ServerRequest('GET', '/sofinder/browser?lang=zh-CN&path=documents'), $fallback);
+        self::assertSame(200, $browser->getStatusCode(), (string) $browser->getBody());
+        self::assertSame('text/html; charset=UTF-8', $browser->getHeaderLine('Content-Type'));
+        self::assertSame('no-store, private', $browser->getHeaderLine('Cache-Control'));
+        self::assertSame('SAMEORIGIN', $browser->getHeaderLine('X-Frame-Options'));
+        self::assertStringContainsString('<html lang="zh-cn">', (string) $browser->getBody());
+        self::assertStringContainsString('&quot;apiBase&quot;:&quot;/sofinder/api/config&quot;', (string) $browser->getBody());
+        self::assertStringContainsString('&quot;csrfToken&quot;:&quot;csrf&quot;', (string) $browser->getBody());
+        self::assertStringContainsString('/sofinder/assets/sofinder.js?v=', (string) $browser->getBody());
+
+        $asset = $middleware->process(new ServerRequest('GET', '/sofinder/assets/sofinder.css'), $fallback);
+        self::assertSame(200, $asset->getStatusCode(), (string) $asset->getBody());
+        self::assertSame('text/css; charset=UTF-8', $asset->getHeaderLine('Content-Type'));
 
         $live = $middleware->process(new ServerRequest('GET', '/sofinder/live'), $fallback);
         self::assertSame(200, $live->getStatusCode());

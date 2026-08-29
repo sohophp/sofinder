@@ -14,15 +14,15 @@ use SohoPHP\SoFinder\Psr15\RouteRegistrar;
 
 final class RouteRegistrarTest extends TestCase
 {
-    public function testGenericRegistrarCoversEveryNonPresentationEndpoint(): void
+    public function testGenericRegistrarCoversTheBrowserAndEverySharedEndpoint(): void
     {
         $routes = [];
         (new RouteRegistrar($this->dispatcher()))->register(static function (array $methods, string $path, RequestHandlerInterface $handler, string $name, array $requirements) use (&$routes): void {
             $routes[$name] = compact('methods', 'path', 'handler', 'requirements');
         });
 
-        self::assertCount(51, $routes);
-        self::assertArrayNotHasKey('sofinder_browser', $routes);
+        self::assertCount(52, $routes);
+        self::assertSame('/sofinder/browser', $routes['sofinder_browser']['path']);
         self::assertSame('/sofinder/api/uploads', $routes['sofinder_api_upload']['path']);
         self::assertSame(['POST'], $routes['sofinder_api_upload']['methods']);
     }
@@ -32,7 +32,7 @@ final class RouteRegistrarTest extends TestCase
         $application = new FakeSlimApplication();
         (new RouteRegistrar($this->dispatcher(), '/manager'))->registerSlim($application);
 
-        self::assertCount(51, $application->routes);
+        self::assertCount(52, $application->routes);
         $route = $application->routes['sofinder_api_trash_restore'];
         self::assertSame('/manager/api/trash/{id:[a-f0-9]{32}}/restore', $route['path']);
         $factory = new Psr17Factory();
@@ -50,9 +50,20 @@ final class RouteRegistrarTest extends TestCase
         $application = new FakeMezzioApplication();
         (new RouteRegistrar($this->dispatcher(), '/'))->registerMezzio($application);
 
-        self::assertCount(51, $application->routes);
+        self::assertCount(52, $application->routes);
         self::assertSame('/api/assets/{id:[a-f0-9-]{36}}', $application->routes['sofinder_api_asset_get']['path']);
         self::assertInstanceOf(RequestHandlerInterface::class, $application->routes['sofinder_api_asset_get']['handler']);
+    }
+
+    public function testGenericRegistrarCanBeLimitedToApiRoutes(): void
+    {
+        $routes = [];
+        (new RouteRegistrar($this->dispatcher(), '/sofinder', false))->register(static function (array $methods, string $path, RequestHandlerInterface $handler, string $name, array $requirements) use (&$routes): void {
+            $routes[$name] = compact('methods', 'path', 'handler', 'requirements');
+        });
+
+        self::assertCount(51, $routes);
+        self::assertArrayNotHasKey('sofinder_browser', $routes);
     }
 
     private function dispatcher(): RequestHandlerInterface

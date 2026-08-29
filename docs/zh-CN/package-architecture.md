@@ -12,16 +12,17 @@ SoFinder 正从 1.0 前的 Symfony Bundle 迁移为同步版本的多个 Compose
 | 包 | 职责 | 当前状态 |
 | --- | --- | --- |
 | `sofinder-core` | Domain、Storage、Value 和宿主 Contract | 已完成物理拆分和独立安装验证 |
-| `sofinder-http` | Endpoint Catalog、PSR Dispatcher 和共享 Handler | 51 个非展示端点均已有共享 Action；`/browser` 保留为宿主 Bridge 页面 |
+| `sofinder-http` | Endpoint Catalog、PSR Dispatcher 和共享 Handler | 全部 52 个浏览器/API 端点均已有共享 Action |
 | `sofinder-symfony` | Bundle、HttpFoundation、Console、Messenger | 已完成物理拆分、发布资源和独立安装验证 |
 | `sofinder-laravel` | Laravel 12/13 Provider、授权、CSRF、路由、命令 | 全部共享 Handler、维护命令和安全审计已通过真实应用测试；正式发布仍受门禁约束 |
 | `sofinder-psr15` | Slim、Mezzio 和纯 PHP Middleware | 已完成独立安装、真实宿主冒烟及路由/Action 覆盖；完整端点一致性仍受门禁约束 |
 
 `FrameworkBoundaryTest` 会禁止物理 Core 包引入 Symfony、Illuminate、Slim 或 Mezzio；
 Symfony 现在直接从框架无关的中央清单生成 52 条路由，兼容 YAML 文件只负责导入该集合，
-测试会核对路径、方法、参数约束、Adapter 和特殊默认值。宿主渲染的 `/browser` 保留
-Symfony Controller，其余路由使用单一 HttpFoundation-to-PSR Adapter，并与 Laravel、
-Slim、Mezzio 和纯 PHP 共用 `EndpointDispatcher`。
+测试会核对路径、方法、参数约束、Adapter 和特殊默认值。Symfony 保留围绕共享
+`BrowserPage` 的薄 `/browser` Controller；PSR-15 Runtime 直接分发相应共享 Action。
+其余 Symfony 路由使用单一 HttpFoundation-to-PSR Adapter，并与 Laravel、Slim、
+Mezzio 和纯 PHP 共用 `EndpointDispatcher`。
 
 兼容矩阵保留已提交的 PHP 8.2 Composer Platform 作为最低解析目标，执行 PHP 8.2／
 Symfony 6.4 `prefer-lowest`；PHP 8.5／Symfony 7.4 最新依赖则使用不带 Platform Override
@@ -36,7 +37,8 @@ Core、HTTP 和 PSR-15 已通过不安装 Symfony 的 Composer 独立安装验�
 Archive 中排除。
 
 可执行的 Slim 4、Mezzio 3 和纯 PHP Front Controller 会在 PHP 8.2 与 8.5 上调用真实
-Router 和 Response Emitter；它们与 Symfony、Laravel 在 CI 中执行同一真实上传、
+Router 和 Response Emitter，并由 Chromium 在每个宿主启动共享 React Browser；它们与
+Symfony、Laravel 在 CI 中执行同一真实上传、
 Range/ETag Stream、文件变更与回收站生命周期。正式入口要求构造时显式提供 Authorization、Actor、CSRF
 及 Event Dispatcher；示例对受保护操作默认拒绝，不提供匿名全放行配置。
 
@@ -48,10 +50,10 @@ Mutation Action 必须显式注入 `AuthorizationInterface` 和
 `CsrfTokenProviderInterface`；认证与 CSRF 校验发生在 JSON 解析之前，宿主不能通过
 遗漏安全依赖获得匿名放行默认值。
 
-目前全部 51 个非展示端点都通过框架无关 Action 执行，其中包含 Metadata、内容读取、
+目前全部 52 个清单端点都有框架无关 Action。51 个 API 与 Stream 端点包含 Metadata、内容读取、
 Range/ETag 流式下载、图片缩略图与变体、文档预览、Prometheus Metrics、标准/分块/兼容上传、
-资产访问会话、归档、完整资产 API、签名 URL 和安全状态。剩余 `/browser` 是由完整框架 Bridge
-渲染的 HTML 外壳，刻意不下沉到无框架 HTTP 用例。
+资产访问会话、归档、完整资产 API、签名 URL 和安全状态；剩余 Action 为 PSR 宿主渲染
+共享 `/browser` HTML 外壳。
 端点 URL 与角色授权使用 Core
 契约并由 Symfony Adapter 实现；功能开关、显式 Workspace 隔离和 Mutation 校验不在
 Bridge 中重复实现。

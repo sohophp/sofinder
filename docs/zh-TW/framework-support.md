@@ -11,15 +11,16 @@ API、命令、安全及依賴注入的完整穩定目標。
 | Host | 目前層級 | 發布門檻 |
 | --- | --- | --- |
 | Symfony 6.4／7.4 | 完整、穩定 | PHP 8.2～8.5 CI Matrix 全部通過 |
-| 純 PHP／任意 Container | 實驗性完整 headless HTTP Runtime | Host 明確提供授權、CSRF、Actor、事件及 PSR Factory |
+| 純 PHP／任意 Container | 實驗性完整瀏覽器/API Runtime | Host 明確提供授權、CSRF、Actor、事件及 PSR Factory |
 | Laravel 12/13 | 實驗性全棧 Bridge：瀏覽器、51 個共用 Handler、Artisan/Queue、Auth/Gate 與 Session CSRF | 完整黑盒一致性及 Symfony 觀察門禁 |
-| Slim／Mezzio | 含全部 51 個共用 Handler 及可執行 Host 的實驗性 PSR-15 Bridge | 完整黑盒一致性及 Symfony 1.0 觀察期門禁 |
+| Slim／Mezzio | 含全部 52 個共用 Handler 及可執行 Host 的實驗性 PSR-15 Bridge | 完整黑盒一致性及 Symfony 1.0 觀察期門禁 |
 | 其他框架 | 僅 headless 核心 | 實作公開契約，不繼承內部 Controller |
 
-實驗性 PSR-15 Package 現已提供 Middleware、`RouteRegistrar` 及全部 51 個非展示 Endpoint
+實驗性 PSR-15 Package 現已提供 Middleware、`RouteRegistrar` 及完整 52 Route 瀏覽器/API
 的本地 Runtime Factory。真實 Slim 4、Mezzio 3 與純 PHP Front Controller 已在 PHP 8.2 和
-8.5 上執行全部 51 條 Route，以及 Liveness、Capabilities、Health、拒絕及寫入路徑；共用
-清單會把狀態／錯誤 Contract 與安全 Response Header 跟 Symfony 比較，`/browser` 仍由 Host 呈現。
+8.5 上提供共用 `/browser` 外殼及前端資源，並執行全部 51 條非展示 Route，以及 Liveness、
+Capabilities、Health、拒絕及寫入路徑；Chromium 會在三個真實 Host 啟動 React UI 且不得
+產生 Runtime Error，共用 API 清單會把狀態／錯誤 Contract 與安全 Response Header 跟 Symfony 比較。
 目前只有 Symfony 屬於支援安裝；PSR Bridge 必須通過完整黑盒 Suite 及發布門禁後才能升級。
 
 受門禁保護的 Laravel Package 已在真實 Laravel 12/13 Application 透過自動探索啟動，
