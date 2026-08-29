@@ -42,7 +42,8 @@
     },
     "autoload": {
         "psr-4": {
-            "SohoPHP\\SoFinder\\": "src/"
+            "SohoPHP\\SoFinder\\": "src/",
+            "SohoPHP\\SoFinderS3\\": "src/S3/"
         }
     },
     "config": {

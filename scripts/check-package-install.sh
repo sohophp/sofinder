@@ -65,7 +65,7 @@ cd "$s3_test_dir"
 "$repository_root/scripts/composer.sh" config repositories.core '{"type":"path","url":"../../packages/sofinder-core","options":{"symlink":false,"versions":{"sohophp/sofinder-core":"1.0.0"}}}'
 "$repository_root/scripts/composer.sh" config repositories.s3 '{"type":"path","url":"../../packages/sofinder-s3","options":{"symlink":false,"versions":{"sohophp/sofinder-s3":"1.0.0"}}}'
 "$repository_root/scripts/composer.sh" require sohophp/sofinder-s3:1.0.0 --no-interaction --prefer-dist "${preference_args[@]}"
-"$repository_root/scripts/php-bin.sh" -r 'require "vendor/autoload.php"; exit(class_exists("SohoPHP\\SoFinderS3\\S3StorageAdapter") && !class_exists("Symfony\\Component\\HttpFoundation\\Request") ? 0 : 1);'
+"$repository_root/scripts/php-bin.sh" -r 'require "vendor/autoload.php"; exit(class_exists("SohoPHP\\SoFinderS3\\S3StorageAdapter") && !class_exists("SohoPHP\\SoFinderS3\\SoFinderS3Bundle") && !class_exists("Symfony\\Component\\HttpKernel\\Bundle\\Bundle") && !class_exists("Symfony\\Component\\HttpFoundation\\Request") ? 0 : 1);'
 test -s vendor/sohophp/sofinder-s3/LICENSE
 test -s vendor/sohophp/sofinder-s3/README.md
 

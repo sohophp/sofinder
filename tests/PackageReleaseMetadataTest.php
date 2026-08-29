@@ -102,4 +102,19 @@ final class PackageReleaseMetadataTest extends TestCase
         self::assertFileExists($package . '/THIRD_PARTY_NOTICES.md');
         self::assertGreaterThan(100, filesize($package . '/THIRD_PARTY_NOTICES.md'));
     }
+
+    public function testS3RuntimePackageIsFrameworkNeutral(): void
+    {
+        $root = dirname(__DIR__);
+        $s3Composer = json_decode((string) file_get_contents($root . '/packages/sofinder-s3/composer.json'), true, 32, JSON_THROW_ON_ERROR);
+        $symfonyComposer = json_decode((string) file_get_contents($root . '/packages/sofinder-symfony/composer.json'), true, 32, JSON_THROW_ON_ERROR);
+
+        self::assertSame('library', $s3Composer['type']);
+        self::assertArrayNotHasKey('symfony/http-kernel', $s3Composer['require']);
+        self::assertFileDoesNotExist($root . '/packages/sofinder-s3/src/SoFinderS3Bundle.php');
+        self::assertFileDoesNotExist($root . '/packages/sofinder-s3/src/DependencyInjection/SoFinderS3Extension.php');
+        self::assertSame('src/S3/', $symfonyComposer['autoload']['psr-4']['SohoPHP\\SoFinderS3\\'] ?? null);
+        self::assertFileExists($root . '/packages/sofinder-symfony/src/S3/SoFinderS3Bundle.php');
+        self::assertFileExists($root . '/packages/sofinder-symfony/src/S3/DependencyInjection/SoFinderS3Extension.php');
+    }
 }

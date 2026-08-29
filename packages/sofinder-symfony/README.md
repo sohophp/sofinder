@@ -21,6 +21,10 @@ Both package names expose the existing `SohoPHP\\SoFinder` namespace. Import
 `@SoFinderBundle/Resources/config/routes.yaml` under the desired prefix and
 configure authorization and CSRF through the host Symfony application.
 
+When `sohophp/sofinder-s3` is installed, this bridge also provides the
+backward-compatible `SohoPHP\SoFinderS3\SoFinderS3Bundle` and its DI extension.
+The S3 package itself remains a framework-neutral Core adapter.
+
 Documentation: <https://sofinder.sohophp.app/symfony>
 
 License: MIT. Bundled frontend dependency notices are in

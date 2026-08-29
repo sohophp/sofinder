@@ -72,6 +72,7 @@ fi
     class_exists("SohoPHP\\SoFinder\\SoFinderBundle")
     && class_exists("SohoPHP\\SoFinder\\Http\\EndpointDispatcher")
     && class_exists("SohoPHP\\SoFinderS3\\S3StorageAdapter")
+    && class_exists("SohoPHP\\SoFinderS3\\SoFinderS3Bundle")
     && class_exists("SohoPHP\\SoFinder\\Configuration\\ConfigurationNormalizer")
     && (!$withBridges || (class_exists("SohoPHP\\SoFinder\\Laravel\\SoFinderServiceProvider")
         && class_exists("SohoPHP\\SoFinder\\Psr15\\SoFinderMiddleware"))) ? 0 : 1

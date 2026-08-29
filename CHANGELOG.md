@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- Make `sohophp/sofinder-s3` a framework-neutral Core adapter library and move
+  its backward-compatible Bundle and DI extension into the Symfony bridge, so
+  headless S3 installs no longer pull in or expose Symfony integration.
 - Generate the Symfony route collection directly from the framework-neutral
   endpoint catalog while preserving the existing Bundle YAML import,
   route names, requirements and host prefix behavior. Keep `/browser` host

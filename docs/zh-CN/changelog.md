@@ -7,6 +7,9 @@ description: SoFinder 每个公开版本的重要变更。
 
 ## 尚未发布
 
+- 将 `sohophp/sofinder-s3` 收紧为框架无关的 Core Adapter Library，并把保持类名
+  兼容的 Bundle 与 DI Extension 移入 Symfony Bridge，使 Headless S3 安装不再携带
+  或暴露 Symfony 集成。
 - Symfony 路由集合现在直接由框架无关的中央端点清单生成，同时保持原有 Bundle YAML
   导入方式、路由名称、参数约束和宿主前缀行为；`/browser` 继续由宿主渲染，其余 51 个
   HTTP 操作统一通过共享 PSR Dispatcher，不再由各功能 Controller 重复解析请求。
