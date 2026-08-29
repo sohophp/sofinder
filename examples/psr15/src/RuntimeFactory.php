@@ -27,9 +27,10 @@ final class RuntimeFactory
         // Deliberately deny protected operations unless the executable contract
         // fixture explicitly opts into its isolated test identity.
         $authorized = getenv('SOFINDER_EXAMPLE_AUTHORIZED') === '1';
-        $authorization = new class($authorized) implements AuthorizationInterface {
-            public function __construct(private readonly bool $authorized) {}
-            public function isAuthenticated(): bool { return $this->authorized; }
+        $authenticated = $authorized || getenv('SOFINDER_EXAMPLE_AUTHENTICATED') === '1';
+        $authorization = new class($authenticated, $authorized) implements AuthorizationInterface {
+            public function __construct(private readonly bool $authenticated, private readonly bool $authorized) {}
+            public function isAuthenticated(): bool { return $this->authenticated; }
             public function isGranted(string $operation, ResourceType $resource, string $path): bool { return $this->authorized; }
         };
         $actor = new class implements ActorProviderInterface {
@@ -42,7 +43,7 @@ final class RuntimeFactory
             public function __construct(private readonly bool $authorized) {}
             public function isGranted(string $role): bool { return $this->authorized; }
         };
-        $csrf = $authorized
+        $csrf = $authenticated
             ? new class implements CsrfTokenProviderInterface {
                 public function token(\SohoPHP\SoFinder\Value\RequestContext $context): string { return 'sofinder-host-contract-token'; }
                 public function isValid(\SohoPHP\SoFinder\Value\RequestContext $context, string $token): bool { return hash_equals($this->token($context), $token); }

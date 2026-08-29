@@ -32,7 +32,9 @@ Dispatcher 和同步发布资源也已接入。Laravel 宿主启用恶意软件�
 及前端资源；Chromium 还会加载真实 Laravel 12／13 浏览器外壳，验证共享 API Bootstrap
 且不产生运行时错误。真实宿主套件也会执行全部 51 条非展示路由，并与 Symfony 比较状态／错误及
 安全响应头契约；同时在五个宿主运行真实 multipart 上传、完整/Range 内容、ETag 重新验证、Range
-下载、重命名、复制、移动、回收站恢复和永久删除生命周期。观察门禁完成前仍标记为实验性。
+下载、重命名、复制、移动、回收站恢复和永久删除生命周期。该套件还验证 Symfony 原生未认证
+401 Challenge，并比较 Laravel、Slim、Mezzio 与纯 PHP 在未认证及“已认证但未授权”两种状态下
+共享的 403 `access_denied` 响应体与安全响应头契约。观察门禁完成前仍标记为实验性。
 
 门禁证据记录在 `config/framework-support.json` 并由 CI 校验。只有记录的主线版本为
 `1.0.0`、UTC 发布日期已满 30 天且未关闭的 P0/P1 缺陷数为零时，才允许设为 eligible。

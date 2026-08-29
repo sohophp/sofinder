@@ -14,10 +14,11 @@ final class AppServiceProvider extends ServiceProvider
 {
     public function boot(): void
     {
-        Auth::viaRequest('sofinder-demo', static fn (Request $request): GenericUser => new GenericUser([
-            'id' => 'sofinder-demo',
-            'name' => 'SoFinder Demo',
-        ]));
-        Gate::before(static fn (): bool => true);
+        $authenticated = getenv('SOFINDER_EXAMPLE_AUTHENTICATED') !== '0';
+        $authorized = getenv('SOFINDER_EXAMPLE_AUTHORIZED') !== '0';
+        Auth::viaRequest('sofinder-demo', static fn (Request $request): ?GenericUser => $authenticated
+            ? new GenericUser(['id' => 'sofinder-demo', 'name' => 'SoFinder Demo'])
+            : null);
+        Gate::before(static fn (): bool => $authorized);
     }
 }

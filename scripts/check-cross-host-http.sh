@@ -215,6 +215,17 @@ stream_signature()
     ' "$label" "$status" "$headers" "$body"
 }
 
+access_denied_signature()
+{
+    local label=$1
+    local status=$2
+    local headers=$3
+    local body=$4
+    [[ "$status" == 403 ]] || fail "$label returned $status instead of 403."
+    grep -Fq '"code":"access_denied"' "$body" || fail "$label returned a different access-denied code."
+    response_signature "$status" "$headers" "$body"
+}
+
 verify_endpoint_inventory()
 {
     local host=$1
@@ -251,18 +262,42 @@ start_host()
 {
     local host=$1
     local port=$2
+    local mode=${3:-allow}
+    local authenticated=1
+    local authorized=1
+    if [[ "$mode" == unauthenticated ]]; then authenticated=0; authorized=0; fi
+    if [[ "$mode" == unauthorized ]]; then authorized=0; fi
     case "$host" in
         symfony)
-            (cd "$repository_root/examples/symfony" && APP_ENV=prod APP_DEBUG=0 "$php_bin" -S "127.0.0.1:$port" -t public public/index.php) > "$test_dir/$host.log" 2>&1 &
+            (cd "$repository_root/examples/symfony" && APP_ENV=prod APP_DEBUG=0 "$php_bin" -S "127.0.0.1:$port" -t public public/index.php) > "$test_dir/$host-$mode.log" 2>&1 &
             ;;
         laravel)
-            (cd "$repository_root/examples/laravel" && SOFINDER_EXAMPLE_OFFICE=1 APP_ENV=production APP_DEBUG=0 "$php_bin" -S "127.0.0.1:$port" -t public public/index.php) > "$test_dir/$host.log" 2>&1 &
+            (cd "$repository_root/examples/laravel" && SOFINDER_EXAMPLE_AUTHENTICATED="$authenticated" SOFINDER_EXAMPLE_AUTHORIZED="$authorized" SOFINDER_EXAMPLE_OFFICE=1 APP_ENV=production APP_DEBUG=0 "$php_bin" -S "127.0.0.1:$port" -t public public/index.php) > "$test_dir/$host-$mode.log" 2>&1 &
             ;;
         slim|mezzio|plain)
-            (cd "$repository_root/examples/psr15" && SOFINDER_EXAMPLE_AUTHORIZED=1 SOFINDER_EXAMPLE_OFFICE=1 "$php_bin" -S "127.0.0.1:$port" "public/$host.php") > "$test_dir/$host.log" 2>&1 &
+            (cd "$repository_root/examples/psr15" && SOFINDER_EXAMPLE_AUTHENTICATED="$authenticated" SOFINDER_EXAMPLE_AUTHORIZED="$authorized" SOFINDER_EXAMPLE_OFFICE=1 "$php_bin" -S "127.0.0.1:$port" "public/$host.php") > "$test_dir/$host-$mode.log" 2>&1 &
             ;;
     esac
     server_pid=$!
+}
+
+wait_for_host()
+{
+    local host=$1
+    local mode=${2:-allow}
+    local ready=false
+    for _attempt in {1..50}; do
+        if curl --silent --fail "$base_url/sofinder/live" > "$test_dir/$host-$mode-live.json"; then
+            ready=true
+            break
+        fi
+        if ! kill -0 "$server_pid" 2>/dev/null; then
+            cat "$test_dir/$host-$mode.log" >&2
+            fail "$host exited before becoming ready in $mode mode."
+        fi
+        sleep 0.2
+    done
+    [[ "$ready" == true ]] || fail "$host did not become ready in $mode mode."
 }
 
 stop_host()
@@ -281,19 +316,7 @@ for specification in 'symfony 18100' 'laravel 18101' 'slim 18102' 'mezzio 18103'
     base_url="http://127.0.0.1:$port"
     start_host "$host" "$port"
 
-    ready=false
-    for _attempt in {1..50}; do
-        if curl --silent --fail "$base_url/sofinder/live" > "$test_dir/$host-live.json"; then
-            ready=true
-            break
-        fi
-        if ! kill -0 "$server_pid" 2>/dev/null; then
-            cat "$test_dir/$host.log" >&2
-            fail "$host exited before becoming ready."
-        fi
-        sleep 0.2
-    done
-    [[ "$ready" == true ]] || fail "$host did not become ready."
+    wait_for_host "$host"
 
     auth=()
     csrf_token='sofinder-host-contract-token'
@@ -498,4 +521,90 @@ for specification in 'symfony 18100' 'laravel 18101' 'slim 18102' 'mezzio 18103'
     printf '%s\n' "$host cross-host contract passed."
 done
 
-printf '%s\n' 'Cross-host HTTP parity passed for Symfony, Laravel, Slim, Mezzio and plain PHP.'
+# Symfony's firewall remains the outer authentication boundary. Confirm its
+# native challenge, then pass a real authenticated-but-underprivileged actor to
+# the shared dispatcher so the authorization response can be compared with the
+# other bridges.
+base_url='http://127.0.0.1:18200'
+start_host symfony 18200
+wait_for_host symfony
+status=$(curl --silent --show-error \
+    --header 'Content-Type: application/json' \
+    --data '{"resource":"Files","path":"","name":"denied"}' \
+    --dump-header "$test_dir/symfony-authentication.headers" \
+    --output "$test_dir/symfony-authentication.body" \
+    --write-out '%{http_code}' \
+    "$base_url/sofinder/api/folders")
+[[ "$status" == 401 ]] || fail "Symfony returned $status instead of its native 401 authentication challenge."
+grep -Eiq '^WWW-Authenticate: Basic' "$test_dir/symfony-authentication.headers" || fail 'Symfony authentication challenge is missing WWW-Authenticate.'
+
+auth=(--user reader:reader)
+curl --silent --show-error --fail "${auth[@]}" --cookie-jar "$test_dir/symfony-reader.cookies" "$base_url/sofinder/browser" > "$test_dir/symfony-reader-browser.html"
+csrf_token=$(sed -n 's/.*csrfToken&quot;:&quot;\([^&]*\)&quot;.*/\1/p' "$test_dir/symfony-reader-browser.html")
+[[ -n "$csrf_token" ]] || fail 'Symfony reader did not receive a CSRF token.'
+cookie=(--cookie "$test_dir/symfony-reader.cookies")
+status=$(curl --silent --show-error "${auth[@]}" "${cookie[@]}" \
+    --header "X-CSRF-TOKEN: $csrf_token" \
+    --form 'resource=Files' --form 'path=' \
+    --form "upload=@$test_dir/upload.txt;filename=authorization-denied.txt;type=text/plain" \
+    --dump-header "$test_dir/symfony-authorization.headers" \
+    --output "$test_dir/symfony-authorization.body" \
+    --write-out '%{http_code}' \
+    "$base_url/sofinder/api/uploads")
+access_denied_signature symfony-authorization "$status" "$test_dir/symfony-authorization.headers" "$test_dir/symfony-authorization.body" > "$test_dir/reference-authorization.signature"
+stop_host
+
+authentication_reference=''
+for specification in 'laravel 18201' 'slim 18202' 'mezzio 18203' 'plain 18204'; do
+    read -r host port <<< "$specification"
+    base_url="http://127.0.0.1:$port"
+    auth=()
+    cookie=()
+    start_host "$host" "$port" unauthenticated
+    wait_for_host "$host" unauthenticated
+    status=$(curl --silent --show-error \
+        --header 'Content-Type: application/json' \
+        --data '{"resource":"Files","path":"","name":"denied"}' \
+        --dump-header "$test_dir/$host-authentication.headers" \
+        --output "$test_dir/$host-authentication.body" \
+        --write-out '%{http_code}' \
+        "$base_url/sofinder/api/folders")
+    access_denied_signature "$host-authentication" "$status" "$test_dir/$host-authentication.headers" "$test_dir/$host-authentication.body" > "$test_dir/$host-authentication.signature"
+    if [[ -z "$authentication_reference" ]]; then
+        authentication_reference="$test_dir/$host-authentication.signature"
+    elif ! diff -u "$authentication_reference" "$test_dir/$host-authentication.signature" >&2; then
+        fail "$host unauthenticated response differs from the Laravel shared contract."
+    fi
+    stop_host
+
+    # Use a distinct listener for the authenticated-but-unauthorized process.
+    # This also proves that no authentication state leaks between the two
+    # independently booted host instances.
+    authorization_port=$((port + 100))
+    base_url="http://127.0.0.1:$authorization_port"
+    start_host "$host" "$authorization_port" unauthorized
+    wait_for_host "$host" unauthorized
+    csrf_token='sofinder-host-contract-token'
+    cookie=()
+    if [[ "$host" == laravel ]]; then
+        curl --silent --show-error --fail --cookie-jar "$test_dir/$host-unauthorized.cookies" "$base_url/sofinder/browser" > "$test_dir/$host-unauthorized-browser.html"
+        csrf_token=$(sed -n 's/.*csrfToken&quot;:&quot;\([^&]*\)&quot;.*/\1/p' "$test_dir/$host-unauthorized-browser.html")
+        [[ -n "$csrf_token" ]] || fail 'Laravel unauthorized actor did not receive a CSRF token.'
+        cookie=(--cookie "$test_dir/$host-unauthorized.cookies")
+    fi
+    status=$(curl --silent --show-error "${cookie[@]}" \
+        --header "X-CSRF-TOKEN: $csrf_token" \
+        --form 'resource=Files' --form 'path=' \
+        --form "upload=@$test_dir/upload.txt;filename=authorization-denied.txt;type=text/plain" \
+        --dump-header "$test_dir/$host-authorization.headers" \
+        --output "$test_dir/$host-authorization.body" \
+        --write-out '%{http_code}' \
+        "$base_url/sofinder/api/uploads")
+    access_denied_signature "$host-authorization" "$status" "$test_dir/$host-authorization.headers" "$test_dir/$host-authorization.body" > "$test_dir/$host-authorization.signature"
+    if ! diff -u "$test_dir/reference-authorization.signature" "$test_dir/$host-authorization.signature" >&2; then
+        fail "$host authorization response differs from the Symfony shared contract."
+    fi
+    stop_host
+done
+
+printf '%s\n' 'Cross-host HTTP parity passed for Symfony, Laravel, Slim, Mezzio and plain PHP, including authentication and authorization boundaries.'

@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+- Exercise real authentication and authorization boundaries across every host:
+  Symfony retains its native Basic 401 challenge, while authenticated-but-denied
+  uploads and framework-neutral unauthenticated requests share the stable 403
+  `access_denied` body and security-header contract.
 - Move deploy-time storage and private-directory auditing into the
   framework-neutral Core `SecurityAuditor`, retain the Symfony Console surface,
   expose the identical JSON contract through Laravel Artisan, and wire Laravel's

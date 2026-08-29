@@ -43,8 +43,11 @@ errors. Its real-host suite also executes all 51
 non-presentation routes against the Symfony status/error and security-header
 contract. The same suite runs a real multipart upload through full/range content,
 ETag revalidation, range download, rename, copy, move, recycle-bin restore and
-permanent deletion on all five hosts. The package remains experimental until
-the observation gate is complete.
+permanent deletion on all five hosts. It additionally verifies Symfony's native
+unauthenticated 401 challenge and compares the shared 403 `access_denied`
+contract for unauthenticated and authenticated-but-unauthorized actors across
+Laravel, Slim, Mezzio and plain PHP. The package remains experimental until the
+observation gate is complete.
 
 The gate is recorded in `config/framework-support.json` and validated in CI.
 It cannot become eligible until the recorded main release is `1.0.0`, its UTC

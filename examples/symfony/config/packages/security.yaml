@@ -6,6 +6,7 @@ security:
       memory:
         users:
           demo: { password: demo, roles: [ROLE_USER, ROLE_ADMIN] }
+          reader: { password: reader, roles: [ROLE_USER] }
   firewalls:
     main:
       lazy: true
