@@ -32,9 +32,11 @@ The gated Laravel package now boots through package discovery in real Laravel
 wires all of them to shared HTTP actions through the PSR dispatcher. Its
 Laravel Auth/Gate, session CSRF, event dispatcher, request context, route URL
 and normalized configuration adapters are present. The shared browser bootstrap,
-four Artisan maintenance commands, Laravel Queue dispatcher and synchronized
-release assets are also wired. A runnable Laravel 12/13 application now verifies
-auto-discovery, configuration and route caches, browser boot, CSRF, upload,
+four Artisan maintenance commands, framework-neutral security audit exposed as
+an Artisan command, Laravel Queue dispatcher and synchronized release assets are
+also wired. Enabling malware scanning attaches the shared fail-closed ClamAV
+scanner to Laravel uploads and the audit. A runnable Laravel 12/13 application
+now verifies auto-discovery, configuration and route caches, browser boot, CSRF, upload,
 download, Range and frontend assets. Chromium also loads the real Laravel 12
 and 13 browser shell and verifies its shared API bootstrap without runtime
 errors. Its real-host suite also executes all 51

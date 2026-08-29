@@ -22,7 +22,7 @@ cd "$core_test_dir"
 "$repository_root/scripts/composer.sh" init --name=sohophp/core-install-test --no-interaction
 "$repository_root/scripts/composer.sh" config repositories.core '{"type":"path","url":"../../packages/sofinder-core","options":{"symlink":false,"versions":{"sohophp/sofinder-core":"1.0.0"}}}'
 "$repository_root/scripts/composer.sh" require sohophp/sofinder-core:1.0.0 --no-interaction --prefer-dist "${preference_args[@]}"
-"$repository_root/scripts/php-bin.sh" -r 'require "vendor/autoload.php"; exit(class_exists("SohoPHP\\SoFinder\\FileManager") && class_exists("SohoPHP\\SoFinder\\Configuration\\ConfigurationNormalizer") && !class_exists("Symfony\\Component\\HttpFoundation\\Request") ? 0 : 1);'
+"$repository_root/scripts/php-bin.sh" -r 'require "vendor/autoload.php"; exit(class_exists("SohoPHP\\SoFinder\\FileManager") && class_exists("SohoPHP\\SoFinder\\Configuration\\ConfigurationNormalizer") && class_exists("SohoPHP\\SoFinder\\Security\\SecurityAuditor") && !class_exists("Symfony\\Component\\HttpFoundation\\Request") ? 0 : 1);'
 test -s vendor/sohophp/sofinder-core/LICENSE
 test -s vendor/sohophp/sofinder-core/README.md
 
@@ -75,7 +75,7 @@ cd "$laravel_test_dir"
 "$repository_root/scripts/composer.sh" config repositories.http '{"type":"path","url":"../../packages/sofinder-http","options":{"symlink":false,"versions":{"sohophp/sofinder-http":"1.0.0"}}}'
 "$repository_root/scripts/composer.sh" config repositories.laravel '{"type":"path","url":"../../packages/sofinder-laravel","options":{"symlink":false,"versions":{"sohophp/sofinder-laravel":"1.0.0"}}}'
 "$repository_root/scripts/composer.sh" require sohophp/sofinder-laravel:1.0.0 --no-interaction --prefer-dist "${preference_args[@]}"
-"$repository_root/scripts/php-bin.sh" -r 'require "vendor/autoload.php"; exit(class_exists("SohoPHP\\SoFinder\\Laravel\\SoFinderServiceProvider") && class_exists("SohoPHP\\SoFinder\\Http\\EndpointDispatcher") ? 0 : 1);'
+"$repository_root/scripts/php-bin.sh" -r 'require "vendor/autoload.php"; exit(class_exists("SohoPHP\\SoFinder\\Laravel\\SoFinderServiceProvider") && class_exists("SohoPHP\\SoFinder\\Laravel\\Console\\SecurityAuditCommand") && class_exists("SohoPHP\\SoFinder\\Http\\EndpointDispatcher") ? 0 : 1);'
 test -s vendor/sohophp/sofinder-laravel/LICENSE
 test -s vendor/sohophp/sofinder-laravel/README.md
 test -s vendor/sohophp/sofinder-laravel/config/sofinder.php

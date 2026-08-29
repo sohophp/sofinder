@@ -10,8 +10,11 @@ Illuminate requests and responses at the PSR-7 boundary. Protected routes deny
 access unless the host application defines the corresponding `sofinder.*` Gate
 abilities. It also registers `sofinder:uploads:cleanup`,
 `sofinder:trash:cleanup`, `sofinder:usage:recalculate` and
-`sofinder:maintenance:status`. Set the shared `maintenance.mode` to `messenger`
-to dispatch maintenance through Laravel's configured queue.
+`sofinder:maintenance:status`, plus the shared deploy-time
+`sofinder:security:audit` (with optional `--json` output). Set the shared
+`maintenance.mode` to `messenger` to dispatch maintenance through Laravel's
+configured queue. Enabling shared `malware_scanning` wires the same fail-closed
+ClamAV upload scanner and audit health check used by the Symfony bridge.
 
 Publish host-editable configuration with
 `php artisan vendor:publish --tag=sofinder-config`, or copy the synchronized

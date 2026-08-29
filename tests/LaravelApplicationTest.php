@@ -18,6 +18,7 @@ use SohoPHP\SoFinder\ResourceRegistry;
 use SohoPHP\SoFinder\Http\StandardEndpointActions;
 use SohoPHP\SoFinder\Http\AdvancedEndpointActions;
 use SohoPHP\SoFinder\Http\EndpointCatalog;
+use SohoPHP\SoFinder\Security\ClamAvScanner;
 use SohoPHP\SoFinder\Workspace\WorkspaceProvider;
 
 final class LaravelApplicationTest extends TestCase
@@ -83,10 +84,28 @@ final class LaravelApplicationTest extends TestCase
             ->expectsOutputToContain('"status":"ready"')
             ->assertExitCode(0);
 
+        $this->artisan('sofinder:security:audit', ['--json' => true])
+            ->expectsOutputToContain('"scope":"malware-scanning"')
+            ->assertExitCode(0);
+
         $commands = $this->app->make(\Illuminate\Contracts\Console\Kernel::class)->all();
-        foreach (['sofinder:uploads:cleanup', 'sofinder:trash:cleanup', 'sofinder:usage:recalculate', 'sofinder:maintenance:status'] as $name) {
+        foreach (['sofinder:uploads:cleanup', 'sofinder:trash:cleanup', 'sofinder:usage:recalculate', 'sofinder:maintenance:status', 'sofinder:security:audit'] as $name) {
             self::assertArrayHasKey($name, $commands);
         }
+    }
+
+    public function testEnabledMalwareScanningIsWiredIntoTheSecurityAudit(): void
+    {
+        $this->app->make('config')->set('sofinder.core.malware_scanning', [
+            'enabled' => true,
+            'endpoint' => 'tcp://127.0.0.1:1',
+            'timeout_seconds' => 0.1,
+        ]);
+
+        self::assertInstanceOf(ClamAvScanner::class, $this->app->make(ClamAvScanner::class));
+        $this->artisan('sofinder:security:audit', ['--json' => true])
+            ->expectsOutputToContain('"message":"The configured malware scanner is unavailable."')
+            ->assertExitCode(1);
     }
 
     public function testProviderPublishesConfigurationAndFrontendAssets(): void

@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+- Move deploy-time storage and private-directory auditing into the
+  framework-neutral Core `SecurityAuditor`, retain the Symfony Console surface,
+  expose the identical JSON contract through Laravel Artisan, and wire Laravel's
+  malware-scanning configuration into the shared fail-closed ClamAV pipeline.
 - Execute the canonical 51-route inventory against real Symfony, Laravel,
   Slim, Mezzio and plain PHP hosts, comparing status/error envelopes, response
   shape and security headers while retaining lifecycle tests for mutations and

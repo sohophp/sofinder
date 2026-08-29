@@ -12,6 +12,7 @@ use Nyholm\Psr7\Factory\Psr17Factory;
 use Psr\EventDispatcher\EventDispatcherInterface;
 use Psr\Http\Message\ResponseFactoryInterface;
 use Psr\Http\Message\StreamFactoryInterface;
+use Psr\Log\LoggerInterface;
 use SohoPHP\SoFinder\Contract\ActorProviderInterface;
 use SohoPHP\SoFinder\Contract\AssetCatalogInterface;
 use SohoPHP\SoFinder\Contract\AssetSearchProviderInterface;
@@ -58,15 +59,18 @@ use SohoPHP\SoFinder\Laravel\Console\CleanupTrashCommand;
 use SohoPHP\SoFinder\Laravel\Console\CleanupUploadsCommand;
 use SohoPHP\SoFinder\Laravel\Console\MaintenanceStatusCommand;
 use SohoPHP\SoFinder\Laravel\Console\RecalculateUsageCommand;
+use SohoPHP\SoFinder\Laravel\Console\SecurityAuditCommand;
 use SohoPHP\SoFinder\Laravel\Queue\LaravelMaintenanceDispatcher;
 use SohoPHP\SoFinder\Observability\LocalMetricsStore;
 use SohoPHP\SoFinder\Preview\DocumentPreviewJobManager;
 use SohoPHP\SoFinder\Preview\DocumentPreviewManager;
 use SohoPHP\SoFinder\ResourceRegistry;
 use SohoPHP\SoFinder\Security\DefaultFileInspector;
+use SohoPHP\SoFinder\Security\ClamAvScanner;
 use SohoPHP\SoFinder\Security\PathGuard;
 use SohoPHP\SoFinder\Security\MalwareScanStatusStore;
 use SohoPHP\SoFinder\Security\SignedUrlManager;
+use SohoPHP\SoFinder\Security\SecurityAuditor;
 use SohoPHP\SoFinder\Security\UploadPipeline;
 use SohoPHP\SoFinder\Storage\ResourceRegistryFactory;
 use SohoPHP\SoFinder\Storage\StoragePaginator;
@@ -201,7 +205,39 @@ final class SoFinderServiceProvider extends ServiceProvider
         $this->app->singleton(UploadPipeline::class, static fn ($app): UploadPipeline => new UploadPipeline(
             new DefaultFileInspector($app->make(HybridImageProcessor::class), $app->make(ImageFormatRegistry::class)),
             (string) $app->make(LaravelConfiguration::class)->get('quarantine_dir'),
+            [$app->make(ClamAvScanner::class)],
         ));
+        $this->app->singleton(ClamAvScanner::class, static function ($app): ClamAvScanner {
+            $configuration = $app->make(LaravelConfiguration::class);
+
+            return new ClamAvScanner(
+                (string) $configuration->get('malware_scanning.endpoint'),
+                (float) $configuration->get('malware_scanning.timeout_seconds'),
+                metrics: $app->make(MetricsStoreInterface::class),
+                statusStore: $app->make(MalwareScanStatusStoreInterface::class),
+                logger: $app->make(LoggerInterface::class),
+                enabled: (bool) $configuration->get('malware_scanning.enabled'),
+            );
+        });
+        $this->app->singleton(SecurityAuditor::class, static function ($app): SecurityAuditor {
+            $configuration = $app->make(LaravelConfiguration::class);
+
+            return new SecurityAuditor(
+                $app->make(ResourceRegistry::class),
+                $app->basePath(),
+                (string) $configuration->get('quarantine_dir'),
+                (string) $configuration->get('chunk_dir'),
+                (string) $configuration->get('trash_dir'),
+                $app->make(ImageCapabilityProviderInterface::class),
+                $app->make(ImageFormatRegistry::class),
+                (bool) $configuration->get('malware_scanning.enabled'),
+                $app->make(ClamAvScanner::class),
+                $configuration->get('cluster.state_service') !== null,
+                (bool) $configuration->get('cluster.shared_preview_cache'),
+                (string) $configuration->get('document_preview.mode'),
+                (bool) $configuration->get('document_preview.office'),
+            );
+        });
         $this->app->singleton(FileManager::class, static fn ($app): FileManager => new FileManager(
             $app->make(ResourceRegistry::class),
             $app->make(AuthorizationInterface::class),
@@ -376,6 +412,7 @@ final class SoFinderServiceProvider extends ServiceProvider
                 CleanupTrashCommand::class,
                 RecalculateUsageCommand::class,
                 MaintenanceStatusCommand::class,
+                SecurityAuditCommand::class,
             ]);
             $this->publishes([
                 dirname(__DIR__) . '/config/sofinder.php' => config_path('sofinder.php'),
