@@ -8,7 +8,14 @@ The bridge registers the browser and canonical endpoint catalog below
 `/sofinder`, uses Laravel Auth/Gate and session CSRF services, and converts
 Illuminate requests and responses at the PSR-7 boundary. Protected routes deny
 access unless the host application defines the corresponding `sofinder.*` Gate
-abilities. It also registers `sofinder:uploads:cleanup`,
+abilities. Operational state for chunk sessions, maintenance claims, metrics,
+malware status and document-preview jobs uses Laravel's configured Cache
+repository and atomic locks. The default Cache store is selected unless
+`cache_store` names another store; a driver without atomic-lock support fails
+application bootstrap. `cache_prefix`, `cache_lock_seconds` and
+`cache_lock_wait_seconds` tune isolation and lock behavior.
+
+The bridge also registers `sofinder:uploads:cleanup`,
 `sofinder:trash:cleanup`, `sofinder:usage:recalculate` and
 `sofinder:maintenance:status`, plus the shared deploy-time
 `sofinder:security:audit` (with optional `--json` output). Set the shared

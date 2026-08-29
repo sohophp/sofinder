@@ -79,6 +79,7 @@ final class PackageReleaseMetadataTest extends TestCase
                 'psr/http-server-middleware',
             ],
             'packages/sofinder-laravel/composer.json' => [
+                'illuminate/cache',
                 'psr/event-dispatcher',
                 'psr/http-factory',
                 'psr/log',

@@ -4,7 +4,9 @@ declare(strict_types=1);
 
 namespace SohoPHP\SoFinder\Laravel;
 
+use Illuminate\Cache\Repository as CacheRepository;
 use Illuminate\Contracts\Auth\Factory as AuthFactory;
+use Illuminate\Contracts\Cache\Factory as CacheFactory;
 use Illuminate\Contracts\Events\Dispatcher as IlluminateDispatcher;
 use Illuminate\Routing\Router;
 use Illuminate\Support\ServiceProvider;
@@ -14,6 +16,7 @@ use Psr\Http\Message\ResponseFactoryInterface;
 use Psr\Http\Message\StreamFactoryInterface;
 use Psr\Log\LoggerInterface;
 use SohoPHP\SoFinder\Contract\ActorProviderInterface;
+use SohoPHP\SoFinder\Contract\AtomicStateStoreInterface;
 use SohoPHP\SoFinder\Contract\AssetCatalogInterface;
 use SohoPHP\SoFinder\Contract\AssetSearchProviderInterface;
 use SohoPHP\SoFinder\Contract\AssetUsageStoreInterface;
@@ -22,6 +25,7 @@ use SohoPHP\SoFinder\Contract\ChunkUploadStoreInterface;
 use SohoPHP\SoFinder\Contract\CsrfTokenProviderInterface;
 use SohoPHP\SoFinder\Contract\EndpointUrlGeneratorInterface;
 use SohoPHP\SoFinder\Contract\EntryUrlGeneratorInterface;
+use SohoPHP\SoFinder\Contract\GaugeMetricsStoreInterface;
 use SohoPHP\SoFinder\Contract\RequestContextProviderInterface;
 use SohoPHP\SoFinder\Contract\RoleAuthorizationInterface;
 use SohoPHP\SoFinder\Contract\WorkspaceResolverInterface;
@@ -61,14 +65,14 @@ use SohoPHP\SoFinder\Laravel\Console\MaintenanceStatusCommand;
 use SohoPHP\SoFinder\Laravel\Console\RecalculateUsageCommand;
 use SohoPHP\SoFinder\Laravel\Console\SecurityAuditCommand;
 use SohoPHP\SoFinder\Laravel\Queue\LaravelMaintenanceDispatcher;
-use SohoPHP\SoFinder\Observability\LocalMetricsStore;
+use SohoPHP\SoFinder\Observability\SharedMetricsStore;
 use SohoPHP\SoFinder\Preview\DocumentPreviewJobManager;
 use SohoPHP\SoFinder\Preview\DocumentPreviewManager;
 use SohoPHP\SoFinder\ResourceRegistry;
 use SohoPHP\SoFinder\Security\DefaultFileInspector;
 use SohoPHP\SoFinder\Security\ClamAvScanner;
 use SohoPHP\SoFinder\Security\PathGuard;
-use SohoPHP\SoFinder\Security\MalwareScanStatusStore;
+use SohoPHP\SoFinder\Security\SharedMalwareScanStatusStore;
 use SohoPHP\SoFinder\Security\SignedUrlManager;
 use SohoPHP\SoFinder\Security\SecurityAuditor;
 use SohoPHP\SoFinder\Security\UploadPipeline;
@@ -76,6 +80,7 @@ use SohoPHP\SoFinder\Storage\ResourceRegistryFactory;
 use SohoPHP\SoFinder\Storage\StoragePaginator;
 use SohoPHP\SoFinder\Trash\TrashManager;
 use SohoPHP\SoFinder\Upload\ChunkUploadManager;
+use SohoPHP\SoFinder\Upload\SharedChunkUploadStore;
 use SohoPHP\SoFinder\Upload\UploadNamePolicy;
 use SohoPHP\SoFinder\Usage\PersistentUsageTracker;
 use SohoPHP\SoFinder\Value\Theme;
@@ -109,6 +114,24 @@ final class SoFinderServiceProvider extends ServiceProvider
         $this->app->singleton(RoleAuthorizationInterface::class, static fn ($app): LaravelRoleAuthorization => new LaravelRoleAuthorization($app->make(\Illuminate\Contracts\Auth\Access\Gate::class)));
         $this->app->singleton(CsrfTokenProviderInterface::class, static fn ($app): LaravelCsrfTokenProvider => new LaravelCsrfTokenProvider(static fn (): \Illuminate\Http\Request => $app->make('request')));
         $this->app->singleton(EventDispatcherInterface::class, static fn ($app): LaravelEventDispatcher => new LaravelEventDispatcher($app->make(IlluminateDispatcher::class)));
+        $this->app->singleton(LaravelCacheAtomicStateStore::class, static function ($app): LaravelCacheAtomicStateStore {
+            $store = $app->make('config')->get('sofinder.cache_store');
+            if ($store !== null && (!is_string($store) || $store === '')) {
+                throw new \InvalidArgumentException('sofinder.cache_store must be null or a non-empty Laravel cache store name.');
+            }
+            $cache = $app->make(CacheFactory::class)->store($store);
+            if (!$cache instanceof CacheRepository) {
+                throw new \LogicException('Laravel cache.store must resolve to an Illuminate cache repository.');
+            }
+
+            return new LaravelCacheAtomicStateStore(
+                $cache,
+                (string) $app->make('config')->get('sofinder.cache_prefix', 'sofinder:'),
+                (int) $app->make('config')->get('sofinder.cache_lock_seconds', 60),
+                (int) $app->make('config')->get('sofinder.cache_lock_wait_seconds', 2),
+            );
+        });
+        $this->app->alias(LaravelCacheAtomicStateStore::class, AtomicStateStoreInterface::class);
         $this->app->singleton(RequestContextProviderInterface::class, static fn ($app): LaravelRequestContextProvider => new LaravelRequestContextProvider(static fn (): \Illuminate\Http\Request => $app->make('request')));
         $this->app->singleton(EndpointUrlGeneratorInterface::class, LaravelEndpointUrlGenerator::class);
         $this->app->singleton(EntryUrlGeneratorInterface::class, LaravelEntryUrlGenerator::class);
@@ -181,7 +204,12 @@ final class SoFinderServiceProvider extends ServiceProvider
             (int) $app->make(LaravelConfiguration::class)->get('chunk_size'),
             (int) $app->make(LaravelConfiguration::class)->get('max_upload_chunks'),
         ));
-        $this->app->alias(ChunkUploadManager::class, ChunkUploadStoreInterface::class);
+        $this->app->singleton(SharedChunkUploadStore::class, static fn ($app): SharedChunkUploadStore => new SharedChunkUploadStore(
+            $app->make(ChunkUploadManager::class),
+            $app->make(AtomicStateStoreInterface::class),
+            $app->make(ActorProviderInterface::class),
+        ));
+        $this->app->alias(SharedChunkUploadStore::class, ChunkUploadStoreInterface::class);
         $this->app->singleton(LaravelMaintenanceDispatcher::class);
         $this->app->alias(LaravelMaintenanceDispatcher::class, MaintenanceDispatcherInterface::class);
         $this->app->singleton(MaintenanceRunner::class, static fn ($app): MaintenanceRunner => new MaintenanceRunner(
@@ -190,6 +218,7 @@ final class SoFinderServiceProvider extends ServiceProvider
             $app->make(TrashManager::class),
             $app->make(PersistentUsageTracker::class),
             $app->make(ResourceRegistry::class),
+            $app->make(AtomicStateStoreInterface::class),
         ));
         $this->app->singleton(MaintenanceCoordinator::class, static function ($app): MaintenanceCoordinator {
             $mode = (string) $app->make(LaravelConfiguration::class)->get('maintenance.mode');
@@ -200,6 +229,7 @@ final class SoFinderServiceProvider extends ServiceProvider
                 (int) $app->make(LaravelConfiguration::class)->get('maintenance.max_items_per_run'),
                 $app->make(MaintenanceRunner::class),
                 $mode === 'messenger' ? $app->make(MaintenanceDispatcherInterface::class) : null,
+                $app->make(AtomicStateStoreInterface::class),
             );
         });
         $this->app->singleton(UploadPipeline::class, static fn ($app): UploadPipeline => new UploadPipeline(
@@ -292,8 +322,9 @@ final class SoFinderServiceProvider extends ServiceProvider
         ));
         $this->app->singleton(AssetOperationPublisher::class, static fn ($app): AssetOperationPublisher => new AssetOperationPublisher($app->make(EventDispatcherInterface::class), $app->make(WorkspaceProvider::class), $app->make(ResourceRegistry::class), $app->make(AssetCatalogInterface::class), (bool) $app->make(LaravelConfiguration::class)->get('asset_catalog.enabled')));
         $this->app->singleton(ArchiveManager::class, static fn ($app): ArchiveManager => new ArchiveManager($app->make(FileManager::class), $app->make(PathGuard::class), (string) $app->make(LaravelConfiguration::class)->get('cache_dir')));
-        $this->app->singleton(LocalMetricsStore::class, static fn ($app): LocalMetricsStore => new LocalMetricsStore(rtrim((string) $app->make(LaravelConfiguration::class)->get('cache_dir'), '/') . '/metrics.json'));
-        $this->app->alias(LocalMetricsStore::class, MetricsStoreInterface::class);
+        $this->app->singleton(SharedMetricsStore::class, static fn ($app): SharedMetricsStore => new SharedMetricsStore($app->make(AtomicStateStoreInterface::class)));
+        $this->app->alias(SharedMetricsStore::class, MetricsStoreInterface::class);
+        $this->app->alias(SharedMetricsStore::class, GaugeMetricsStoreInterface::class);
         $this->app->singleton(DocumentPreviewManager::class, static fn ($app): DocumentPreviewManager => new DocumentPreviewManager(
             $app->make(FileManager::class), (string) $app->make(LaravelConfiguration::class)->get('cache_dir'),
             (bool) $app->make(LaravelConfiguration::class)->get('document_preview.pdf'), (bool) $app->make(LaravelConfiguration::class)->get('document_preview.office'),
@@ -303,7 +334,7 @@ final class SoFinderServiceProvider extends ServiceProvider
         $this->app->singleton(DocumentPreviewJobManager::class, static fn ($app): DocumentPreviewJobManager => new DocumentPreviewJobManager(
             $app->make(DocumentPreviewManager::class), $app->make(ActorProviderInterface::class), rtrim((string) $app->make(LaravelConfiguration::class)->get('cache_dir'), '/') . '/document-preview-jobs.json',
             (string) $app->make(LaravelConfiguration::class)->get('document_preview.mode'), (int) $app->make(LaravelConfiguration::class)->get('document_preview.job_ttl_seconds'),
-            (int) $app->make(LaravelConfiguration::class)->get('document_preview.cache_ttl_seconds'), metrics: $app->make(MetricsStoreInterface::class),
+            (int) $app->make(LaravelConfiguration::class)->get('document_preview.cache_ttl_seconds'), state: $app->make(AtomicStateStoreInterface::class), metrics: $app->make(MetricsStoreInterface::class),
         ));
         $this->app->singleton(SignedUrlManager::class, static fn ($app): SignedUrlManager => new SignedUrlManager(
             $app->make(FileManager::class), $app->make(ResourceRegistry::class), $app->make(PathGuard::class), (bool) $app->make(LaravelConfiguration::class)->get('signed_urls.enabled'),
@@ -325,13 +356,16 @@ final class SoFinderServiceProvider extends ServiceProvider
                 $app->make(ResourceRegistry::class),
                 $app->make(ImageCapabilityProviderInterface::class),
                 $app->make(ImageFormatRegistry::class),
-                $app->make(LocalMetricsStore::class),
+                $app->make(GaugeMetricsStoreInterface::class),
                 $packageDirectory,
                 true,
             );
         });
-        $this->app->singleton(MalwareScanStatusStore::class, static fn ($app): MalwareScanStatusStore => new MalwareScanStatusStore(rtrim((string) $app->make(LaravelConfiguration::class)->get('cache_dir'), '/') . '/malware-scans.json', (int) $app->make(LaravelConfiguration::class)->get('malware_scanning.history_limit')));
-        $this->app->alias(MalwareScanStatusStore::class, MalwareScanStatusStoreInterface::class);
+        $this->app->singleton(SharedMalwareScanStatusStore::class, static fn ($app): SharedMalwareScanStatusStore => new SharedMalwareScanStatusStore(
+            $app->make(AtomicStateStoreInterface::class),
+            (int) $app->make(LaravelConfiguration::class)->get('malware_scanning.history_limit'),
+        ));
+        $this->app->alias(SharedMalwareScanStatusStore::class, MalwareScanStatusStoreInterface::class);
         $this->app->singleton(StandardEndpointActions::class, static fn ($app): StandardEndpointActions => new StandardEndpointActions(
             $app->make(FileManager::class),
             $app->make(MetadataManager::class),

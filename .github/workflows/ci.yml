@@ -245,6 +245,7 @@ jobs:
       - run: >-
           COMPOSER=composer.laravel.json ./scripts/composer.sh require --no-update
           illuminate/auth:${{ matrix.laravel }}.*
+          illuminate/cache:${{ matrix.laravel }}.*
           illuminate/console:${{ matrix.laravel }}.*
           illuminate/http:${{ matrix.laravel }}.*
           illuminate/routing:${{ matrix.laravel }}.*
@@ -252,7 +253,7 @@ jobs:
           illuminate/support:${{ matrix.laravel }}.*
           orchestra/testbench:${{ matrix.testbench }}.*
       - run: COMPOSER=composer.laravel.json ./scripts/composer.sh update --no-interaction --prefer-dist
-      - run: ./scripts/php-bin.sh vendor/bin/phpunit tests/LaravelBridgeTest.php tests/LaravelApplicationTest.php
+      - run: ./scripts/php-bin.sh vendor/bin/phpunit tests/LaravelBridgeTest.php tests/LaravelApplicationTest.php tests/LaravelCacheAtomicStateStoreTest.php
       - run: COMPOSER=composer.laravel.json ./scripts/composer.sh audit
 
   laravel-example:

@@ -82,6 +82,12 @@ if [[ "$with_bridges" == true ]]; then
     test -s vendor/sohophp/sofinder-psr15/dist/manifest.json
     test -s vendor/sohophp/sofinder-laravel/THIRD_PARTY_NOTICES.md
     test -s vendor/sohophp/sofinder-psr15/THIRD_PARTY_NOTICES.md
+    "$repository_root/scripts/php-bin.sh" -r '
+        require "vendor/autoload.php";
+        $manifest=json_decode((string) file_get_contents("vendor/sohophp/sofinder-laravel/composer.json"),true,32,JSON_THROW_ON_ERROR);
+        exit(class_exists("SohoPHP\\SoFinder\\Laravel\\LaravelCacheAtomicStateStore")
+            && ($manifest["require"]["illuminate/cache"]??null)==="^12.0 || ^13.0" ? 0 : 1);
+    '
 
     psr_consumer_dir="$happy_dir/psr15-consumer"
     mkdir -p "$psr_consumer_dir"

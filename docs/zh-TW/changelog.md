@@ -7,6 +7,8 @@ description: SoFinder 每個公開版本的重要變更。
 
 ## 尚未發佈
 
+- Laravel 的分塊 Session、維護鎖、Metrics、惡意軟體狀態和文件預覽工作現在預設使用
+  Host 設定的 Cache Repository 與原子鎖；不支援安全鎖的 Cache Driver 會在啟動時直接失敗。
 - 發布受門禁保護的 Bridge 前，線上驗證成功的 GitHub Actions 記錄，匹配 Symfony Matrix
   Commit、Workflow 路徑、`main` Branch 及觀察期後的執行日期，不再只信任 URL 文字。
 - 將 Framework 晉級版本視為穩定最低版本而非完全相同的 Tag，使政策可如實記錄 1.0.1，

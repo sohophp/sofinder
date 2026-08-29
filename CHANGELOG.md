@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+- Back Laravel's operational shared state with the host's configured Cache
+  repository and atomic locks, covering chunk sessions, maintenance claims,
+  metrics, malware status and document-preview jobs while failing bootstrap for
+  cache drivers that cannot provide safe locks.
 - Lock the framework-free startup contract with tests proving authorization,
   actor, CSRF and event services cannot be omitted, while an omitted optional
   role provider denies every endpoint configured with required roles.

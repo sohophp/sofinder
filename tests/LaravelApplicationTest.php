@@ -8,17 +8,25 @@ use Illuminate\Foundation\Application;
 use Illuminate\Routing\Router;
 use Orchestra\Testbench\TestCase;
 use SohoPHP\SoFinder\Contract\EndpointUrlGeneratorInterface;
+use SohoPHP\SoFinder\Contract\AtomicStateStoreInterface;
+use SohoPHP\SoFinder\Contract\ChunkUploadStoreInterface;
+use SohoPHP\SoFinder\Contract\GaugeMetricsStoreInterface;
+use SohoPHP\SoFinder\Contract\MalwareScanStatusStoreInterface;
 use SohoPHP\SoFinder\Contract\EntryUrlGeneratorInterface;
 use SohoPHP\SoFinder\Contract\RequestContextProviderInterface;
 use SohoPHP\SoFinder\Contract\RoleAuthorizationInterface;
 use SohoPHP\SoFinder\Contract\WorkspaceResolverInterface;
 use SohoPHP\SoFinder\Laravel\LaravelConfiguration;
+use SohoPHP\SoFinder\Laravel\LaravelCacheAtomicStateStore;
 use SohoPHP\SoFinder\Laravel\SoFinderServiceProvider;
 use SohoPHP\SoFinder\ResourceRegistry;
 use SohoPHP\SoFinder\Http\StandardEndpointActions;
 use SohoPHP\SoFinder\Http\AdvancedEndpointActions;
 use SohoPHP\SoFinder\Http\EndpointCatalog;
 use SohoPHP\SoFinder\Security\ClamAvScanner;
+use SohoPHP\SoFinder\Observability\SharedMetricsStore;
+use SohoPHP\SoFinder\Security\SharedMalwareScanStatusStore;
+use SohoPHP\SoFinder\Upload\SharedChunkUploadStore;
 use SohoPHP\SoFinder\Workspace\WorkspaceProvider;
 
 final class LaravelApplicationTest extends TestCase
@@ -122,7 +130,11 @@ final class LaravelApplicationTest extends TestCase
     {
         foreach ([
             EndpointUrlGeneratorInterface::class,
+            AtomicStateStoreInterface::class,
+            ChunkUploadStoreInterface::class,
             EntryUrlGeneratorInterface::class,
+            GaugeMetricsStoreInterface::class,
+            MalwareScanStatusStoreInterface::class,
             RequestContextProviderInterface::class,
             RoleAuthorizationInterface::class,
             WorkspaceResolverInterface::class,
@@ -133,6 +145,10 @@ final class LaravelApplicationTest extends TestCase
         }
 
         self::assertSame('/sofinder/live', $this->app->make(EndpointUrlGeneratorInterface::class)->generate('sofinder_liveness'));
+        self::assertInstanceOf(LaravelCacheAtomicStateStore::class, $this->app->make(AtomicStateStoreInterface::class));
+        self::assertInstanceOf(SharedChunkUploadStore::class, $this->app->make(ChunkUploadStoreInterface::class));
+        self::assertInstanceOf(SharedMetricsStore::class, $this->app->make(GaugeMetricsStoreInterface::class));
+        self::assertInstanceOf(SharedMalwareScanStatusStore::class, $this->app->make(MalwareScanStatusStoreInterface::class));
         self::assertSame(['Files'], array_map(
             static fn ($storage): string => $storage->resource->name,
             $this->app->make(ResourceRegistry::class)->all(),

@@ -7,6 +7,8 @@ description: SoFinder 每个公开版本的重要变更。
 
 ## 尚未发布
 
+- Laravel 的分块会话、维护锁、指标、恶意软件状态和文档预览任务现在默认使用宿主配置的
+  Cache Repository 与原子锁；不支持安全锁的 Cache Driver 会在启动时直接失败。
 - 发布受门禁保护的 Bridge 前，在线核验成功的 GitHub Actions 记录，匹配 Symfony 矩阵
   Commit、Workflow 路径、`main` 分支及观察期后的运行日期，不再只信任 URL 文本。
 - 将框架晋级版本作为稳定最低版本而非完全相同的 Tag，使政策能如实记录 1.0.1，同时不重置
