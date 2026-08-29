@@ -7,6 +7,9 @@ description: SoFinder 每個公開版本的重要變更。
 
 ## 尚未發佈
 
+- 發佈演練現在會把未來 Laravel 拆分 Repository 安裝到全新的 Laravel 13 應用，並針對
+  安裝後的 Package 執行自動發現、設定／Route Cache、全部 52 Route、Artisan、瀏覽器、
+  CSRF、上傳下載、Range 與前端資源驗證。
 - PSR-15 本地應用 Factory 現在會自動發現發佈 Package 內的前端資源，並在未來拆分
   Repository 的乾淨 Composer Consumer 中實際啟動 `/browser`、讀取真實資源，避免使用者傳入 Repository 內部路徑。
 - 將框架無關 Browser Action 加入 PSR-15 本地 Runtime，預設註冊全部 52 條中央 Route，

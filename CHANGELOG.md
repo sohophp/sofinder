@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+- Install the future Laravel split repository into a clean Laravel 13
+  application during publication rehearsal and execute package discovery,
+  config/route caches, all 52 routes, Artisan, browser, CSRF, upload, download,
+  Range and frontend-asset checks against the installed package.
 - Let the PSR-15 local application factory discover its packaged frontend
   distribution automatically, and boot `/browser` plus a real asset from a
   clean Composer consumer of the future split repository.

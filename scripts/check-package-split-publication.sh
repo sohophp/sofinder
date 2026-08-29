@@ -83,6 +83,38 @@ if [[ "$with_bridges" == true ]]; then
     runtime_dir="$consumer_dir/var/psr15-runtime"
     mkdir -p "$runtime_dir/state" "$runtime_dir/files"
     "$repository_root/scripts/php-bin.sh" "$repository_root/tests/fixtures/verify-installed-psr-browser.php" "$runtime_dir"
+
+    laravel_dir="$happy_dir/laravel-consumer"
+    mkdir -p "$laravel_dir/bootstrap/cache" "$laravel_dir/storage/app" \
+        "$laravel_dir/storage/framework/cache" "$laravel_dir/storage/framework/sessions" \
+        "$laravel_dir/storage/framework/views" "$laravel_dir/storage/logs"
+    cp -R "$repository_root/examples/laravel/app" "$laravel_dir/app"
+    cp -R "$repository_root/examples/laravel/config" "$laravel_dir/config"
+    cp -R "$repository_root/examples/laravel/public" "$laravel_dir/public"
+    cp -R "$repository_root/examples/laravel/routes" "$laravel_dir/routes"
+    cp "$repository_root/examples/laravel/bootstrap/app.php" "$laravel_dir/bootstrap/app.php"
+    cp "$repository_root/examples/laravel/bootstrap/providers.php" "$laravel_dir/bootstrap/providers.php"
+    cp "$repository_root/examples/laravel/artisan" "$laravel_dir/artisan"
+    cp "$repository_root/examples/laravel/.env.example" "$laravel_dir/.env.example"
+    cp "$repository_root/examples/laravel/README.md" "$laravel_dir/README.md"
+    cp "$repository_root/examples/laravel/composer-13.json" "$laravel_dir/composer.json"
+    cd "$laravel_dir"
+    "$repository_root/scripts/composer.sh" config --unset repositories
+    while IFS=$'\t' read -r package_name repository _commit _tag _bundle; do
+        package=${package_name#sohophp/}
+        "$repository_root/scripts/composer.sh" config "repositories.$package" \
+            "{\"type\":\"vcs\",\"url\":\"$happy_url/$repository.git\"}"
+    done < "$split_dir/SPLIT_MANIFEST.tsv"
+    "$repository_root/scripts/composer.sh" config minimum-stability RC
+    stable_version=${release_version%%-*}
+    release_minor=${stable_version%.*}
+    "$repository_root/scripts/composer.sh" require --no-update \
+        "laravel/framework:13.*" "sohophp/sofinder-laravel:^$release_minor@RC"
+    "$repository_root/scripts/composer.sh" update --no-interaction --prefer-dist --no-progress
+    "$repository_root/scripts/composer.sh" show "sohophp/sofinder-laravel" "$release_version" --no-interaction >/dev/null
+    cd "$repository_root"
+    SOFINDER_LARAVEL_EXAMPLE_DIR="$laravel_dir" SOFINDER_LARAVEL_PORT=18088 \
+        bash "$repository_root/scripts/check-laravel-example-http.sh"
 fi
 cd "$repository_root"
 

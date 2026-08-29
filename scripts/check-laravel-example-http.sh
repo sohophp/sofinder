@@ -3,8 +3,14 @@
 set -euo pipefail
 
 repository_root=$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)
-example_dir="$repository_root/examples/laravel"
+example_dir=${SOFINDER_LARAVEL_EXAMPLE_DIR:-"$repository_root/examples/laravel"}
+if [[ ! -s "$example_dir/composer.json" || ! -s "$example_dir/artisan" ]]; then
+    echo "Invalid Laravel example directory: $example_dir" >&2
+    exit 2
+fi
+example_dir=$(cd "$example_dir" && pwd)
 php_bin="$repository_root/scripts/php-bin.sh"
+composer_bin="$repository_root/scripts/composer.sh"
 mkdir -p "$repository_root/var"
 test_dir=$(mktemp -d "$repository_root/var/laravel-http.XXXXXX")
 port=${SOFINDER_LARAVEL_PORT:-18083}
@@ -60,8 +66,8 @@ trap cleanup EXIT
 
 cd "$example_dir"
 cp .env.example .env
-../../scripts/composer.sh validate --strict
-../../scripts/composer.sh install --no-interaction --prefer-dist --no-progress
+"$composer_bin" validate --strict
+"$composer_bin" install --no-interaction --prefer-dist --no-progress
 "$php_bin" artisan package:discover --ansi
 "$php_bin" artisan config:cache
 "$php_bin" artisan route:cache

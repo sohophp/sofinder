@@ -7,6 +7,9 @@ description: SoFinder 每个公开版本的重要变更。
 
 ## 尚未发布
 
+- 发布演练现在把未来 Laravel 拆分仓库安装到全新的 Laravel 13 应用，并针对安装后的包
+  执行自动发现、配置／路由缓存、全部 52 路由、Artisan、浏览器、CSRF、上传下载、Range
+  与前端资源验证。
 - PSR-15 本地应用工厂现在自动发现发布包内的前端资源，并在未来拆分仓库的干净
   Composer 消费者中实际启动 `/browser`、读取真实资源，避免用户传入仓库内部路径。
 - 将框架无关 Browser Action 加入 PSR-15 本地 Runtime，默认注册全部 52 条中央路由，
