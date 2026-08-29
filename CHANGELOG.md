@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- Expand both monorepo and future split-package Laravel CI from boundary-only
+  checks to every supported pair: Laravel 12 on PHP 8.2–8.5 and Laravel 13 on
+  PHP 8.3–8.5, with executable example coverage for the same seven pairs.
 - Exercise real authentication and authorization boundaries across every host:
   Symfony retains its native Basic 401 challenge, while authenticated-but-denied
   uploads and framework-neutral unauthenticated requests share the stable 403

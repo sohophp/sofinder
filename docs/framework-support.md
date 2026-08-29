@@ -36,7 +36,8 @@ four Artisan maintenance commands, framework-neutral security audit exposed as
 an Artisan command, Laravel Queue dispatcher and synchronized release assets are
 also wired. Enabling malware scanning attaches the shared fail-closed ClamAV
 scanner to Laravel uploads and the audit. A runnable Laravel 12/13 application
-now verifies auto-discovery, configuration and route caches, browser boot, CSRF, upload,
+now verifies every supported PHP/framework pair (Laravel 12 on PHP 8.2–8.5;
+Laravel 13 on PHP 8.3–8.5), including auto-discovery, configuration and route caches, browser boot, CSRF, upload,
 download, Range and frontend assets. Chromium also loads the real Laravel 12
 and 13 browser shell and verifies its shared API bootstrap without runtime
 errors. Its real-host suite also executes all 51

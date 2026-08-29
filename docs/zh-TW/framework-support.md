@@ -28,7 +28,8 @@ Laravel Auth/Gate、Session CSRF、Event Dispatcher、Request Context、Route UR
 Adapter 已完成；瀏覽器外殼、四個 Artisan 維護命令、以框架無關 Auditor 實作的 Artisan
 安全稽核命令、Laravel Queue Dispatcher 及同步發布資源也已接入。Laravel Host 啟用惡意軟體
 掃描後，上傳及安全稽核會接入共用的 Fail-closed ClamAV Scanner。可執行的
-Laravel 12/13 Application 現已驗證自動探索、設定與 Route Cache、
+Laravel 12/13 Application 現已覆蓋全部支援組合（Laravel 12 × PHP 8.2～8.5；Laravel 13 ×
+PHP 8.3～8.5），並驗證自動探索、設定與 Route Cache、
 瀏覽器啟動、CSRF、上傳、下載、Range 及前端資源；Chromium 亦會載入真實 Laravel 12／13
 瀏覽器外殼，驗證共用 API Bootstrap 且不產生 Runtime Error。真實 Host Suite 亦執行全部 51 條非展示
 Route，並與 Symfony 比較狀態／錯誤及安全 Response Header Contract；同時在五個 Host 執行真實

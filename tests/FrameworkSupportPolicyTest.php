@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace SohoPHP\SoFinder\Tests;
 
 use PHPUnit\Framework\TestCase;
+use Symfony\Component\Yaml\Yaml;
 
 final class FrameworkSupportPolicyTest extends TestCase
 {
@@ -44,5 +45,47 @@ final class FrameworkSupportPolicyTest extends TestCase
         self::assertSame('^5.4', $policy['legacy']['symfony']);
         self::assertTrue($policy['legacy']['repositoryMustBeSeparate']);
         self::assertSame('best-effort', $policy['legacy']['support']);
+        self::assertSame([
+            '12' => ['8.2', '8.3', '8.4', '8.5'],
+            '13' => ['8.3', '8.4', '8.5'],
+        ], $policy['gated']['laravel']['phpByVersion']);
+    }
+
+    public function testLaravelCiCoversEveryPublishedCompatibilityPair(): void
+    {
+        $policy = json_decode((string) file_get_contents(__DIR__ . '/../config/framework-support.json'), true, 32, JSON_THROW_ON_ERROR);
+        $expected = [];
+        foreach ($policy['gated']['laravel']['phpByVersion'] as $laravel => $versions) {
+            foreach ($versions as $php) {
+                $expected[] = $php . '|laravel-' . $laravel;
+            }
+        }
+        sort($expected);
+
+        $root = Yaml::parseFile(__DIR__ . '/../.github/workflows/ci.yml');
+        self::assertSame($expected, $this->matrixPairs($root['jobs']['laravel-bridge']['strategy']['matrix']['include']));
+        self::assertSame($expected, $this->matrixPairs(
+            $root['jobs']['laravel-example']['strategy']['matrix']['include'],
+            static fn (array $entry): string => str_contains($entry['composer'], '-13') ? '13' : '12',
+        ));
+
+        $package = Yaml::parseFile(__DIR__ . '/../packages/sofinder-laravel/.github/workflows/ci.yml');
+        self::assertSame($expected, $this->matrixPairs($package['jobs']['dependencies']['strategy']['matrix']['include']));
+    }
+
+    /**
+     * @param list<array<string, mixed>> $matrix
+     * @param null|callable(array<string, mixed>): string $laravelVersion
+     * @return list<string>
+     */
+    private function matrixPairs(array $matrix, ?callable $laravelVersion = null): array
+    {
+        $pairs = array_map(
+            static fn (array $entry): string => (string) $entry['php'] . '|laravel-' . ($laravelVersion === null ? $entry['laravel'] : $laravelVersion($entry)),
+            $matrix,
+        );
+        sort($pairs);
+
+        return $pairs;
     }
 }

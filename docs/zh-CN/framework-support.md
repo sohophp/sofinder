@@ -28,7 +28,8 @@ Session CSRF、Event Dispatcher、请求上下文、路由 URL 和统一配置 A
 外壳、四个 Artisan 维护命令、基于框架无关审计器的 Artisan 安全审计命令、Laravel Queue
 Dispatcher 和同步发布资源也已接入。Laravel 宿主启用恶意软件扫描后，上传和安全审计会接入
 共享的 Fail-closed ClamAV 扫描器。
-可运行的 Laravel 12/13 应用现已验证自动发现、配置与路由缓存、浏览器启动、CSRF、上传、下载、Range
+可运行的 Laravel 12/13 应用现已覆盖全部支持组合（Laravel 12 × PHP 8.2～8.5；Laravel 13 ×
+PHP 8.3～8.5），并验证自动发现、配置与路由缓存、浏览器启动、CSRF、上传、下载、Range
 及前端资源；Chromium 还会加载真实 Laravel 12／13 浏览器外壳，验证共享 API Bootstrap
 且不产生运行时错误。真实宿主套件也会执行全部 51 条非展示路由，并与 Symfony 比较状态／错误及
 安全响应头契约；同时在五个宿主运行真实 multipart 上传、完整/Range 内容、ETag 重新验证、Range

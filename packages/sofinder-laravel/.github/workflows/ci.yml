@@ -22,12 +22,21 @@ jobs:
           - php: '8.2'
             laravel: '12'
             preference: --prefer-lowest
+          - php: '8.3'
+            laravel: '12'
+            preference: --prefer-stable
+          - php: '8.4'
+            laravel: '12'
+            preference: --prefer-stable
           - php: '8.5'
             laravel: '12'
             preference: --prefer-stable
           - php: '8.3'
             laravel: '13'
             preference: --prefer-lowest
+          - php: '8.4'
+            laravel: '13'
+            preference: --prefer-stable
           - php: '8.5'
             laravel: '13'
             preference: --prefer-stable
@@ -62,4 +71,6 @@ jobs:
       - run: ./scripts/composer.sh update --no-interaction --prefer-dist ${{ matrix.preference }}
       - run: ./scripts/composer.sh audit
       - run: find src config -type f -name '*.php' -print0 | xargs -0 -n1 ./scripts/php-bin.sh -l
-      - run: ./scripts/php-bin.sh -r 'require "vendor/autoload.php"; exit(class_exists("SohoPHP\\SoFinder\\Laravel\\SoFinderServiceProvider") ? 0 : 1);'
+      - run: >-
+          ./scripts/php-bin.sh -r
+          'require "vendor/autoload.php"; exit(class_exists("SohoPHP\\SoFinder\\Laravel\\SoFinderServiceProvider") ? 0 : 1);'
