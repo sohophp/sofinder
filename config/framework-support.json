@@ -20,16 +20,16 @@
     "requiresMainVersion": "1.0.0",
     "minimumStableDays": 30,
     "requiresZeroOpenPriorityDefects": true,
-    "releasedMainVersion": null,
-    "releaseDate": null,
-    "openP0P1Defects": null,
+    "releasedMainVersion": "1.0.0",
+    "releaseDate": "2026-08-29",
+    "openP0P1Defects": 0,
     "evidence": {
-      "symfonyMatrixCommit": null,
-      "symfonyMatrixWorkflowUrl": null,
-      "symfonyMatrixVerifiedAt": null,
-      "observationStartedAt": null,
+      "symfonyMatrixCommit": "4c1a4587634f758b3ce96471898fddcf4b15d26c",
+      "symfonyMatrixWorkflowUrl": "https://github.com/sohophp/sofinder/actions/runs/33241249866",
+      "symfonyMatrixVerifiedAt": "2026-08-29",
+      "observationStartedAt": "2026-08-29",
       "observationCompletedAt": null,
-      "priorityDefectAuditUrl": null
+      "priorityDefectAuditUrl": "https://github.com/sohophp/sofinder/actions/runs/33241684671"
     },
     "eligible": false
   },

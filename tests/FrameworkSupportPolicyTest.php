@@ -18,9 +18,9 @@ final class FrameworkSupportPolicyTest extends TestCase
         self::assertSame('1.0.0', $policy['promotionGate']['requiresMainVersion']);
         self::assertSame(30, $policy['promotionGate']['minimumStableDays']);
         self::assertTrue($policy['promotionGate']['requiresZeroOpenPriorityDefects']);
-        self::assertNull($policy['promotionGate']['releasedMainVersion']);
-        self::assertNull($policy['promotionGate']['releaseDate']);
-        self::assertNull($policy['promotionGate']['openP0P1Defects']);
+        self::assertSame('1.0.0', $policy['promotionGate']['releasedMainVersion']);
+        self::assertSame('2026-08-29', $policy['promotionGate']['releaseDate']);
+        self::assertSame(0, $policy['promotionGate']['openP0P1Defects']);
         self::assertSame([
             'symfonyMatrixCommit',
             'symfonyMatrixWorkflowUrl',
@@ -29,7 +29,12 @@ final class FrameworkSupportPolicyTest extends TestCase
             'observationCompletedAt',
             'priorityDefectAuditUrl',
         ], array_keys($policy['promotionGate']['evidence']));
-        self::assertSame([], array_filter($policy['promotionGate']['evidence'], static fn (mixed $value): bool => $value !== null));
+        self::assertSame('4c1a4587634f758b3ce96471898fddcf4b15d26c', $policy['promotionGate']['evidence']['symfonyMatrixCommit']);
+        self::assertSame('https://github.com/sohophp/sofinder/actions/runs/33241249866', $policy['promotionGate']['evidence']['symfonyMatrixWorkflowUrl']);
+        self::assertSame('2026-08-29', $policy['promotionGate']['evidence']['symfonyMatrixVerifiedAt']);
+        self::assertSame('2026-08-29', $policy['promotionGate']['evidence']['observationStartedAt']);
+        self::assertNull($policy['promotionGate']['evidence']['observationCompletedAt']);
+        self::assertSame('https://github.com/sohophp/sofinder/actions/runs/33241684671', $policy['promotionGate']['evidence']['priorityDefectAuditUrl']);
         self::assertFalse($policy['promotionGate']['eligible']);
         self::assertSame(30, $policy['gated']['laravel']['minimumStableDays']);
         self::assertSame('1.0.0', $policy['gated']['laravel']['requiresMainVersion']);
