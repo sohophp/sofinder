@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace SohoPHP\SoFinder\Tests;
 
 use PHPUnit\Framework\TestCase;
-use Symfony\Component\Yaml\Yaml;
 
 final class FrameworkSupportPolicyTest extends TestCase
 {
@@ -62,27 +61,31 @@ final class FrameworkSupportPolicyTest extends TestCase
         }
         sort($expected);
 
-        $root = Yaml::parseFile(__DIR__ . '/../.github/workflows/ci.yml');
-        self::assertSame($expected, $this->matrixPairs($root['jobs']['laravel-bridge']['strategy']['matrix']['include']));
-        self::assertSame($expected, $this->matrixPairs(
-            $root['jobs']['laravel-example']['strategy']['matrix']['include'],
-            static fn (array $entry): string => str_contains($entry['composer'], '-13') ? '13' : '12',
+        $root = __DIR__ . '/../.github/workflows/ci.yml';
+        self::assertSame($expected, $this->workflowMatrixPairs($root, 'laravel-bridge', 'laravel'));
+        self::assertSame($expected, $this->workflowMatrixPairs($root, 'laravel-example', 'composer'));
+        self::assertSame($expected, $this->workflowMatrixPairs(
+            __DIR__ . '/../packages/sofinder-laravel/.github/workflows/ci.yml',
+            'dependencies',
+            'laravel',
         ));
-
-        $package = Yaml::parseFile(__DIR__ . '/../packages/sofinder-laravel/.github/workflows/ci.yml');
-        self::assertSame($expected, $this->matrixPairs($package['jobs']['dependencies']['strategy']['matrix']['include']));
     }
 
     /**
-     * @param list<array<string, mixed>> $matrix
-     * @param null|callable(array<string, mixed>): string $laravelVersion
      * @return list<string>
      */
-    private function matrixPairs(array $matrix, ?callable $laravelVersion = null): array
+    private function workflowMatrixPairs(string $path, string $job, string $versionField): array
     {
+        $workflow = (string) file_get_contents($path);
+        self::assertMatchesRegularExpression('/^  ' . preg_quote($job, '/') . ':$/m', $workflow);
+        preg_match('/^  ' . preg_quote($job, '/') . ":\n(?<job>(?:(?!^  [a-zA-Z0-9_-]+:\n).)*)/ms", $workflow, $jobMatch);
+        $field = $versionField === 'composer'
+            ? 'composer: composer-(?<laravel>[0-9]+)\\.json'
+            : "laravel: '(?<laravel>[0-9]+)'";
+        preg_match_all("/^          - php: '(?<php>[^']+)'\\n            $field$/m", (string) ($jobMatch['job'] ?? ''), $matches, PREG_SET_ORDER);
         $pairs = array_map(
-            static fn (array $entry): string => (string) $entry['php'] . '|laravel-' . ($laravelVersion === null ? $entry['laravel'] : $laravelVersion($entry)),
-            $matrix,
+            static fn (array $match): string => $match['php'] . '|laravel-' . $match['laravel'],
+            $matches,
         );
         sort($pairs);
 
