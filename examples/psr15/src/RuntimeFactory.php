@@ -68,8 +68,8 @@ final class RuntimeFactory
                 'image_variants' => ['enabled' => true],
                 'document_preview' => [
                     'pdf' => true,
-                    'office' => true,
-                    'office_binary' => '/usr/bin/libreoffice',
+                    'office' => getenv('SOFINDER_EXAMPLE_OFFICE') === '1',
+                    'office_binary' => getenv('SOFINDER_EXAMPLE_OFFICE_BINARY') ?: '/usr/bin/libreoffice',
                 ],
                 'resources' => [
                     'Files' => ['delivery_mode' => 'public'],

@@ -168,10 +168,10 @@ start_host()
             (cd "$repository_root/examples/symfony" && APP_ENV=prod APP_DEBUG=0 "$php_bin" -S "127.0.0.1:$port" -t public public/index.php) > "$test_dir/$host.log" 2>&1 &
             ;;
         laravel)
-            (cd "$repository_root/examples/laravel" && APP_ENV=production APP_DEBUG=0 "$php_bin" -S "127.0.0.1:$port" -t public public/index.php) > "$test_dir/$host.log" 2>&1 &
+            (cd "$repository_root/examples/laravel" && SOFINDER_EXAMPLE_OFFICE=1 APP_ENV=production APP_DEBUG=0 "$php_bin" -S "127.0.0.1:$port" -t public public/index.php) > "$test_dir/$host.log" 2>&1 &
             ;;
         slim|mezzio|plain)
-            (cd "$repository_root/examples/psr15" && SOFINDER_EXAMPLE_AUTHORIZED=1 "$php_bin" -S "127.0.0.1:$port" "public/$host.php") > "$test_dir/$host.log" 2>&1 &
+            (cd "$repository_root/examples/psr15" && SOFINDER_EXAMPLE_AUTHORIZED=1 SOFINDER_EXAMPLE_OFFICE=1 "$php_bin" -S "127.0.0.1:$port" "public/$host.php") > "$test_dir/$host.log" 2>&1 &
             ;;
     esac
     server_pid=$!

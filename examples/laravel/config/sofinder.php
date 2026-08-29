@@ -16,8 +16,8 @@ return [
         'image_variants' => ['enabled' => true],
         'document_preview' => [
             'pdf' => true,
-            'office' => true,
-            'office_binary' => '/usr/bin/libreoffice',
+            'office' => (bool) env('SOFINDER_EXAMPLE_OFFICE', false),
+            'office_binary' => (string) env('SOFINDER_EXAMPLE_OFFICE_BINARY', '/usr/bin/libreoffice'),
         ],
         'resources' => [
             'Files' => ['delivery_mode' => 'public'],
