@@ -4,9 +4,26 @@ declare(strict_types=1);
 
 use SohoPHP\SoFinder\Http\EndpointCatalog;
 
-require dirname(__DIR__) . '/vendor/autoload.php';
+$repositoryRoot = dirname(__DIR__);
+$autoload = null;
+foreach (array_filter([
+    getenv('SOFINDER_CONTRACT_AUTOLOAD') ?: null,
+    $repositoryRoot . '/vendor/autoload.php',
+    $repositoryRoot . '/examples/psr15/vendor/autoload.php',
+    $repositoryRoot . '/examples/symfony/vendor/autoload.php',
+    $repositoryRoot . '/examples/laravel/vendor/autoload.php',
+]) as $candidate) {
+    if (is_file($candidate)) {
+        $autoload = $candidate;
+        break;
+    }
+}
+if ($autoload === null) {
+    throw new RuntimeException('Install one SoFinder example before exporting cross-host contract cases.');
+}
+require $autoload;
 
-$manifest = json_decode((string) file_get_contents(dirname(__DIR__) . '/dist/manifest.json'), true, 32, JSON_THROW_ON_ERROR);
+$manifest = json_decode((string) file_get_contents($repositoryRoot . '/dist/manifest.json'), true, 32, JSON_THROW_ON_ERROR);
 $assetFile = null;
 foreach ($manifest as $entry) {
     $candidate = $entry['file'] ?? null;
