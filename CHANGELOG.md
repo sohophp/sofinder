@@ -6,6 +6,9 @@
   Slim, Mezzio and plain PHP hosts, comparing status/error envelopes, response
   shape and security headers while retaining lifecycle tests for mutations and
   streams.
+- Run a real Chromium UI smoke against the Laravel 12 and 13 boundary examples,
+  covering browser bootstrap, session CSRF configuration, shared API discovery,
+  security headers and frontend runtime errors.
 - Give Laravel and framework-neutral PSR runtimes the same runtime, storage,
   image, document-preview and maintenance readiness probes as Symfony instead
   of returning readiness from an empty check collection.

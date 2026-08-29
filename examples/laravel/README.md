@@ -11,3 +11,11 @@ From this directory, copy `.env.example` to `.env`, install dependencies through
 Open `http://127.0.0.1:18083/sofinder/browser`.
 
 Use `composer-12.json` on PHP 8.2–8.5 and `composer-13.json` on PHP 8.3–8.5.
+
+The repository-level HTTP smoke is `bash scripts/check-laravel-example-http.sh`.
+After installing frontend dependencies, the real Chromium UI smoke can be run
+from `frontend` with:
+
+```bash
+pnpm exec playwright test --config playwright.laravel.config.ts
+```

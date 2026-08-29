@@ -35,7 +35,9 @@ and normalized configuration adapters are present. The shared browser bootstrap,
 four Artisan maintenance commands, Laravel Queue dispatcher and synchronized
 release assets are also wired. A runnable Laravel 12/13 application now verifies
 auto-discovery, configuration and route caches, browser boot, CSRF, upload,
-download, Range and frontend assets. Its real-host suite also executes all 51
+download, Range and frontend assets. Chromium also loads the real Laravel 12
+and 13 browser shell and verifies its shared API bootstrap without runtime
+errors. Its real-host suite also executes all 51
 non-presentation routes against the Symfony status/error and security-header
 contract. The package remains experimental while the remaining success-lifecycle
 snapshots and observation gate are being completed.

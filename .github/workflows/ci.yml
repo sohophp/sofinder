@@ -232,12 +232,16 @@ jobs:
         include:
           - php: '8.2'
             composer: composer-12.json
+            e2e: true
           - php: '8.5'
             composer: composer-12.json
+            e2e: false
           - php: '8.3'
             composer: composer-13.json
+            e2e: false
           - php: '8.5'
             composer: composer-13.json
+            e2e: true
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - uses: shivammathur/setup-php@f3e473d116dcccaddc5834248c87452386958240 # v2
@@ -248,6 +252,21 @@ jobs:
       - run: cp ${{ matrix.composer }} composer.json
         working-directory: examples/laravel
       - run: bash scripts/check-laravel-example-http.sh
+      - if: matrix.e2e
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: '22'
+      - if: matrix.e2e
+        run: corepack enable
+      - if: matrix.e2e
+        run: pnpm install --frozen-lockfile
+        working-directory: frontend
+      - if: matrix.e2e
+        run: pnpm exec playwright install --with-deps chromium
+        working-directory: frontend
+      - if: matrix.e2e
+        run: pnpm exec playwright test --config playwright.laravel.config.ts
+        working-directory: frontend
       - run: ../../scripts/composer.sh audit
         working-directory: examples/laravel
 
