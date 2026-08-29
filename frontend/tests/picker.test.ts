@@ -70,6 +70,20 @@ describe("picker SDK", () => {
     expect(changed).toHaveBeenCalledOnce();
   });
 
+  it("preserves a same-origin relative URL selected from a nested folder", async () => {
+    const popup = { closed: false } as Window;
+    vi.spyOn(window, "open").mockReturnValue(popup);
+    const input = document.createElement("input");
+    const promise = selectForInput(input, { baseUrl: "/sofinder/browser", kind: "image" });
+    const opened = new URL(String(vi.mocked(window.open).mock.calls.at(-1)?.[0]), window.location.href);
+    const entry = { resource: "Images", path: "campaign/summer/hero.jpg", name: "hero.jpg", directory: false, size: 12, modifiedAt: 1, mimeType: "image/jpeg", url: "/host-files/Images/hero.jpg?path=campaign%2Fsummer%2Fhero.jpg", width: 320, height: 180, capabilities: {} };
+    window.dispatchEvent(new MessageEvent("message", { source: popup, origin: window.location.origin, data: { type: "sofinder:select", version: "1.0", requestId: opened.searchParams.get("pickerRequestId"), entry } }));
+
+    await expect(promise).resolves.toEqual(entry);
+    expect(input.value).toBe(entry.url);
+    expect(input.value).not.toMatch(/^https?:\/\//);
+  });
+
   it("registers TinyMCE without importing editor internals", () => {
     const add = vi.fn();
     registerTinyMce({ PluginManager: { add } }, { baseUrl: "/sofinder/browser" });

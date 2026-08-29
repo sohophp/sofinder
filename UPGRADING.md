@@ -1,5 +1,14 @@
 # Upgrading SoFinder
 
+## From 1.1.0 to 1.1.1
+
+Deploy the complete rebuilt `dist/` directory. Applications that copied the
+Symfony S3 example's same-origin `entry_url` configuration should set
+`absolute: false`; this prevents an incorrectly inferred proxy scheme from
+being persisted in editor content. Keep `absolute: true` only for host routes
+whose public absolute origin is intentional and whose trusted-proxy scheme
+configuration is verified.
+
 ## From 0.1.0-beta.31 to the next beta
 
 Custom `WorkspaceResolverInterface::resolve()` and

@@ -135,4 +135,29 @@ final class SymfonyIntegrationServicesTest extends TestCase
             new Entry('archive/report.pdf', 'report.pdf', false, 10, 1, 'application/pdf'),
         ));
     }
+
+    public function testSameOriginHostRoutesKeepNestedEntryUrlsRelative(): void
+    {
+        $router = $this->createMock(RouterInterface::class);
+        $router->expects(self::once())->method('generate')->with(
+            'file.output',
+            ['resource' => 'Images', 'name' => 'hero image.jpg', 'path' => 'campaign/summer/hero image.jpg'],
+            RouterInterface::ABSOLUTE_PATH,
+        )->willReturn('/host-files/Images/hero%20image.jpg?path=campaign%2Fsummer%2Fhero%20image.jpg');
+        $generator = new SymfonyEntryUrlGenerator($router);
+        $resource = new ResourceType(
+            'Images',
+            '/tmp/images',
+            '',
+            deliveryMode: 'proxy',
+            entryUrlRoute: 'file.output',
+            entryUrlParameters: ['resource' => '{resource}', 'name' => '{name}', 'path' => '{path}'],
+            entryUrlAbsolute: false,
+        );
+
+        self::assertSame(
+            '/host-files/Images/hero%20image.jpg?path=campaign%2Fsummer%2Fhero%20image.jpg',
+            $generator->generate($resource, new Entry('campaign/summer/hero image.jpg', 'hero image.jpg', false, 10, 1, 'image/jpeg')),
+        );
+    }
 }

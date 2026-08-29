@@ -7,12 +7,18 @@ description: SoFinder 每個公開版本的重要變更。
 
 ## 尚未發佈
 
+## 1.1.1 - 2026-08-30
+
 - 新增 Laravel 12／13、Slim 4、Mezzio 3 和純 PHP 的完整框架整合指南，涵蓋安裝、
   Host 授權、CSRF、路由和正式環境驗證步驟。
 - 明確不可改變的相容邊界：PHP 8 主線絕不為 PHP 7.2 降級；PHP 7.2 是否繼續開發，
   始終是獨立的 Legacy 產品決策。
 - 建立獨立公開的 `sohophp/sofinder-legacy` Repository 及通過的 PHP 7.2.5／7.3／7.4
   基線 CI；Runtime 移植維持暫停，且明確不發布版本。
+- Symfony S3 範例的同源 Host 檔案 Route 改為相對 URL，避免編輯器從子目錄選取圖片時，
+  將 Request Context 誤判的 HTTP／HTTPS Scheme 固化到內容中。
+- 讓編輯器範例的大檔上傳相容 PHP 常見的 2 MiB 開發限制；一般表單上傳失敗不再產生
+  未處理 Promise；同時恢復範例空間配額顯示及支援資源的工具列資源回收筒入口。
 
 ## 1.1.0 - 2026-08-30
 

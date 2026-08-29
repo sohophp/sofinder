@@ -158,7 +158,7 @@ included `example.file.output` route:
 ```yaml
 entry_url:
   route: example.file.output
-  absolute: true
+  absolute: false
   parameters:
     resource: '{resource}'
     name: '{name}'
@@ -171,6 +171,10 @@ object with the configured MIME type and disposition. Adding `redirect=1` lets
 the same controller redirect to the adapter's public/CDN URL when one is
 available; private resources continue to stream through the application. The
 route is protected by the example's normal `ROLE_USER` access rule.
+Keeping `absolute: false` returns a same-origin path and therefore cannot bake
+an incorrectly inferred HTTP/HTTPS scheme into editor content. Use `true` only
+when an absolute URL is an intentional host contract and trusted-proxy scheme
+handling is configured correctly.
 
 Real applications can replace the built-in placeholders with values supplied
 by an `EntryUrlContextProviderInterface` implementation. For example, a host

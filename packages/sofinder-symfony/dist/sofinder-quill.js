@@ -1,2 +1,2 @@
-import { l as e } from "./editorAdapters-TSPP7BUN.js";
+import { l as e } from "./editorAdapters-GlwQHMrq.js";
 export { e as installQuillUploads };

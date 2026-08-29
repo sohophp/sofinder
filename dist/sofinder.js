@@ -10129,6 +10129,10 @@ function gt({ config: e, initialMessages: t }) {
 							e.target.files && pi(e.target.files), e.target.value = "";
 						}
 					})] }),
+					(d === "manager" || Pa) && N.trash && Ia && /* @__PURE__ */ (0, C.jsx)("button", {
+						onClick: () => $n(!0),
+						children: H("trash", y("trash"))
+					}),
 					(d === "manager" || Pa) && /* @__PURE__ */ (0, C.jsx)("div", {
 						ref: Gr,
 						className: "sf-utility sf-selection-menu",

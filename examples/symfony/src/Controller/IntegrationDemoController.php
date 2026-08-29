@@ -57,7 +57,9 @@ final readonly class IntegrationDemoController
   import { createWangEditorUploadIntegration } from '/sofinder/assets/sofinder-wangeditor.js';
   import { createJoditUploadIntegration } from '/sofinder/assets/sofinder-jodit.js';
   const baseUrl = '/sofinder/browser';
-  const editorOptions = { apiBase: '/sofinder/api', csrfToken: __CSRF_TOKEN__, resource: 'Files', locale: 'zh-cn', conflictStrategy: 'ask', onTaskChange: task => task.status !== 'ready' && console.info('SoFinder upload', task.status, task.progress) };
+  // Keep every multipart request below PHP's common 2 MiB development default.
+  // Production applications can raise their server limits and use larger chunks.
+  const editorOptions = { apiBase: '/sofinder/api', csrfToken: __CSRF_TOKEN__, resource: 'Files', locale: 'zh-cn', conflictStrategy: 'ask', chunkThreshold: 1_500_000, chunkSize: 1_500_000, onTaskChange: task => task.status !== 'ready' && console.info('SoFinder upload', task.status, task.progress) };
   const imageOptions = { baseUrl, resource: 'Files', language: 'zh-cn', tools: 'common' };
   const status = (id, value) => document.getElementById(id).textContent = value ? `已选择：${value.name}` : '';
   document.querySelectorAll('[data-pane]').forEach(button => button.addEventListener('click', () => {
@@ -65,7 +67,7 @@ final readonly class IntegrationDemoController
     document.querySelectorAll('.pane').forEach(pane => pane.classList.toggle('active', pane.id === button.dataset.pane));
   }));
   document.getElementById('plain-choose').addEventListener('click', async () => status('plain-status', await selectForInput(document.getElementById('file-url'), { baseUrl, kind: 'file', resource: 'Files' })));
-  bindAssetInput(document.getElementById('plain-upload'), document.getElementById('file-url'), editorOptions);
+  bindAssetInput(document.getElementById('plain-upload'), document.getElementById('file-url'), { ...editorOptions, onAssetReady: asset => status('plain-status', asset), onError: error => { document.getElementById('plain-status').textContent = `上传失败：${error.message}`; } });
 
   let ckeditor;
   try {

@@ -1246,6 +1246,7 @@ export default function App({ config, initialMessages }: { config: SoFinderConfi
       <input ref={uploadInput} type="file" multiple hidden onChange={event => { if (event.target.files) void upload(event.target.files); event.target.value = ""; }}/>
       {featureAvailability.folderUpload !== false && <><button onClick={() => directoryUploadInput.current?.click()} disabled={collectionView !== null || currentResource?.readOnly || directoryCapabilities.upload === false}>{iconButton("add-folder", t("uploadFolder"))}</button>
       <input ref={element => { directoryUploadInput.current = element; element?.setAttribute("webkitdirectory", ""); }} type="file" multiple hidden onChange={event => { if (event.target.files) void uploadDirectory(event.target.files); event.target.value = ""; }}/></>}
+      {(uiMode === "manager" || fullTools) && features.trash && recoverableDelete && <button onClick={() => setTrashOpen(true)}>{iconButton("trash", t("trash"))}</button>}
       {(uiMode === "manager" || fullTools) && <div ref={selectionMenu} className="sf-utility sf-selection-menu"><button onClick={toggleSelectionMenu} aria-expanded={selectionMenuOpen} aria-haspopup="menu">{iconButton("select", t("selection"))}</button></div>}
       {(uiMode === "manager" || fullTools) && selectedEntries.length > 0 && <><span className="sf-separator"/><div className="sf-context-actions">
       <button onClick={rename} disabled={selectedEntries.length !== 1 || !canSelected("rename") || currentResource?.readOnly}>{iconButton("rename", t("rename"))}</button>

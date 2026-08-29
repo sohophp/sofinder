@@ -1,9 +1,13 @@
-import { describe, expect, it, vi } from "vitest";
-import { attributesFor, ckeditorUploadResult, createCkeditor5UploadPlugin, createJoditUploadIntegration, createWangEditorUploadIntegration, imageHtml, resourceForUpload } from "../src/editorAdapters";
+// @vitest-environment jsdom
+
+import { afterEach, describe, expect, it, vi } from "vitest";
+import { attributesFor, bindAssetInput, ckeditorUploadResult, createCkeditor5UploadPlugin, createJoditUploadIntegration, createWangEditorUploadIntegration, imageHtml, resourceForUpload } from "../src/editorAdapters";
 import { altForAsset, attributesForAsset, imageHtmlForAsset } from "../src/assetPresentation";
 import type { AssetReference } from "../src/types";
 
 const asset: AssetReference = { schemaVersion: "1.0", assetId: "00000000-0000-4000-8000-000000000001", resource: "Images", path: "photo.jpg", name: "photo.jpg", directory: false, mimeType: "image/jpeg", size: 10, modifiedAt: 1, version: "1-10", url: "/images/photo.jpg", downloadUrl: "/api/download", width: 1200, height: 800, alt: "A photo", variants: [{ width: 320, height: 213, url: "/variant/320", mimeType: "image/webp" }, { width: 640, height: 427, url: "/variant/640", mimeType: "image/webp" }], capabilities: { embeddable: true } };
+
+afterEach(() => vi.unstubAllGlobals());
 
 describe("editor adapters", () => {
   it("creates consistent responsive insertion attributes", () => {
@@ -47,6 +51,32 @@ describe("editor adapters", () => {
     expect(resourceForUpload(new File(["x"], "photo.bin", { type: "image/png" }), options)).toBe("Images");
     expect(resourceForUpload(new File(["x"], "manual.PDF"), options)).toBe("Documents");
     expect(resourceForUpload(new File(["x"], "archive.zip"), options)).toBe("Files");
+  });
+
+  it("reports file-input upload failures without leaking a rejected event promise", async () => {
+    class FailedUploadRequest {
+      upload = {};
+      status = 400;
+      responseText = JSON.stringify({ success: false, error: { code: "invalid_upload", message: "Upload rejected." } });
+      withCredentials = false;
+      onload: (() => void) | null = null;
+      open() {}
+      setRequestHeader() {}
+      send() { queueMicrotask(() => this.onload?.()); }
+      abort() {}
+    }
+    vi.stubGlobal("XMLHttpRequest", FailedUploadRequest);
+    const input = document.createElement("input"); input.type = "file";
+    const output = document.createElement("input");
+    Object.defineProperty(input, "files", { configurable: true, value: [new File(["image"], "large.jpg", { type: "image/jpeg" })] });
+    const onError = vi.fn();
+    bindAssetInput(input, output, { apiBase: "/api", csrfToken: "token", resource: "Files", onError });
+
+    input.dispatchEvent(new Event("change"));
+
+    await vi.waitFor(() => expect(onError).toHaveBeenCalledWith(expect.objectContaining({ code: "invalid_upload", message: "Upload rejected." })));
+    expect(output.value).toBe("");
+    expect(input.value).toBe("");
   });
 
   it("provides wangEditor 5's public custom upload contract", () => {

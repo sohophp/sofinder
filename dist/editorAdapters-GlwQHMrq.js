@@ -207,9 +207,12 @@ var r = (e, t) => {
 }, k = (e, t, n, r = "url") => {
 	let i = async () => {
 		let i = e.files?.[0];
-		if (!i) return;
-		let a = await u(i, n).completion;
-		t.value = r === "json" ? JSON.stringify(a) : f(a).url, t.dispatchEvent(new Event("input", { bubbles: !0 })), t.dispatchEvent(new Event("change", { bubbles: !0 }));
+		if (i) try {
+			let e = await u(i, n).completion;
+			t.value = r === "json" ? JSON.stringify(e) : f(e).url, t.dispatchEvent(new Event("input", { bubbles: !0 })), t.dispatchEvent(new Event("change", { bubbles: !0 }));
+		} catch {} finally {
+			e.value = "";
+		}
 	};
 	return e.addEventListener("change", i), () => e.removeEventListener("change", i);
 };

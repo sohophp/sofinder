@@ -279,7 +279,20 @@ export const bindMarkdownUploads = (input: HTMLTextAreaElement, options: EditorA
 };
 
 export const bindAssetInput = (fileInput: HTMLInputElement, output: HTMLInputElement | HTMLTextAreaElement, options: EditorAdapterOptions, outputMode: "url" | "json" = "url"): (() => void) => {
-  const change = async () => { const file = fileInput.files?.[0]; if (!file) return; const asset = await uploadForEditor(file, options).completion; output.value = outputMode === "json" ? JSON.stringify(asset) : embeddable(asset).url; output.dispatchEvent(new Event("input", { bubbles: true })); output.dispatchEvent(new Event("change", { bubbles: true })); };
+  const change = async () => {
+    const file = fileInput.files?.[0]; if (!file) return;
+    try {
+      const asset = await uploadForEditor(file, options).completion;
+      output.value = outputMode === "json" ? JSON.stringify(asset) : embeddable(asset).url;
+      output.dispatchEvent(new Event("input", { bubbles: true })); output.dispatchEvent(new Event("change", { bubbles: true }));
+    } catch {
+      // DOM event listeners have no promise consumer. uploadForEditor already
+      // reports the typed failure through onError, so do not leak a rejected
+      // listener promise as an unhandled browser exception.
+    } finally {
+      fileInput.value = "";
+    }
+  };
   fileInput.addEventListener("change", change);
   return () => fileInput.removeEventListener("change", change);
 };

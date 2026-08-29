@@ -34,8 +34,8 @@
     "file": "defineProperty-B_lfzbVN.js",
     "name": "defineProperty"
   },
-  "_editorAdapters-TSPP7BUN.js": {
-    "file": "editorAdapters-TSPP7BUN.js",
+  "_editorAdapters-GlwQHMrq.js": {
+    "file": "editorAdapters-GlwQHMrq.js",
     "name": "editorAdapters",
     "imports": [
       "_defineProperty-B_lfzbVN.js",
@@ -67,7 +67,7 @@
     "src": "src/ckeditor5.ts",
     "isEntry": true,
     "imports": [
-      "_editorAdapters-TSPP7BUN.js"
+      "_editorAdapters-GlwQHMrq.js"
     ]
   },
   "src/components/AssetMetadataDialog.tsx": {
@@ -293,7 +293,7 @@
     "src": "src/editors.ts",
     "isEntry": true,
     "imports": [
-      "_editorAdapters-TSPP7BUN.js"
+      "_editorAdapters-GlwQHMrq.js"
     ]
   },
   "src/jodit.ts": {
@@ -302,7 +302,7 @@
     "src": "src/jodit.ts",
     "isEntry": true,
     "imports": [
-      "_editorAdapters-TSPP7BUN.js"
+      "_editorAdapters-GlwQHMrq.js"
     ]
   },
   "src/locales/en.ts": {
@@ -375,7 +375,7 @@
     "src": "src/quill.ts",
     "isEntry": true,
     "imports": [
-      "_editorAdapters-TSPP7BUN.js"
+      "_editorAdapters-GlwQHMrq.js"
     ]
   },
   "src/sdk.ts": {
@@ -393,7 +393,7 @@
     "src": "src/tinymce.ts",
     "isEntry": true,
     "imports": [
-      "_editorAdapters-TSPP7BUN.js"
+      "_editorAdapters-GlwQHMrq.js"
     ]
   },
   "src/tiptap.ts": {
@@ -402,7 +402,7 @@
     "src": "src/tiptap.ts",
     "isEntry": true,
     "imports": [
-      "_editorAdapters-TSPP7BUN.js"
+      "_editorAdapters-GlwQHMrq.js"
     ]
   },
   "src/wangeditor.ts": {
@@ -411,7 +411,7 @@
     "src": "src/wangeditor.ts",
     "isEntry": true,
     "imports": [
-      "_editorAdapters-TSPP7BUN.js"
+      "_editorAdapters-GlwQHMrq.js"
     ]
   },
   "style.css": {

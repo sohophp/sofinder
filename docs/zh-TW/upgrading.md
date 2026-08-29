@@ -5,6 +5,13 @@ description: 各 SoFinder 預發布版本的相容性、設定與 adapter 升級
 
 # 升級 SoFinder
 
+## 從 1.1.0 升級至 1.1.1
+
+請完整部署重新建置的 `dist/`。複製了 Symfony S3 範例同源 `entry_url` 設定的應用，
+應設定 `absolute: false`，避免將 Proxy 層誤判的 Scheme 固化到編輯器內容中。僅當 Host
+Route 確實需要公開絕對位址，且 Trusted Proxy Scheme 設定已驗證時，才保留
+`absolute: true`。
+
 ## 從 0.1.0-beta.26 升級至 0.1.0-beta.31
 
 請完整部署重新建置的 `dist/`，不需移轉儲存檔案。收藏現在僅接受檔案，快速存取改為僅接受

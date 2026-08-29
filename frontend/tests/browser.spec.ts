@@ -1563,6 +1563,7 @@ test("warns when the current storage deletes permanently", async ({ page }) => {
   await page.addStyleTag({ path: resolve(import.meta.dirname, "../../dist/sofinder.css") });
   await page.addScriptTag({ path: resolve(import.meta.dirname, "../../dist/sofinder.js"), type: "module" });
   await expect(page.getByText("guide.txt").first()).toBeVisible();
+  await expect(page.locator(".sf-toolbar").getByRole("button", { name: "回收站" })).toHaveCount(0);
   const scope = page.getByRole("combobox", { name: "搜索范围" });
   await expect(scope.locator('option[value="name"]')).toBeDisabled();
   await scope.selectOption("tags");
@@ -1878,6 +1879,7 @@ test("switches language and remembers the choice", async ({ page }) => {
 });
 
 test("asks how to resolve a recycle-bin restore conflict", async ({ page }) => {
+  await expect(page.locator(".sf-toolbar").getByRole("button", { name: "回收站" })).toBeVisible();
   await page.getByRole("button", { name: "更多操作" }).click();
   await page.getByRole("menuitem", { name: /回收站/ }).click();
   await page.getByRole("button", { name: "恢复" }).click();

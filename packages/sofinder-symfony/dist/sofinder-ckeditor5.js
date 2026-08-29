@@ -1,2 +1,2 @@
-import { i as e } from "./editorAdapters-TSPP7BUN.js";
+import { i as e } from "./editorAdapters-GlwQHMrq.js";
 export { e as createCkeditor5UploadPlugin };

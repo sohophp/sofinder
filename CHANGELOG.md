@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## 1.1.1 - 2026-08-30
+
 - Add complete framework integration guides for Laravel 12/13, Slim 4,
   Mezzio 3 and plain PHP, including installation, host-owned authorization,
   CSRF, routing and production verification steps.
@@ -11,6 +13,13 @@
 - Establish the independent public `sohophp/sofinder-legacy` repository and
   green PHP 7.2.5/7.3/7.4 baseline CI, while leaving runtime porting paused and
   explicitly unreleased.
+- Keep same-origin application-owned entry routes relative in the Symfony S3
+  example, preventing an inferred HTTP/HTTPS scheme from being stored when an
+  editor selects an image from a nested directory.
+- Make large editor-demo uploads work with PHP's common 2 MiB development
+  limit, report ordinary form upload failures without unhandled promises, and
+  restore visible demo storage quotas and a discoverable recycle-bin toolbar
+  action for capable resources.
 
 ## 1.1.0 - 2026-08-30
 
