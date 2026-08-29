@@ -9286,7 +9286,7 @@
             "dist": {
                 "type": "path",
                 "url": "packages/sofinder-laravel",
-                "reference": "e4313a318547e11680a3df4daa9c6205bf40cabf"
+                "reference": "72f32dbb34b4c47cea3a93d47a04bbbc9104ffd1"
             },
             "require": {
                 "illuminate/auth": "^12.0 || ^13.0",
@@ -9298,8 +9298,12 @@
                 "illuminate/support": "^12.0 || ^13.0",
                 "nyholm/psr7": "^1.8",
                 "php": "^8.2",
+                "psr/event-dispatcher": "^1.0",
+                "psr/http-factory": "^1.1",
+                "psr/log": "^3.0",
                 "sohophp/sofinder-http": "self.version",
-                "symfony/psr-http-message-bridge": "^7.2"
+                "symfony/http-foundation": "^7.2 || ^8.0",
+                "symfony/psr-http-message-bridge": "^7.2 || ^8.0"
             },
             "conflict": {
                 "sohophp/sofinder-legacy": "*"
@@ -9346,10 +9350,12 @@
             "dist": {
                 "type": "path",
                 "url": "packages/sofinder-psr15",
-                "reference": "b76709ea25c7f80da7a3aca9b259c5ef7cc74fb1"
+                "reference": "2340ca2ee3a5c9600c84413aa494b9a96cc46067"
             },
             "require": {
                 "php": "^8.2",
+                "psr/event-dispatcher": "^1.0",
+                "psr/http-factory": "^1.1",
                 "psr/http-message": "^1.1 || ^2.0",
                 "psr/http-server-handler": "^1.0",
                 "psr/http-server-middleware": "^1.0",
@@ -9359,7 +9365,9 @@
                 "sohophp/sofinder-legacy": "*"
             },
             "suggest": {
+                "guzzlehttp/psr7": "Provides PSR-7 and PSR-17 factories for a framework-free host",
                 "mezzio/mezzio": "Registers the shared endpoints in a Mezzio 3 application",
+                "nyholm/psr7": "Provides compact PSR-7 and PSR-17 factories for a framework-free host",
                 "slim/slim": "Registers the shared endpoints in a Slim 4 application"
             },
             "type": "library",

@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- Declare the Laravel and PSR-15 bridges' direct PSR and HttpFoundation
+  dependencies explicitly instead of relying on Core/HTTP transitive packages,
+  and allow Laravel 13 installations to resolve the Symfony 8 PSR bridge.
 - Include the compiled frontend's third-party notices in Laravel and PSR-15
   release archives and split repositories, and verify them from clean Composer
   consumers before either gated bridge is published.

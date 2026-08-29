@@ -21,24 +21,31 @@ jobs:
         include:
           - php: '8.2'
             laravel: '12'
+            symfony: '7'
             preference: --prefer-lowest
           - php: '8.3'
             laravel: '12'
+            symfony: '7'
             preference: --prefer-stable
           - php: '8.4'
             laravel: '12'
+            symfony: '7'
             preference: --prefer-stable
           - php: '8.5'
             laravel: '12'
+            symfony: '7'
             preference: --prefer-stable
           - php: '8.3'
             laravel: '13'
+            symfony: '7'
             preference: --prefer-lowest
           - php: '8.4'
             laravel: '13'
+            symfony: '8'
             preference: --prefer-stable
           - php: '8.5'
             laravel: '13'
+            symfony: '8'
             preference: --prefer-stable
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -74,3 +81,9 @@ jobs:
       - run: >-
           ./scripts/php-bin.sh -r
           'require "vendor/autoload.php"; exit(class_exists("SohoPHP\\SoFinder\\Laravel\\SoFinderServiceProvider") ? 0 : 1);'
+      - name: Verify resolved Laravel and Symfony interop lines
+        run: >-
+          ./scripts/php-bin.sh -r
+          '$major=static function(string $package):string{$version=Composer\InstalledVersions::getPrettyVersion($package);return is_string($version)?explode(".",ltrim($version,"v"),2)[0]:"";};
+          exit([$major("illuminate/support"),$major("symfony/http-foundation"),$major("symfony/psr-http-message-bridge")]
+          === ["${{ matrix.laravel }}","${{ matrix.symfony }}","${{ matrix.symfony }}"] ? 0 : 1);'

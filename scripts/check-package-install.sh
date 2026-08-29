@@ -76,6 +76,18 @@ cd "$laravel_test_dir"
 "$repository_root/scripts/composer.sh" config repositories.laravel '{"type":"path","url":"../../packages/sofinder-laravel","options":{"symlink":false,"versions":{"sohophp/sofinder-laravel":"1.0.0"}}}'
 "$repository_root/scripts/composer.sh" require sohophp/sofinder-laravel:1.0.0 --no-interaction --prefer-dist "${preference_args[@]}"
 "$repository_root/scripts/php-bin.sh" -r 'require "vendor/autoload.php"; exit(class_exists("SohoPHP\\SoFinder\\Laravel\\SoFinderServiceProvider") && class_exists("SohoPHP\\SoFinder\\Laravel\\Console\\SecurityAuditCommand") && class_exists("SohoPHP\\SoFinder\\Http\\EndpointDispatcher") ? 0 : 1);'
+"$repository_root/scripts/php-bin.sh" -r '
+    require "vendor/autoload.php";
+    $preference=$argv[1];
+    $major=static function (string $package): string {
+        $version=Composer\InstalledVersions::getPrettyVersion($package);
+        return is_string($version) ? explode(".", ltrim($version, "v"), 2)[0] : "";
+    };
+    $expected=$preference === "stable" && version_compare(PHP_VERSION, "8.4.0", ">=")
+        ? ["13", "8", "8"]
+        : ["12", "7", "7"];
+    exit([$major("illuminate/support"), $major("symfony/http-foundation"), $major("symfony/psr-http-message-bridge")] === $expected ? 0 : 1);
+' "${SOFINDER_COMPOSER_PREFERENCE:-stable}"
 test -s vendor/sohophp/sofinder-laravel/LICENSE
 test -s vendor/sohophp/sofinder-laravel/README.md
 test -s vendor/sohophp/sofinder-laravel/config/sofinder.php

@@ -67,6 +67,38 @@ final class PackageReleaseMetadataTest extends TestCase
         }
     }
 
+    public function testFrameworkBridgesDeclareTheirDirectInteropDependencies(): void
+    {
+        $root = dirname(__DIR__);
+        $requirements = [
+            'packages/sofinder-psr15/composer.json' => [
+                'psr/event-dispatcher',
+                'psr/http-factory',
+                'psr/http-message',
+                'psr/http-server-handler',
+                'psr/http-server-middleware',
+            ],
+            'packages/sofinder-laravel/composer.json' => [
+                'psr/event-dispatcher',
+                'psr/http-factory',
+                'psr/log',
+                'symfony/http-foundation',
+                'symfony/psr-http-message-bridge',
+            ],
+        ];
+
+        foreach ($requirements as $manifest => $dependencies) {
+            $composer = json_decode((string) file_get_contents($root . '/' . $manifest), true, 32, JSON_THROW_ON_ERROR);
+            foreach ($dependencies as $dependency) {
+                self::assertArrayHasKey($dependency, $composer['require'], "$manifest must directly require $dependency.");
+            }
+        }
+
+        $laravel = json_decode((string) file_get_contents($root . '/packages/sofinder-laravel/composer.json'), true, 32, JSON_THROW_ON_ERROR);
+        self::assertStringContainsString('^8.0', $laravel['require']['symfony/http-foundation']);
+        self::assertStringContainsString('^8.0', $laravel['require']['symfony/psr-http-message-bridge']);
+    }
+
     public function testPhp8PackagesRejectLegacyProductLineCoInstallation(): void
     {
         $root = dirname(__DIR__);

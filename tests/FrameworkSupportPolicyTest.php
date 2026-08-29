@@ -71,6 +71,19 @@ final class FrameworkSupportPolicyTest extends TestCase
         ));
     }
 
+    public function testLaravelPackageCiExercisesBothSymfonyInteropLines(): void
+    {
+        self::assertSame([
+            '8.2|laravel-12|symfony-7',
+            '8.3|laravel-12|symfony-7',
+            '8.3|laravel-13|symfony-7',
+            '8.4|laravel-12|symfony-7',
+            '8.4|laravel-13|symfony-8',
+            '8.5|laravel-12|symfony-7',
+            '8.5|laravel-13|symfony-8',
+        ], $this->laravelPackageInteropPairs());
+    }
+
     /**
      * @return list<string>
      */
@@ -85,6 +98,30 @@ final class FrameworkSupportPolicyTest extends TestCase
         preg_match_all("/^          - php: '(?<php>[^']+)'\\n            $field$/m", (string) ($jobMatch['job'] ?? ''), $matches, PREG_SET_ORDER);
         $pairs = array_map(
             static fn (array $match): string => $match['php'] . '|laravel-' . $match['laravel'],
+            $matches,
+        );
+        sort($pairs);
+
+        return $pairs;
+    }
+
+    /** @return list<string> */
+    private function laravelPackageInteropPairs(): array
+    {
+        $workflow = (string) file_get_contents(__DIR__ . '/../packages/sofinder-laravel/.github/workflows/ci.yml');
+        preg_match_all(
+            "/^          - php: '(?<php>[^']+)'\n            laravel: '(?<laravel>[0-9]+)'\n            symfony: '(?<symfony>[0-9]+)'$/m",
+            $workflow,
+            $matches,
+            PREG_SET_ORDER,
+        );
+        $pairs = array_map(
+            static fn (array $match): string => sprintf(
+                '%s|laravel-%s|symfony-%s',
+                $match['php'],
+                $match['laravel'],
+                $match['symfony'],
+            ),
             $matches,
         );
         sort($pairs);
