@@ -1,0 +1,17 @@
+<phpunit bootstrap="tests/bootstrap.php" colors="true">
+    <testsuites>
+        <testsuite name="Symfony">
+            <directory>tests</directory>
+            <exclude>tests/LaravelApplicationTest.php</exclude>
+            <exclude>tests/LaravelBridgeTest.php</exclude>
+        </testsuite>
+    </testsuites>
+    <source>
+        <include>
+            <directory suffix=".php">packages/sofinder-symfony/src</directory>
+            <directory suffix=".php">packages/sofinder-core/src</directory>
+            <directory suffix=".php">packages/sofinder-http/src</directory>
+            <directory suffix=".php">packages/sofinder-psr15/src</directory>
+        </include>
+    </source>
+</phpunit>

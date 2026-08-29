@@ -24,17 +24,21 @@ jobs:
           php-version: ${{ matrix.php }}
           coverage: none
           extensions: gd, imagick
-      - run: ./scripts/composer.sh validate --strict
+      - run: cp composer.json composer.symfony.json
+      - run: >-
+          COMPOSER=composer.symfony.json ./scripts/composer.sh remove --dev --no-update
+          orchestra/testbench sohophp/sofinder-laravel
+      - run: COMPOSER=composer.symfony.json ./scripts/composer.sh validate --strict
       - run: |
-          ./scripts/composer.sh require --no-update \
+          COMPOSER=composer.symfony.json ./scripts/composer.sh require --no-update \
             symfony/config:${{ matrix.symfony }} symfony/console:${{ matrix.symfony }} \
             symfony/dependency-injection:${{ matrix.symfony }} symfony/event-dispatcher:${{ matrix.symfony }} \
             symfony/filesystem:${{ matrix.symfony }} symfony/http-foundation:${{ matrix.symfony }} \
             symfony/http-kernel:${{ matrix.symfony }} symfony/routing:${{ matrix.symfony }} \
             symfony/security-core:${{ matrix.symfony }} symfony/security-csrf:${{ matrix.symfony }}
-          ./scripts/composer.sh update --no-interaction --prefer-dist
-      - run: ./scripts/php-bin.sh vendor/bin/phpunit --display-deprecations --fail-on-deprecation
-      - run: ./scripts/composer.sh audit
+          COMPOSER=composer.symfony.json ./scripts/composer.sh update --no-interaction --prefer-dist
+      - run: ./scripts/php-bin.sh vendor/bin/phpunit -c phpunit.symfony.xml --display-deprecations --fail-on-deprecation
+      - run: COMPOSER=composer.symfony.json ./scripts/composer.sh audit
 
   minimum-dependencies:
     runs-on: ubuntu-latest
@@ -45,15 +49,19 @@ jobs:
           php-version: '8.2'
           coverage: none
           extensions: gd
+      - run: cp composer.json composer.symfony.json
+      - run: >-
+          COMPOSER=composer.symfony.json ./scripts/composer.sh remove --dev --no-update
+          orchestra/testbench sohophp/sofinder-laravel
       - run: |
-          ./scripts/composer.sh require --no-update \
+          COMPOSER=composer.symfony.json ./scripts/composer.sh require --no-update \
             symfony/config:6.4.* symfony/console:6.4.* \
             symfony/dependency-injection:6.4.* symfony/event-dispatcher:6.4.* \
             symfony/filesystem:6.4.* symfony/http-foundation:6.4.* \
             symfony/http-kernel:6.4.* symfony/routing:6.4.* \
             symfony/security-core:6.4.* symfony/security-csrf:6.4.*
-          ./scripts/composer.sh update --prefer-lowest --prefer-dist --no-interaction
-      - run: ./scripts/php-bin.sh vendor/bin/phpunit --display-deprecations --fail-on-deprecation
+          COMPOSER=composer.symfony.json ./scripts/composer.sh update --prefer-lowest --prefer-dist --no-interaction
+      - run: ./scripts/php-bin.sh vendor/bin/phpunit -c phpunit.symfony.xml --display-deprecations --fail-on-deprecation
 
   latest-dependencies:
     runs-on: ubuntu-latest
