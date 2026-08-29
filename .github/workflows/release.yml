@@ -27,13 +27,20 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           fetch-depth: 0
-          ref: ${{ inputs.tag || github.ref }}
+          ref: ${{ inputs.tag && github.event.repository.default_branch || github.ref }}
       - name: Verify annotated immutable release tag
         run: |
           test "$RELEASE_TAG" != main
           test "$(git cat-file -t "$RELEASE_TAG")" = tag
           release_sha=$(git rev-list -n 1 "$RELEASE_TAG")
-          test "$release_sha" = "$(git rev-parse HEAD)"
+          if [[ "${{ github.event_name }}" == workflow_dispatch ]]; then
+            unexpected_changes=$(git diff --name-only "$release_sha" HEAD -- . \
+              ':(exclude).github/workflows/release.yml' \
+              ':(exclude)scripts/prepare-package-splits.sh')
+            test -z "$unexpected_changes"
+          else
+            test "$release_sha" = "$(git rev-parse HEAD)"
+          fi
           echo "RELEASE_SHA=$release_sha" >> "$GITHUB_ENV"
       - uses: shivammathur/setup-php@f3e473d116dcccaddc5834248c87452386958240 # v2
         with:
