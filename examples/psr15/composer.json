@@ -1,0 +1,44 @@
+{
+    "name": "sohophp/sofinder-psr15-example",
+    "description": "Executable Slim, Mezzio and plain PHP hosts for SoFinder",
+    "type": "project",
+    "license": "MIT",
+    "require": {
+        "php": "^8.2",
+        "laminas/laminas-diactoros": "^3.6",
+        "laminas/laminas-httphandlerrunner": "^2.13",
+        "mezzio/mezzio": "^3.24",
+        "mezzio/mezzio-fastroute": "^3.13",
+        "slim/psr7": "^1.7",
+        "slim/slim": "^4.15",
+        "sohophp/sofinder-psr15": "dev-main"
+    },
+    "autoload": {
+        "psr-4": {
+            "SoFinderExample\\": "src/"
+        }
+    },
+    "repositories": [
+        {
+            "type": "path",
+            "url": "../../packages/sofinder-core",
+            "options": {"symlink": true}
+        },
+        {
+            "type": "path",
+            "url": "../../packages/sofinder-http",
+            "options": {"symlink": true}
+        },
+        {
+            "type": "path",
+            "url": "../../packages/sofinder-psr15",
+            "options": {"symlink": true}
+        }
+    ],
+    "minimum-stability": "dev",
+    "prefer-stable": true,
+    "config": {
+        "platform": {"php": "8.2.0"},
+        "sort-packages": true
+    }
+}

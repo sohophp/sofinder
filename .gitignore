@@ -9,6 +9,8 @@
 /examples/symfony/config/reference.php
 /examples/symfony/.env.*
 !/examples/symfony/.env.example
+/examples/psr15/composer.lock
+/examples/psr15/vendor/
 /.phpunit.result.cache
 /.phpunit.cache/
 /coverage/

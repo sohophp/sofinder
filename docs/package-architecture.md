@@ -16,7 +16,7 @@ isolated install test passes.
 | `sohophp/sofinder-http` | Endpoint catalog, PSR dispatcher and shared handlers | All 51 non-presentation endpoints have shared actions; `/browser` remains a host bridge page |
 | `sohophp/sofinder-symfony` | Bundle and HttpFoundation/Console/Messenger adapters | Physical subtree, release assets and isolated install complete |
 | `sohophp/sofinder-laravel` | Laravel 12/13 provider, auth, CSRF, routes and commands | Blocked by the 1.0 observation gate |
-| `sohophp/sofinder-psr15` | Slim, Mezzio and plain PSR-15 middleware | Isolated install and route/action coverage complete; runnable host examples pending |
+| `sohophp/sofinder-psr15` | Slim, Mezzio and plain PSR-15 middleware | Isolated install, real-host smoke and route/action coverage complete; full endpoint parity remains gated |
 
 The source-level `FrameworkBoundaryTest` rejects Symfony, Illuminate, Slim or
 Mezzio imports from the physical Core package. `EndpointCatalogTest` rejects
@@ -37,6 +37,12 @@ package name and `SohoPHP\\SoFinder` namespace without retaining duplicate root 
 Every split repository carries package-local PHP/Composer wrappers and pinned CI
 for PHP 8.2 lowest plus PHP 8.5 stable dependencies. Those development files are
 export-ignored from consumer distribution archives.
+
+Executable Slim 4, Mezzio 3 and plain PHP front controllers exercise the real
+host routers and emitters on PHP 8.2 and 8.5. Their official entry point requires
+authorization, actor, CSRF and event-dispatcher services at construction time;
+the example denies protected operations instead of supplying an anonymous
+allow-all default.
 
 `ConfigurationNormalizer` lives in Core and is the canonical array entry point
 for framework defaults, list replacement, the legacy upload-naming alias and

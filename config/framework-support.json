@@ -12,7 +12,7 @@
   "experimental": {
     "psr15": {
       "hosts": ["slim-4", "mezzio-3", "plain-php"],
-      "reason": "Shared route and action coverage is complete; executable host parity and the Symfony observation gate remain pending."
+      "reason": "Executable Slim, Mezzio and plain PHP hosts pass on PHP 8.2 and 8.5; full endpoint contract parity and the Symfony observation gate remain pending."
     }
   },
   "promotionGate": {

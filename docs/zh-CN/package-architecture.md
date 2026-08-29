@@ -15,7 +15,7 @@ SoFinder 正从 1.0 前的 Symfony Bundle 迁移为同步版本的多个 Compose
 | `sofinder-http` | Endpoint Catalog、PSR Dispatcher 和共享 Handler | 51 个非展示端点均已有共享 Action；`/browser` 保留为宿主 Bridge 页面 |
 | `sofinder-symfony` | Bundle、HttpFoundation、Console、Messenger | 已完成物理拆分、发布资源和独立安装验证 |
 | `sofinder-laravel` | Laravel 12/13 Provider、授权、CSRF、路由、命令 | 受 1.0 观察期门禁约束 |
-| `sofinder-psr15` | Slim、Mezzio 和纯 PHP Middleware | 已完成独立安装及路由/Action 覆盖，等待可运行宿主示例 |
+| `sofinder-psr15` | Slim、Mezzio 和纯 PHP Middleware | 已完成独立安装、真实宿主冒烟及路由/Action 覆盖；完整端点一致性仍受门禁约束 |
 
 `FrameworkBoundaryTest` 会禁止物理 Core 包引入 Symfony、Illuminate、Slim 或 Mezzio；
 `EndpointCatalogTest` 会校验框架无关 Catalog 与 Symfony 当前 52 条路由完全一致。
@@ -31,6 +31,10 @@ Core、HTTP 和 PSR-15 已通过不安装 Symfony 的 Composer 独立安装验�
 每个 Split Repository 都携带包内 PHP／Composer 包装脚本及锁定 Action 版本的 CI，
 分别验证 PHP 8.2 最低依赖和 PHP 8.5 稳定依赖；这些开发文件会从使用者 Distribution
 Archive 中排除。
+
+可执行的 Slim 4、Mezzio 3 和纯 PHP Front Controller 会在 PHP 8.2 与 8.5 上调用真实
+Router 和 Response Emitter。正式入口要求构造时显式提供 Authorization、Actor、CSRF
+及 Event Dispatcher；示例对受保护操作默认拒绝，不提供匿名全放行配置。
 
 Core 中的 `ConfigurationNormalizer` 是框架配置数组的统一入口，负责默认值、列表替换、
 旧上传命名别名及安全范围。Symfony 解析后的 YAML 也必须经过同一 Normalizer；Laravel

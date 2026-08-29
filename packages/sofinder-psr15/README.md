@@ -12,8 +12,14 @@ The bridge supports PHP 8.2–8.5 and remains experimental until the Symfony 1.0
 observation gate and executable host parity suites pass. Do not describe an
 installation as full-stack support merely because this package can be installed.
 
-The application must provide compatible PSR-7 and PSR-17 factories plus explicit
-authorization, actor, workspace, CSRF and event-dispatcher services.
+Construct `SoFinderApplication` with an `EndpointDispatcher` and `HostServices`.
+`HostServices` requires explicit authorization, actor, CSRF and event-dispatcher
+implementations, so the official runtime cannot silently start with anonymous
+access. `NativeSessionCsrfTokenProvider` is available for framework-free PHP.
+
+Runnable Slim, Mezzio and plain PHP front controllers live in
+`examples/psr15`. The example deliberately exposes only the public liveness
+action and denies protected operations until a real host supplies its services.
 
 Documentation: <https://sofinder.sohophp.app/framework-support>
 
