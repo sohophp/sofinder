@@ -1,6 +1,9 @@
 parameters:
     level: 8
     paths:
-        - src
+        - packages/sofinder-symfony/src
+        - packages/sofinder-core/src
+        - packages/sofinder-http/src
+        - packages/sofinder-psr15/src
     tmpDir: var/phpstan
     treatPhpDocTypesAsCertain: false

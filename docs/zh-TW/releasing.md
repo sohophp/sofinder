@@ -22,10 +22,44 @@ description: SoFinder 維護者測試、建立標籤與發布套件的檢查清�
 
 目前 beta 的確切 Composer 版本限制是 `sohophp/sofinder:0.1.0-beta.31`。已發布的標籤不得移動。
 
-S3 adapter 位於 `packages/sofinder-s3`，會在相符的核心預發布版本之後，以獨立 repository 發布。目前 adapter 版本為 `v0.1.0-beta.2`：
+## 同步發布 1.x Package
 
-1. 從核心發布的確切 commit 拆分套件目錄：`git subtree split --prefix=packages/sofinder-s3 -b release/sofinder-s3-beta.2`。
-2. 將該 branch 推送到 `https://github.com/sohophp/sofinder-s3` 的 `main`。
-3. 執行套件自己的 MinIO CI，再建立不可變更的 `v0.1.0-beta.2` 標籤，不得移動核心標籤。
-4. 確認 Packagist 已索引新的 adapter 標籤。
-5. 在全新的 Symfony 專案驗證安裝後，才啟用宿主資源。切勿將憑證複製到任何 repository 或發布記錄中。
+1.x 發布必須從同一 Release Commit 拆分每個可發布子目錄，並為本次參與發布的所有
+Package 建立完全相同的版本標籤。內部相依使用 `self.version`，因此依 Core、HTTP、
+Symfony、S3、相容 Meta Package 的順序發布並等待索引。PSR-15 與 Laravel 只有在
+`config/framework-support.json` 的 1.0 觀察門禁 eligible 後，才能加入同步 Minor。
+
+建立標籤前執行 `scripts/check-package-install.sh`；它會使用鏡像副本而非 Symlink 安裝，
+並驗證每個 Archive 的 README、License、Runtime Autoload 邊界及 Symfony 前端第三方聲明。
+不得發布依賴 Monorepo 根目錄殘留檔案才能執行的子目錄。
+
+可用 `scripts/build-release-archives.sh 1.0.0-rc.1 WORKTREE <output>` 在本機預覽
+五個 Archive。Tag Workflow 會從不可變 Git Object 重新建置，而非直接封裝 Checkout；
+接著驗證 Package 身分與 Runtime 內容，並發布排序後的統一 `SHA256SUMS`。
+`v1.0.0-rc.1` 等帶連字號 Tag 自動成為 Prerelease，`v1.0.0` 自動成為最新正式版。
+
+首次建立 1.x Tag 前，必須建立 `sohophp/sofinder-core`、`sohophp/sofinder-http`、
+`sohophp/sofinder-symfony` 及 `sohophp/sofinder-s3` Repository，將各 Composer Package
+登記至 Packagist，並設定對這些 Repository 有寫入權限的 Actions Secret
+`SOFINDER_PACKAGE_PUSH_TOKEN`。發布工作會建置可重現的子目錄歷史 Bundle，驗證 Package
+身分與 Checksum，再以一次 Atomic Push 建立 `main` 及不可變版本 Tag，且不會 Force Push。
+Repository／Token 缺少或 Branch 無法 Fast-forward 時，會在建立 GitHub Release 前停止。
+PSR-15 與 Laravel 只在晉級門禁 eligible 後加入。
+
+Split 只是發布邊界，並不改變 Monorepo 開發模式：[Packagist 要求每個 Package 的
+`composer.json` 位於所提交 VCS Repository 頂層](https://packagist.org/about)，權威
+開發來源仍是本 Monorepo。
+
+由於同步 Package 使用 `self.version`，安裝 RC 的專案必須允許傳遞 RC 相依：在 Root
+Project 設定 `minimum-stability: RC` 並啟用 `prefer-stable: true`，或等待正式版 Tag。
+穩定 1.x 使用者不需要此 Override。
+
+每日 `Symfony 1.0 observation` Workflow 只會在不可變的 `1.0.0` GitHub Release
+存在後開始。維護者必須為符合條件的 Issue 加上精確 `priority:p0` 或 `priority:p1`
+Label。每次執行都會上傳保留 90 天的 JSON Artifact，包含發布時間、覆蓋日數、未關閉數量
+及觀察期內建立的全部 P0/P1 Issue；即使 Issue 已關閉也會令執行失敗。開啟 Framework
+晉級門禁時，使用最終成功的 Workflow Run 作為缺陷稽核 URL。
+
+S3 Adapter 位於 `packages/sofinder-s3`，由同步 Workflow 發布至獨立 Repository。
+其歷史預發布版本為 `v0.1.0-beta.2`；1.x 與 Core 使用相同版本。啟用 Host Resource 前
+必須確認 Packagist Tag 及全新專案安裝，且不得將憑證寫入 Repository 或發布 Log。

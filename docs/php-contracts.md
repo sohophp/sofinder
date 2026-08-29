@@ -5,6 +5,13 @@ description: Public PHP interfaces and value objects provided for SoFinder integ
 
 # Public PHP contracts
 
+`ConfigurationNormalizer` is the framework-neutral entry point for YAML-derived
+or native PHP configuration arrays. `normalize($config, $hostDefaults)` applies
+the published snake_case defaults, replaces list values instead of merging list
+indexes, preserves the deprecated upload-naming alias, and rejects unsafe core
+limits. A framework adapter may resolve environment expressions first, but must
+pass the resolved result through `normalizeResolved()` before wiring services.
+
 SoFinder 1.x treats the interfaces under `SohoPHP\SoFinder\Contract` and the
 documented value objects as its public extension surface. Implementations are
 Symfony services; replace the corresponding interface alias or use the tags
@@ -37,8 +44,12 @@ the shared implementation uses `AtomicStateStoreInterface`. Asset metadata uses
 optimistic versions and reports stale writes as `asset_metadata_conflict`.
 
 `WorkspaceResolverInterface` resolves a trusted immutable `WorkspaceContext`
-from the current request. The context contains the opaque workspace ID, actor
-and allowed resources. Resolvers must derive it from authenticated host context;
+from the framework-neutral `RequestContext`; host implementations must not type
+this parameter as Symfony, Laravel or PSR request objects. The corresponding
+bridge owns that conversion. `CsrfTokenProviderInterface` similarly isolates
+token issue/validation from the host framework.
+The resolved Workspace context contains the opaque workspace ID, actor and
+allowed resources. Resolvers must derive it from authenticated host context;
 they must not trust a browser query parameter. Storage isolation remains the
 host adapter/resource mapping's responsibility.
 

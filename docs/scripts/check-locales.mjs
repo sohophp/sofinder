@@ -9,7 +9,7 @@ const sourcePages = readdirSync(docsRoot)
 const sourceRoutes = new Set(sourcePages.map((name) => name === 'index.md' ? '' : basename(name, '.md')))
 const errors = []
 
-const routeLines = readFileSync(join(docsRoot, '..', 'src', 'Resources', 'config', 'routes.yaml'), 'utf8').split('\n')
+const routeLines = readFileSync(join(docsRoot, '..', 'packages', 'sofinder-symfony', 'src', 'Resources', 'config', 'routes.yaml'), 'utf8').split('\n')
 const httpRoutes = []
 let routePath = ''
 for (const line of routeLines) {

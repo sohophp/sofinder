@@ -1,0 +1,39 @@
+{
+    "name": "sohophp/sofinder-psr15",
+    "description": "Experimental PSR-15 bridge for SoFinder",
+    "type": "library",
+    "license": "MIT",
+    "homepage": "https://sofinder.sohophp.app/",
+    "keywords": ["file-manager", "psr-15", "slim", "mezzio"],
+    "support": {
+        "issues": "https://github.com/sohophp/sofinder/issues",
+        "source": "https://github.com/sohophp/sofinder"
+    },
+    "require": {
+        "php": "^8.2",
+        "psr/http-message": "^1.1 || ^2.0",
+        "psr/http-server-handler": "^1.0",
+        "psr/http-server-middleware": "^1.0",
+        "sohophp/sofinder-http": "self.version"
+    },
+    "conflict": {
+        "sohophp/sofinder-legacy": "*"
+    },
+    "autoload": {
+        "psr-4": {
+            "SohoPHP\\SoFinder\\Psr15\\": "src/"
+        }
+    },
+    "suggest": {
+        "mezzio/mezzio": "Registers the shared endpoints in a Mezzio 3 application",
+        "slim/slim": "Registers the shared endpoints in a Slim 4 application"
+    },
+    "config": {
+        "sort-packages": true
+    },
+    "extra": {
+        "branch-alias": {
+            "dev-main": "1.x-dev"
+        }
+    }
+}

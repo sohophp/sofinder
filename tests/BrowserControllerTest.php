@@ -17,6 +17,9 @@ use SohoPHP\SoFinder\Value\ResourceStorage;
 use SohoPHP\SoFinder\Value\ResourceType;
 use SohoPHP\SoFinder\Value\Theme;
 use SohoPHP\SoFinder\Value\WorkspaceContext;
+use SohoPHP\SoFinder\Value\RequestContext;
+use SohoPHP\SoFinder\Symfony\SymfonyRequestContextProvider;
+use SohoPHP\SoFinder\Symfony\CsrfGuard;
 use SohoPHP\SoFinder\Workspace\WorkspaceProvider;
 use Symfony\Component\EventDispatcher\EventDispatcher;
 use Symfony\Component\HttpFoundation\Request;
@@ -107,14 +110,14 @@ final class BrowserControllerTest extends TestCase
     public function testPublishesOnlySafeTrustedWorkspaceNavigationOptions(): void
     {
         $request = Request::create('/browser'); $stack = new RequestStack(); $stack->push($request);
-        $resolver = new class implements WorkspaceResolverInterface { public function resolve(Request $request): WorkspaceContext { return new WorkspaceContext('site-a', 'actor', ['Files']); } };
-        $provider = new class implements WorkspaceOptionProviderInterface { public function options(Request $request, WorkspaceContext $current): array { return [
+        $resolver = new class implements WorkspaceResolverInterface { public function resolve(RequestContext $request): WorkspaceContext { return new WorkspaceContext('site-a', 'actor', ['Files']); } };
+        $provider = new class implements WorkspaceOptionProviderInterface { public function options(RequestContext $request, WorkspaceContext $current): array { return [
             ['id' => 'site-a', 'label' => 'Site A', 'url' => '/site-a/files'],
             ['id' => 'site-b', 'label' => 'Site B', 'url' => '/site-b/files?from=sofinder'],
             ['id' => 'evil', 'label' => 'Evil', 'url' => '//evil.example/files'],
             ['id' => 'traversal', 'label' => 'Traversal', 'url' => '/site-a/../admin'],
         ]; } };
-        $config = $this->config($request, workspaces: new WorkspaceProvider($resolver, $stack), workspaceOptions: $provider);
+        $config = $this->config($request, workspaces: new WorkspaceProvider($resolver, new SymfonyRequestContextProvider($stack)), workspaceOptions: $provider);
 
         self::assertSame('site-a', $config['workspace']['id']);
         self::assertSame(['site-a', 'site-b'], array_column($config['workspace']['options'], 'id'));
@@ -134,7 +137,7 @@ final class BrowserControllerTest extends TestCase
         $csrf = $this->createMock(CsrfTokenManagerInterface::class);
         $csrf->method('getToken')->willReturn(new CsrfToken('sofinder', 'token'));
         $theme = new Theme(['accent' => '#276ef1', 'background' => '#f4f6f9', 'panel' => '#fff', 'text' => '#1c2735', 'muted' => '#667282', 'danger' => '#c13a43', 'radius' => '10px']);
-        $controller = new BrowserController($files, $router, $csrf, 'test', $theme, [
+        $controller = new BrowserController($files, $router, new CsrfGuard($csrf, $authorization), 'test', $theme, [
             'mode' => 'auto', 'header' => false, 'logo' => false, 'search' => true,
             'language_switcher' => true, 'view_switcher' => true, 'folder_tree' => false, 'scale' => 'standard', 'upload_conflict_strategy' => 'ask',
         ], $features, null, [], $allowedOrigins, $workspaces, $workspaceOptions);

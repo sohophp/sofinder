@@ -1,0 +1,5 @@
+so_finder:
+  maintenance:
+    mode: messenger
+  document_preview:
+    mode: messenger

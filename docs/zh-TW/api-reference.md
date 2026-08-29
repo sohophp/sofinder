@@ -185,7 +185,7 @@ Session 24 小時後過期。客戶端可以補傳缺失 Index，但不能超過
 
 ## 內容傳遞
 
-- `GET /api/download?resource=Files&path=manual.pdf`：授權後以 Attachment 下載，資料夾返回 `invalid_type`。
+- `GET /api/download?resource=Files&path=manual.pdf`：授權後以 Attachment 下載，並支援 ETag、Last-Modified、條件請求及單段位元組 Range；資料夾返回 `invalid_type`，無效或無法滿足的 Range 返回 416。
 - `GET /api/content?resource=Images&path=photo.jpg&disposition=inline`：返回私有內容，支援 ETag、Last-Modified、條件請求和單段 Byte Range。只有安全 Raster MIME 能 Inline，其餘強制 Attachment。無效 Range 返回 416。
 - `GET /api/signed-url?resource=Private&path=manual.pdf&ttl=300`：先重新授權目前使用者，再回傳 `{url,expiresAt}`。臨時網址指向 `/signed/{token}`；只有宿主 Firewall 明確允許該路由匿名存取時才不需要 Session。Token 使用 HMAC、僅適用於 `delivery_mode: proxy`，並綁定檔案大小與修改時間；過期或檔案已替換回傳 410，竄改回傳 403。
 - `GET /api/preview/text?resource=Files&path=readme.txt`：回傳已授權 UTF-8 文字、JSON、XML 或 YAML 檔案的前 256 KiB，格式為 `{content,truncated,mimeType,size}`；內建 UI 一律按純文字顯示。

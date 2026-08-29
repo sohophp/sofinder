@@ -4,11 +4,16 @@ declare(strict_types=1);
 
 namespace SohoPHP\SoFinder\Tests;
 
+use Nyholm\Psr7\Factory\Psr17Factory;
+use Nyholm\Psr7\ServerRequest;
 use PHPUnit\Framework\TestCase;
 use SohoPHP\SoFinder\Contract\AuthorizationInterface;
 use SohoPHP\SoFinder\Contract\ImageCapabilityProviderInterface;
 use SohoPHP\SoFinder\FileManager;
 use SohoPHP\SoFinder\Http\ApiController;
+use SohoPHP\SoFinder\Http\Action\ConfigAction;
+use SohoPHP\SoFinder\Http\EndpointDispatcher;
+use SohoPHP\SoFinder\Http\PsrEndpointHandler;
 use SohoPHP\SoFinder\Plugin\PluginRegistry;
 use SohoPHP\SoFinder\ResourceRegistry;
 use SohoPHP\SoFinder\Storage\LocalStorageAdapter;
@@ -37,8 +42,14 @@ final class ApiContractSnapshotTest extends TestCase
                 public function driver(): string { return ''; }
                 public function cacheVersion(): string { return 'test'; }
             };
-            $controller = new ApiController($files, (new \ReflectionClass(CsrfGuard::class))->newInstanceWithoutConstructor(), new PluginRegistry([]), imageCapabilities: $images);
+            $plugins = new PluginRegistry([]);
+            $action = new ConfigAction($files, $plugins, imageCapabilities: $images);
+            $controller = new ApiController($files, (new \ReflectionClass(CsrfGuard::class))->newInstanceWithoutConstructor(), $plugins, imageCapabilities: $images, configAction: $action);
             $payload = json_decode((string) $controller->config()->getContent(), true, 512, JSON_THROW_ON_ERROR);
+            $factory = new Psr17Factory();
+            $psr = (new EndpointDispatcher($factory, $factory, [new PsrEndpointHandler($action, $factory, $factory)]))
+                ->dispatch($action->endpoint(), new ServerRequest('GET', '/api/config'));
+            self::assertSame($payload, json_decode((string) $psr->getBody(), true, 512, JSON_THROW_ON_ERROR));
             $schema = json_decode((string) file_get_contents(__DIR__ . '/../docs/public/schema/config-data.schema.json'), true, 512, JSON_THROW_ON_ERROR);
             foreach ($schema['required'] as $field) self::assertArrayHasKey($field, $payload['data']);
             foreach ($schema['properties']['featureAvailability']['required'] as $field) {

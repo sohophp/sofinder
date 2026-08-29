@@ -2,6 +2,89 @@
 
 ## Unreleased
 
+- Make every PHP 8 package conflict with `sohophp/sofinder-legacy`, preventing
+  Composer from mixing the independent PHP 7 and PHP 8 product lines.
+- Add the framework-neutral `ConfigurationNormalizer`, make Symfony pass its
+  resolved YAML configuration through it, and verify equivalent plain PHP array
+  defaults, list replacement, legacy aliases and security limit validation.
+- Add a daily, read-only Symfony 1.0 observation workflow that records all P0/P1
+  issues created after release, including already closed defects, as promotion
+  evidence instead of relying on a one-time open-issue count.
+- Build deterministic subtree Git bundles for every synchronized package and
+  publish their `main` branch plus immutable tag atomically, so Packagist can
+  index real package repositories instead of relying on root release archives.
+- Test mirrored package installation on PHP 8.2 with lowest dependencies and
+  PHP 8.5 with preferred stable dependencies, including the Legacy conflict.
+- Ship package-local PHP/Composer wrappers and pinned independent CI workflows
+  in every split repository; development automation remains excluded from
+  Composer distribution archives.
+- Extract framework-independent resource registry construction and keep the
+  Symfony bridge as a thin mount-path adapter, establishing the first tested
+  headless integration seam for Laravel, Slim, Mezzio and plain PHP hosts.
+- Document the framework support levels and keep any possible PHP 7.2 port on
+  a separate compatibility release line after the PHP 8.2–8.5 Symfony baseline.
+- Remove Symfony Request types from Workspace extension contracts, add trusted
+  framework-neutral request and CSRF ports, and adapt the Symfony bridge.
+- Publish the canonical 52-endpoint catalog plus experimental PSR-15 routing
+  and a PSR-7 dispatcher with stable error envelopes and security headers.
+- Add independently valid experimental `sofinder-http` and `sofinder-psr15`
+  subtrees, two-implementation PSR-7 tests and machine-readable framework and
+  legacy release policy. Full handler parity remains gated on the 1.0 baseline.
+- Physically extract `sofinder-core`, make HTTP depend directly on it, and add
+  isolated Composer checks proving Core and PSR-15 installs do not pull Symfony.
+- Make the S3 adapter depend on Core instead of the Symfony compatibility package;
+  Symfony service registration remains available when the Symfony bridge exists.
+- Route liveness, readiness and capability responses through shared HTTP actions,
+  with verified Symfony/PSR-7 parity and matching retry headers for domain errors.
+- Make the compatibility package consume Core and HTTP through real Composer
+  dependencies, retaining PSR-15 only as an experimental development dependency.
+- Convert PSR-7 requests into the shared RequestContext and migrate entry listing
+  and runtime configuration discovery to shared actions, including black-box
+  Symfony/PSR parity for query, pagination and published config payloads.
+- Migrate folder creation, rename, copy, move and delete to shared mutation
+  actions with fail-closed host authorization, CSRF validation before JSON
+  parsing, stable error envelopes and Symfony/PSR filesystem parity tests.
+- Migrate batch operations, batch rename and the complete recycle-bin lifecycle
+  to shared actions, including route-attribute IDs, FeaturePolicy gates and PSR
+  tests for listing, restoring and permanently deleting private trash entries.
+- Migrate metadata reads and mutations to shared actions, preserving feature
+  filtering, authorization-before-parse, CSRF and Symfony/PSR response parity.
+- Migrate bounded SHA-256 checksums and UTF-8 text previews to shared read
+  actions with identical Symfony/PSR payloads and FeaturePolicy enforcement.
+- Migrate chunk-upload status/cancellation and image-dimension discovery to
+  shared actions, retaining workspace isolation, CSRF and upload authorization.
+- Pass RequestContext explicitly through workspace resolution and migrate asset
+  search plus the complete asset-usage lifecycle to shared Symfony/PSR actions.
+- Replace the asset-reference Router dependency with a Core endpoint URL contract
+  and migrate asset resolve, detail and metadata update to shared actions.
+- Use the URL contract for document-preview jobs and signed URL issuance, add a
+  framework-neutral role authorization port, and share the security status API.
+- Share content/download, image thumbnail/variant, document preview and signed
+  content streams across Symfony and PSR-15, including Range, ETag, cache and
+  Unicode Content-Disposition behavior.
+- Render Prometheus metrics through the same framework-neutral streaming action
+  in Symfony and PSR-15 hosts.
+- Complete shared actions for every non-presentation endpoint, including image
+  mutations, archives with deterministic temporary-file cleanup, private asset
+  sessions, manifest assets, standard/chunk uploads and CKEditor compatibility
+  uploads with origin checks and nonce-protected script responses.
+- Add dependency-free Slim and Mezzio route registration from the canonical
+  endpoint catalog while keeping the host-rendered browser page outside the
+  experimental PSR-15 API bridge.
+- Physically extract the Symfony Bundle, adapters, routes and release assets to
+  `sofinder-symfony`; turn `sohophp/sofinder` into a compatibility meta package,
+  and verify isolated bridge/meta installs plus the real Symfony example.
+- Add real Symfony HTTP and Chromium browser smoke tests for authentication,
+  session CSRF, uploads, ETag/Range downloads, security headers and compiled
+  assets; exercise optional Messenger routing without making it mandatory.
+- Give every publishable package its own README, license and support metadata,
+  including third-party frontend notices in the Symfony release subtree.
+- Build and verify synchronized Meta/Core/HTTP/Symfony/S3 archives from an
+  immutable tag, publish shared checksums and provenance, and distinguish RC
+  prereleases from stable GitHub releases automatically.
+- Require auditable matrix, observation-window and priority-defect evidence
+  before the Laravel/PSR-15 promotion gate can become eligible.
+
 ## 0.1.0-beta.31 - 2026-08-29
 
 - Add Jodit 4 picker and native uploader adapters, declarations, bundle-size

@@ -27,15 +27,58 @@ for an intentional compatibility run:
 The current beta's exact Composer constraint is
 `sohophp/sofinder:0.1.0-beta.31`. Published tags must never be moved.
 
-The S3 adapter is maintained in `packages/sofinder-s3` and released as an
-independent repository after the matching core prerelease. The current adapter
-release is `v0.1.0-beta.2`:
+## Synchronized 1.x packages
 
-1. Split the package directory from the exact core release commit with
-   `git subtree split --prefix=packages/sofinder-s3 -b release/sofinder-s3-beta.2`.
-2. Push that branch to `https://github.com/sohophp/sofinder-s3` as `main`.
-3. Run the package's own MinIO CI, then create the immutable
-   `v0.1.0-beta.2` tag without moving the core tag.
-4. Confirm Packagist has indexed the new adapter tag.
-5. Verify installation in a clean Symfony project before enabling a host
-   resource. Never copy credentials into either repository or release logs.
+For 1.x, split each publishable subtree from the exact release commit and tag
+every package participating in that release with the identical version. Internal
+dependencies use `self.version`, so publish/index in dependency order: Core,
+HTTP, Symfony, S3, then the compatibility Meta Package. PSR-15 and Laravel join
+the synchronized minor only after `config/framework-support.json` reports that
+the 1.0 observation gate is eligible.
+
+Before tagging, run `scripts/check-package-install.sh`; it installs mirrored
+copies rather than symlinks and checks every archive's README, license, runtime
+autoload boundary and Symfony frontend notices. Never publish a subtree that
+only works because files remain available in the monorepo root.
+
+`scripts/build-release-archives.sh 1.0.0-rc.1 WORKTREE <output>` previews the
+five archives locally. On a tag, the release workflow rebuilds them from the
+immutable Git object rather than the checkout, verifies their package identity
+and runtime contents, then publishes one sorted `SHA256SUMS` file. A hyphenated
+tag such as `v1.0.0-rc.1` becomes a prerelease; `v1.0.0` becomes the latest
+stable release.
+
+Before the first 1.x tag, create the `sohophp/sofinder-core`,
+`sohophp/sofinder-http`, `sohophp/sofinder-symfony` and
+`sohophp/sofinder-s3` repositories, register each Composer package with
+Packagist, and configure the `SOFINDER_PACKAGE_PUSH_TOKEN` Actions secret with
+write access to those repositories. The release job builds reproducible
+subdirectory-history bundles, verifies their package identity and checksum,
+then atomically pushes `main` and the immutable version tag without force. A
+missing repository/token or a non-fast-forward branch stops the release before
+the GitHub Release is created. PSR-15 and Laravel repositories are included only
+after the promotion gate is eligible.
+
+This split is a publishing boundary, not a departure from monorepo development:
+[Packagist requires each package's `composer.json` at the top of the submitted
+VCS repository](https://packagist.org/about), while authoritative development
+continues in this monorepo.
+
+An RC consumer must allow RC transitive dependencies because synchronized
+packages use `self.version`; use a root `minimum-stability` of `RC` together
+with `prefer-stable: true`, or wait for the stable tag. Stable 1.x consumers do
+not need this override.
+
+The daily `Symfony 1.0 observation` workflow starts only after the immutable
+`1.0.0` GitHub Release exists. Maintainers must apply the exact `priority:p0` or
+`priority:p1` label to qualifying issues. Each run uploads a 90-day JSON
+artifact with the release timestamp, covered days, open count and every P0/P1
+issue created during observation; any such issue fails the run, even when it is
+already closed. Use the final successful workflow run as the defect-audit URL
+when opening the framework promotion gate.
+
+The S3 adapter is maintained in `packages/sofinder-s3` and released to its
+independent repository by the synchronized workflow. Its historical prerelease
+is `v0.1.0-beta.2`; the 1.x line uses the same version as Core. Before enabling
+a host resource, confirm its Packagist tag and clean-project installation, and
+never copy credentials into either repository or release logs.

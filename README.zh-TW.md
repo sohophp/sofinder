@@ -6,6 +6,12 @@ SoFinder 是原創、採 MIT 授權的網頁檔案管理器，支援 PHP 8.2 至
 
 本專案採獨立設計，不包含專有檔案管理器的程式碼、美術、翻譯、樣式或其他資產。Runtime 相依套件聲明記錄於 `THIRD_PARTY_NOTICES.md`。
 
+目前完整支援的 Host 整合是 Symfony；同時提供已測試且不依賴框架 Request／Container
+的 Registry 與 `FileManager` headless 入口。Laravel 及共用的 Slim／Mezzio PSR-7
+Bridge 會在 Symfony／PHP 8.2～8.5 基線穩定後推進。準確支援層級請見
+[`docs/zh-TW/framework-support.md`](docs/zh-TW/framework-support.md)。PHP 7.2
+移植只能使用獨立 Package 及獨立發布線，不進入目前 Branch 或 1.x 依賴圖。
+
 一般使用者可閱讀[檔案管理器指南](https://sofinder.sohophp.app/zh-TW/user-guide)、[圖片管理](https://sofinder.sohophp.app/zh-TW/image-guide)和[編輯器整合](https://sofinder.sohophp.app/zh-TW/editor-integrations)。開發者請使用[整合指南](https://sofinder.sohophp.app/zh-TW/developer-guide)及 [HTTP API 參考](https://sofinder.sohophp.app/zh-TW/api-reference)。
 
 ## Symfony 安裝

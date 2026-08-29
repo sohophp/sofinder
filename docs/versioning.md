@@ -26,3 +26,9 @@ The 1.0 support matrix is PHP 8.2–8.5 with Symfony 6.4 LTS or 7.4 LTS. The
 bundled local adapter is the only storage backend covered by the 1.0 support
 promise. The React application remains a private build input shipped in the
 Composer package; no npm package is published for 1.0.
+
+PHP 7.2 is not part of this matrix and will not be added to `main` or the 1.x
+Composer constraint. If a maintainable port is feasible after the supported
+Symfony matrix is stable, it must use a separate repository, package, version
+namespace, dependency lock, CI matrix and security policy. See
+[Framework support](framework-support.md).

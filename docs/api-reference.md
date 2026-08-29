@@ -244,7 +244,9 @@ Sessions expire after 24 hours. Clients may retry missing indexes, but must not 
 
 ### `GET /api/download?resource=Files&path=manual.pdf`
 
-Authorizes `read` and returns an attachment. Folders return `invalid_type`.
+Authorizes `read` and returns an attachment with the same ETag, Last-Modified,
+conditional request and single byte `Range` contract as authenticated content.
+Folders return `invalid_type`; invalid or unsatisfiable ranges return 416.
 
 ### `GET /api/content?resource=Images&path=photo.jpg&disposition=inline`
 

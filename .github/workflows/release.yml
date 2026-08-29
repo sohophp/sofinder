@@ -14,12 +14,16 @@ permissions:
   attestations: write
 
 jobs:
-  prerelease:
+  release:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           fetch-depth: 0
+      - name: Verify annotated immutable release tag
+        run: |
+          test "$(git cat-file -t "$GITHUB_REF_NAME")" = tag
+          test "$(git rev-list -n 1 "$GITHUB_REF_NAME")" = "$GITHUB_SHA"
       - uses: shivammathur/setup-php@f3e473d116dcccaddc5834248c87452386958240 # v2
         with:
           php-version: '8.5'
@@ -30,6 +34,10 @@ jobs:
           node-version: '22'
       - run: corepack enable
       - run: ./scripts/composer.sh install --no-interaction --prefer-dist
+      - run: cp composer-7.4.json composer.json
+        working-directory: examples/symfony
+      - run: ../../scripts/composer.sh install --no-interaction --prefer-dist
+        working-directory: examples/symfony
       - run: pnpm install --frozen-lockfile
         working-directory: frontend
       - run: pnpm build && pnpm check:size && pnpm test:unit
@@ -38,35 +46,52 @@ jobs:
         working-directory: frontend
       - run: pnpm test:e2e
         working-directory: frontend
-      - run: ./scripts/php-bin.sh vendor/bin/phpunit && ./scripts/php-bin.sh vendor/bin/phpstan analyse --no-progress
+      - run: ./scripts/php-bin.sh vendor/bin/phpunit --display-deprecations --fail-on-deprecation && ./scripts/php-bin.sh vendor/bin/phpstan analyse --no-progress
+      - run: bash scripts/check-symfony-example-http.sh
+      - run: pnpm exec playwright test --config playwright.symfony.config.ts
+        working-directory: frontend
+      - run: bash scripts/check-package-install.sh
+      - run: ./scripts/php-bin.sh scripts/check-framework-release-gate.php
+      - run: pnpm install --frozen-lockfile && pnpm check
+        working-directory: docs
       - run: git diff --exit-code -- dist
-      - name: Create immutable source archive and checksum
+      - run: diff -qr dist packages/sofinder-symfony/dist
+      - name: Create synchronized immutable package archives and checksums
         run: |
           version=${GITHUB_REF_NAME#v}
-          git archive --format=tar.gz --prefix="SoFinder-${version}/" --output="SoFinder-${version}.tar.gz" "$GITHUB_SHA"
-          sha256sum "SoFinder-${version}.tar.gz" > SHA256SUMS
+          bash scripts/build-release-archives.sh "$version" "$GITHUB_SHA" release-artifacts
+          bash scripts/prepare-package-splits.sh "$version" "$GITHUB_SHA" package-splits
       - name: Generate CycloneDX SBOM
         uses: anchore/sbom-action@e22c389904149dbc22b58101806040fa8d37a610 # v0
         with:
           path: .
           format: cyclonedx-json
-          output-file: sofinder-sbom.cdx.json
+          output-file: release-artifacts/sofinder-sbom.cdx.json
           artifact-name: sofinder-sbom.cdx.json
           upload-release-assets: false
           syft-version: v1.33.0
       - name: Attest release archive provenance
         uses: actions/attest-build-provenance@4d101475d8b20a2381f78447822ac1eab6504dd8 # v4.2.2
         with:
-          subject-path: SoFinder-*.tar.gz
+          subject-path: release-artifacts/*.tar.gz
       - name: Upload release evidence
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: sofinder-release-evidence
           path: |
-            SoFinder-*.tar.gz
-            SHA256SUMS
-            sofinder-sbom.cdx.json
-      - name: Create beta prerelease
+            release-artifacts/
+            package-splits/
+      - name: Publish synchronized package repositories
+        env:
+          GH_TOKEN: ${{ secrets.SOFINDER_PACKAGE_PUSH_TOKEN }}
+        run: |
+          test -n "$GH_TOKEN"
+          gh auth setup-git
+          bash scripts/publish-package-splits.sh package-splits
+      - name: Create immutable GitHub release
         env:
           GH_TOKEN: ${{ github.token }}
-        run: gh release create "$GITHUB_REF_NAME" SoFinder-*.tar.gz SHA256SUMS sofinder-sbom.cdx.json --verify-tag --prerelease --generate-notes --title "$GITHUB_REF_NAME"
+        run: |
+          release_type=(--latest)
+          if [[ "$GITHUB_REF_NAME" == *-* ]]; then release_type=(--prerelease); fi
+          gh release create "$GITHUB_REF_NAME" release-artifacts/* --verify-tag "${release_type[@]}" --generate-notes --title "$GITHUB_REF_NAME"

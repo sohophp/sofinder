@@ -1,5 +1,21 @@
 # Upgrading SoFinder
 
+## From 0.1.0-beta.31 to the next beta
+
+Custom `WorkspaceResolverInterface::resolve()` and
+`WorkspaceOptionProviderInterface::options()` implementations must replace the
+Symfony `Request` parameter with `SohoPHP\SoFinder\Value\RequestContext`.
+Read trusted headers, query values and host attributes through that value.
+Symfony applications do not need to wire it manually; the Bundle registers
+`SymfonyRequestContextProvider`. This intentional pre-1.0 break removes the
+last Symfony request type from the public Workspace contracts.
+
+Custom browser/HTTP integrations should implement `CsrfTokenProviderInterface`
+instead of depending on Symfony's token manager. Symfony's `CsrfGuard` already
+implements the new contract. The experimental PSR packages are not yet a
+full-stack replacement for the Symfony Bundle; unregistered endpoint handlers
+fail closed with `501 endpoint_not_implemented`.
+
 ## From 0.1.0-beta.26 to 0.1.0-beta.31
 
 Deploy the complete rebuilt `dist/` directory. Stored files require no

@@ -5,6 +5,11 @@ description: SoFinder 提供给整合与扩充使用的公开 PHP Interface 与 
 
 # 公开 PHP 契约
 
+`ConfigurationNormalizer` 是 YAML 转换结果和原生 PHP 配置数组的框架无关入口。
+`normalize($config, $hostDefaults)` 会应用已发布的 snake_case 默认值，以替换而非索引
+合并的方式处理列表，保留旧上传命名别名，并拒绝不安全的核心限制。框架 Adapter 可以
+先解析环境表达式，但在装配服务前必须把结果传入 `normalizeResolved()`。
+
 SoFinder 1.x 将 `SohoPHP\SoFinder\Contract` 下的 Interface 及文件化 Value Object 视为公开扩充界面。实现是 Symfony Service；可替换对应的 Interface Alias，或使用下述 Tag。实现必须能安全处理并行请求，且应抛出 SoFinder Domain Exception，不得泄漏 Storage Path 或机密。
 
 ## 授权与 Actor
@@ -17,7 +22,7 @@ Storage Interface、可选的本机 Capability 及 Factory Tag 记录于[存储 
 
 Remote Adapter 也可实现 `StorageAuditProviderInterface`，向安全审计返回不含机密的 `warning` 或 `critical` Finding。
 
-可选的 `AssetCatalogInterface` 按 Workspace／资源／路径解析不透明资产 ID，并维护上传、移动、删除与恢复的身份变化；JSON 实现用于单节点，共享实现基于 `AtomicStateStoreInterface`。`WorkspaceResolverInterface` 必须从可信请求上下文返回不可变 `WorkspaceContext`，不得直接信任浏览器查询参数。
+可选的 `AssetCatalogInterface` 按 Workspace／资源／路径解析不透明资产 ID，并维护上传、移动、删除与恢复的身份变化；JSON 实现用于单节点，共享实现基于 `AtomicStateStoreInterface`。`WorkspaceResolverInterface` 必须从框架无关的可信 `RequestContext` 返回不可变 `WorkspaceContext`，不得直接接收 Symfony／Laravel Request 或信任浏览器查询参数；`CsrfTokenProviderInterface` 同样由宿主 Bridge 实现。
 
 `EntryUrlContextProviderInterface` 可为资源配置的 `entry_url` Route Template 加入宿主拥有的 Scalar Value。Autoconfiguration 会自动加入 `sofinder.entry_url_context_provider` Tag。Provider 对无关资源应返回空阵列，且不得在 Route Parameter 中暴露机密。
 

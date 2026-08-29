@@ -4,7 +4,11 @@
   "type": "project",
   "license": "MIT",
   "repositories": [
-    { "type": "path", "url": "../../packages/sofinder-s3", "options": { "symlink": false } }
+    { "type": "path", "url": "../..", "options": { "symlink": false, "versions": { "sohophp/sofinder": "dev-main" } } },
+    { "type": "path", "url": "../../packages/sofinder-core", "options": { "symlink": false, "versions": { "sohophp/sofinder-core": "dev-main" } } },
+    { "type": "path", "url": "../../packages/sofinder-http", "options": { "symlink": false, "versions": { "sohophp/sofinder-http": "dev-main" } } },
+    { "type": "path", "url": "../../packages/sofinder-symfony", "options": { "symlink": false, "versions": { "sohophp/sofinder-symfony": "dev-main" } } },
+    { "type": "path", "url": "../../packages/sofinder-s3", "options": { "symlink": false, "versions": { "sohophp/sofinder-s3": "dev-main" } } }
   ],
   "require": {
     "php": "^8.2",
@@ -16,7 +20,9 @@
     "symfony/security-bundle": "6.4.*",
     "symfony/yaml": "6.4.*"
   },
-  "autoload": { "psr-4": { "App\\": "src/", "SohoPHP\\SoFinder\\": "../../src/", "SohoPHP\\SoFinderS3\\": "../../packages/sofinder-s3/src/" } },
+  "autoload": { "psr-4": { "App\\": "src/" } },
+  "minimum-stability": "dev",
+  "prefer-stable": true,
   "config": { "allow-plugins": { "symfony/runtime": true }, "sort-packages": true },
   "extra": { "runtime": { "class": "Symfony\\Component\\Runtime\\SymfonyRuntime" } }
 }

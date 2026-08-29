@@ -6,7 +6,10 @@
     </testsuites>
     <source>
         <include>
-            <directory suffix=".php">src</directory>
+            <directory suffix=".php">packages/sofinder-symfony/src</directory>
+            <directory suffix=".php">packages/sofinder-core/src</directory>
+            <directory suffix=".php">packages/sofinder-http/src</directory>
+            <directory suffix=".php">packages/sofinder-psr15/src</directory>
         </include>
     </source>
 </phpunit>

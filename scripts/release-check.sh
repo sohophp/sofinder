@@ -19,6 +19,7 @@ pnpm test:unit
 pnpm build
 pnpm check:size
 git -C "$project_dir" diff --exit-code -- dist
+diff -qr "$project_dir/dist" "$project_dir/packages/sofinder-symfony/dist"
 pnpm audit --audit-level=high --registry=https://registry.npmjs.org
 pnpm test:e2e
 
@@ -32,5 +33,16 @@ cd "$project_dir/examples/symfony"
 "$php_bin" bin/console sofinder:security:audit --env=prod --no-debug
 
 cd "$project_dir"
+bash scripts/check-symfony-example-http.sh
+cd "$project_dir/frontend"
+pnpm exec playwright test --config playwright.symfony.config.ts
+
+cd "$project_dir"
+bash scripts/check-package-install.sh
+release_archive_dir=$(mktemp -d "$project_dir/var/release-archives.XXXXXX")
+bash scripts/build-release-archives.sh 1.0.0-rc.1 WORKTREE "$release_archive_dir"
+"$php_bin" scripts/check-framework-release-gate.php
+bash scripts/check-framework-release-gate-fixtures.sh
+bash scripts/check-observation-evidence-fixtures.sh
 git diff --check
 echo "SoFinder release checks passed."

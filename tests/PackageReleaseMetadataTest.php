@@ -1,0 +1,102 @@
+<?php
+
+declare(strict_types=1);
+
+namespace SohoPHP\SoFinder\Tests;
+
+use PHPUnit\Framework\Attributes\DataProvider;
+use PHPUnit\Framework\TestCase;
+
+final class PackageReleaseMetadataTest extends TestCase
+{
+    /** @return iterable<string, array{string,string}> */
+    public static function packageProvider(): iterable
+    {
+        yield 'Core' => ['packages/sofinder-core', 'sohophp/sofinder-core'];
+        yield 'HTTP' => ['packages/sofinder-http', 'sohophp/sofinder-http'];
+        yield 'PSR-15' => ['packages/sofinder-psr15', 'sohophp/sofinder-psr15'];
+        yield 'Symfony' => ['packages/sofinder-symfony', 'sohophp/sofinder-symfony'];
+        yield 'S3' => ['packages/sofinder-s3', 'sohophp/sofinder-s3'];
+    }
+
+    #[DataProvider('packageProvider')]
+    public function testPublishablePackageContainsIndependentReleaseMetadata(string $directory, string $name): void
+    {
+        $root = dirname(__DIR__);
+        $package = $root . '/' . $directory;
+        $composer = json_decode((string) file_get_contents($package . '/composer.json'), true, 32, JSON_THROW_ON_ERROR);
+
+        self::assertSame($name, $composer['name']);
+        self::assertSame('MIT', $composer['license']);
+        self::assertSame('1.x-dev', $composer['extra']['branch-alias']['dev-main']);
+        self::assertNotEmpty($composer['support']['issues']);
+        self::assertNotEmpty($composer['support']['source']);
+        self::assertFileExists($package . '/LICENSE');
+        self::assertFileExists($package . '/README.md');
+        self::assertFileExists($package . '/.php-version');
+        self::assertFileExists($package . '/.github/workflows/ci.yml');
+        self::assertTrue(is_executable($package . '/scripts/php-bin.sh'));
+        self::assertTrue(is_executable($package . '/scripts/composer.sh'));
+        self::assertGreaterThan(100, filesize($package . '/LICENSE'));
+        self::assertGreaterThan(100, filesize($package . '/README.md'));
+
+        $workflow = (string) file_get_contents($package . '/.github/workflows/ci.yml');
+        self::assertStringContainsString('./scripts/composer.sh validate --strict', $workflow);
+        self::assertStringContainsString('./scripts/composer.sh audit', $workflow);
+        self::assertDoesNotMatchRegularExpression('/run:\s+(?:php|composer|vendor\/bin\/phpunit)(?:\s|$)/m', $workflow);
+    }
+
+    public function testSynchronizedPackagesUseTheReleaseVersionForInternalDependencies(): void
+    {
+        $root = dirname(__DIR__);
+        $requirements = [
+            'composer.json' => ['sohophp/sofinder-symfony'],
+            'packages/sofinder-http/composer.json' => ['sohophp/sofinder-core'],
+            'packages/sofinder-psr15/composer.json' => ['sohophp/sofinder-http'],
+            'packages/sofinder-symfony/composer.json' => ['sohophp/sofinder-core', 'sohophp/sofinder-http'],
+            'packages/sofinder-s3/composer.json' => ['sohophp/sofinder-core'],
+        ];
+
+        foreach ($requirements as $manifest => $dependencies) {
+            $composer = json_decode((string) file_get_contents($root . '/' . $manifest), true, 32, JSON_THROW_ON_ERROR);
+            foreach ($dependencies as $dependency) {
+                self::assertSame('self.version', $composer['require'][$dependency] ?? null, "$manifest must synchronize $dependency.");
+            }
+        }
+    }
+
+    public function testPhp8PackagesRejectLegacyProductLineCoInstallation(): void
+    {
+        $root = dirname(__DIR__);
+        $manifests = [
+            'composer.json',
+            'packages/sofinder-core/composer.json',
+            'packages/sofinder-http/composer.json',
+            'packages/sofinder-psr15/composer.json',
+            'packages/sofinder-symfony/composer.json',
+            'packages/sofinder-s3/composer.json',
+        ];
+
+        foreach ($manifests as $manifest) {
+            $composer = json_decode((string) file_get_contents($root . '/' . $manifest), true, 32, JSON_THROW_ON_ERROR);
+            self::assertSame('*', $composer['conflict']['sohophp/sofinder-legacy'] ?? null, "$manifest must reject the PHP 7 legacy product line.");
+        }
+    }
+
+    public function testCompatibilityPackageIsASourceFreeMetaPackage(): void
+    {
+        $composer = json_decode((string) file_get_contents(dirname(__DIR__) . '/composer.json'), true, 32, JSON_THROW_ON_ERROR);
+
+        self::assertSame('metapackage', $composer['type']);
+        self::assertArrayNotHasKey('autoload', $composer);
+        self::assertDirectoryDoesNotExist(dirname(__DIR__) . '/src');
+    }
+
+    public function testSymfonyReleaseIncludesCompiledAssetsAndNotices(): void
+    {
+        $package = dirname(__DIR__) . '/packages/sofinder-symfony';
+        self::assertFileExists($package . '/dist/manifest.json');
+        self::assertFileExists($package . '/THIRD_PARTY_NOTICES.md');
+        self::assertGreaterThan(100, filesize($package . '/THIRD_PARTY_NOTICES.md'));
+    }
+}

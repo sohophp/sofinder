@@ -13,7 +13,7 @@ final class OpenApiContractTest extends TestCase
         $root = dirname(__DIR__);
         $spec = json_decode((string) file_get_contents($root . '/docs/public/openapi.json'), true, 512, JSON_THROW_ON_ERROR);
         self::assertSame('3.1.0', $spec['openapi']);
-        $yaml = (string) file_get_contents($root . '/src/Resources/config/routes.yaml');
+        $yaml = (string) file_get_contents($root . '/packages/sofinder-symfony/src/Resources/config/routes.yaml');
         preg_match_all('/\n[^\s][^\n]*:\n\s+path: ([^\n]+)\n\s+controller:[^\n]+\n\s+methods: \[([A-Z]+)\]/', $yaml, $matches, PREG_SET_ORDER);
         foreach ($matches as $route) {
             if (!str_starts_with($route[1], '/api/') && !str_starts_with($route[1], '/compat/') && !in_array($route[1], ['/health', '/live', '/metrics'], true)) continue;
@@ -79,12 +79,14 @@ final class OpenApiContractTest extends TestCase
         $catalog = json_decode((string) file_get_contents($root . '/docs/public/error-codes.json'), true, 512, JSON_THROW_ON_ERROR);
         self::assertSame('1.0', $catalog['apiVersion']);
         $actual = [];
-        $iterator = new \RecursiveIteratorIterator(new \RecursiveDirectoryIterator($root . '/src'));
-        foreach ($iterator as $file) {
-            if (!$file instanceof \SplFileInfo || !$file->isFile() || $file->getExtension() !== 'php') continue;
-            $source = (string) file_get_contents($file->getPathname());
-            preg_match_all('/(?:new\s+SoFinderException|parent::__construct)\((?:(?!\);).)*?[\'\"]([a-z][a-z0-9_]+)[\'\"]\s*,\s*(\d{3})/s', $source, $matches, PREG_SET_ORDER);
-            foreach ($matches as $match) $actual[$match[1]][(int) $match[2]] = true;
+        foreach ([$root . '/packages/sofinder-core/src', $root . '/packages/sofinder-symfony/src'] as $sourceDirectory) {
+            $iterator = new \RecursiveIteratorIterator(new \RecursiveDirectoryIterator($sourceDirectory));
+            foreach ($iterator as $file) {
+                if (!$file instanceof \SplFileInfo || !$file->isFile() || $file->getExtension() !== 'php') continue;
+                $source = (string) file_get_contents($file->getPathname());
+                preg_match_all('/(?:new\s+SoFinderException|parent::__construct)\((?:(?!\);).)*?[\'\"]([a-z][a-z0-9_]+)[\'\"]\s*,\s*(\d{3})/s', $source, $matches, PREG_SET_ORDER);
+                foreach ($matches as $match) $actual[$match[1]][(int) $match[2]] = true;
+            }
         }
         // These codes are selected by a bounded ternary after request validation.
         $actual['folder_name_too_long'][422] = true;

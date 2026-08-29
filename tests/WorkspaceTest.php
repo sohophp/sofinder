@@ -16,6 +16,8 @@ use SohoPHP\SoFinder\Symfony\DefaultWorkspaceResolver;
 use SohoPHP\SoFinder\Value\ResourceStorage;
 use SohoPHP\SoFinder\Value\ResourceType;
 use SohoPHP\SoFinder\Value\WorkspaceContext;
+use SohoPHP\SoFinder\Value\RequestContext;
+use SohoPHP\SoFinder\Symfony\SymfonyRequestContextProvider;
 use SohoPHP\SoFinder\Workspace\WorkspaceProvider;
 use Symfony\Component\EventDispatcher\EventDispatcher;
 use Symfony\Component\HttpFoundation\Request;
@@ -28,7 +30,7 @@ final class WorkspaceTest extends TestCase
         $root = sys_get_temp_dir();
         $registry = new ResourceRegistry([new ResourceStorage(new ResourceType('Files', $root, '/files'), new LocalStorageAdapter($root, '/files'))]);
         $actors = new class implements ActorProviderInterface { public function actorId(): string { return 'actor-a'; } };
-        $workspace = (new DefaultWorkspaceResolver($actors, $registry, 'main'))->resolve(new Request(['workspace' => 'forged']));
+        $workspace = (new DefaultWorkspaceResolver($actors, $registry, 'main'))->resolve(new RequestContext(query: ['workspace' => 'forged']));
 
         self::assertSame('main', $workspace->id);
         self::assertSame('actor-a', $workspace->actor);
@@ -45,10 +47,10 @@ final class WorkspaceTest extends TestCase
             public function isGranted(string $operation, ResourceType $resource, string $path): bool { return true; }
         };
         $resolver = new class implements WorkspaceResolverInterface {
-            public function resolve(Request $request): WorkspaceContext { return new WorkspaceContext('restricted', 'actor', ['Images']); }
+            public function resolve(RequestContext $request): WorkspaceContext { return new WorkspaceContext('restricted', 'actor', ['Images']); }
         };
         $requests = new RequestStack(); $requests->push(new Request());
-        $files = new FileManager($registry, $authorization, new EventDispatcher(), workspaces: new WorkspaceProvider($resolver, $requests));
+        $files = new FileManager($registry, $authorization, new EventDispatcher(), workspaces: new WorkspaceProvider($resolver, new SymfonyRequestContextProvider($requests)));
 
         $this->expectException(AccessDeniedException::class);
         $files->entry('Files', 'anything.txt');

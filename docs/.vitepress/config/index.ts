@@ -31,6 +31,8 @@ const englishSidebar = [
     collapsed: true,
     items: [
       { text: 'Symfony', link: '/symfony' },
+      { text: 'Framework support', link: '/framework-support' },
+      { text: 'Package architecture', link: '/package-architecture' },
       { text: 'CKEditor 4', link: '/ckeditor4' },
       { text: 'Editor integrations', link: '/editor-integrations' },
       { text: 'Custom integration', link: '/developer-guide' },
@@ -106,6 +108,8 @@ const traditionalChineseSidebar = [
     collapsed: true,
     items: [
       { text: 'Symfony 整合', link: '/zh-TW/symfony' },
+      { text: '框架支援', link: '/zh-TW/framework-support' },
+      { text: 'Package 架構', link: '/zh-TW/package-architecture' },
       { text: 'CKEditor 4', link: '/zh-TW/ckeditor4' },
       { text: '主流編輯器整合', link: '/zh-TW/editor-integrations' },
       { text: '自訂整合', link: '/zh-TW/developer-guide' },
@@ -181,6 +185,8 @@ const simplifiedChineseSidebar = [
     collapsed: true,
     items: [
       { text: 'Symfony 集成', link: '/zh-CN/symfony' },
+      { text: '框架支持', link: '/zh-CN/framework-support' },
+      { text: '包架构', link: '/zh-CN/package-architecture' },
       { text: 'CKEditor 4', link: '/zh-CN/ckeditor4' },
       { text: '主流编辑器集成', link: '/zh-CN/editor-integrations' },
       { text: '自定义集成', link: '/zh-CN/developer-guide' },
@@ -229,7 +235,7 @@ const simplifiedChineseSidebar = [
 
 const traditionalChineseTheme = {
   nav: [
-    { text: '文件', link: '/zh-TW/getting-started', activeMatch: '^/zh-TW/(getting-started|configuration|symfony|storage-adapters|s3|security|production|maintenance)' },
+    { text: '文件', link: '/zh-TW/getting-started', activeMatch: '^/zh-TW/(getting-started|configuration|symfony|framework-support|package-architecture|storage-adapters|s3|security|production|maintenance)' },
     { text: '指南', link: '/zh-TW/user-guide', activeMatch: '^/zh-TW/(user-guide|image-guide|image-formats|document-preview|editor-integrations|ckeditor4)' },
     { text: 'API', link: '/zh-TW/api-reference', activeMatch: '^/zh-TW/(api-reference|http-api|php-contracts|plugins|developer-guide|console-commands)' },
     { text: 'GitHub', link: repository },
@@ -256,7 +262,7 @@ const traditionalChineseTheme = {
 
 const simplifiedChineseTheme = {
   nav: [
-    { text: '文档', link: '/zh-CN/getting-started', activeMatch: '^/zh-CN/(getting-started|configuration|symfony|storage-adapters|s3|security|production|maintenance)' },
+    { text: '文档', link: '/zh-CN/getting-started', activeMatch: '^/zh-CN/(getting-started|configuration|symfony|framework-support|package-architecture|storage-adapters|s3|security|production|maintenance)' },
     { text: '指南', link: '/zh-CN/user-guide', activeMatch: '^/zh-CN/(user-guide|image-guide|image-formats|document-preview|editor-integrations|ckeditor4)' },
     { text: 'API', link: '/zh-CN/api-reference', activeMatch: '^/zh-CN/(api-reference|http-api|php-contracts|plugins|developer-guide|console-commands)' },
     { text: 'GitHub', link: repository },
@@ -357,7 +363,7 @@ export default defineConfig({
     logo: '/logo.svg',
     siteTitle: 'SoFinder',
     nav: [
-      { text: 'Docs', link: '/getting-started', activeMatch: '^/(getting-started|configuration|symfony|storage-adapters|s3|security|production|maintenance)' },
+      { text: 'Docs', link: '/getting-started', activeMatch: '^/(getting-started|configuration|symfony|framework-support|package-architecture|storage-adapters|s3|security|production|maintenance)' },
       { text: 'Guides', link: '/user-guide', activeMatch: '^/(user-guide|image-guide|image-formats|document-preview|editor-integrations|ckeditor4)' },
       { text: 'API', link: '/api-reference', activeMatch: '^/(api-reference|http-api|php-contracts|plugins|developer-guide|console-commands)' },
       { text: 'GitHub', link: repository },

@@ -1,0 +1,421 @@
+{
+  "_EntryVisuals-COz6M0oc.js": {
+    "file": "EntryVisuals-COz6M0oc.js",
+    "name": "EntryVisuals",
+    "imports": [
+      "_jsx-runtime-CmCsaYvT.js",
+      "_react-B5TC723I.js"
+    ]
+  },
+  "_Modal-ClPLM5jI.js": {
+    "file": "Modal-ClPLM5jI.js",
+    "name": "Modal",
+    "imports": [
+      "_jsx-runtime-CmCsaYvT.js",
+      "_react-B5TC723I.js",
+      "_UiIcon-JdLj8VHV.js"
+    ]
+  },
+  "_UiIcon-JdLj8VHV.js": {
+    "file": "UiIcon-JdLj8VHV.js",
+    "name": "UiIcon",
+    "imports": [
+      "_jsx-runtime-CmCsaYvT.js"
+    ]
+  },
+  "_api-Cq-FmALq.js": {
+    "file": "api-Cq-FmALq.js",
+    "name": "api",
+    "imports": [
+      "_defineProperty-B_lfzbVN.js"
+    ]
+  },
+  "_defineProperty-B_lfzbVN.js": {
+    "file": "defineProperty-B_lfzbVN.js",
+    "name": "defineProperty"
+  },
+  "_editorAdapters-TSPP7BUN.js": {
+    "file": "editorAdapters-TSPP7BUN.js",
+    "name": "editorAdapters",
+    "imports": [
+      "_defineProperty-B_lfzbVN.js",
+      "src/sdk.ts"
+    ]
+  },
+  "_format-GD3_dnvn.js": {
+    "file": "format-GD3_dnvn.js",
+    "name": "format"
+  },
+  "_jsx-runtime-CmCsaYvT.js": {
+    "file": "jsx-runtime-CmCsaYvT.js",
+    "name": "jsx-runtime"
+  },
+  "_nameValidation-DURyMFRU.js": {
+    "file": "nameValidation-DURyMFRU.js",
+    "name": "nameValidation"
+  },
+  "_react-B5TC723I.js": {
+    "file": "react-B5TC723I.js",
+    "name": "react",
+    "imports": [
+      "_jsx-runtime-CmCsaYvT.js"
+    ]
+  },
+  "src/ckeditor5.ts": {
+    "file": "sofinder-ckeditor5.js",
+    "name": "sofinder-ckeditor5",
+    "src": "src/ckeditor5.ts",
+    "isEntry": true,
+    "imports": [
+      "_editorAdapters-TSPP7BUN.js"
+    ]
+  },
+  "src/components/AssetMetadataDialog.tsx": {
+    "file": "AssetMetadataDialog-nI-9C5A1.js",
+    "name": "AssetMetadataDialog",
+    "src": "src/components/AssetMetadataDialog.tsx",
+    "isDynamicEntry": true,
+    "imports": [
+      "_jsx-runtime-CmCsaYvT.js",
+      "_react-B5TC723I.js",
+      "_Modal-ClPLM5jI.js"
+    ]
+  },
+  "src/components/AssetSearchDialog.tsx": {
+    "file": "AssetSearchDialog-CjUBVpG6.js",
+    "name": "AssetSearchDialog",
+    "src": "src/components/AssetSearchDialog.tsx",
+    "isDynamicEntry": true,
+    "imports": [
+      "_jsx-runtime-CmCsaYvT.js",
+      "_react-B5TC723I.js",
+      "_UiIcon-JdLj8VHV.js",
+      "_Modal-ClPLM5jI.js",
+      "_EntryVisuals-COz6M0oc.js",
+      "_format-GD3_dnvn.js"
+    ]
+  },
+  "src/components/BulkRenameDialog.tsx": {
+    "file": "BulkRenameDialog-CpYqUNbh.js",
+    "name": "BulkRenameDialog",
+    "src": "src/components/BulkRenameDialog.tsx",
+    "isDynamicEntry": true,
+    "imports": [
+      "_jsx-runtime-CmCsaYvT.js",
+      "_react-B5TC723I.js",
+      "_Modal-ClPLM5jI.js",
+      "_nameValidation-DURyMFRU.js"
+    ]
+  },
+  "src/components/ContextMenu.tsx": {
+    "file": "ContextMenu-B5qP5e8D.js",
+    "name": "ContextMenu",
+    "src": "src/components/ContextMenu.tsx",
+    "isDynamicEntry": true,
+    "imports": [
+      "_jsx-runtime-CmCsaYvT.js",
+      "_react-B5TC723I.js"
+    ]
+  },
+  "src/components/DestinationDialog.tsx": {
+    "file": "DestinationDialog-_vPHUvHt.js",
+    "name": "DestinationDialog",
+    "src": "src/components/DestinationDialog.tsx",
+    "isDynamicEntry": true,
+    "imports": [
+      "_jsx-runtime-CmCsaYvT.js",
+      "_Modal-ClPLM5jI.js",
+      "_EntryVisuals-COz6M0oc.js"
+    ]
+  },
+  "src/components/DetailsPanel.tsx": {
+    "file": "DetailsPanel-Bn1jENLP.js",
+    "name": "DetailsPanel",
+    "src": "src/components/DetailsPanel.tsx",
+    "isDynamicEntry": true,
+    "imports": [
+      "_jsx-runtime-CmCsaYvT.js",
+      "_react-B5TC723I.js",
+      "_api-Cq-FmALq.js",
+      "_UiIcon-JdLj8VHV.js",
+      "_EntryVisuals-COz6M0oc.js",
+      "_format-GD3_dnvn.js"
+    ]
+  },
+  "src/components/DocumentPreviewPane.tsx": {
+    "file": "DocumentPreviewPane-DhmHG-pU.js",
+    "name": "DocumentPreviewPane",
+    "src": "src/components/DocumentPreviewPane.tsx",
+    "isDynamicEntry": true,
+    "imports": [
+      "_jsx-runtime-CmCsaYvT.js",
+      "_react-B5TC723I.js"
+    ]
+  },
+  "src/components/FavoritesPage.tsx": {
+    "file": "FavoritesPage-B3df6J_M.js",
+    "name": "FavoritesPage",
+    "src": "src/components/FavoritesPage.tsx",
+    "isDynamicEntry": true,
+    "imports": [
+      "_jsx-runtime-CmCsaYvT.js",
+      "_UiIcon-JdLj8VHV.js"
+    ]
+  },
+  "src/components/FolderTree.tsx": {
+    "file": "FolderTree-BH9KXooH.js",
+    "name": "FolderTree",
+    "src": "src/components/FolderTree.tsx",
+    "isDynamicEntry": true,
+    "imports": [
+      "_jsx-runtime-CmCsaYvT.js",
+      "_react-B5TC723I.js",
+      "_UiIcon-JdLj8VHV.js"
+    ]
+  },
+  "src/components/ImageEditor.tsx": {
+    "file": "ImageEditor-DS0tdHUd.js",
+    "name": "ImageEditor",
+    "src": "src/components/ImageEditor.tsx",
+    "isDynamicEntry": true,
+    "imports": [
+      "_jsx-runtime-CmCsaYvT.js",
+      "_react-B5TC723I.js",
+      "_UiIcon-JdLj8VHV.js",
+      "_Modal-ClPLM5jI.js",
+      "_nameValidation-DURyMFRU.js"
+    ]
+  },
+  "src/components/ImagePreviewPane.tsx": {
+    "file": "ImagePreviewPane-D5O_-Lqv.js",
+    "name": "ImagePreviewPane",
+    "src": "src/components/ImagePreviewPane.tsx",
+    "isDynamicEntry": true,
+    "imports": [
+      "_jsx-runtime-CmCsaYvT.js",
+      "_react-B5TC723I.js",
+      "_format-GD3_dnvn.js"
+    ]
+  },
+  "src/components/ImageProcessDialog.tsx": {
+    "file": "ImageProcessDialog-DvreG9XB.js",
+    "name": "ImageProcessDialog",
+    "src": "src/components/ImageProcessDialog.tsx",
+    "isDynamicEntry": true,
+    "imports": [
+      "_jsx-runtime-CmCsaYvT.js",
+      "_react-B5TC723I.js",
+      "_Modal-ClPLM5jI.js"
+    ]
+  },
+  "src/components/MetadataSidebarPanels.tsx": {
+    "file": "MetadataSidebarPanels-CrrCA6wa.js",
+    "name": "MetadataSidebarPanels",
+    "src": "src/components/MetadataSidebarPanels.tsx",
+    "isDynamicEntry": true,
+    "imports": [
+      "_jsx-runtime-CmCsaYvT.js",
+      "_react-B5TC723I.js",
+      "_UiIcon-JdLj8VHV.js"
+    ]
+  },
+  "src/components/SecurityStatusDialog.tsx": {
+    "file": "SecurityStatusDialog-BCJGJBZr.js",
+    "name": "SecurityStatusDialog",
+    "src": "src/components/SecurityStatusDialog.tsx",
+    "isDynamicEntry": true,
+    "imports": [
+      "_jsx-runtime-CmCsaYvT.js",
+      "_react-B5TC723I.js",
+      "_Modal-ClPLM5jI.js",
+      "_format-GD3_dnvn.js"
+    ]
+  },
+  "src/components/SettingsDialog.tsx": {
+    "file": "SettingsDialog-CBeIvSUg.js",
+    "name": "SettingsDialog",
+    "src": "src/components/SettingsDialog.tsx",
+    "isDynamicEntry": true,
+    "imports": [
+      "_jsx-runtime-CmCsaYvT.js",
+      "_react-B5TC723I.js",
+      "_Modal-ClPLM5jI.js"
+    ]
+  },
+  "src/components/ShareDialog.tsx": {
+    "file": "ShareDialog-DOqdA2sG.js",
+    "name": "ShareDialog",
+    "src": "src/components/ShareDialog.tsx",
+    "isDynamicEntry": true,
+    "imports": [
+      "_jsx-runtime-CmCsaYvT.js",
+      "_react-B5TC723I.js",
+      "_Modal-ClPLM5jI.js"
+    ]
+  },
+  "src/components/TagsDialog.tsx": {
+    "file": "TagsDialog-DgzGQFxx.js",
+    "name": "TagsDialog",
+    "src": "src/components/TagsDialog.tsx",
+    "isDynamicEntry": true,
+    "imports": [
+      "_jsx-runtime-CmCsaYvT.js",
+      "_react-B5TC723I.js",
+      "_UiIcon-JdLj8VHV.js",
+      "_Modal-ClPLM5jI.js"
+    ]
+  },
+  "src/components/TrashDialog.tsx": {
+    "file": "TrashDialog-B7Isdie0.js",
+    "name": "TrashDialog",
+    "src": "src/components/TrashDialog.tsx",
+    "isDynamicEntry": true,
+    "imports": [
+      "_jsx-runtime-CmCsaYvT.js",
+      "_react-B5TC723I.js",
+      "_UiIcon-JdLj8VHV.js",
+      "_Modal-ClPLM5jI.js"
+    ]
+  },
+  "src/components/UploadQueue.tsx": {
+    "file": "UploadQueue-VIbyTWFA.js",
+    "name": "UploadQueue",
+    "src": "src/components/UploadQueue.tsx",
+    "isDynamicEntry": true,
+    "imports": [
+      "_jsx-runtime-CmCsaYvT.js",
+      "_UiIcon-JdLj8VHV.js"
+    ]
+  },
+  "src/editors.ts": {
+    "file": "sofinder-editors.js",
+    "name": "sofinder-editors",
+    "src": "src/editors.ts",
+    "isEntry": true,
+    "imports": [
+      "_editorAdapters-TSPP7BUN.js"
+    ]
+  },
+  "src/jodit.ts": {
+    "file": "sofinder-jodit.js",
+    "name": "sofinder-jodit",
+    "src": "src/jodit.ts",
+    "isEntry": true,
+    "imports": [
+      "_editorAdapters-TSPP7BUN.js"
+    ]
+  },
+  "src/locales/en.ts": {
+    "file": "en-aV6Bn7l2.js",
+    "name": "en",
+    "src": "src/locales/en.ts",
+    "isDynamicEntry": true
+  },
+  "src/locales/zh-cn.ts": {
+    "file": "zh-cn-DwsUa41g.js",
+    "name": "zh-cn",
+    "src": "src/locales/zh-cn.ts",
+    "isDynamicEntry": true
+  },
+  "src/locales/zh-tw.ts": {
+    "file": "zh-tw-CKUa5ol8.js",
+    "name": "zh-tw",
+    "src": "src/locales/zh-tw.ts",
+    "isDynamicEntry": true
+  },
+  "src/main.tsx": {
+    "file": "sofinder.js",
+    "name": "sofinder",
+    "src": "src/main.tsx",
+    "isEntry": true,
+    "imports": [
+      "_jsx-runtime-CmCsaYvT.js",
+      "_react-B5TC723I.js",
+      "_api-Cq-FmALq.js",
+      "_UiIcon-JdLj8VHV.js",
+      "_Modal-ClPLM5jI.js",
+      "_nameValidation-DURyMFRU.js",
+      "_EntryVisuals-COz6M0oc.js",
+      "_format-GD3_dnvn.js"
+    ],
+    "dynamicImports": [
+      "src/locales/en.ts",
+      "src/locales/zh-cn.ts",
+      "src/locales/zh-tw.ts",
+      "src/components/ImageEditor.tsx",
+      "src/components/ImageProcessDialog.tsx",
+      "src/components/SecurityStatusDialog.tsx",
+      "src/components/DocumentPreviewPane.tsx",
+      "src/components/SettingsDialog.tsx",
+      "src/components/DestinationDialog.tsx",
+      "src/components/BulkRenameDialog.tsx",
+      "src/components/TrashDialog.tsx",
+      "src/components/TagsDialog.tsx",
+      "src/components/FolderTree.tsx",
+      "src/components/DetailsPanel.tsx",
+      "src/components/ShareDialog.tsx",
+      "src/components/FavoritesPage.tsx",
+      "src/components/MetadataSidebarPanels.tsx",
+      "src/components/ContextMenu.tsx",
+      "src/components/UploadQueue.tsx",
+      "src/components/ImagePreviewPane.tsx",
+      "src/components/AssetMetadataDialog.tsx",
+      "src/components/AssetSearchDialog.tsx"
+    ]
+  },
+  "src/picker.ts": {
+    "file": "sofinder-picker.js",
+    "name": "sofinder-picker",
+    "src": "src/picker.ts",
+    "isEntry": true
+  },
+  "src/quill.ts": {
+    "file": "sofinder-quill.js",
+    "name": "sofinder-quill",
+    "src": "src/quill.ts",
+    "isEntry": true,
+    "imports": [
+      "_editorAdapters-TSPP7BUN.js"
+    ]
+  },
+  "src/sdk.ts": {
+    "file": "sofinder-sdk.js",
+    "name": "sofinder-sdk",
+    "src": "src/sdk.ts",
+    "isEntry": true,
+    "imports": [
+      "_defineProperty-B_lfzbVN.js"
+    ]
+  },
+  "src/tinymce.ts": {
+    "file": "sofinder-tinymce.js",
+    "name": "sofinder-tinymce",
+    "src": "src/tinymce.ts",
+    "isEntry": true,
+    "imports": [
+      "_editorAdapters-TSPP7BUN.js"
+    ]
+  },
+  "src/tiptap.ts": {
+    "file": "sofinder-tiptap.js",
+    "name": "sofinder-tiptap",
+    "src": "src/tiptap.ts",
+    "isEntry": true,
+    "imports": [
+      "_editorAdapters-TSPP7BUN.js"
+    ]
+  },
+  "src/wangeditor.ts": {
+    "file": "sofinder-wangeditor.js",
+    "name": "sofinder-wangeditor",
+    "src": "src/wangeditor.ts",
+    "isEntry": true,
+    "imports": [
+      "_editorAdapters-TSPP7BUN.js"
+    ]
+  },
+  "style.css": {
+    "file": "sofinder.css",
+    "src": "style.css"
+  }
+}

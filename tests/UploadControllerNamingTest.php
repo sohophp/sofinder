@@ -20,6 +20,8 @@ use SohoPHP\SoFinder\Symfony\ResourceRegistryFactory;
 use SohoPHP\SoFinder\Upload\ChunkUploadManager;
 use SohoPHP\SoFinder\Value\ResourceType;
 use SohoPHP\SoFinder\Value\WorkspaceContext;
+use SohoPHP\SoFinder\Value\RequestContext;
+use SohoPHP\SoFinder\Symfony\SymfonyRequestContextProvider;
 use SohoPHP\SoFinder\Workspace\WorkspaceProvider;
 use Symfony\Component\EventDispatcher\EventDispatcher;
 use Symfony\Component\HttpFoundation\File\UploadedFile;
@@ -86,7 +88,7 @@ final class UploadControllerNamingTest extends TestCase
         $request = Request::create('/api/uploads/chunks/abcdefghijklmnop');
         $stack = new RequestStack(); $stack->push($request);
         $resolver = new class implements WorkspaceResolverInterface {
-            public function resolve(Request $request): WorkspaceContext { return new WorkspaceContext('site-b', 'actor', ['Files']); }
+            public function resolve(RequestContext $request): WorkspaceContext { return new WorkspaceContext('site-b', 'actor', ['Files']); }
         };
         $chunks = new class implements ChunkUploadStoreInterface {
             public function accept(string $id, int $index, int $total, mixed $stream, int $maximumFileBytes, array $context = []): array { return ['complete' => false]; }
@@ -94,7 +96,7 @@ final class UploadControllerNamingTest extends TestCase
             public function discard(string $id): void {}
             public function cleanupExpired(bool $allActors = false, ?int $limit = null): int { return 0; }
         };
-        $controller = new ChunkUploadController($this->files($request), $chunks, $this->csrf(), workspaces: new WorkspaceProvider($resolver, $stack));
+        $controller = new ChunkUploadController($this->files($request), $chunks, $this->csrf(), workspaces: new WorkspaceProvider($resolver, new SymfonyRequestContextProvider($stack)));
 
         try {
             $controller->status('abcdefghijklmnop');

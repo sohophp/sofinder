@@ -17,6 +17,8 @@ use SohoPHP\SoFinder\Value\AssetSearchQuery;
 use SohoPHP\SoFinder\Value\ResourceStorage;
 use SohoPHP\SoFinder\Value\ResourceType;
 use SohoPHP\SoFinder\Value\WorkspaceContext;
+use SohoPHP\SoFinder\Value\RequestContext;
+use SohoPHP\SoFinder\Symfony\SymfonyRequestContextProvider;
 use SohoPHP\SoFinder\Workspace\WorkspaceProvider;
 use Symfony\Component\EventDispatcher\EventDispatcher;
 use Symfony\Component\HttpFoundation\Request;
@@ -51,9 +53,9 @@ final class AssetSearchTest extends TestCase
         $stack = new RequestStack();
         $stack->push(new Request());
         $resolver = new class implements WorkspaceResolverInterface {
-            public function resolve(Request $request): WorkspaceContext { return new WorkspaceContext('main', 'actor', ['Files']); }
+            public function resolve(RequestContext $request): WorkspaceContext { return new WorkspaceContext('main', 'actor', ['Files']); }
         };
-        $this->workspaces = new WorkspaceProvider($resolver, $stack);
+        $this->workspaces = new WorkspaceProvider($resolver, new SymfonyRequestContextProvider($stack));
     }
 
     protected function tearDown(): void

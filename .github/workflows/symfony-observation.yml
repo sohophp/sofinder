@@ -1,0 +1,50 @@
+name: Symfony 1.0 observation
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '17 3 * * *'
+
+permissions:
+  contents: read
+  issues: read
+
+env:
+  PHP_BIN: php
+  GH_TOKEN: ${{ github.token }}
+
+jobs:
+  observe:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: shivammathur/setup-php@f3e473d116dcccaddc5834248c87452386958240 # v2
+        with:
+          php-version: '8.5'
+          coverage: none
+      - name: Detect the 1.0.0 release
+        id: release
+        run: |
+          if gh api "repos/$GITHUB_REPOSITORY/releases/tags/1.0.0" > release.json 2>/dev/null; then
+            echo 'published=true' >> "$GITHUB_OUTPUT"
+          else
+            echo 'published=false' >> "$GITHUB_OUTPUT"
+            echo 'Symfony 1.0.0 is not published; observation has not started.'
+          fi
+      - name: Collect all P0/P1 issues created during observation
+        if: steps.release.outputs.published == 'true'
+        run: |
+          gh issue list --repo "$GITHUB_REPOSITORY" --state all --label 'priority:p0' --limit 1000 --json number,title,state,createdAt,closedAt,url,labels > issues-p0.json
+          gh issue list --repo "$GITHUB_REPOSITORY" --state all --label 'priority:p1' --limit 1000 --json number,title,state,createdAt,closedAt,url,labels > issues-p1.json
+          jq -s 'add | unique_by(.number)' issues-p0.json issues-p1.json > issues.json
+      - name: Build immutable observation evidence
+        if: steps.release.outputs.published == 'true'
+        run: ./scripts/php-bin.sh scripts/build-observation-evidence.php release.json issues.json observation-evidence.json --fail-on-defects
+      - name: Upload observation evidence
+        if: steps.release.outputs.published == 'true' && always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: symfony-observation-${{ github.run_id }}
+          path: observation-evidence.json
+          if-no-files-found: error
+          retention-days: 90

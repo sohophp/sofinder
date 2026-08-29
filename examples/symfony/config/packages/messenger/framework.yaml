@@ -1,0 +1,7 @@
+framework:
+  messenger:
+    transports:
+      sofinder_async: 'in-memory://'
+    routing:
+      'SohoPHP\SoFinder\Maintenance\MaintenanceMessage': sofinder_async
+      'SohoPHP\SoFinder\Preview\DocumentPreviewMessage': sofinder_async

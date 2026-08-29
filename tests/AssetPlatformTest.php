@@ -28,6 +28,8 @@ use SohoPHP\SoFinder\Value\Entry;
 use SohoPHP\SoFinder\Value\ResourceStorage;
 use SohoPHP\SoFinder\Value\ResourceType;
 use SohoPHP\SoFinder\Value\WorkspaceContext;
+use SohoPHP\SoFinder\Value\RequestContext;
+use SohoPHP\SoFinder\Symfony\SymfonyRequestContextProvider;
 use SohoPHP\SoFinder\Workspace\WorkspaceProvider;
 use Symfony\Component\EventDispatcher\EventDispatcher;
 use Symfony\Component\HttpFoundation\Request;
@@ -48,8 +50,8 @@ final class AssetPlatformTest extends TestCase
     {
         $this->directory = sys_get_temp_dir() . '/sofinder-asset-platform-' . bin2hex(random_bytes(8)); mkdir($this->directory, 0770, true); file_put_contents($this->directory . '/manual.txt', 'manual');
         $this->requests = new RequestStack(); $this->requests->push(new Request());
-        $resolver = new class implements WorkspaceResolverInterface { public function resolve(Request $request): WorkspaceContext { return new WorkspaceContext('main', 'actor', ['Files']); } };
-        $this->workspaces = new WorkspaceProvider($resolver, $this->requests);
+        $resolver = new class implements WorkspaceResolverInterface { public function resolve(RequestContext $request): WorkspaceContext { return new WorkspaceContext('main', 'actor', ['Files']); } };
+        $this->workspaces = new WorkspaceProvider($resolver, new SymfonyRequestContextProvider($this->requests));
         $this->authorization = new class implements AuthorizationInterface {
             public function isAuthenticated(): bool { return true; }
             public function isGranted(string $operation, ResourceType $resource, string $path): bool { return true; }
@@ -132,8 +134,8 @@ final class AssetPlatformTest extends TestCase
 
     public function testImageControllerPublishesSafeFailurePhase(): void
     {
-        $resolver = new class implements WorkspaceResolverInterface { public function resolve(Request $request): WorkspaceContext { return new WorkspaceContext('main', 'actor', ['Images']); } };
-        $workspaces = new WorkspaceProvider($resolver, $this->requests); $resource = new ResourceType('Images', $this->directory, '/images');
+        $resolver = new class implements WorkspaceResolverInterface { public function resolve(RequestContext $request): WorkspaceContext { return new WorkspaceContext('main', 'actor', ['Images']); } };
+        $workspaces = new WorkspaceProvider($resolver, new SymfonyRequestContextProvider($this->requests)); $resource = new ResourceType('Images', $this->directory, '/images');
         $registry = new ResourceRegistry([new ResourceStorage($resource, new LocalStorageAdapter($this->directory, '/images'))]);
         $events = new EventDispatcher(); $published = []; $events->addListener(AssetOperationEvent::class, static function (AssetOperationEvent $event) use (&$published): void { $published[] = $event; });
         $publisher = new AssetOperationPublisher($events, $workspaces, $registry, new JsonAssetCatalog($this->directory . '/unused-assets.json'), false);

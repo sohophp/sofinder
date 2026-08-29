@@ -10,6 +10,14 @@ The project is independently designed and does not contain code, artwork,
 translations, styles, or other assets from proprietary file managers.
 Runtime dependency notices are recorded in `THIRD_PARTY_NOTICES.md`.
 
+The complete supported host integration is currently Symfony. A tested
+framework-independent registry and `FileManager` bootstrap seam is available
+for headless use; Laravel and a shared Slim/Mezzio PSR-7 bridge follow only
+after the Symfony/PHP 8.2–8.5 baseline is stable. See
+[`docs/framework-support.md`](docs/framework-support.md) for exact support
+levels. Any PHP 7.2 port will use a separate package and release line, never
+the current branch or 1.x dependency graph.
+
 Users can start with the [file manager guide](https://sofinder.sohophp.app/user-guide), [image guide](https://sofinder.sohophp.app/image-guide) and [editor integration guide](https://sofinder.sohophp.app/editor-integrations). Developers should use the [integration guide](https://sofinder.sohophp.app/developer-guide) and [HTTP API reference](https://sofinder.sohophp.app/api-reference).
 
 ## Symfony installation

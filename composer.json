@@ -1,7 +1,7 @@
 {
     "name": "sohophp/sofinder",
-    "description": "An original, framework-friendly web file manager for PHP and Symfony applications",
-    "type": "symfony-bundle",
+    "description": "Compatibility meta package for the SoFinder Symfony bridge",
+    "type": "metapackage",
     "license": "MIT",
     "homepage": "https://sofinder.sohophp.app/",
     "keywords": ["file-manager", "symfony", "ckeditor", "upload", "image-manager"],
@@ -11,25 +11,17 @@
     },
     "require": {
         "php": "^8.2",
-        "ext-fileinfo": "*",
-        "ext-json": "*",
-        "ext-mbstring": "*",
-        "psr/event-dispatcher": "^1.0",
-        "psr/log": "^3.0",
-        "symfony/config": "^6.4 || ^7.4",
-        "symfony/console": "^6.4 || ^7.4",
-        "symfony/dependency-injection": "^6.4 || ^7.4",
-        "symfony/event-dispatcher": "^6.4 || ^7.4",
-        "symfony/filesystem": "^6.4 || ^7.4",
-        "symfony/http-foundation": "^6.4 || ^7.4",
-        "symfony/http-kernel": "^6.4 || ^7.4",
-        "symfony/routing": "^6.4 || ^7.4",
-        "symfony/security-core": "^6.4 || ^7.4",
-        "symfony/security-csrf": "^6.4 || ^7.4"
+        "sohophp/sofinder-symfony": "self.version"
     },
     "require-dev": {
+        "guzzlehttp/psr7": "^2.7",
         "phpstan/phpstan": "^2.1",
-        "phpunit/phpunit": "^11.5"
+        "phpunit/phpunit": "^11.5",
+        "nyholm/psr7": "^1.8",
+        "sohophp/sofinder-psr15": "self.version"
+    },
+    "conflict": {
+        "sohophp/sofinder-legacy": "*"
     },
     "scripts": {
         "test": "./scripts/php-bin.sh vendor/bin/phpunit",
@@ -43,11 +35,6 @@
         "ext-zip": "Required for ZIP archive downloads",
         "symfony/messenger": "Enables asynchronous maintenance and document preview jobs"
     },
-    "autoload": {
-        "psr-4": {
-            "SohoPHP\\SoFinder\\": "src/"
-        }
-    },
     "autoload-dev": {
         "psr-4": {
             "SohoPHP\\SoFinder\\Tests\\": "tests/"
@@ -55,9 +42,41 @@
     },
     "extra": {
         "branch-alias": {
-            "dev-main": "0.1.x-dev"
+            "dev-main": "1.x-dev"
         }
     },
+    "repositories": [
+        {
+            "type": "path",
+            "url": "packages/sofinder-core",
+            "options": {
+                "symlink": true
+            }
+        },
+        {
+            "type": "path",
+            "url": "packages/sofinder-http",
+            "options": {
+                "symlink": true
+            }
+        },
+        {
+            "type": "path",
+            "url": "packages/sofinder-psr15",
+            "options": {
+                "symlink": true
+            }
+        },
+        {
+            "type": "path",
+            "url": "packages/sofinder-symfony",
+            "options": {
+                "symlink": true
+            }
+        }
+    ],
+    "minimum-stability": "dev",
+    "prefer-stable": true,
     "config": {
         "platform": {
             "php": "8.2.0"

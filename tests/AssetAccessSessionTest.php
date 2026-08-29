@@ -17,6 +17,8 @@ use SohoPHP\SoFinder\Storage\LocalStorageAdapter;
 use SohoPHP\SoFinder\Value\ResourceStorage;
 use SohoPHP\SoFinder\Value\ResourceType;
 use SohoPHP\SoFinder\Value\WorkspaceContext;
+use SohoPHP\SoFinder\Value\RequestContext;
+use SohoPHP\SoFinder\Symfony\SymfonyRequestContextProvider;
 use SohoPHP\SoFinder\Workspace\WorkspaceProvider;
 use Symfony\Component\EventDispatcher\EventDispatcher;
 use Symfony\Component\HttpFoundation\Request;
@@ -29,8 +31,8 @@ final class AssetAccessSessionTest extends TestCase
         $directory = sys_get_temp_dir() . '/sofinder-access-session-' . bin2hex(random_bytes(5)); mkdir($directory, 0777, true); file_put_contents($directory . '/private.txt', 'secret');
         try {
             $requestStack = new RequestStack(); $requestStack->push(new Request());
-            $resolver = new class implements WorkspaceResolverInterface { public function resolve(Request $request): WorkspaceContext { return new WorkspaceContext('main', 'actor', ['Private']); } };
-            $workspaces = new WorkspaceProvider($resolver, $requestStack);
+            $resolver = new class implements WorkspaceResolverInterface { public function resolve(RequestContext $request): WorkspaceContext { return new WorkspaceContext('main', 'actor', ['Private']); } };
+            $workspaces = new WorkspaceProvider($resolver, new SymfonyRequestContextProvider($requestStack));
             $authorization = new class implements AuthorizationInterface { public function isAuthenticated(): bool { return true; } public function isGranted(string $operation, ResourceType $resource, string $path): bool { return true; } };
             $type = new ResourceType('Private', $directory, '', allowedExtensions: ['txt'], allowedMimeTypes: ['text/plain'], deliveryMode: 'proxy');
             $registry = new ResourceRegistry([new ResourceStorage($type, new LocalStorageAdapter($directory, ''))]);

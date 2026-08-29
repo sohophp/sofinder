@@ -1,0 +1,53 @@
+{
+  "schemaVersion": 1,
+  "stable": {
+    "symfony": {
+      "versions": ["6.4", "7.4"],
+      "php": ["8.2", "8.3", "8.4", "8.5"]
+    },
+    "headless-core": {
+      "php": ["8.2", "8.3", "8.4", "8.5"]
+    }
+  },
+  "experimental": {
+    "psr15": {
+      "hosts": ["slim-4", "mezzio-3", "plain-php"],
+      "reason": "Shared route and action coverage is complete; executable host parity and the Symfony observation gate remain pending."
+    }
+  },
+  "promotionGate": {
+    "targets": ["laravel", "psr15"],
+    "requiresMainVersion": "1.0.0",
+    "minimumStableDays": 30,
+    "requiresZeroOpenPriorityDefects": true,
+    "releasedMainVersion": null,
+    "releaseDate": null,
+    "openP0P1Defects": null,
+    "evidence": {
+      "symfonyMatrixCommit": null,
+      "symfonyMatrixWorkflowUrl": null,
+      "symfonyMatrixVerifiedAt": null,
+      "observationStartedAt": null,
+      "observationCompletedAt": null,
+      "priorityDefectAuditUrl": null
+    },
+    "eligible": false
+  },
+  "gated": {
+    "laravel": {
+      "versions": ["12", "13"],
+      "minimumStableDays": 30,
+      "requiresMainVersion": "1.0.0",
+      "requiresZeroOpenPriorityDefects": true
+    }
+  },
+  "legacy": {
+    "package": "sohophp/sofinder-legacy",
+    "branch": "7.2.x",
+    "versionLine": "7.2.x",
+    "php": ">=7.2.5 <8.0",
+    "symfony": "^5.4",
+    "repositoryMustBeSeparate": true,
+    "support": "best-effort"
+  }
+}

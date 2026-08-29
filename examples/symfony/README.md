@@ -1,23 +1,33 @@
 # Symfony compatibility example
 
 Choose one tested dependency line, then install and run. The example resolves
-SoFinder and its S3 adapter from the current checkout at runtime. Composer uses
-the remote core development package only to resolve dependencies; the root PSR-4
-mapping takes precedence and loads the current checkout instead:
+the compatibility Meta Package, Symfony Bridge, Core, HTTP and S3 adapter from
+their physical package directories in the current checkout:
 
 ```bash
 cp composer-7.4.json composer.json
-php85 /usr/local/bin/composer install
+../../scripts/composer.sh install
 mkdir -p var/storage
 test -e public/uploads || ln -s ../var/storage public/uploads
-php85 bin/console cache:warmup
-php85 bin/console sofinder:security:audit
-php85 -S 127.0.0.1:8080 -t public
+../../scripts/php-bin.sh bin/console cache:warmup
+../../scripts/php-bin.sh bin/console sofinder:security:audit
+../../scripts/php-bin.sh -S 127.0.0.1:8080 -t public public/index.php
 ```
 
 Use `composer-6.4.json` for Symfony 6.4. Browse `/sofinder/browser` and sign in
 with `demo` / `demo`. These credentials and the plaintext hasher are for this
 local example only.
+
+Repository CI runs `scripts/check-symfony-example-http.sh` against this app.
+The black-box smoke verifies anonymous rejection, HTTP Basic authentication,
+session CSRF, upload/download byte parity, Range responses, security headers
+and compiled asset delivery. A separate Chromium Playwright smoke boots this
+same application and verifies the real React browser shell and configuration API.
+
+CI also installs the matching optional `symfony/messenger` line and warms the
+`messenger` environment. Its in-memory transport proves that maintenance and
+document-preview messages can be routed asynchronously without making Messenger
+a mandatory dependency of the bridge.
 
 Open `/integrations` for a live CKEditor 5, TinyMCE 8, TipTap, Quill 2, wangEditor 5, Jodit 4 and plain
 form integration matrix. The editors load from their official/documented CDN

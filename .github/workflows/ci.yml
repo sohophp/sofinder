@@ -33,8 +33,88 @@ jobs:
             symfony/http-kernel:${{ matrix.symfony }} symfony/routing:${{ matrix.symfony }} \
             symfony/security-core:${{ matrix.symfony }} symfony/security-csrf:${{ matrix.symfony }}
           ./scripts/composer.sh update --no-interaction --prefer-dist
-      - run: ./scripts/php-bin.sh vendor/bin/phpunit
+      - run: ./scripts/php-bin.sh vendor/bin/phpunit --display-deprecations --fail-on-deprecation
       - run: ./scripts/composer.sh audit
+
+  minimum-dependencies:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: shivammathur/setup-php@f3e473d116dcccaddc5834248c87452386958240 # v2
+        with:
+          php-version: '8.2'
+          coverage: none
+          extensions: gd
+      - run: |
+          ./scripts/composer.sh require --no-update \
+            symfony/config:6.4.* symfony/console:6.4.* \
+            symfony/dependency-injection:6.4.* symfony/event-dispatcher:6.4.* \
+            symfony/filesystem:6.4.* symfony/http-foundation:6.4.* \
+            symfony/http-kernel:6.4.* symfony/routing:6.4.* \
+            symfony/security-core:6.4.* symfony/security-csrf:6.4.*
+          ./scripts/composer.sh update --prefer-lowest --prefer-dist --no-interaction
+      - run: ./scripts/php-bin.sh vendor/bin/phpunit --display-deprecations --fail-on-deprecation
+
+  latest-dependencies:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: shivammathur/setup-php@f3e473d116dcccaddc5834248c87452386958240 # v2
+        with:
+          php-version: '8.5'
+          coverage: none
+          extensions: gd, imagick
+      - run: cp composer.json composer.latest.json
+      - run: COMPOSER=composer.latest.json ./scripts/composer.sh config --unset platform.php
+      - run: >-
+          COMPOSER=composer.latest.json ./scripts/composer.sh require --no-update
+          symfony/config:7.4.* symfony/console:7.4.*
+          symfony/dependency-injection:7.4.* symfony/event-dispatcher:7.4.*
+          symfony/filesystem:7.4.* symfony/http-foundation:7.4.*
+          symfony/http-kernel:7.4.* symfony/routing:7.4.*
+          symfony/security-core:7.4.* symfony/security-csrf:7.4.*
+      - run: COMPOSER=composer.latest.json ./scripts/composer.sh update --no-interaction --prefer-dist
+      - run: ./scripts/php-bin.sh vendor/bin/phpunit --display-deprecations --fail-on-deprecation
+      - run: COMPOSER=composer.latest.json ./scripts/composer.sh audit
+
+  package-boundaries:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: shivammathur/setup-php@f3e473d116dcccaddc5834248c87452386958240 # v2
+        with:
+          php-version: '8.5'
+          coverage: none
+      - run: ./scripts/composer.sh install --no-interaction --prefer-dist
+      - run: ./scripts/composer.sh validate --strict
+      - run: ../../scripts/composer.sh validate --strict
+        working-directory: packages/sofinder-core
+      - run: ../../scripts/composer.sh validate --strict
+        working-directory: packages/sofinder-http
+      - run: ../../scripts/composer.sh validate --strict
+        working-directory: packages/sofinder-psr15
+      - run: ../../scripts/composer.sh validate --strict
+        working-directory: packages/sofinder-symfony
+      - run: diff -qr dist packages/sofinder-symfony/dist
+      - run: ./scripts/php-bin.sh scripts/check-framework-release-gate.php
+      - run: bash scripts/check-framework-release-gate-fixtures.sh
+      - run: bash scripts/check-observation-evidence-fixtures.sh
+      - run: bash scripts/check-package-install.sh
+      - run: |
+          release_output=$(mktemp -d var/release-archives.XXXXXX)
+          bash scripts/build-release-archives.sh 1.0.0-rc.1 WORKTREE "$release_output"
+      - run: |
+          split_output=$(mktemp -d var/package-splits.XXXXXX)
+          bash scripts/prepare-package-splits.sh 1.0.0-rc.1 "$GITHUB_SHA" "$split_output"
+          (cd "$split_output" && sha256sum -c SPLIT_SHA256SUMS)
+          verify_output=$(mktemp -d var/package-split-verify.XXXXXX)
+          while IFS=$'\t' read -r _package _repository commit tag bundle; do
+            checkout="$verify_output/${_package#sohophp/}"
+            git clone --quiet --branch package-release-main "$split_output/$bundle" "$checkout"
+            test "$(git -C "$checkout" rev-parse "refs/tags/$tag^{commit}")" = "$commit"
+          done < "$split_output/SPLIT_MANIFEST.tsv"
+          bash scripts/check-package-split-publication.sh "$split_output"
+      - run: ./scripts/php-bin.sh vendor/bin/phpunit tests/FrameworkBoundaryTest.php tests/EndpointCatalogTest.php tests/SharedActionCoverageTest.php tests/Psr15BridgeTest.php tests/PsrImplementationTest.php tests/RouteRegistrarTest.php tests/SharedEndpointActionTest.php tests/SharedMutationActionTest.php tests/SharedUploadActionTest.php tests/SharedQuickUploadActionTest.php tests/SharedMetadataActionTest.php tests/SharedContentReadActionTest.php tests/SharedChunkActionTest.php tests/SharedChunkUploadActionTest.php tests/SharedImageInfoActionTest.php tests/SharedImageMutationActionTest.php tests/SharedArchiveActionTest.php tests/SharedAssetSessionActionTest.php tests/SharedFrontendAssetActionTest.php tests/SharedAssetSearchActionTest.php tests/SharedAssetUsageActionTest.php tests/SharedAssetActionTest.php tests/SharedRoutedActionTest.php tests/SharedStreamActionTest.php tests/SharedDerivedStreamActionTest.php tests/SharedMetricsActionTest.php
 
   frontend:
     runs-on: ubuntu-latest
@@ -62,17 +142,44 @@ jobs:
       - run: pnpm test:e2e
         working-directory: frontend
 
-  s3-adapter:
+  package-install-matrix:
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - php: '8.2'
+            preference: lowest
+          - php: '8.5'
+            preference: stable
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - uses: shivammathur/setup-php@f3e473d116dcccaddc5834248c87452386958240 # v2
         with:
-          php-version: '8.5'
+          php-version: ${{ matrix.php }}
           coverage: none
-      - run: ../../scripts/composer.sh config repositories.sofinder '{"type":"path","url":"../..","options":{"versions":{"sohophp/sofinder":"0.1.0-beta.25"}}}'
+      - run: bash scripts/check-package-install.sh
+        env:
+          SOFINDER_COMPOSER_PREFERENCE: ${{ matrix.preference }}
+
+  s3-adapter:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        php: ['8.2', '8.5']
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: shivammathur/setup-php@f3e473d116dcccaddc5834248c87452386958240 # v2
+        with:
+          php-version: ${{ matrix.php }}
+          coverage: none
+      - run: ../../scripts/composer.sh config repositories.sofinder-core '{"type":"path","url":"../sofinder-core","options":{"versions":{"sohophp/sofinder-core":"dev-main"}}}'
         working-directory: packages/sofinder-s3
       - run: ../../scripts/composer.sh install --no-interaction --prefer-dist
+        working-directory: packages/sofinder-s3
+      - run: |
+          ../../scripts/php-bin.sh -r 'require "vendor/autoload.php"; exit(class_exists("SohoPHP\\SoFinderS3\\S3StorageAdapter") && !class_exists("Symfony\\Component\\HttpFoundation\\Request") ? 0 : 1);'
         working-directory: packages/sofinder-s3
       - run: docker run -d --name sofinder-minio -p 9000:9000 -e MINIO_ROOT_USER=minioadmin -e MINIO_ROOT_PASSWORD=minioadmin minio/minio@sha256:d249d1fb6966de4d8ad26c04754b545205ff15a62e4fd19ebd0f26fa5baacbc0 server /data
       - run: for attempt in {1..30}; do curl --fail --silent http://127.0.0.1:9000/minio/health/ready && exit 0; sleep 1; done; exit 1
@@ -108,23 +215,23 @@ jobs:
       - run: ./scripts/php-bin.sh vendor/bin/phpunit --coverage-clover var/coverage.xml
       - run: >-
           ./scripts/php-bin.sh scripts/check-coverage.php var/coverage.xml 72
-          src/Preview/DocumentPreviewJobManager.php:85
-          src/Preview/DocumentPreviewManager.php:85
-          src/Security/MalwareScanStatusStore.php:85
-          src/Security/SharedMalwareScanStatusStore.php:85
-          src/Http/AssetController.php:85
-          src/Asset/AssetReferenceFactory.php:85
-          src/Asset/AssetOperationPublisher.php:85
-          src/Asset/JsonAssetCatalog.php:85
-          src/Asset/SharedAssetCatalog.php:85
-          src/Http/AssetApiController.php:85
-          src/Event/AssetOperationEvent.php:85
-          src/Symfony/AssetCatalogSubscriber.php:85
-          src/Symfony/VersionedOperationSubscriber.php:85
-          src/Symfony/DefaultWorkspaceResolver.php:85
-          src/Workspace/WorkspaceProvider.php:85
-          src/Plugin/PluginRegistry.php:85
-          src/Plugin/PluginContractValidator.php:85
+          packages/sofinder-core/src/Preview/DocumentPreviewJobManager.php:85
+          packages/sofinder-core/src/Preview/DocumentPreviewManager.php:85
+          packages/sofinder-core/src/Security/MalwareScanStatusStore.php:85
+          packages/sofinder-core/src/Security/SharedMalwareScanStatusStore.php:85
+          packages/sofinder-symfony/src/Http/AssetController.php:85
+          packages/sofinder-symfony/src/Asset/AssetReferenceFactory.php:85
+          packages/sofinder-core/src/Asset/AssetOperationPublisher.php:85
+          packages/sofinder-core/src/Asset/JsonAssetCatalog.php:85
+          packages/sofinder-core/src/Asset/SharedAssetCatalog.php:85
+          packages/sofinder-symfony/src/Http/AssetApiController.php:85
+          packages/sofinder-core/src/Event/AssetOperationEvent.php:85
+          packages/sofinder-symfony/src/Symfony/AssetCatalogSubscriber.php:85
+          packages/sofinder-symfony/src/Symfony/VersionedOperationSubscriber.php:85
+          packages/sofinder-symfony/src/Symfony/DefaultWorkspaceResolver.php:85
+          packages/sofinder-core/src/Workspace/WorkspaceProvider.php:85
+          packages/sofinder-core/src/Plugin/PluginRegistry.php:85
+          packages/sofinder-symfony/src/Plugin/PluginContractValidator.php:85
 
   pdo-state:
     runs-on: ubuntu-latest
@@ -222,8 +329,10 @@ jobs:
         include:
           - php: '8.2'
             manifest: composer-6.4.json
+            symfony: '6.4.*'
           - php: '8.5'
             manifest: composer-7.4.json
+            symfony: '7.4.*'
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - uses: shivammathur/setup-php@f3e473d116dcccaddc5834248c87452386958240 # v2
@@ -238,6 +347,25 @@ jobs:
       - run: ../../scripts/php-bin.sh bin/console cache:warmup --env=prod --no-interaction
         working-directory: examples/symfony
         env: { APP_ENV: prod, APP_DEBUG: 0 }
+      - run: bash scripts/check-symfony-example-http.sh
+      - run: ../../scripts/composer.sh require symfony/messenger:${{ matrix.symfony }} --with-all-dependencies --no-interaction --prefer-dist
+        working-directory: examples/symfony
+      - run: ../../scripts/php-bin.sh bin/console cache:warmup --env=messenger --no-interaction
+        working-directory: examples/symfony
+        env: { APP_ENV: messenger, APP_DEBUG: 0 }
+      - run: ../../scripts/php-bin.sh bin/console sofinder:maintenance:status --env=messenger --json
+        working-directory: examples/symfony
+        env: { APP_ENV: messenger, APP_DEBUG: 0 }
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: '22'
+      - run: corepack enable
+      - run: pnpm install --frozen-lockfile
+        working-directory: frontend
+      - run: pnpm exec playwright install --with-deps chromium
+        working-directory: frontend
+      - run: pnpm exec playwright test --config playwright.symfony.config.ts
+        working-directory: frontend
       - name: Verify the reference inspector is available only in the dev demo
         run: |
           ../../scripts/php-bin.sh bin/console debug:router --env=dev | grep -F '/integrations/plugin-inspector'
