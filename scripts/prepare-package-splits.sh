@@ -41,11 +41,20 @@ prepare_split()
     git -C "$split_repository" checkout --quiet -B source-release "$source_ref"
     FILTER_BRANCH_SQUELCH_WARNING=1 git -C "$split_repository" filter-branch --force --prune-empty \
         --subdirectory-filter "$directory" -- source-release >/dev/null
+    if [[ "$directory" == packages/sofinder-laravel ]]; then
+        git -C "$repository_root" archive "$source_ref" dist | tar -x -C "$split_repository"
+        git -C "$split_repository" add dist
+        GIT_AUTHOR_DATE="$tag_date" GIT_COMMITTER_DATE="$tag_date" \
+            git -C "$split_repository" commit --quiet -m 'Include synchronized frontend distribution'
+    fi
     split_commit=$(git -C "$split_repository" rev-parse source-release)
     git -C "$split_repository" show "$split_commit:composer.json" | "$php_bin" -r '
         $composer = json_decode(stream_get_contents(STDIN), true, 32, JSON_THROW_ON_ERROR);
         exit(($composer["name"] ?? null) === $argv[1] ? 0 : 1);
     ' "$package_name"
+    if [[ "$directory" == packages/sofinder-laravel ]]; then
+        git -C "$split_repository" cat-file -e "$split_commit:dist/manifest.json"
+    fi
     git -C "$split_repository" branch -f package-release-main "$split_commit" >/dev/null
     GIT_COMMITTER_DATE="$tag_date" git -C "$split_repository" tag -a "$tag" "$split_commit" -m "$package_name $version" >/dev/null
     git -C "$split_repository" -c pack.threads=1 bundle create "$output_dir/$bundle_name" \

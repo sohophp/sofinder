@@ -46,7 +46,23 @@ archive_package()
         files+=(config)
     fi
 
-    if [[ "$source_ref" == WORKTREE ]]; then
+    if [[ "$directory" == sofinder-laravel ]]; then
+        local staging
+        staging=$(mktemp -d "$repository_root/var/laravel-release.XXXXXX")
+        mkdir -p "$staging/$prefix"
+        if [[ "$source_ref" == WORKTREE ]]; then
+            local file
+            for file in "${files[@]}"; do
+                cp -a "$repository_root/packages/$directory/$file" "$staging/$prefix/"
+            done
+            cp -a "$repository_root/dist" "$staging/$prefix/dist"
+        else
+            git -C "$repository_root" archive "$source_ref:packages/$directory" | tar -x -C "$staging/$prefix"
+            git -C "$repository_root" archive "$source_ref" dist | tar -x -C "$staging/$prefix"
+        fi
+        tar -czf "$archive" -C "$staging" "$prefix"
+        rm -rf -- "$staging"
+    elif [[ "$source_ref" == WORKTREE ]]; then
         tar -czf "$archive" --transform "s#^#$prefix/#" -C "$repository_root/packages/$directory" "${files[@]}"
     else
         git -C "$repository_root" archive --format=tar.gz --prefix="$prefix/" --output="$archive" "$source_ref:packages/$directory"
@@ -58,6 +74,8 @@ archive_package()
         listing=$(tar -tzf "$archive")
         grep -Fxq "$prefix/dist/manifest.json" <<< "$listing"
         grep -Fxq "$prefix/THIRD_PARTY_NOTICES.md" <<< "$listing"
+    elif [[ "$directory" == sofinder-laravel ]]; then
+        grep -Fxq "$prefix/dist/manifest.json" <<< "$listing"
     fi
 }
 
