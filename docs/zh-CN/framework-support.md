@@ -16,6 +16,10 @@ API、命令、安全和依赖注入的完整稳定目标。
 | Slim／Mezzio | 通过 PSR-15 提供全栈支持及全部 52 个共享 Handler | 完整兼容矩阵与黑盒一致性矩阵 |
 | 其他框架 | 仅 headless 核心 | 实现公开契约，不继承内部 Controller |
 
+安装、授权及 Bootstrap 示例请阅读[框架集成指南](/zh-CN/framework-integrations)，其中包含
+Laravel 12／13、Slim 4、Mezzio 3 和纯 PHP；Symfony 请阅读单独的
+[集成指南](/zh-CN/symfony)。
+
 正式支持的 PSR-15 包提供 Middleware、`RouteRegistrar` 和完整 52 路由浏览器/API 的本地
 Runtime Factory。真实 Slim 4、Mezzio 3 与纯 PHP Front Controller 已在 PHP 8.2 和 8.5 上
 提供共享 `/browser` 外壳及前端资源，并执行全部 51 条非展示路由以及 Liveness、Capabilities、

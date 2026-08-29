@@ -65,7 +65,8 @@ composer require sohophp/sofinder-symfony:^1.0
 
 ::: tip 正式支援的 Framework 版本線
 Symfony 6.4／7.4、Laravel 12／13 與共用 PSR-15 Host 均為正式支援的 Full-stack
-整合，具體 PHP 8 組合詳見[Framework 支援策略](/zh-TW/framework-support)。PHP 8 主線
+整合。Laravel、Slim、Mezzio 和純 PHP 的可執行接入步驟見[框架整合指南](/zh-TW/framework-integrations)，
+具體 PHP 8 組合詳見[Framework 支援策略](/zh-TW/framework-support)。PHP 8 主線
 絕不為 PHP 7.2 降級；Legacy 可行性始終獨立評估。
 :::
 

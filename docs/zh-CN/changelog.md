@@ -7,6 +7,8 @@ description: SoFinder 每个公开版本的重要变更。
 
 ## 尚未发布
 
+- 新增 Laravel 12／13、Slim 4、Mezzio 3 和纯 PHP 的完整框架集成指南，涵盖安装、
+  宿主授权、CSRF、路由和生产验证步骤。
 - 明确不可改变的兼容边界：PHP 8 主线绝不为 PHP 7.2 降级；PHP 7.2 是否继续开发，
   始终是独立的 Legacy 产品决策。
 - 建立独立公开的 `sohophp/sofinder-legacy` 仓库及通过的 PHP 7.2.5／7.3／7.4

@@ -68,8 +68,10 @@ host-generated URLs.
 
 ::: tip Supported framework lines
 Symfony 6.4/7.4, Laravel 12/13 and the shared PSR-15 hosts are supported
-full-stack integrations on their documented PHP 8 matrix. See the
-[framework support policy](/framework-support). The PHP 8 main line is never
+full-stack integrations on their documented PHP 8 matrix. Follow the
+[framework integration guide](/framework-integrations) for installable Laravel,
+Slim, Mezzio and plain PHP examples, and see the [framework support
+policy](/framework-support) for the compatibility matrix. The PHP 8 main line is never
 downgraded for PHP 7.2; Legacy feasibility is evaluated independently.
 :::
 

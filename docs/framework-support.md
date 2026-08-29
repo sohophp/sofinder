@@ -18,6 +18,10 @@ and 7.4 LTS.
 | Slim / Mezzio | Full-stack supported through PSR-15 with all 52 shared handlers | Complete compatibility and black-box parity matrices |
 | Other frameworks | Headless core only | Implement the same public contracts; do not subclass internal controllers |
 
+For installation, authorization and bootstrap examples, use the
+[framework integration guide](/framework-integrations). It covers Laravel 12/13,
+Slim 4, Mezzio 3 and plain PHP; Symfony has its own [integration guide](/symfony).
+
 The supported PSR-15 package supplies middleware, a `RouteRegistrar` and a
 local runtime factory for the complete 52-route browser/API surface. Real Slim
 4, Mezzio 3 and plain PHP front controllers serve the shared `/browser` shell

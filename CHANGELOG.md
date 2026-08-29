@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- Add complete framework integration guides for Laravel 12/13, Slim 4,
+  Mezzio 3 and plain PHP, including installation, host-owned authorization,
+  CSRF, routing and production verification steps.
 - Clarify the non-negotiable compatibility boundary: PHP 8 main never
   downgrades for PHP 7.2, whose development feasibility remains an independent
   Legacy product decision.

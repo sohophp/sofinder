@@ -65,7 +65,8 @@ namespace。接着注册 Bundle、导入路由并建立至少一个存储资源�
 
 ::: tip 正式支持的框架版本线
 Symfony 6.4／7.4、Laravel 12／13 与共享 PSR-15 Host 均是正式支持的 Full-stack
-集成，具体 PHP 8 组合详见[框架支持策略](/zh-CN/framework-support)。PHP 8 主线绝不为
+集成。Laravel、Slim、Mezzio 和纯 PHP 的可执行接入步骤见[框架集成指南](/zh-CN/framework-integrations)，
+具体 PHP 8 组合见[框架支持策略](/zh-CN/framework-support)。PHP 8 主线绝不为
 PHP 7.2 降级；Legacy 可行性始终独立评估。
 :::
 
