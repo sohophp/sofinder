@@ -21,9 +21,12 @@ use SohoPHP\SoFinder\Laravel\LaravelEndpointController;
 use SohoPHP\SoFinder\Laravel\LaravelRouteName;
 use SohoPHP\SoFinder\Laravel\LaravelRouteRegistrar;
 use SohoPHP\SoFinder\Laravel\SoFinderServiceProvider;
+use SohoPHP\SoFinder\Laravel\Queue\LaravelDocumentPreviewDispatcher;
+use SohoPHP\SoFinder\Laravel\Queue\LaravelDocumentPreviewJob;
 use SohoPHP\SoFinder\Laravel\Queue\LaravelMaintenanceDispatcher;
 use SohoPHP\SoFinder\Laravel\Queue\LaravelMaintenanceJob;
 use SohoPHP\SoFinder\Maintenance\MaintenanceTask;
+use SohoPHP\SoFinder\Preview\DocumentPreviewMessage;
 use SohoPHP\SoFinder\Value\RequestContext;
 use Symfony\Bridge\PsrHttpMessage\Factory\HttpFoundationFactory;
 use Symfony\Bridge\PsrHttpMessage\Factory\PsrHttpFactory;
@@ -38,6 +41,16 @@ final class LaravelBridgeTest extends TestCase
         ));
 
         (new LaravelMaintenanceDispatcher($bus))->dispatch(MaintenanceTask::Uploads);
+    }
+
+    public function testLaravelQueueDispatcherTranslatesTheSharedPreviewMessage(): void
+    {
+        $bus = $this->createMock(\Illuminate\Contracts\Bus\Dispatcher::class);
+        $bus->expects(self::once())->method('dispatch')->with(self::callback(
+            static fn (mixed $job): bool => $job instanceof LaravelDocumentPreviewJob && $job->jobId === 'preview-job-1',
+        ));
+
+        (new LaravelDocumentPreviewDispatcher($bus))->dispatch(new DocumentPreviewMessage('preview-job-1'));
     }
 
     public function testRegistrarCreatesCanonicalLaravelRoutesAndMiddleware(): void

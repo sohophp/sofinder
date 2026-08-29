@@ -64,6 +64,7 @@ use SohoPHP\SoFinder\Laravel\Console\CleanupUploadsCommand;
 use SohoPHP\SoFinder\Laravel\Console\MaintenanceStatusCommand;
 use SohoPHP\SoFinder\Laravel\Console\RecalculateUsageCommand;
 use SohoPHP\SoFinder\Laravel\Console\SecurityAuditCommand;
+use SohoPHP\SoFinder\Laravel\Queue\LaravelDocumentPreviewDispatcher;
 use SohoPHP\SoFinder\Laravel\Queue\LaravelMaintenanceDispatcher;
 use SohoPHP\SoFinder\Observability\SharedMetricsStore;
 use SohoPHP\SoFinder\Preview\DocumentPreviewJobManager;
@@ -212,6 +213,7 @@ final class SoFinderServiceProvider extends ServiceProvider
         $this->app->alias(SharedChunkUploadStore::class, ChunkUploadStoreInterface::class);
         $this->app->singleton(LaravelMaintenanceDispatcher::class);
         $this->app->alias(LaravelMaintenanceDispatcher::class, MaintenanceDispatcherInterface::class);
+        $this->app->singleton(LaravelDocumentPreviewDispatcher::class);
         $this->app->singleton(MaintenanceRunner::class, static fn ($app): MaintenanceRunner => new MaintenanceRunner(
             rtrim((string) $app->make(LaravelConfiguration::class)->get('cache_dir'), '/') . '/maintenance',
             $app->make(ChunkUploadStoreInterface::class),
@@ -334,7 +336,8 @@ final class SoFinderServiceProvider extends ServiceProvider
         $this->app->singleton(DocumentPreviewJobManager::class, static fn ($app): DocumentPreviewJobManager => new DocumentPreviewJobManager(
             $app->make(DocumentPreviewManager::class), $app->make(ActorProviderInterface::class), rtrim((string) $app->make(LaravelConfiguration::class)->get('cache_dir'), '/') . '/document-preview-jobs.json',
             (string) $app->make(LaravelConfiguration::class)->get('document_preview.mode'), (int) $app->make(LaravelConfiguration::class)->get('document_preview.job_ttl_seconds'),
-            (int) $app->make(LaravelConfiguration::class)->get('document_preview.cache_ttl_seconds'), state: $app->make(AtomicStateStoreInterface::class), metrics: $app->make(MetricsStoreInterface::class),
+            (int) $app->make(LaravelConfiguration::class)->get('document_preview.cache_ttl_seconds'), bus: $app->make(LaravelDocumentPreviewDispatcher::class),
+            state: $app->make(AtomicStateStoreInterface::class), metrics: $app->make(MetricsStoreInterface::class),
         ));
         $this->app->singleton(SignedUrlManager::class, static fn ($app): SignedUrlManager => new SignedUrlManager(
             $app->make(FileManager::class), $app->make(ResourceRegistry::class), $app->make(PathGuard::class), (bool) $app->make(LaravelConfiguration::class)->get('signed_urls.enabled'),

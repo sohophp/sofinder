@@ -70,6 +70,7 @@ jobs:
         run: >-
           ./scripts/composer.sh require --no-update
           illuminate/auth:${{ matrix.laravel }}.*
+          illuminate/bus:${{ matrix.laravel }}.*
           illuminate/cache:${{ matrix.laravel }}.*
           illuminate/console:${{ matrix.laravel }}.*
           illuminate/http:${{ matrix.laravel }}.*
@@ -86,5 +87,5 @@ jobs:
         run: >-
           ./scripts/php-bin.sh -r
           '$major=static function(string $package):string{$version=Composer\InstalledVersions::getPrettyVersion($package);return is_string($version)?explode(".",ltrim($version,"v"),2)[0]:"";};
-          exit([$major("illuminate/cache"),$major("illuminate/support"),$major("symfony/http-foundation"),$major("symfony/psr-http-message-bridge")]
-          === ["${{ matrix.laravel }}","${{ matrix.laravel }}","${{ matrix.symfony }}","${{ matrix.symfony }}"] ? 0 : 1);'
+          exit([$major("illuminate/bus"),$major("illuminate/cache"),$major("illuminate/support"),$major("symfony/http-foundation"),$major("symfony/psr-http-message-bridge")]
+          === ["${{ matrix.laravel }}","${{ matrix.laravel }}","${{ matrix.laravel }}","${{ matrix.symfony }}","${{ matrix.symfony }}"] ? 0 : 1);'

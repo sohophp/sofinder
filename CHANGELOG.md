@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- Translate framework-neutral document-preview messages into self-handling
+  Laravel queue jobs, so `document_preview.mode=auto|messenger` uses the host
+  Bus just as Symfony uses Messenger; move the shared message DTO into Core.
 - Back Laravel's operational shared state with the host's configured Cache
   repository and atomic locks, covering chunk sessions, maintenance claims,
   metrics, malware status and document-preview jobs while failing bootstrap for

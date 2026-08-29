@@ -20,7 +20,10 @@ The bridge also registers `sofinder:uploads:cleanup`,
 `sofinder:maintenance:status`, plus the shared deploy-time
 `sofinder:security:audit` (with optional `--json` output). Set the shared
 `maintenance.mode` to `messenger` to dispatch maintenance through Laravel's
-configured queue. Enabling shared `malware_scanning` wires the same fail-closed
+configured queue. `document_preview.mode=auto` uses the Laravel Bus when Office
+preview is enabled, while `messenger` requires it and `inline` remains
+synchronous; the shared configuration name stays unchanged across bridges.
+Enabling shared `malware_scanning` wires the same fail-closed
 ClamAV upload scanner and audit health check used by the Symfony bridge.
 
 Publish host-editable configuration with

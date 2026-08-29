@@ -79,6 +79,7 @@ final class PackageReleaseMetadataTest extends TestCase
                 'psr/http-server-middleware',
             ],
             'packages/sofinder-laravel/composer.json' => [
+                'illuminate/bus',
                 'illuminate/cache',
                 'psr/event-dispatcher',
                 'psr/http-factory',
@@ -149,5 +150,14 @@ final class PackageReleaseMetadataTest extends TestCase
         self::assertSame('src/S3/', $symfonyComposer['autoload']['psr-4']['SohoPHP\\SoFinderS3\\'] ?? null);
         self::assertFileExists($root . '/packages/sofinder-symfony/src/S3/SoFinderS3Bundle.php');
         self::assertFileExists($root . '/packages/sofinder-symfony/src/S3/DependencyInjection/SoFinderS3Extension.php');
+    }
+
+    public function testDocumentPreviewQueueMessageLivesInFrameworkNeutralCore(): void
+    {
+        $root = dirname(__DIR__);
+        $message = new \ReflectionClass(\SohoPHP\SoFinder\Preview\DocumentPreviewMessage::class);
+
+        self::assertStringContainsString('/packages/sofinder-core/src/Preview/', (string) $message->getFileName());
+        self::assertFileDoesNotExist($root . '/packages/sofinder-symfony/src/Preview/DocumentPreviewMessage.php');
     }
 }

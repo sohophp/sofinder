@@ -7,6 +7,8 @@ description: SoFinder 每个公开版本的重要变更。
 
 ## 尚未发布
 
+- 将框架无关的文档预览消息转换为可自行处理的 Laravel Queue Job，使
+  `document_preview.mode=auto|messenger` 实际使用宿主 Bus；共享消息 DTO 已移入 Core。
 - Laravel 的分块会话、维护锁、指标、恶意软件状态和文档预览任务现在默认使用宿主配置的
   Cache Repository 与原子锁；不支持安全锁的 Cache Driver 会在启动时直接失败。
 - 发布受门禁保护的 Bridge 前，在线核验成功的 GitHub Actions 记录，匹配 Symfony 矩阵

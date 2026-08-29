@@ -27,7 +27,7 @@ Symfony 属于支持安装；PSR Bridge 必须在完整黑盒 Suite 和发布门
 非浏览器路由，并把全部路由通过 PSR Dispatcher 接到共享 HTTP Action。Laravel Auth/Gate、
 Session CSRF、Event Dispatcher、请求上下文、路由 URL 和统一配置 Adapter 已完成；浏览器
 分块会话、维护锁、指标、恶意软件状态与预览任务默认使用 Laravel Cache 和原子锁，不能提供
-安全锁的 Cache Driver 会在启动时失败。浏览器外壳、四个 Artisan 维护命令、基于框架无关审计器的 Artisan 安全审计命令、Laravel Queue
+安全锁的 Cache Driver 会在启动时失败。浏览器外壳、四个 Artisan 维护命令、基于框架无关审计器的 Artisan 安全审计命令、维护与异步文档预览的 Laravel Queue
 Dispatcher 和同步发布资源也已接入。Laravel 宿主启用恶意软件扫描后，上传和安全审计会接入
 共享的 Fail-closed ClamAV 扫描器。
 可运行的 Laravel 12/13 应用现已覆盖全部支持组合（Laravel 12 × PHP 8.2～8.5；Laravel 13 ×

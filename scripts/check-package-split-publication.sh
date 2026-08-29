@@ -86,6 +86,8 @@ if [[ "$with_bridges" == true ]]; then
         require "vendor/autoload.php";
         $manifest=json_decode((string) file_get_contents("vendor/sohophp/sofinder-laravel/composer.json"),true,32,JSON_THROW_ON_ERROR);
         exit(class_exists("SohoPHP\\SoFinder\\Laravel\\LaravelCacheAtomicStateStore")
+            && class_exists("SohoPHP\\SoFinder\\Laravel\\Queue\\LaravelDocumentPreviewJob")
+            && ($manifest["require"]["illuminate/bus"]??null)==="^12.0 || ^13.0"
             && ($manifest["require"]["illuminate/cache"]??null)==="^12.0 || ^13.0" ? 0 : 1);
     '
 

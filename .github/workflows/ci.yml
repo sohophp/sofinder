@@ -245,6 +245,7 @@ jobs:
       - run: >-
           COMPOSER=composer.laravel.json ./scripts/composer.sh require --no-update
           illuminate/auth:${{ matrix.laravel }}.*
+          illuminate/bus:${{ matrix.laravel }}.*
           illuminate/cache:${{ matrix.laravel }}.*
           illuminate/console:${{ matrix.laravel }}.*
           illuminate/http:${{ matrix.laravel }}.*

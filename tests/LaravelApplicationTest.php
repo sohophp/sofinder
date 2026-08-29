@@ -25,6 +25,7 @@ use SohoPHP\SoFinder\Http\AdvancedEndpointActions;
 use SohoPHP\SoFinder\Http\EndpointCatalog;
 use SohoPHP\SoFinder\Security\ClamAvScanner;
 use SohoPHP\SoFinder\Observability\SharedMetricsStore;
+use SohoPHP\SoFinder\Preview\DocumentPreviewJobManager;
 use SohoPHP\SoFinder\Security\SharedMalwareScanStatusStore;
 use SohoPHP\SoFinder\Upload\SharedChunkUploadStore;
 use SohoPHP\SoFinder\Workspace\WorkspaceProvider;
@@ -149,6 +150,13 @@ final class LaravelApplicationTest extends TestCase
         self::assertInstanceOf(SharedChunkUploadStore::class, $this->app->make(ChunkUploadStoreInterface::class));
         self::assertInstanceOf(SharedMetricsStore::class, $this->app->make(GaugeMetricsStoreInterface::class));
         self::assertInstanceOf(SharedMalwareScanStatusStore::class, $this->app->make(MalwareScanStatusStoreInterface::class));
+        self::assertSame([
+            'configuredMode' => 'auto',
+            'effectiveMode' => 'messenger',
+            'queueAvailable' => true,
+            'counts' => ['queued' => 0, 'running' => 0, 'ready' => 0, 'failed' => 0, 'expired' => 0],
+            'lastSuccessfulAt' => null,
+        ], $this->app->make(DocumentPreviewJobManager::class)->diagnostics());
         self::assertSame(['Files'], array_map(
             static fn ($storage): string => $storage->resource->name,
             $this->app->make(ResourceRegistry::class)->all(),

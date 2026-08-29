@@ -9286,10 +9286,11 @@
             "dist": {
                 "type": "path",
                 "url": "packages/sofinder-laravel",
-                "reference": "8e760e888e1ec90a78a3182bd78b526525121ce8"
+                "reference": "6beccf6c6970205e61c2589a5a3e58ecf19e4387"
             },
             "require": {
                 "illuminate/auth": "^12.0 || ^13.0",
+                "illuminate/bus": "^12.0 || ^13.0",
                 "illuminate/cache": "^12.0 || ^13.0",
                 "illuminate/console": "^12.0 || ^13.0",
                 "illuminate/contracts": "^12.0 || ^13.0",
