@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- Let the PSR-15 local application factory discover its packaged frontend
+  distribution automatically, and boot `/browser` plus a real asset from a
+  clean Composer consumer of the future split repository.
 - Add the framework-neutral browser action to the PSR-15 local runtime, register
   all 52 catalog routes by default, and boot the real React UI in Chromium
   against Slim 4, Mezzio 3 and plain PHP on both PHP matrix boundaries.

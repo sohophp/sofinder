@@ -154,8 +154,7 @@ final class Psr15HostIntegrationTest extends TestCase
             [],
             $this->directory . '/state',
             $this->directory . '/files',
-            dirname(__DIR__),
-            $prefix,
+            prefix: $prefix,
         ))->create();
     }
 }

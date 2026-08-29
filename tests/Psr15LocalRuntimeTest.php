@@ -51,7 +51,6 @@ final class Psr15LocalRuntimeTest extends TestCase
             [],
             $this->directory . '/state',
             $this->directory . '/files',
-            dirname(__DIR__),
         );
         $implemented = array_map(static fn ($action): string => $action->endpoint(), $factory->actions());
         $expected = array_map(static fn ($endpoint): string => $endpoint->name, EndpointCatalog::all());

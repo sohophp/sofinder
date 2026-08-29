@@ -78,8 +78,7 @@ final class RuntimeFactory
             ],
             dirname(__DIR__) . '/var/state',
             dirname(__DIR__) . '/var/files',
-            dirname(__DIR__, 3),
-            $prefix,
+            prefix: $prefix,
         ))->create();
     }
 }

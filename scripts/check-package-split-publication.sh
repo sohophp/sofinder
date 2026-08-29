@@ -80,6 +80,9 @@ fi
 if [[ "$with_bridges" == true ]]; then
     test -s vendor/sohophp/sofinder-laravel/dist/manifest.json
     test -s vendor/sohophp/sofinder-psr15/dist/manifest.json
+    runtime_dir="$consumer_dir/var/psr15-runtime"
+    mkdir -p "$runtime_dir/state" "$runtime_dir/files"
+    "$repository_root/scripts/php-bin.sh" "$repository_root/tests/fixtures/verify-installed-psr-browser.php" "$runtime_dir"
 fi
 cd "$repository_root"
 

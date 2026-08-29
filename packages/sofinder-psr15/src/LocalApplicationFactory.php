@@ -28,7 +28,7 @@ final readonly class LocalApplicationFactory
         private array $configuration,
         private string $stateDirectory,
         private string $resourceRoot,
-        private string $packageDirectory,
+        private ?string $packageDirectory = null,
         private string $prefix = '/sofinder',
         private string $baseUrl = '',
         private iterable $storageFactories = [],
@@ -86,9 +86,30 @@ final readonly class LocalApplicationFactory
             $urls,
             new CatalogEntryUrlGenerator($urls),
             $this->contexts,
-            $this->packageDirectory,
+            $this->resolvePackageDirectory(),
             $this->storageFactories,
             $this->maintenanceDispatcher,
         );
+    }
+
+    private function resolvePackageDirectory(): string
+    {
+        if ($this->packageDirectory !== null && trim($this->packageDirectory) !== '') {
+            return rtrim($this->packageDirectory, '/');
+        }
+
+        $packageRoot = dirname(__DIR__);
+        if (is_file($packageRoot . '/dist/manifest.json')) {
+            return $packageRoot;
+        }
+
+        // The source monorepo keeps the shared distribution at its root. A
+        // published split package carries the same directory at $packageRoot.
+        $monorepoRoot = dirname(__DIR__, 3);
+        if (is_file($monorepoRoot . '/dist/manifest.json')) {
+            return $monorepoRoot;
+        }
+
+        return $packageRoot;
     }
 }

@@ -7,6 +7,8 @@ description: SoFinder 每个公开版本的重要变更。
 
 ## 尚未发布
 
+- PSR-15 本地应用工厂现在自动发现发布包内的前端资源，并在未来拆分仓库的干净
+  Composer 消费者中实际启动 `/browser`、读取真实资源，避免用户传入仓库内部路径。
 - 将框架无关 Browser Action 加入 PSR-15 本地 Runtime，默认注册全部 52 条中央路由，
   并在 PHP 矩阵两端通过 Chromium 分别启动 Slim 4、Mezzio 3 和纯 PHP 的真实 React UI。
 - 将 `sohophp/sofinder-s3` 收紧为框架无关的 Core Adapter Library，并把保持类名

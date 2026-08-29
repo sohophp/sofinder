@@ -20,6 +20,8 @@ runtime from normalized configuration and explicit host services.
 `HostServices` requires explicit authorization, actor, CSRF and event-dispatcher
 implementations, so the official runtime cannot silently start with anonymous
 access. `NativeSessionCsrfTokenProvider` is available for framework-free PHP.
+The factory discovers the packaged `dist` directory automatically; consumers
+only need to pass `packageDirectory` when deliberately serving a custom build.
 
 Runnable Slim, Mezzio and plain PHP front controllers live in
 `examples/psr15`. Each host serves the real React browser and every API action;
