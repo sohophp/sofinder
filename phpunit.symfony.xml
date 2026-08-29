@@ -4,6 +4,7 @@
             <directory>tests</directory>
             <exclude>tests/LaravelApplicationTest.php</exclude>
             <exclude>tests/LaravelBridgeTest.php</exclude>
+            <exclude>tests/LaravelCacheAtomicStateStoreTest.php</exclude>
         </testsuite>
     </testsuites>
     <source>
