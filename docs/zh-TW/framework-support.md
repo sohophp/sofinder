@@ -12,13 +12,19 @@ API、命令、安全及依賴注入的完整穩定目標。
 | --- | --- | --- |
 | Symfony 6.4／7.4 | 完整、穩定 | PHP 8.2～8.5 CI Matrix 全部通過 |
 | 純 PHP／任意 Container | 實驗性 headless HTTP Bridge | Host 明確提供授權、CSRF、Actor、事件及 PSR Factory |
-| Laravel | 可使用核心；完整 Bridge 待實作 | Symfony 基線穩定後加入 Service Provider、Route 及授權測試 |
-| Slim／Mezzio | 實驗性 PSR-15 API Bridge | 可執行 Host 範例及 Symfony 1.0 觀察期門禁 |
+| Laravel 12/13 | 實驗性 Bridge：Provider、51 條 API Route、Auth/Gate、Session CSRF 與 PSR 轉換 | 其餘共用 Handler、瀏覽器/命令、完整一致性及 Symfony 觀察門禁 |
+| Slim／Mezzio | 含可執行 Host 的實驗性 PSR-15 API Bridge | 完整 Endpoint 一致性及 Symfony 1.0 觀察期門禁 |
 | 其他框架 | 僅 headless 核心 | 實作公開契約，不繼承內部 Controller |
 
 實驗性 PSR-15 Package 現已提供 Middleware 與 `RouteRegistrar`，可在 Slim 或 Mezzio
-註冊全部 51 個非展示 Endpoint 的中央路徑及約束；`/browser` 仍由 Host 呈現。目前只有
-Symfony 屬於完整支援的安裝方式；PSR Bridge 必須通過可執行範例及發布門禁後才能升級。
+註冊全部 51 個非展示 Endpoint 的中央路徑及約束；`/browser` 仍由 Host 呈現。真實 Slim 4、
+Mezzio 3 與純 PHP Front Controller 已在 PHP 8.2 和 8.5 上運行。目前只有 Symfony 屬於
+完整支援的安裝方式；PSR Bridge 必須通過完整 Contract Suite 及發布門禁後才能升級。
+
+受門禁保護的 Laravel Package 已在真實 Laravel 12/13 Application 透過自動探索啟動，
+註冊中央 51 個非展示 Route，並經共用 PSR Dispatcher 執行 Liveness Endpoint。Laravel
+Auth/Gate、Session CSRF、Event Dispatcher 與統一設定 Normalizer Adapter 已完成；其餘
+共用 Action Graph、瀏覽器外殼、命令和完整契約仍在接入，因此維持實驗性。
 
 門禁證據記錄於 `config/framework-support.json` 並由 CI 驗證。只有記錄的主線版本為
 `1.0.0`、UTC 發布日期已滿 30 天且未關閉的 P0/P1 缺陷數為零時，才能設為 eligible。

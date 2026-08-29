@@ -10,6 +10,7 @@
             <directory suffix=".php">packages/sofinder-core/src</directory>
             <directory suffix=".php">packages/sofinder-http/src</directory>
             <directory suffix=".php">packages/sofinder-psr15/src</directory>
+            <directory suffix=".php">packages/sofinder-laravel/src</directory>
         </include>
     </source>
 </phpunit>

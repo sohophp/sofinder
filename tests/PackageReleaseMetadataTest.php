@@ -15,6 +15,7 @@ final class PackageReleaseMetadataTest extends TestCase
         yield 'Core' => ['packages/sofinder-core', 'sohophp/sofinder-core'];
         yield 'HTTP' => ['packages/sofinder-http', 'sohophp/sofinder-http'];
         yield 'PSR-15' => ['packages/sofinder-psr15', 'sohophp/sofinder-psr15'];
+        yield 'Laravel' => ['packages/sofinder-laravel', 'sohophp/sofinder-laravel'];
         yield 'Symfony' => ['packages/sofinder-symfony', 'sohophp/sofinder-symfony'];
         yield 'S3' => ['packages/sofinder-s3', 'sohophp/sofinder-s3'];
     }
@@ -53,6 +54,7 @@ final class PackageReleaseMetadataTest extends TestCase
             'composer.json' => ['sohophp/sofinder-symfony'],
             'packages/sofinder-http/composer.json' => ['sohophp/sofinder-core'],
             'packages/sofinder-psr15/composer.json' => ['sohophp/sofinder-http'],
+            'packages/sofinder-laravel/composer.json' => ['sohophp/sofinder-http'],
             'packages/sofinder-symfony/composer.json' => ['sohophp/sofinder-core', 'sohophp/sofinder-http'],
             'packages/sofinder-s3/composer.json' => ['sohophp/sofinder-core'],
         ];
@@ -73,6 +75,7 @@ final class PackageReleaseMetadataTest extends TestCase
             'packages/sofinder-core/composer.json',
             'packages/sofinder-http/composer.json',
             'packages/sofinder-psr15/composer.json',
+            'packages/sofinder-laravel/composer.json',
             'packages/sofinder-symfony/composer.json',
             'packages/sofinder-s3/composer.json',
         ];

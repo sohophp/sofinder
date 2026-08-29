@@ -14,7 +14,7 @@ SoFinder 正从 1.0 前的 Symfony Bundle 迁移为同步版本的多个 Compose
 | `sofinder-core` | Domain、Storage、Value 和宿主 Contract | 已完成物理拆分和独立安装验证 |
 | `sofinder-http` | Endpoint Catalog、PSR Dispatcher 和共享 Handler | 51 个非展示端点均已有共享 Action；`/browser` 保留为宿主 Bridge 页面 |
 | `sofinder-symfony` | Bundle、HttpFoundation、Console、Messenger | 已完成物理拆分、发布资源和独立安装验证 |
-| `sofinder-laravel` | Laravel 12/13 Provider、授权、CSRF、路由、命令 | 受 1.0 观察期门禁约束 |
+| `sofinder-laravel` | Laravel 12/13 Provider、授权、CSRF、路由、命令 | Provider/路由/安全 Adapter 已通过真实应用测试；其余 Handler 与命令受门禁约束 |
 | `sofinder-psr15` | Slim、Mezzio 和纯 PHP Middleware | 已完成独立安装、真实宿主冒烟及路由/Action 覆盖；完整端点一致性仍受门禁约束 |
 
 `FrameworkBoundaryTest` 会禁止物理 Core 包引入 Symfony、Illuminate、Slim 或 Mezzio；

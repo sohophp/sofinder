@@ -14,8 +14,9 @@ package_test_dir=$(mktemp -d "$repository_root/var/package-install.XXXXXX")
 symfony_test_dir=$(mktemp -d "$repository_root/var/symfony-install.XXXXXX")
 meta_test_dir=$(mktemp -d "$repository_root/var/meta-install.XXXXXX")
 s3_test_dir=$(mktemp -d "$repository_root/var/s3-install.XXXXXX")
+laravel_test_dir=$(mktemp -d "$repository_root/var/laravel-install.XXXXXX")
 legacy_conflict_test_dir=$(mktemp -d "$repository_root/var/legacy-conflict-install.XXXXXX")
-trap 'rm -rf -- "$core_test_dir" "$package_test_dir" "$symfony_test_dir" "$meta_test_dir" "$s3_test_dir" "$legacy_conflict_test_dir"' EXIT
+trap 'rm -rf -- "$core_test_dir" "$package_test_dir" "$symfony_test_dir" "$meta_test_dir" "$s3_test_dir" "$laravel_test_dir" "$legacy_conflict_test_dir"' EXIT
 
 cd "$core_test_dir"
 "$repository_root/scripts/composer.sh" init --name=sohophp/core-install-test --no-interaction
@@ -67,6 +68,17 @@ cd "$s3_test_dir"
 "$repository_root/scripts/php-bin.sh" -r 'require "vendor/autoload.php"; exit(class_exists("SohoPHP\\SoFinderS3\\S3StorageAdapter") && !class_exists("Symfony\\Component\\HttpFoundation\\Request") ? 0 : 1);'
 test -s vendor/sohophp/sofinder-s3/LICENSE
 test -s vendor/sohophp/sofinder-s3/README.md
+
+cd "$laravel_test_dir"
+"$repository_root/scripts/composer.sh" init --name=sohophp/laravel-install-test --no-interaction
+"$repository_root/scripts/composer.sh" config repositories.core '{"type":"path","url":"../../packages/sofinder-core","options":{"symlink":false,"versions":{"sohophp/sofinder-core":"1.0.0"}}}'
+"$repository_root/scripts/composer.sh" config repositories.http '{"type":"path","url":"../../packages/sofinder-http","options":{"symlink":false,"versions":{"sohophp/sofinder-http":"1.0.0"}}}'
+"$repository_root/scripts/composer.sh" config repositories.laravel '{"type":"path","url":"../../packages/sofinder-laravel","options":{"symlink":false,"versions":{"sohophp/sofinder-laravel":"1.0.0"}}}'
+"$repository_root/scripts/composer.sh" require sohophp/sofinder-laravel:1.0.0 --no-interaction --prefer-dist "${preference_args[@]}"
+"$repository_root/scripts/php-bin.sh" -r 'require "vendor/autoload.php"; exit(class_exists("SohoPHP\\SoFinder\\Laravel\\SoFinderServiceProvider") && class_exists("SohoPHP\\SoFinder\\Http\\EndpointDispatcher") ? 0 : 1);'
+test -s vendor/sohophp/sofinder-laravel/LICENSE
+test -s vendor/sohophp/sofinder-laravel/README.md
+test -s vendor/sohophp/sofinder-laravel/config/sofinder.php
 
 cd "$legacy_conflict_test_dir"
 "$repository_root/scripts/composer.sh" init --name=sohophp/legacy-conflict-install-test --no-interaction

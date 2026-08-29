@@ -14,16 +14,25 @@ and 7.4 LTS.
 | --- | --- | --- |
 | Symfony 6.4/7.4 | Full, stable target | Complete PHP 8.2–8.5 CI matrix |
 | Plain PHP / any container | Experimental headless HTTP bridge | Host supplies explicit authorization, CSRF, actor, events and PSR factories |
-| Laravel | Core usable; first full bridge planned | Symfony baseline remains green, then service provider, routes and auth tests |
-| Slim / Mezzio | Experimental PSR-15 API bridge | Executable host examples and the Symfony 1.0 observation gate |
+| Laravel 12/13 | Experimental bridge: Provider, 51 API routes, Auth/Gate, session CSRF and PSR conversion | Remaining shared handlers, browser/commands, full parity and the Symfony observation gate |
+| Slim / Mezzio | Experimental PSR-15 API bridge with executable hosts | Full endpoint parity and the Symfony 1.0 observation gate |
 | Other frameworks | Headless core only | Implement the same public contracts; do not subclass internal controllers |
 
 The experimental PSR-15 package now supplies middleware and a `RouteRegistrar`
 for all 51 non-presentation endpoints. It can register the canonical paths and
 requirements in Slim or Mezzio, while `/browser` remains a host-rendered page.
-Only the Symfony row is a supported full-stack installation today; the PSR row
-does not become full-stack supported until its runnable examples and release
+Real Slim 4, Mezzio 3 and plain PHP front controllers now run on PHP 8.2 and
+8.5. Only the Symfony row is a supported full-stack installation today; the
+PSR row does not become supported until the complete contract suite and release
 gate pass.
+
+The gated Laravel package now boots through package discovery in real Laravel
+12 and 13 applications, registers the canonical 51 non-presentation routes,
+and delegates its liveness endpoint through the shared PSR dispatcher. Its
+Laravel Auth/Gate, session CSRF, event dispatcher and normalized configuration
+adapters are present. The package remains experimental while the rest of the
+shared action graph, browser shell, commands and full contract suite are being
+connected.
 
 The gate is recorded in `config/framework-support.json` and validated in CI.
 It cannot become eligible until the recorded main release is `1.0.0`, its UTC

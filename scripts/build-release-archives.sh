@@ -42,6 +42,8 @@ archive_package()
         files+=(THIRD_PARTY_NOTICES.md dist)
     elif [[ "$directory" == sofinder-s3 ]]; then
         files+=(CHANGELOG.md THIRD_PARTY_NOTICES.md)
+    elif [[ "$directory" == sofinder-laravel ]]; then
+        files+=(config)
     fi
 
     if [[ "$source_ref" == WORKTREE ]]; then

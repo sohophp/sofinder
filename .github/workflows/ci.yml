@@ -176,6 +176,46 @@ jobs:
           coverage: none
       - run: bash scripts/check-psr15-hosts.sh
 
+  laravel-bridge:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - php: '8.2'
+            laravel: '12'
+            testbench: '10'
+          - php: '8.5'
+            laravel: '12'
+            testbench: '10'
+          - php: '8.3'
+            laravel: '13'
+            testbench: '11'
+          - php: '8.5'
+            laravel: '13'
+            testbench: '11'
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: shivammathur/setup-php@f3e473d116dcccaddc5834248c87452386958240 # v2
+        with:
+          php-version: ${{ matrix.php }}
+          coverage: none
+      - run: cp composer.json composer.laravel.json
+      - if: matrix.laravel == '13'
+        run: COMPOSER=composer.laravel.json ./scripts/composer.sh config --unset platform.php
+      - run: >-
+          COMPOSER=composer.laravel.json ./scripts/composer.sh require --no-update
+          illuminate/auth:${{ matrix.laravel }}.*
+          illuminate/console:${{ matrix.laravel }}.*
+          illuminate/http:${{ matrix.laravel }}.*
+          illuminate/routing:${{ matrix.laravel }}.*
+          illuminate/session:${{ matrix.laravel }}.*
+          illuminate/support:${{ matrix.laravel }}.*
+          orchestra/testbench:${{ matrix.testbench }}.*
+      - run: COMPOSER=composer.laravel.json ./scripts/composer.sh update --no-interaction --prefer-dist
+      - run: ./scripts/php-bin.sh vendor/bin/phpunit tests/LaravelBridgeTest.php tests/LaravelApplicationTest.php
+      - run: COMPOSER=composer.laravel.json ./scripts/composer.sh audit
+
   s3-adapter:
     runs-on: ubuntu-latest
     strategy:

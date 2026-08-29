@@ -1,0 +1,45 @@
+{
+    "name": "sohophp/sofinder-laravel",
+    "description": "Experimental Laravel 12/13 bridge for SoFinder",
+    "type": "library",
+    "license": "MIT",
+    "homepage": "https://sofinder.sohophp.app/",
+    "keywords": ["file-manager", "laravel", "upload", "image-manager"],
+    "support": {
+        "issues": "https://github.com/sohophp/sofinder/issues",
+        "source": "https://github.com/sohophp/sofinder"
+    },
+    "require": {
+        "php": "^8.2",
+        "illuminate/auth": "^12.0 || ^13.0",
+        "illuminate/console": "^12.0 || ^13.0",
+        "illuminate/http": "^12.0 || ^13.0",
+        "illuminate/routing": "^12.0 || ^13.0",
+        "illuminate/session": "^12.0 || ^13.0",
+        "illuminate/support": "^12.0 || ^13.0",
+        "nyholm/psr7": "^1.8",
+        "sohophp/sofinder-http": "self.version",
+        "symfony/psr-http-message-bridge": "^7.2"
+    },
+    "conflict": {
+        "sohophp/sofinder-legacy": "*"
+    },
+    "autoload": {
+        "psr-4": {
+            "SohoPHP\\SoFinder\\Laravel\\": "src/"
+        }
+    },
+    "config": {
+        "sort-packages": true
+    },
+    "extra": {
+        "branch-alias": {
+            "dev-main": "1.x-dev"
+        },
+        "laravel": {
+            "providers": [
+                "SohoPHP\\SoFinder\\Laravel\\SoFinderServiceProvider"
+            ]
+        }
+    }
+}

@@ -15,7 +15,7 @@ isolated install test passes.
 | `sohophp/sofinder-core` | Domain, storage, values and host contracts | Physical subtree and isolated install complete |
 | `sohophp/sofinder-http` | Endpoint catalog, PSR dispatcher and shared handlers | All 51 non-presentation endpoints have shared actions; `/browser` remains a host bridge page |
 | `sohophp/sofinder-symfony` | Bundle and HttpFoundation/Console/Messenger adapters | Physical subtree, release assets and isolated install complete |
-| `sohophp/sofinder-laravel` | Laravel 12/13 provider, auth, CSRF, routes and commands | Blocked by the 1.0 observation gate |
+| `sohophp/sofinder-laravel` | Laravel 12/13 provider, auth, CSRF, routes and commands | Provider/routing/security adapters pass real-app tests; remaining handlers and commands are gated |
 | `sohophp/sofinder-psr15` | Slim, Mezzio and plain PSR-15 middleware | Isolated install, real-host smoke and route/action coverage complete; full endpoint parity remains gated |
 
 The source-level `FrameworkBoundaryTest` rejects Symfony, Illuminate, Slim or
