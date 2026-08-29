@@ -80,6 +80,8 @@ fi
 if [[ "$with_bridges" == true ]]; then
     test -s vendor/sohophp/sofinder-laravel/dist/manifest.json
     test -s vendor/sohophp/sofinder-psr15/dist/manifest.json
+    test -s vendor/sohophp/sofinder-laravel/THIRD_PARTY_NOTICES.md
+    test -s vendor/sohophp/sofinder-psr15/THIRD_PARTY_NOTICES.md
 
     psr_consumer_dir="$happy_dir/psr15-consumer"
     mkdir -p "$psr_consumer_dir"

@@ -52,10 +52,10 @@ prepare_split()
     FILTER_BRANCH_SQUELCH_WARNING=1 git -C "$split_repository" filter-branch --force --prune-empty \
         --subdirectory-filter "$directory" -- source-release >/dev/null
     if [[ "$directory" == packages/sofinder-laravel || "$directory" == packages/sofinder-psr15 ]]; then
-        git -C "$repository_root" archive "$source_ref" dist | tar -x -C "$split_repository"
-        git -C "$split_repository" add dist
+        git -C "$repository_root" archive "$source_ref" dist THIRD_PARTY_NOTICES.md | tar -x -C "$split_repository"
+        git -C "$split_repository" add dist THIRD_PARTY_NOTICES.md
         GIT_AUTHOR_DATE="$tag_date" GIT_COMMITTER_DATE="$tag_date" \
-            git -C "$split_repository" commit --quiet -m 'Include synchronized frontend distribution'
+            git -C "$split_repository" commit --quiet -m 'Include synchronized frontend distribution and notices'
     fi
     split_commit=$(git -C "$split_repository" rev-parse source-release)
     git -C "$split_repository" show "$split_commit:composer.json" | "$php_bin" -r '
@@ -64,6 +64,7 @@ prepare_split()
     ' "$package_name"
     if [[ "$directory" == packages/sofinder-laravel || "$directory" == packages/sofinder-psr15 ]]; then
         git -C "$split_repository" cat-file -e "$split_commit:dist/manifest.json"
+        git -C "$split_repository" cat-file -e "$split_commit:THIRD_PARTY_NOTICES.md"
     fi
     git -C "$split_repository" branch -f package-release-main "$split_commit" >/dev/null
     GIT_COMMITTER_DATE="$tag_date" git -C "$split_repository" tag -a "$tag" "$split_commit" -m "$package_name $version" >/dev/null

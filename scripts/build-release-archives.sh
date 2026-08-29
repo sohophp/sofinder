@@ -66,9 +66,10 @@ archive_package()
                 cp -a "$repository_root/packages/$directory/$file" "$staging/$prefix/"
             done
             cp -a "$repository_root/dist" "$staging/$prefix/dist"
+            cp -a "$repository_root/THIRD_PARTY_NOTICES.md" "$staging/$prefix/THIRD_PARTY_NOTICES.md"
         else
             git -C "$repository_root" archive "$source_ref:packages/$directory" | tar -x -C "$staging/$prefix"
-            git -C "$repository_root" archive "$source_ref" dist | tar -x -C "$staging/$prefix"
+            git -C "$repository_root" archive "$source_ref" dist THIRD_PARTY_NOTICES.md | tar -x -C "$staging/$prefix"
         fi
         tar -czf "$archive" -C "$staging" "$prefix"
         rm -rf -- "$staging"
@@ -88,6 +89,7 @@ archive_package()
         local listing
         listing=$(tar -tzf "$archive")
         grep -Fxq "$prefix/dist/manifest.json" <<< "$listing"
+        grep -Fxq "$prefix/THIRD_PARTY_NOTICES.md" <<< "$listing"
     fi
 }
 

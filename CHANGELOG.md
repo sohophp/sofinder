@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- Include the compiled frontend's third-party notices in Laravel and PSR-15
+  release archives and split repositories, and verify them from clean Composer
+  consumers before either gated bridge is published.
 - Verify promotion evidence against live successful GitHub Actions runs before
   a gated bridge release, matching the Symfony matrix commit, workflow paths,
   main branch and post-observation execution dates instead of trusting URLs.

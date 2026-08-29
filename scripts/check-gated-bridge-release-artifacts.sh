@@ -35,6 +35,10 @@ SOFINDER_RELEASE_TEST_MODE=1 SOFINDER_RELEASE_TEST_POLICY="$policy" \
 for package in sofinder sofinder-core sofinder-http sofinder-symfony sofinder-s3 sofinder-psr15 sofinder-laravel; do
     test -s "$archive_dir/$package-$version.tar.gz"
 done
+for package in sofinder-psr15 sofinder-laravel; do
+    archive_listing=$(tar -tzf "$archive_dir/$package-$version.tar.gz")
+    grep -Fxq "$package-$version/THIRD_PARTY_NOTICES.md" <<< "$archive_listing"
+done
 test "$(find "$archive_dir" -maxdepth 1 -type f -name '*.tar.gz' | wc -l)" = 7
 
 SOFINDER_RELEASE_TEST_MODE=1 SOFINDER_RELEASE_TEST_POLICY="$policy" \
