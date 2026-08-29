@@ -34,6 +34,36 @@ while IFS=$'\t' read -r _package repository commit tag _bundle; do
     test "$(git -C "$bare" rev-parse "refs/tags/$tag^{commit}")" = "$commit"
 done < "$split_dir/SPLIT_MANIFEST.tsv"
 
+# Laravel and PSR-15 inject the root frontend distribution after filtering the
+# package history. Consecutive injected commits can therefore be siblings when
+# the package source itself did not change. The publisher must preserve both
+# histories without permitting arbitrary package-source divergence.
+bridge_record=$(awk -F '\t' '$1 == "sohophp/sofinder-psr15" {print $2 "\t" $3 "\t" $4 "\t" $5; exit}' "$split_dir/SPLIT_MANIFEST.tsv")
+if [[ -n "$bridge_record" ]]; then
+    IFS=$'\t' read -r bridge_repository bridge_commit bridge_tag bridge_bundle <<< "$bridge_record"
+    bridge_source="$happy_dir/bridge-source"
+    git clone --quiet --branch package-release-main "$split_dir/$bridge_bundle" "$bridge_source"
+    bridge_parent=$(git -C "$bridge_source" rev-parse "$bridge_commit^")
+    bridge_parent_tree=$(git -C "$bridge_source" rev-parse "$bridge_parent^{tree}")
+    previous_bridge_commit=$(printf '%s\n' 'Include previous synchronized frontend distribution and notices' | \
+        GIT_AUTHOR_NAME='SoFinder Release Automation' \
+        GIT_AUTHOR_EMAIL='release@sofinder.sohophp.app' \
+        GIT_COMMITTER_NAME='SoFinder Release Automation' \
+        GIT_COMMITTER_EMAIL='release@sofinder.sohophp.app' \
+        git -C "$bridge_source" commit-tree "$bridge_parent_tree" -p "$bridge_parent")
+    bridge_bare="$happy_dir/$bridge_repository.git"
+    git -C "$bridge_source" push --quiet --force "$bridge_bare" "$previous_bridge_commit:refs/heads/main"
+
+    GH_TOKEN=test-only SOFINDER_PACKAGE_REPOSITORY_BASE_URL="file://$happy_url" \
+        bash "$repository_root/scripts/publish-package-splits.sh" "$split_dir"
+    merged_bridge_commit=$(git -C "$bridge_bare" rev-parse refs/heads/main)
+    git -C "$bridge_bare" merge-base --is-ancestor "$previous_bridge_commit" "$merged_bridge_commit"
+    git -C "$bridge_bare" merge-base --is-ancestor "$bridge_commit" "$merged_bridge_commit"
+    test "$(git -C "$bridge_bare" rev-parse "$merged_bridge_commit^{tree}")" = \
+        "$(git -C "$bridge_bare" rev-parse "$bridge_commit^{tree}")"
+    test "$(git -C "$bridge_bare" rev-parse "refs/tags/$bridge_tag^{commit}")" = "$bridge_commit"
+fi
+
 branch_only_dir=$(mktemp -d "$repository_root/var/package-publish-branch-only.XXXXXX")
 trap 'rm -rf -- "$happy_dir" "$conflict_dir" "$branch_only_dir"' EXIT
 initialize_remotes "$branch_only_dir"

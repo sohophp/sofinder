@@ -43,23 +43,51 @@ while IFS=$'\t' read -r package_name target_repository expected_commit tag bundl
         fi
     fi
     remote_main=$(awk '$2 == "refs/heads/main" {print $1}' <<< "$remote_refs")
+    publish_commit=$expected_commit
     if [[ -n "$remote_main" ]]; then
         git -C "$checkout" fetch --quiet publish refs/heads/main:refs/remotes/publish/main
-        if ! git -C "$checkout" merge-base --is-ancestor "$remote_main" "$expected_commit"; then
+        if git -C "$checkout" merge-base --is-ancestor "$remote_main" "$expected_commit"; then
+            :
+        elif git -C "$checkout" merge-base --is-ancestor "$expected_commit" "$remote_main" \
+            && [[ "$(git -C "$checkout" rev-parse "$remote_main^{tree}")" == "$(git -C "$checkout" rev-parse "$expected_commit^{tree}")" ]]; then
+            # A previous publication may already have joined an injected dist
+            # commit to the package history. Preserve that merge on retries.
+            publish_commit=$remote_main
+        elif [[ "$package_name" == sohophp/sofinder-psr15 || "$package_name" == sohophp/sofinder-laravel ]]; then
+            while IFS= read -r changed_path; do
+                case "$changed_path" in
+                    dist/*|THIRD_PARTY_NOTICES.md) ;;
+                    *)
+                        echo "Remote $target_repository has non-generated divergence at $changed_path." >&2
+                        exit 1
+                        ;;
+                esac
+            done < <(git -C "$checkout" diff --name-only "$remote_main" "$expected_commit")
+            tag_date=$(git -C "$checkout" show -s --format=%cI "$expected_commit")
+            publish_commit=$(printf '%s\n' "Merge $tag synchronized frontend distribution" | \
+                GIT_AUTHOR_NAME='SoFinder Release Automation' \
+                GIT_AUTHOR_EMAIL='release@sofinder.sohophp.app' \
+                GIT_AUTHOR_DATE="$tag_date" \
+                GIT_COMMITTER_NAME='SoFinder Release Automation' \
+                GIT_COMMITTER_EMAIL='release@sofinder.sohophp.app' \
+                GIT_COMMITTER_DATE="$tag_date" \
+                git -C "$checkout" commit-tree "$expected_commit^{tree}" -p "$remote_main" -p "$expected_commit")
+        else
             echo "Remote $target_repository main cannot fast-forward to $expected_commit." >&2
             exit 1
         fi
     fi
+    git -C "$checkout" branch -f package-publish-main "$publish_commit" >/dev/null
 done < "$split_dir/SPLIT_MANIFEST.tsv"
 
 while IFS=$'\t' read -r package_name target_repository expected_commit tag bundle_name; do
     checkout="$temporary_dir/${package_name#sohophp/}"
     if [[ "$publish_mode" == '--branch-only' ]]; then
-        git -C "$checkout" push publish refs/heads/package-release-main:refs/heads/main
+        git -C "$checkout" push publish refs/heads/package-publish-main:refs/heads/main
         echo "Published $package_name main to $target_repository without a release tag."
     else
         git -C "$checkout" push --atomic publish \
-            refs/heads/package-release-main:refs/heads/main \
+            refs/heads/package-publish-main:refs/heads/main \
             "refs/tags/$tag:refs/tags/$tag"
         echo "Published $package_name $tag to $target_repository."
     fi

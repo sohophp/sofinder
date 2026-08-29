@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+- Preserve Laravel and PSR-15 split-repository history when consecutive
+  generated frontend distribution commits diverge, while continuing to reject
+  any non-generated remote changes during publication.
+
 ## 1.1.1 - 2026-08-30
 
 - Add complete framework integration guides for Laravel 12/13, Slim 4,
