@@ -4,6 +4,7 @@ set -euo pipefail
 
 repository_root=$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)
 php_bin="$repository_root/scripts/php-bin.sh"
+mkdir -p "$repository_root/var"
 fixture_dir=$(mktemp -d "$repository_root/var/observation-fixtures.XXXXXX")
 trap 'rm -rf -- "$fixture_dir"' EXIT
 

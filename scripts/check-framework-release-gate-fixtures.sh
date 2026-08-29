@@ -4,6 +4,7 @@ set -euo pipefail
 
 repository_root=$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)
 php_bin="$repository_root/scripts/php-bin.sh"
+mkdir -p "$repository_root/var"
 fixture=$(mktemp "$repository_root/var/framework-gate.XXXXXX.json")
 trap 'rm -f -- "$fixture"' EXIT
 cp "$repository_root/config/framework-support.json" "$fixture"

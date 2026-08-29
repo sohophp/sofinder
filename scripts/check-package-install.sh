@@ -8,6 +8,7 @@ case "${SOFINDER_COMPOSER_PREFERENCE:-stable}" in
     stable) preference_args=(--prefer-stable) ;;
     *) echo 'SOFINDER_COMPOSER_PREFERENCE must be lowest or stable.' >&2; exit 2 ;;
 esac
+mkdir -p "$repository_root/var"
 core_test_dir=$(mktemp -d "$repository_root/var/core-install.XXXXXX")
 package_test_dir=$(mktemp -d "$repository_root/var/package-install.XXXXXX")
 symfony_test_dir=$(mktemp -d "$repository_root/var/symfony-install.XXXXXX")

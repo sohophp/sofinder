@@ -6,6 +6,7 @@ php_bin="$project_dir/scripts/php-bin.sh"
 composer_bin="$project_dir/scripts/composer.sh"
 
 cd "$project_dir"
+mkdir -p "$project_dir/var"
 "$composer_bin" validate --strict
 "$php_bin" vendor/bin/phpunit
 "$php_bin" vendor/bin/phpstan analyse --no-progress --memory-limit=512M

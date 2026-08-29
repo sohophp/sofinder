@@ -5,6 +5,7 @@ set -euo pipefail
 repository_root=$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)
 example_dir="$repository_root/examples/symfony"
 php_bin="$repository_root/scripts/php-bin.sh"
+mkdir -p "$repository_root/var"
 test_dir=$(mktemp -d "$repository_root/var/symfony-http.XXXXXX")
 port=${SOFINDER_E2E_PORT:-18080}
 base_url="http://127.0.0.1:$port"
