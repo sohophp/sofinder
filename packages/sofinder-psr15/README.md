@@ -22,6 +22,10 @@ implementations, so the official runtime cannot silently start with anonymous
 access. `NativeSessionCsrfTokenProvider` is available for framework-free PHP.
 The factory discovers the packaged `dist` directory automatically; consumers
 only need to pass `packageDirectory` when deliberately serving a custom build.
+Install a PSR-7/PSR-17 implementation such as `nyholm/psr7` or
+`guzzlehttp/psr7` for a framework-free host. Publication checks install this
+bridge by itself (without Symfony or Laravel) and boot the complete browser and
+asset runtime with both implementations.
 
 Runnable Slim, Mezzio and plain PHP front controllers live in
 `examples/psr15`. Each host serves the real React browser and every API action;

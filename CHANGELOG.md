@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- Install the future PSR-15 split package in a framework-free clean consumer,
+  assert that it pulls neither Symfony nor Laravel, and boot the complete
+  browser/asset runtime independently with Nyholm and Guzzle PSR-7 factories.
 - Install the future Laravel split repository into clean Laravel 12/PHP 8.2
   and Laravel 13/PHP 8.5 applications during publication rehearsal and execute package discovery,
   config/route caches, all 52 routes, Artisan, browser, CSRF, upload, download,

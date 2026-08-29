@@ -2,9 +2,10 @@
 
 declare(strict_types=1);
 
-use Nyholm\Psr7\Factory\Psr17Factory;
-use Nyholm\Psr7\ServerRequest;
+use GuzzleHttp\Psr7\HttpFactory as GuzzleFactory;
+use Nyholm\Psr7\Factory\Psr17Factory as NyholmFactory;
 use Psr\EventDispatcher\EventDispatcherInterface;
+use Psr\Http\Message\ResponseFactoryInterface;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
 use Psr\Http\Server\RequestHandlerInterface;
@@ -19,10 +20,16 @@ use SohoPHP\SoFinder\Value\ResourceType;
 require getcwd() . '/vendor/autoload.php';
 
 $runtimeDirectory = $argv[1] ?? '';
+$implementation = $argv[2] ?? 'nyholm';
 if ($runtimeDirectory === '') {
-    fwrite(STDERR, "Usage: verify-installed-psr-browser.php RUNTIME_DIRECTORY\n");
+    fwrite(STDERR, "Usage: verify-installed-psr-browser.php RUNTIME_DIRECTORY [nyholm|guzzle]\n");
     exit(2);
 }
+$psr17 = match ($implementation) {
+    'nyholm' => new NyholmFactory(),
+    'guzzle' => new GuzzleFactory(),
+    default => throw new InvalidArgumentException(sprintf('Unknown PSR-7 implementation: %s', $implementation)),
+};
 
 $authorization = new class implements AuthorizationInterface {
     public function isAuthenticated(): bool { return true; }
@@ -39,7 +46,6 @@ $events = new class implements EventDispatcherInterface {
     public function dispatch(object $event): object { return $event; }
 };
 $services = new HostServices($authorization, $actor, $csrf, $events);
-$psr17 = new Psr17Factory();
 $application = (new LocalApplicationFactory(
     $psr17,
     $psr17,
@@ -49,21 +55,21 @@ $application = (new LocalApplicationFactory(
     $runtimeDirectory . '/files',
 ))->create();
 $fallback = new class($psr17) implements RequestHandlerInterface {
-    public function __construct(private Psr17Factory $responses) {}
+    public function __construct(private ResponseFactoryInterface $responses) {}
     public function handle(ServerRequestInterface $request): ResponseInterface { return $this->responses->createResponse(404); }
 };
 
-$browser = $application->middleware()->process(new ServerRequest('GET', '/sofinder/browser'), $fallback);
+$browser = $application->middleware()->process($psr17->createServerRequest('GET', '/sofinder/browser'), $fallback);
 $body = (string) $browser->getBody();
 if ($browser->getStatusCode() !== 200 || !str_contains($body, '/sofinder/assets/sofinder.js?v=')) {
     fwrite(STDERR, "Installed PSR-15 browser did not bootstrap from packaged assets.\n");
     exit(1);
 }
 
-$asset = $application->middleware()->process(new ServerRequest('GET', '/sofinder/assets/sofinder.css'), $fallback);
+$asset = $application->middleware()->process($psr17->createServerRequest('GET', '/sofinder/assets/sofinder.css'), $fallback);
 if ($asset->getStatusCode() !== 200 || $asset->getHeaderLine('Content-Type') !== 'text/css; charset=UTF-8') {
     fwrite(STDERR, "Installed PSR-15 frontend asset was not served from the split package.\n");
     exit(1);
 }
 
-echo "Installed PSR-15 browser and frontend assets passed.\n";
+printf("Installed PSR-15 browser and frontend assets passed with %s.\n", $implementation);

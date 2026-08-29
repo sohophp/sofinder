@@ -80,9 +80,31 @@ fi
 if [[ "$with_bridges" == true ]]; then
     test -s vendor/sohophp/sofinder-laravel/dist/manifest.json
     test -s vendor/sohophp/sofinder-psr15/dist/manifest.json
-    runtime_dir="$consumer_dir/var/psr15-runtime"
-    mkdir -p "$runtime_dir/state" "$runtime_dir/files"
-    "$repository_root/scripts/php-bin.sh" "$repository_root/tests/fixtures/verify-installed-psr-browser.php" "$runtime_dir"
+
+    psr_consumer_dir="$happy_dir/psr15-consumer"
+    mkdir -p "$psr_consumer_dir"
+    cd "$psr_consumer_dir"
+    "$repository_root/scripts/composer.sh" init --name=sohophp/psr15-split-consumer --no-interaction
+    "$repository_root/scripts/composer.sh" config minimum-stability RC
+    "$repository_root/scripts/composer.sh" config prefer-stable true
+    while IFS=$'\t' read -r package_name repository _commit _tag _bundle; do
+        package=${package_name#sohophp/}
+        "$repository_root/scripts/composer.sh" config "repositories.$package" \
+            "{\"type\":\"vcs\",\"url\":\"$happy_url/$repository.git\"}"
+    done < "$split_dir/SPLIT_MANIFEST.tsv"
+    "$repository_root/scripts/composer.sh" require \
+        "sohophp/sofinder-psr15:$release_version" "nyholm/psr7:^1.8" "guzzlehttp/psr7:^2.7" \
+        --no-interaction --prefer-dist --no-progress
+    "$repository_root/scripts/php-bin.sh" -r 'require "vendor/autoload.php"; exit(
+        !class_exists("Symfony\\Component\\HttpFoundation\\Request")
+        && !class_exists("Illuminate\\Foundation\\Application") ? 0 : 1
+    );'
+    for implementation in nyholm guzzle; do
+        runtime_dir="$psr_consumer_dir/var/$implementation-runtime"
+        mkdir -p "$runtime_dir/state" "$runtime_dir/files"
+        "$repository_root/scripts/php-bin.sh" "$repository_root/tests/fixtures/verify-installed-psr-browser.php" \
+            "$runtime_dir" "$implementation"
+    done
 
     laravel_major=${SOFINDER_LARAVEL_CONSUMER_MAJOR:-13}
     case "$laravel_major" in

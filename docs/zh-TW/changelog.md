@@ -7,6 +7,8 @@ description: SoFinder 每個公開版本的重要變更。
 
 ## 尚未發佈
 
+- 未來 PSR-15 拆分 Package 現在會安裝到無框架的乾淨 Consumer，明確斷言不會帶入
+  Symfony 或 Laravel，並分別使用 Nyholm 與 Guzzle PSR-7 Factory 啟動完整瀏覽器／資源 Runtime。
 - 發佈演練現在會把未來 Laravel 拆分 Repository 安裝到全新的 Laravel 12／PHP 8.2 與
   Laravel 13／PHP 8.5 應用，並針對安裝後的 Package 執行自動發現、設定／Route Cache、全部 52 Route、Artisan、瀏覽器、
   CSRF、上傳下載、Range 與前端資源驗證。

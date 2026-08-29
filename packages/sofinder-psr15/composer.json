@@ -25,7 +25,9 @@
         }
     },
     "suggest": {
+        "guzzlehttp/psr7": "Provides PSR-7 and PSR-17 factories for a framework-free host",
         "mezzio/mezzio": "Registers the shared endpoints in a Mezzio 3 application",
+        "nyholm/psr7": "Provides compact PSR-7 and PSR-17 factories for a framework-free host",
         "slim/slim": "Registers the shared endpoints in a Slim 4 application"
     },
     "config": {
