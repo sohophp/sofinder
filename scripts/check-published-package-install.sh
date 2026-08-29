@@ -49,7 +49,7 @@ create_consumer "$symfony_dir" sohophp/published-symfony-install-test
 verify_package sohophp/sofinder-core "$version" https://github.com/sohophp/sofinder-core
 verify_package sohophp/sofinder-http "$version" https://github.com/sohophp/sofinder-http
 verify_package sohophp/sofinder-symfony "$version" https://github.com/sohophp/sofinder-symfony
-"$repository_root/scripts/php-bin.sh" -r 'require "vendor/autoload.php"; $class = new ReflectionClass("SohoPHP\\SoFinder\\SoFinderBundle"); $package = dirname((string) $class->getFileName(), 2); $routes = (string) file_get_contents($package . "/src/Resources/config/routes.yaml"); $routeCount = preg_match_all("/^sofinder[^:\\r\\n]*:/m", $routes); exit(is_file($package . "/dist/manifest.json") && class_exists("SohoPHP\\SoFinder\\Http\\ApiController") && class_exists("SohoPHP\\SoFinder\\Http\\BrowserController") && $routeCount === 52 && str_contains((string) $class->getFileName(), "/vendor/sohophp/sofinder-symfony/src/") ? 0 : 1);'
+"$repository_root/scripts/php-bin.sh" -r 'require "vendor/autoload.php"; $class = new ReflectionClass("SohoPHP\\SoFinder\\SoFinderBundle"); $package = dirname((string) $class->getFileName(), 2); $routes = SohoPHP\SoFinder\Routing\SymfonyRouteCollectionFactory::create(); exit(is_file($package . "/dist/manifest.json") && is_file($package . "/src/Resources/config/routes.php") && class_exists("SohoPHP\\SoFinder\\Symfony\\SymfonyEndpointController") && count($routes) === 52 && str_contains((string) $class->getFileName(), "/vendor/sohophp/sofinder-symfony/src/") ? 0 : 1);'
 "$repository_root/scripts/composer.sh" audit --locked --no-interaction
 
 meta_dir="$test_root/meta"
