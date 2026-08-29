@@ -50,6 +50,15 @@ final class FrameworkSupportPolicyTest extends TestCase
         ], $policy['gated']['laravel']['phpByVersion']);
     }
 
+    public function testPublishedPackageCheckReadsTheCurrentStableVersionFromPolicy(): void
+    {
+        $script = (string) file_get_contents(__DIR__ . '/../scripts/check-published-package-install.sh');
+
+        self::assertStringContainsString('config/framework-support.json', $script);
+        self::assertStringContainsString('releasedMainVersion', $script);
+        self::assertStringNotContainsString('SOFINDER_PUBLISHED_VERSION:-1.', $script);
+    }
+
     public function testLaravelCiCoversEveryPublishedCompatibilityPair(): void
     {
         $policy = json_decode((string) file_get_contents(__DIR__ . '/../config/framework-support.json'), true, 32, JSON_THROW_ON_ERROR);

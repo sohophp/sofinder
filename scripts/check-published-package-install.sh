@@ -3,7 +3,14 @@
 set -euo pipefail
 
 repository_root=$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)
-version=${SOFINDER_PUBLISHED_VERSION:-1.0.1}
+version=${SOFINDER_PUBLISHED_VERSION:-}
+
+if [[ -z "$version" ]]; then
+    version=$("$repository_root/scripts/php-bin.sh" -r '
+        $policy = json_decode((string) file_get_contents($argv[1]), true, 32, JSON_THROW_ON_ERROR);
+        echo $policy["promotionGate"]["releasedMainVersion"] ?? "";
+    ' "$repository_root/config/framework-support.json")
+fi
 
 if [[ ! "$version" =~ ^[0-9]+\.[0-9]+\.[0-9]+([.-][0-9A-Za-z.-]+)?$ ]]; then
     echo 'SOFINDER_PUBLISHED_VERSION must be an exact Composer version.' >&2
