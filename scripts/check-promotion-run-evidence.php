@@ -2,12 +2,12 @@
 
 declare(strict_types=1);
 
-if ($argc !== 4) {
-    fwrite(STDERR, "Usage: check-promotion-run-evidence.php POLICY MATRIX_RUN_JSON AUDIT_RUN_JSON\n");
+if ($argc !== 5) {
+    fwrite(STDERR, "Usage: check-promotion-run-evidence.php POLICY MATRIX_RUN_JSON AUDIT_RUN_JSON OBSERVATION_EVIDENCE_JSON\n");
     exit(2);
 }
 
-[, $policyFile, $matrixRunFile, $auditRunFile] = $argv;
+[, $policyFile, $matrixRunFile, $auditRunFile, $observationFile] = $argv;
 $policy = json_decode((string) file_get_contents($policyFile), true, 32, JSON_THROW_ON_ERROR);
 $gate = is_array($policy['promotionGate'] ?? null) ? $policy['promotionGate'] : [];
 
@@ -19,6 +19,7 @@ if (($gate['eligible'] ?? false) !== true) {
 $evidence = is_array($gate['evidence'] ?? null) ? $gate['evidence'] : [];
 $matrixRun = json_decode((string) file_get_contents($matrixRunFile), true, 32, JSON_THROW_ON_ERROR);
 $auditRun = json_decode((string) file_get_contents($auditRunFile), true, 32, JSON_THROW_ON_ERROR);
+$observation = json_decode((string) file_get_contents($observationFile), true, 32, JSON_THROW_ON_ERROR);
 $errors = [];
 
 $date = static function (mixed $value, string $label) use (&$errors): ?DateTimeImmutable {
@@ -35,6 +36,22 @@ $date = static function (mixed $value, string $label) use (&$errors): ?DateTimeI
     }
 
     return $parsed;
+};
+
+$timestamp = static function (mixed $value, string $label) use (&$errors): ?DateTimeImmutable {
+    if (!is_string($value)) {
+        $errors[] = sprintf('%s must be an ISO 8601 timestamp.', $label);
+
+        return null;
+    }
+
+    try {
+        return new DateTimeImmutable($value);
+    } catch (Throwable) {
+        $errors[] = sprintf('%s must be an ISO 8601 timestamp.', $label);
+
+        return null;
+    }
 };
 
 $validateRun = static function (
@@ -115,6 +132,69 @@ if ($completedAt instanceof DateTimeImmutable
     && $auditStartedAt instanceof DateTimeImmutable
     && $auditStartedAt < $completedAt) {
     $errors[] = 'Priority defect audit must run after the observation period completes.';
+}
+
+if (!is_array($observation)) {
+    $errors[] = 'Observation evidence must be an object.';
+} else {
+    $minimumStableDays = $gate['minimumStableDays'] ?? null;
+    $release = is_array($observation['release'] ?? null) ? $observation['release'] : [];
+    $period = is_array($observation['observation'] ?? null) ? $observation['observation'] : [];
+    $publishedAt = $timestamp($release['publishedAt'] ?? null, 'Observation release publishedAt');
+    $observedAt = $timestamp($period['observedAt'] ?? null, 'Observation observedAt');
+    $eligibleAt = $timestamp($period['eligibleAt'] ?? null, 'Observation eligibleAt');
+
+    if (($observation['schemaVersion'] ?? null) !== 1) {
+        $errors[] = 'Observation evidence must use schemaVersion 1.';
+    }
+    if (($release['version'] ?? null) !== ($gate['requiresMainVersion'] ?? null)
+        || ($release['url'] ?? null) !== 'https://github.com/sohophp/sofinder/releases/tag/v1.0.0') {
+        $errors[] = 'Observation evidence must identify the immutable v1.0.0 release.';
+    }
+    if (!$publishedAt instanceof DateTimeImmutable
+        || $publishedAt->setTimezone(new DateTimeZone('UTC'))->format('Y-m-d') !== ($gate['releaseDate'] ?? null)) {
+        $errors[] = 'Observation release date does not match the promotion policy.';
+    }
+    if (!is_int($minimumStableDays) || $minimumStableDays < 1) {
+        $errors[] = 'Promotion policy minimumStableDays must be a positive integer.';
+    }
+    if (($period['periodComplete'] ?? null) !== true) {
+        $errors[] = 'Observation period must be complete.';
+    }
+    if (!is_int($period['coveredDays'] ?? null)
+        || !is_int($minimumStableDays)
+        || $period['coveredDays'] < $minimumStableDays) {
+        $errors[] = 'Observation evidence does not cover the minimum stable period.';
+    }
+    if ($publishedAt instanceof DateTimeImmutable
+        && $eligibleAt instanceof DateTimeImmutable
+        && is_int($minimumStableDays)
+        && $eligibleAt != $publishedAt->modify(sprintf('+%d days', $minimumStableDays))) {
+        $errors[] = 'Observation eligibleAt does not match the required stable period.';
+    }
+    if ($observedAt instanceof DateTimeImmutable
+        && $eligibleAt instanceof DateTimeImmutable
+        && $observedAt < $eligibleAt) {
+        $errors[] = 'Observation timestamp precedes its eligibility timestamp.';
+    }
+    if ($completedAt instanceof DateTimeImmutable
+        && $eligibleAt instanceof DateTimeImmutable
+        && $eligibleAt->setTimezone(new DateTimeZone('UTC'))->format('Y-m-d') !== $completedAt->format('Y-m-d')) {
+        $errors[] = 'Observation eligibility date does not match observationCompletedAt.';
+    }
+    if ($auditStartedAt instanceof DateTimeImmutable
+        && $observedAt instanceof DateTimeImmutable
+        && $observedAt < $auditStartedAt) {
+        $errors[] = 'Observation evidence predates its audit workflow run.';
+    }
+    if (($observation['priorityLabels'] ?? null) !== ['priority:p0', 'priority:p1']) {
+        $errors[] = 'Observation evidence must audit exactly the P0 and P1 labels.';
+    }
+    if (($observation['openP0P1Defects'] ?? null) !== 0
+        || ($observation['observedP0P1Defects'] ?? null) !== 0
+        || ($observation['issues'] ?? null) !== []) {
+        $errors[] = 'Observation period must contain zero open or closed P0/P1 defects.';
+    }
 }
 
 if ($errors !== []) {

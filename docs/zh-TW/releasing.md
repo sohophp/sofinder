@@ -74,8 +74,12 @@ Framework 晉級門禁時，使用包含兩個公開 Package 安裝工作的最�
 
 政策標記 eligible 後，`scripts/check-live-promotion-evidence.sh` 還會透過 GitHub API 解析
 兩個已記錄的 Actions URL。Symfony Matrix 必須是成功的 `main` CI，其 SHA 與記錄的 Commit
-一致；觀察工作亦必須成功，且兩者不得早於各自記錄的觀察期後日期。Release Workflow 會在
-發布 Laravel 或 PSR-15 Split Repository 前執行此驗證。
+一致；觀察工作亦必須成功，且兩者不得早於各自記錄的觀察期後日期。隨後 Script 會從該觀察
+執行下載唯一且未過期的 `symfony-observation-<audit-run-id>` Artifact，並驗證其中的
+`observation-evidence.json`：不可變的 1.0.0 Release、政策日期、完整 30 日覆蓋、精確的優先級
+Label，以及觀察期內零個已關閉或未關閉的 P0/P1 缺陷必須全部一致。Release Workflow 會在
+發布 Laravel 或 PSR-15 Split Repository 前執行此驗證。Artifact 保留 90 日，因此必須在所選
+證據過期前完成晉級。
 
 S3 Adapter 位於 `packages/sofinder-s3`，由同步 Workflow 發布至獨立 Repository。
 其歷史預發布版本為 `v0.1.0-beta.2`；1.x 與 Core 使用相同版本。啟用 Host Resource 前

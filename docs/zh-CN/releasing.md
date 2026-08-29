@@ -73,8 +73,12 @@ Core、HTTP、Symfony、兼容 Meta 与 S3 版本，校验仓库来源、运行�
 
 政策标记 eligible 后，`scripts/check-live-promotion-evidence.sh` 还会通过 GitHub API 解析
 两个已记录的 Actions URL。Symfony 矩阵必须是成功的 `main` CI，其 SHA 与已记录 Commit
-一致；观察任务也必须成功，且两者不得早于各自记录的观察期后日期。Release Workflow 会在
-发布 Laravel 或 PSR-15 拆分仓库前执行此校验。
+一致；观察任务也必须成功，且两者不得早于各自记录的观察期后日期。随后脚本会从该观察运行
+下载唯一且未过期的 `symfony-observation-<audit-run-id>` Artifact，并校验其中的
+`observation-evidence.json`：不可变的 1.0.0 Release、政策日期、完整 30 天覆盖、精确的优先级
+Label，以及观察期内零个已关闭或未关闭的 P0/P1 缺陷必须全部一致。Release Workflow 会在
+发布 Laravel 或 PSR-15 拆分仓库前执行此校验。Artifact 保留 90 天，因此必须在所选证据过期
+前完成晋级。
 
 S3 Adapter 位于 `packages/sofinder-s3`，由同步 Workflow 发布到独立 Repository。
 其历史预发布版本为 `v0.1.0-beta.2`；1.x 与 Core 使用相同版本。启用宿主资源前必须确认

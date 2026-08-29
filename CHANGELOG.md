@@ -5,6 +5,8 @@
 - Verify promotion evidence against live successful GitHub Actions runs before
   a gated bridge release, matching the Symfony matrix commit, workflow paths,
   main branch and post-observation execution dates instead of trusting URLs.
+  Download the audit artifact bound to that exact run and reject incomplete
+  coverage or any open or closed P0/P1 defect recorded during observation.
 - Treat the framework promotion version as a stable minimum rather than an
   exact tag, recording 1.0.1 truthfully without resetting the observation
   clock anchored to the immutable 1.0.0 release.

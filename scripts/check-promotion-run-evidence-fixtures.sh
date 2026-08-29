@@ -45,17 +45,55 @@ trap 'rm -rf -- "$fixture_dir"' EXIT
         "path" => ".github/workflows/symfony-observation.yml",
         "head_sha" => str_repeat("b", 40),
     ], JSON_THROW_ON_ERROR));
-' "$repository_root/config/framework-support.json" "$fixture_dir/policy.json" "$fixture_dir/matrix.json" "$fixture_dir/audit.json"
+    file_put_contents($argv[5], json_encode([
+        "schemaVersion" => 1,
+        "release" => [
+            "version" => "1.0.0",
+            "url" => "https://github.com/sohophp/sofinder/releases/tag/v1.0.0",
+            "publishedAt" => $today->modify("-31 days")->format(DATE_ATOM),
+        ],
+        "observation" => [
+            "observedAt" => $today->modify("+1 minute")->format(DATE_ATOM),
+            "eligibleAt" => $today->modify("-1 day")->format(DATE_ATOM),
+            "coveredDays" => 30,
+            "periodComplete" => true,
+        ],
+        "priorityLabels" => ["priority:p0", "priority:p1"],
+        "openP0P1Defects" => 0,
+        "observedP0P1Defects" => 0,
+        "issues" => [],
+    ], JSON_THROW_ON_ERROR));
+' "$repository_root/config/framework-support.json" "$fixture_dir/policy.json" "$fixture_dir/matrix.json" "$fixture_dir/audit.json" "$fixture_dir/observation.json"
 
 "$php_bin" "$repository_root/scripts/check-framework-release-gate.php" "$fixture_dir/policy.json" >/dev/null
 "$php_bin" "$repository_root/scripts/check-promotion-run-evidence.php" \
-    "$fixture_dir/policy.json" "$fixture_dir/matrix.json" "$fixture_dir/audit.json" >/dev/null
+    "$fixture_dir/policy.json" "$fixture_dir/matrix.json" "$fixture_dir/audit.json" \
+    "$fixture_dir/observation.json" >/dev/null
 
 "$php_bin" -r '$d=json_decode(file_get_contents($argv[1]), true, 32, JSON_THROW_ON_ERROR); $d["conclusion"]="failure"; file_put_contents($argv[1], json_encode($d, JSON_THROW_ON_ERROR));' "$fixture_dir/matrix.json"
 if "$php_bin" "$repository_root/scripts/check-promotion-run-evidence.php" \
-    "$fixture_dir/policy.json" "$fixture_dir/matrix.json" "$fixture_dir/audit.json" >/dev/null 2>&1; then
+    "$fixture_dir/policy.json" "$fixture_dir/matrix.json" "$fixture_dir/audit.json" \
+    "$fixture_dir/observation.json" >/dev/null 2>&1; then
     echo 'Live evidence unexpectedly accepted a failed matrix run.' >&2
     exit 1
 fi
 
-echo 'Promotion run evidence positive and negative fixtures passed.'
+"$php_bin" -r '
+    $d=json_decode(file_get_contents($argv[1]), true, 32, JSON_THROW_ON_ERROR);
+    $d["conclusion"]="success";
+    file_put_contents($argv[1], json_encode($d, JSON_THROW_ON_ERROR));
+' "$fixture_dir/matrix.json"
+"$php_bin" -r '
+    $d=json_decode(file_get_contents($argv[1]), true, 32, JSON_THROW_ON_ERROR);
+    $d["observedP0P1Defects"]=1;
+    $d["issues"]=[["number" => 7, "state" => "closed", "labels" => ["priority:p1"]]];
+    file_put_contents($argv[1], json_encode($d, JSON_THROW_ON_ERROR));
+' "$fixture_dir/observation.json"
+if "$php_bin" "$repository_root/scripts/check-promotion-run-evidence.php" \
+    "$fixture_dir/policy.json" "$fixture_dir/matrix.json" "$fixture_dir/audit.json" \
+    "$fixture_dir/observation.json" >/dev/null 2>&1; then
+    echo 'Live evidence unexpectedly accepted a closed P1 defect.' >&2
+    exit 1
+fi
+
+echo 'Promotion run and observation artifact positive and negative fixtures passed.'
