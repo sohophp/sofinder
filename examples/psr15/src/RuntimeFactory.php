@@ -66,6 +66,11 @@ final class RuntimeFactory
                 'signed_urls' => ['enabled' => true],
                 'asset_catalog' => ['enabled' => true],
                 'image_variants' => ['enabled' => true],
+                'document_preview' => [
+                    'pdf' => true,
+                    'office' => true,
+                    'office_binary' => '/usr/bin/libreoffice',
+                ],
                 'resources' => [
                     'Files' => ['delivery_mode' => 'public'],
                 ],

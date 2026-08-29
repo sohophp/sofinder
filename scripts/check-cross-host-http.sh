@@ -48,6 +48,7 @@ cleanup()
 }
 trap cleanup EXIT
 cp "$repository_root/examples/laravel/.env.example" "$repository_root/examples/laravel/.env"
+(cd "$repository_root/examples/laravel" && "$php_bin" artisan config:clear --quiet)
 
 fail()
 {
@@ -90,7 +91,7 @@ response_signature()
             if(!is_array($payload)) { fwrite(STDERR,"Invalid JSON contract response.\n"); exit(1); }
             $success=array_key_exists("success",$payload)?($payload["success"]?"true":"false"):"missing";
             $code=(string)($payload["error"]["code"]??"");
-            if($success==="false"){
+            if($success==="false" && isset($payload["error"])){
                 $bodyContract=hash("sha256",json_encode($payload,JSON_THROW_ON_ERROR|JSON_UNESCAPED_SLASHES));
             } else {
                 $envelope=array_keys($payload); sort($envelope);
