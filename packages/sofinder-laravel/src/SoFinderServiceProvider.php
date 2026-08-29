@@ -20,12 +20,27 @@ use SohoPHP\SoFinder\Contract\EntryUrlGeneratorInterface;
 use SohoPHP\SoFinder\Contract\RequestContextProviderInterface;
 use SohoPHP\SoFinder\Contract\RoleAuthorizationInterface;
 use SohoPHP\SoFinder\Contract\WorkspaceResolverInterface;
-use SohoPHP\SoFinder\Http\Action\LivenessAction;
+use SohoPHP\SoFinder\Contract\ImageCapabilityProviderInterface;
+use SohoPHP\SoFinder\FileManager;
+use SohoPHP\SoFinder\Http\EndpointActionInterface;
 use SohoPHP\SoFinder\Http\EndpointDispatcher;
 use SohoPHP\SoFinder\Http\PsrEndpointHandler;
+use SohoPHP\SoFinder\Http\StandardEndpointActions;
+use SohoPHP\SoFinder\Image\GdImageProcessor;
+use SohoPHP\SoFinder\Image\HybridImageProcessor;
+use SohoPHP\SoFinder\Image\ImageFormatRegistry;
+use SohoPHP\SoFinder\Image\ImagickImageProcessor;
+use SohoPHP\SoFinder\Metadata\JsonMetadataStore;
+use SohoPHP\SoFinder\Metadata\MetadataManager;
 use SohoPHP\SoFinder\ResourceRegistry;
+use SohoPHP\SoFinder\Security\DefaultFileInspector;
 use SohoPHP\SoFinder\Security\PathGuard;
+use SohoPHP\SoFinder\Security\UploadPipeline;
 use SohoPHP\SoFinder\Storage\ResourceRegistryFactory;
+use SohoPHP\SoFinder\Storage\StoragePaginator;
+use SohoPHP\SoFinder\Trash\TrashManager;
+use SohoPHP\SoFinder\Upload\UploadNamePolicy;
+use SohoPHP\SoFinder\Usage\PersistentUsageTracker;
 use SohoPHP\SoFinder\Workspace\DefaultWorkspaceResolver;
 use SohoPHP\SoFinder\Workspace\WorkspaceProvider;
 use Symfony\Bridge\PsrHttpMessage\Factory\HttpFoundationFactory;
@@ -33,7 +48,7 @@ use Symfony\Bridge\PsrHttpMessage\Factory\PsrHttpFactory;
 
 final class SoFinderServiceProvider extends ServiceProvider
 {
-    private const HANDLER_TAG = 'sofinder.endpoint_handlers';
+    private const ACTION_TAG = 'sofinder.endpoint_actions';
 
     public function register(): void
     {
@@ -97,18 +112,79 @@ final class SoFinderServiceProvider extends ServiceProvider
             $app->make(WorkspaceResolverInterface::class),
             $app->make(RequestContextProviderInterface::class),
         ));
-        $this->app->singleton(LivenessAction::class);
-        $this->app->singleton('sofinder.endpoint_handler.liveness', static fn ($app): PsrEndpointHandler => new PsrEndpointHandler(
-            $app->make(LivenessAction::class),
-            $app->make(ResponseFactoryInterface::class),
-            $app->make(StreamFactoryInterface::class),
+        $this->app->singleton(ImageFormatRegistry::class);
+        $this->app->singleton(GdImageProcessor::class, static fn ($app): GdImageProcessor => new GdImageProcessor(
+            formats: $app->make(ImageFormatRegistry::class),
         ));
-        $this->app->tag(['sofinder.endpoint_handler.liveness'], self::HANDLER_TAG);
-        $this->app->singleton(EndpointDispatcher::class, static fn ($app): EndpointDispatcher => new EndpointDispatcher(
-            $app->make(ResponseFactoryInterface::class),
-            $app->make(StreamFactoryInterface::class),
-            $app->tagged(self::HANDLER_TAG),
+        $this->app->singleton(ImagickImageProcessor::class, static fn ($app): ImagickImageProcessor => new ImagickImageProcessor(
+            formats: $app->make(ImageFormatRegistry::class),
         ));
+        $this->app->singleton(HybridImageProcessor::class, static fn ($app): HybridImageProcessor => new HybridImageProcessor(
+            $app->make(ImageFormatRegistry::class),
+            $app->make(GdImageProcessor::class),
+            $app->make(ImagickImageProcessor::class),
+            (string) $app->make(LaravelConfiguration::class)->get('image_processing.driver'),
+        ));
+        $this->app->alias(HybridImageProcessor::class, ImageCapabilityProviderInterface::class);
+        $this->app->singleton(PersistentUsageTracker::class, static fn ($app): PersistentUsageTracker => new PersistentUsageTracker(
+            (string) $app->make(LaravelConfiguration::class)->get('usage_dir'),
+        ));
+        $this->app->singleton(TrashManager::class, static fn ($app): TrashManager => new TrashManager(
+            (string) $app->make(LaravelConfiguration::class)->get('trash_dir'),
+            $app->make(ActorProviderInterface::class),
+            $app->make(PathGuard::class),
+            (int) $app->make(LaravelConfiguration::class)->get('trash_retention_days'),
+            (int) $app->make(LaravelConfiguration::class)->get('trash_max_items'),
+            (int) $app->make(LaravelConfiguration::class)->get('trash_max_bytes'),
+        ));
+        $this->app->singleton(UploadPipeline::class, static fn ($app): UploadPipeline => new UploadPipeline(
+            new DefaultFileInspector($app->make(HybridImageProcessor::class), $app->make(ImageFormatRegistry::class)),
+            (string) $app->make(LaravelConfiguration::class)->get('quarantine_dir'),
+        ));
+        $this->app->singleton(FileManager::class, static fn ($app): FileManager => new FileManager(
+            $app->make(ResourceRegistry::class),
+            $app->make(AuthorizationInterface::class),
+            $app->make(EventDispatcherInterface::class),
+            $app->make(PathGuard::class),
+            $app->make(UploadPipeline::class),
+            $app->make(EntryUrlGeneratorInterface::class),
+            $app->make(TrashManager::class),
+            $app->make(PersistentUsageTracker::class),
+            new StoragePaginator(),
+            workspaces: $app->make(WorkspaceProvider::class),
+        ));
+        $this->app->singleton(JsonMetadataStore::class, static fn ($app): JsonMetadataStore => new JsonMetadataStore(
+            (string) $app->make(LaravelConfiguration::class)->get('metadata_file'),
+        ));
+        $this->app->singleton(MetadataManager::class, static fn ($app): MetadataManager => new MetadataManager(
+            $app->make(FileManager::class),
+            $app->make(JsonMetadataStore::class),
+            $app->make(ActorProviderInterface::class),
+            (bool) $app->make(LaravelConfiguration::class)->get('features.quick_access_files'),
+            $app->make(WorkspaceProvider::class),
+        ));
+        $this->app->singleton(UploadNamePolicy::class, static fn ($app): UploadNamePolicy => new UploadNamePolicy(
+            (bool) $app->make(LaravelConfiguration::class)->get('uploads.naming.lowercase_extensions'),
+        ));
+        $this->app->singleton(StandardEndpointActions::class, static fn ($app): StandardEndpointActions => new StandardEndpointActions(
+            $app->make(FileManager::class),
+            $app->make(MetadataManager::class),
+            $app->make(AuthorizationInterface::class),
+            $app->make(CsrfTokenProviderInterface::class),
+            $app->make(UploadNamePolicy::class),
+            $app->make(LaravelConfiguration::class)->all(),
+            $app->make(ImageCapabilityProviderInterface::class),
+        ));
+        $this->app->singleton(EndpointDispatcher::class, static function ($app): EndpointDispatcher {
+            $responses = $app->make(ResponseFactoryInterface::class);
+            $streams = $app->make(StreamFactoryInterface::class);
+            $actions = [...$app->make(StandardEndpointActions::class)->all(), ...$app->tagged(self::ACTION_TAG)];
+
+            return new EndpointDispatcher($responses, $streams, array_map(
+                static fn (EndpointActionInterface $action): PsrEndpointHandler => new PsrEndpointHandler($action, $responses, $streams),
+                $actions,
+            ));
+        });
         $this->app->singleton(LaravelRouteRegistrar::class, static fn ($app): LaravelRouteRegistrar => new LaravelRouteRegistrar(
             $app->make(Router::class),
             (array) $app->make('config')->get('sofinder', []),

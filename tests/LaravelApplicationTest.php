@@ -15,6 +15,7 @@ use SohoPHP\SoFinder\Contract\WorkspaceResolverInterface;
 use SohoPHP\SoFinder\Laravel\LaravelConfiguration;
 use SohoPHP\SoFinder\Laravel\SoFinderServiceProvider;
 use SohoPHP\SoFinder\ResourceRegistry;
+use SohoPHP\SoFinder\Http\StandardEndpointActions;
 use SohoPHP\SoFinder\Workspace\WorkspaceProvider;
 
 final class LaravelApplicationTest extends TestCase
@@ -41,6 +42,12 @@ final class LaravelApplicationTest extends TestCase
             ->assertOk()
             ->assertHeader('X-Content-Type-Options', 'nosniff')
             ->assertExactJson(['success' => true, 'data' => ['status' => 'ready']]);
+        $this->get('/sofinder/api/capabilities')
+            ->assertOk()
+            ->assertJsonPath('success', true);
+        $this->get('/sofinder/api/config')
+            ->assertForbidden()
+            ->assertJsonPath('error.code', 'access_denied');
 
         $routes = $this->app->make(Router::class)->getRoutes();
         $routes->refreshNameLookups();
@@ -80,5 +87,8 @@ final class LaravelApplicationTest extends TestCase
             static fn ($storage): string => $storage->resource->name,
             $this->app->make(ResourceRegistry::class)->all(),
         ));
+        $endpoints = array_map(static fn ($action): string => $action->endpoint(), $this->app->make(StandardEndpointActions::class)->all());
+        self::assertCount(22, $endpoints);
+        self::assertSame($endpoints, array_values(array_unique($endpoints)));
     }
 }
