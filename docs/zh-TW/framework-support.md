@@ -25,7 +25,7 @@ API、命令、安全及依賴注入的完整穩定目標。
 註冊中央 51 個非瀏覽器 Route，並把全部 Route 經 PSR Dispatcher 接到共用 HTTP Action。
 Laravel Auth/Gate、Session CSRF、Event Dispatcher、Request Context、Route URL 與統一設定
 Adapter 已完成；瀏覽器外殼、四個 Artisan 維護命令、Laravel Queue Dispatcher 及同步發布
-資源也已接入。可執行範例及完整跨框架黑盒契約尚未完成，因此維持實驗性。
+資源也已接入。可執行範例及完整跨框架黑盒契約仍待完成，因此維持實驗性。
 
 門禁證據記錄於 `config/framework-support.json` 並由 CI 驗證。只有記錄的主線版本為
 `1.0.0`、UTC 發布日期已滿 30 天且未關閉的 P0/P1 缺陷數為零時，才能設為 eligible。

@@ -25,7 +25,7 @@ Symfony 属于支持安装；PSR Bridge 必须在完整黑盒 Suite 和发布门
 非浏览器路由，并把全部路由通过 PSR Dispatcher 接到共享 HTTP Action。Laravel Auth/Gate、
 Session CSRF、Event Dispatcher、请求上下文、路由 URL 和统一配置 Adapter 已完成；浏览器
 外壳、四个 Artisan 维护命令、Laravel Queue Dispatcher 和同步发布资源也已接入。可运行
-示例及完整跨框架黑盒契约尚未完成，因此继续标记为实验性。
+示例及完整跨框架黑盒契约仍待完成，因此继续标记为实验性。
 
 门禁证据记录在 `config/framework-support.json` 并由 CI 校验。只有记录的主线版本为
 `1.0.0`、UTC 发布日期已满 30 天且未关闭的 P0/P1 缺陷数为零时，才允许设为 eligible。
