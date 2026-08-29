@@ -7,13 +7,15 @@ description: SoFinder 每个公开版本的重要变更。
 
 ## 尚未发布
 
+## 1.0.2 - 2026-08-30
+
 - 将框架无关的文档预览消息转换为可自行处理的 Laravel Queue Job，使
   `document_preview.mode=auto|messenger` 实际使用宿主 Bus；共享消息 DTO 已移入 Core。
 - Laravel 的分块会话、维护锁、指标、恶意软件状态和文档预览任务现在默认使用宿主配置的
   Cache Repository 与原子锁；不支持安全锁的 Cache Driver 会在启动时直接失败。
 - 发布受门禁保护的 Bridge 前，在线核验成功的 GitHub Actions 记录，匹配 Symfony 矩阵
   Commit、Workflow 路径、`main` 分支及观察期后的运行日期，不再只信任 URL 文本。
-- 将框架晋级版本作为稳定最低版本而非完全相同的 Tag，使政策能如实记录 1.0.1，同时不重置
+- 将框架晋级版本作为稳定最低版本而非完全相同的 Tag，使政策能如实记录 1.0.2，同时不重置
   以不可变 1.0.0 Release 为起点的观察时钟。
 - 将三种语言文档与 Repository README 中已退役的 Beta 安装命令替换为稳定 Symfony
   Bridge 1.x 包，同时明确保留原包名作为兼容选项。

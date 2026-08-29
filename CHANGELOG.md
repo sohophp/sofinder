@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## 1.0.2 - 2026-08-30
+
 - Translate framework-neutral document-preview messages into self-handling
   Laravel queue jobs, so `document_preview.mode=auto|messenger` uses the host
   Bus just as Symfony uses Messenger; move the shared message DTO into Core.
@@ -24,7 +26,7 @@
   Download the audit artifact bound to that exact run and reject incomplete
   coverage or any open or closed P0/P1 defect recorded during observation.
 - Treat the framework promotion version as a stable minimum rather than an
-  exact tag, recording 1.0.1 truthfully without resetting the observation
+  exact tag, recording 1.0.2 truthfully without resetting the observation
   clock anchored to the immutable 1.0.0 release.
 - Replace retired beta install commands across the three documentation locales
   and repository READMEs with the stable Symfony Bridge 1.x package, while

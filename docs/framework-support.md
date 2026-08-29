@@ -58,7 +58,7 @@ The gate is recorded in `config/framework-support.json` and validated in CI.
 It cannot become eligible until the recorded main release is at least `1.0.0`,
 its UTC release date is at least 30 days old, and the open P0/P1 defect count is
 zero. Stable patch releases satisfy that version floor; the currently recorded
-stable line is `1.0.1`, while the observation clock remains anchored to the
+stable line is `1.0.2`, while the observation clock remains anchored to the
 immutable `1.0.0` release.
 Eligibility also requires the final Symfony matrix commit and workflow URL,
 observation start/completion dates, and a secure priority-defect audit link.

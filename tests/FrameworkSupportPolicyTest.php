@@ -18,7 +18,7 @@ final class FrameworkSupportPolicyTest extends TestCase
         self::assertSame('1.0.0', $policy['promotionGate']['requiresMainVersion']);
         self::assertSame(30, $policy['promotionGate']['minimumStableDays']);
         self::assertTrue($policy['promotionGate']['requiresZeroOpenPriorityDefects']);
-        self::assertSame('1.0.1', $policy['promotionGate']['releasedMainVersion']);
+        self::assertSame('1.0.2', $policy['promotionGate']['releasedMainVersion']);
         self::assertSame('2026-08-29', $policy['promotionGate']['releaseDate']);
         self::assertSame(0, $policy['promotionGate']['openP0P1Defects']);
         self::assertSame([

@@ -25,8 +25,8 @@ for an intentional compatibility run:
    audit before announcing the release.
 
 The current stable Symfony Bridge's exact Composer constraint is
-`sohophp/sofinder-symfony:1.0.1`; existing applications may use the compatible
-`sohophp/sofinder:1.0.1` Meta Package. Published tags must never be moved.
+`sohophp/sofinder-symfony:1.0.2`; existing applications may use the compatible
+`sohophp/sofinder:1.0.2` Meta Package. Published tags must never be moved.
 
 ## Synchronized 1.x packages
 
