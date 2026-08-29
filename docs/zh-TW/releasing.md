@@ -46,6 +46,12 @@ Symfony、S3、相容 Meta Package 的順序發布並等待索引。PSR-15 與 L
 Repository／Token 缺少或 Branch 無法 Fast-forward 時，會在建立 GitHub Release 前停止。
 PSR-15 與 Laravel 只在晉級門禁 eligible 後加入。
 
+CI 亦會使用隔離的「僅測試 eligible 策略」執行
+`scripts/check-gated-bridge-release-artifacts.sh`。它會預先產生 Laravel 與 PSR-15 Archive 及拆分
+Repository，把六個 Package 原子發布到本地 Bare Repository，並在乾淨 Consumer 中安裝同一 RC
+版本。策略覆寫若未明確啟用測試模式便會被拒絕，Tag 發布 Workflow 亦不會使用該覆寫，因此這項
+預演無法開啟正式門禁。
+
 Split 只是發布邊界，並不改變 Monorepo 開發模式：[Packagist 要求每個 Package 的
 `composer.json` 位於所提交 VCS Repository 頂層](https://packagist.org/about)，權威
 開發來源仍是本 Monorepo。

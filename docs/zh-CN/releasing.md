@@ -46,6 +46,11 @@ Checksum，再以一次原子 Push 建立 `main` 和不可变版本 Tag，且不
 Token 缺失或分支无法 Fast-forward 时，会在建立 GitHub Release 前停止。PSR-15 与 Laravel
 只在晋级门禁 eligible 后加入。
 
+CI 还会使用隔离的“仅测试 eligible 策略”运行
+`scripts/check-gated-bridge-release-artifacts.sh`。它会预先生成 Laravel 与 PSR-15 归档及拆分仓库，
+把六个包原子发布到本地裸仓库，并在干净消费者中安装同一 RC 版本。策略覆盖若未显式启用测试模式
+会被拒绝，Tag 发布工作流也不会使用该覆盖，因此这项预演无法打开生产门禁。
+
 Split 只是发布边界，并不改变 Monorepo 开发模式：[Packagist 要求每个包的 `composer.json`
 位于所提交 VCS Repository 的顶层](https://packagist.org/about)，权威开发来源仍是本
 Monorepo。

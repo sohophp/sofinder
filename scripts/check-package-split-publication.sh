@@ -53,20 +53,32 @@ cd "$consumer_dir"
 "$repository_root/scripts/composer.sh" init --name=sohophp/package-split-consumer --no-interaction
 "$repository_root/scripts/composer.sh" config minimum-stability RC
 "$repository_root/scripts/composer.sh" config prefer-stable true
-for package in sofinder-core sofinder-http sofinder-symfony sofinder-s3; do
+while IFS=$'\t' read -r package_name repository _commit _tag _bundle; do
+    package=${package_name#sohophp/}
     "$repository_root/scripts/composer.sh" config "repositories.$package" \
-        "{\"type\":\"vcs\",\"url\":\"$happy_url/sohophp/$package.git\"}"
-done
+        "{\"type\":\"vcs\",\"url\":\"$happy_url/$repository.git\"}"
+done < "$split_dir/SPLIT_MANIFEST.tsv"
 release_version=${release_tag#v}
-"$repository_root/scripts/composer.sh" require \
-    "sohophp/sofinder-symfony:$release_version" "sohophp/sofinder-s3:$release_version" \
-    --no-interaction --prefer-dist
-"$repository_root/scripts/php-bin.sh" -r 'require "vendor/autoload.php"; exit(
+consumer_packages=("sohophp/sofinder-symfony:$release_version" "sohophp/sofinder-s3:$release_version")
+with_bridges=false
+if grep -Fq $'sohophp/sofinder-laravel\t' "$split_dir/SPLIT_MANIFEST.tsv"; then
+    grep -Fq $'sohophp/sofinder-psr15\t' "$split_dir/SPLIT_MANIFEST.tsv"
+    consumer_packages+=("sohophp/sofinder-laravel:$release_version" "sohophp/sofinder-psr15:$release_version")
+    with_bridges=true
+fi
+"$repository_root/scripts/composer.sh" require "${consumer_packages[@]}" --no-interaction --prefer-dist
+"$repository_root/scripts/php-bin.sh" -r 'require "vendor/autoload.php"; $withBridges=$argv[1]==="true"; exit(
     class_exists("SohoPHP\\SoFinder\\SoFinderBundle")
     && class_exists("SohoPHP\\SoFinder\\Http\\EndpointDispatcher")
     && class_exists("SohoPHP\\SoFinderS3\\S3StorageAdapter")
-    && class_exists("SohoPHP\\SoFinder\\Configuration\\ConfigurationNormalizer") ? 0 : 1
-);'
+    && class_exists("SohoPHP\\SoFinder\\Configuration\\ConfigurationNormalizer")
+    && (!$withBridges || (class_exists("SohoPHP\\SoFinder\\Laravel\\SoFinderServiceProvider")
+        && class_exists("SohoPHP\\SoFinder\\Psr15\\SoFinderMiddleware"))) ? 0 : 1
+);' "$with_bridges"
+if [[ "$with_bridges" == true ]]; then
+    test -s vendor/sohophp/sofinder-laravel/dist/manifest.json
+    test -s vendor/sohophp/sofinder-psr15/dist/manifest.json
+fi
 cd "$repository_root"
 
 initialize_remotes "$conflict_dir"

@@ -122,6 +122,7 @@ jobs:
             test "$(git -C "$checkout" rev-parse "refs/tags/$tag^{commit}")" = "$commit"
           done < "$split_output/SPLIT_MANIFEST.tsv"
           bash scripts/check-package-split-publication.sh "$split_output"
+      - run: bash scripts/check-gated-bridge-release-artifacts.sh
       - run: ./scripts/php-bin.sh vendor/bin/phpunit tests/FrameworkBoundaryTest.php tests/EndpointCatalogTest.php tests/SharedActionCoverageTest.php tests/Psr15BridgeTest.php tests/PsrImplementationTest.php tests/RouteRegistrarTest.php tests/SharedEndpointActionTest.php tests/SharedMutationActionTest.php tests/SharedUploadActionTest.php tests/SharedQuickUploadActionTest.php tests/SharedMetadataActionTest.php tests/SharedContentReadActionTest.php tests/SharedChunkActionTest.php tests/SharedChunkUploadActionTest.php tests/SharedImageInfoActionTest.php tests/SharedImageMutationActionTest.php tests/SharedArchiveActionTest.php tests/SharedAssetSessionActionTest.php tests/SharedFrontendAssetActionTest.php tests/SharedAssetSearchActionTest.php tests/SharedAssetUsageActionTest.php tests/SharedAssetActionTest.php tests/SharedRoutedActionTest.php tests/SharedStreamActionTest.php tests/SharedDerivedStreamActionTest.php tests/SharedMetricsActionTest.php
 
   frontend:

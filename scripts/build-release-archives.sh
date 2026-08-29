@@ -4,6 +4,7 @@ set -euo pipefail
 
 repository_root=$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)
 php_bin="$repository_root/scripts/php-bin.sh"
+release_policy="$repository_root/config/framework-support.json"
 version=${1:-}
 source_ref=${2:-WORKTREE}
 output_dir=${3:-$repository_root/var/release-archives}
@@ -11,6 +12,15 @@ output_dir=${3:-$repository_root/var/release-archives}
 if [[ ! "$version" =~ ^[0-9]+\.[0-9]+\.[0-9]+(-[0-9A-Za-z]+([.-][0-9A-Za-z]+)*)?$ ]]; then
     printf '%s\n' 'Usage: build-release-archives.sh VERSION [GIT_REF|WORKTREE] [OUTPUT_DIR]' >&2
     exit 2
+fi
+
+if [[ -n "${SOFINDER_RELEASE_TEST_POLICY:-}" ]]; then
+    if [[ "${SOFINDER_RELEASE_TEST_MODE:-}" != 1 || -n "${RELEASE_TAG:-}" || "${GITHUB_REF_TYPE:-}" == tag ]]; then
+        printf '%s\n' 'SOFINDER_RELEASE_TEST_POLICY is restricted to explicit release test mode.' >&2
+        exit 2
+    fi
+    release_policy=$SOFINDER_RELEASE_TEST_POLICY
+    [[ -s "$release_policy" ]] || { printf 'Missing release test policy: %s\n' "$release_policy" >&2; exit 2; }
 fi
 
 mkdir -p "$output_dir"
@@ -114,7 +124,7 @@ archive_package sofinder-s3 sohophp/sofinder-s3
 psr15_eligible=$("$php_bin" -r '
     $policy = json_decode(file_get_contents($argv[1]), true, 32, JSON_THROW_ON_ERROR);
     echo ($policy["promotionGate"]["eligible"] ?? false) === true ? "yes" : "no";
-' "$repository_root/config/framework-support.json")
+' "$release_policy")
 if [[ "$psr15_eligible" == yes ]]; then
     archive_package sofinder-psr15 sohophp/sofinder-psr15
     archive_package sofinder-laravel sohophp/sofinder-laravel

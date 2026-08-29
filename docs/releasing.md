@@ -59,6 +59,13 @@ missing repository/token or a non-fast-forward branch stops the release before
 the GitHub Release is created. PSR-15 and Laravel repositories are included only
 after the promotion gate is eligible.
 
+CI also runs `scripts/check-gated-bridge-release-artifacts.sh` with an isolated
+test-only eligible policy. It builds the future Laravel and PSR-15 archives and
+split repositories, publishes all six package repositories to local bare
+remotes, and installs the synchronized RC into a clean consumer. The policy
+override is rejected unless explicit test mode is enabled and is never used by
+the tag release workflow, so this rehearsal cannot open the production gate.
+
 This split is a publishing boundary, not a departure from monorepo development:
 [Packagist requires each package's `composer.json` at the top of the submitted
 VCS repository](https://packagist.org/about), while authoritative development

@@ -45,5 +45,6 @@ bash scripts/build-release-archives.sh 1.0.0-rc.1 WORKTREE "$release_archive_dir
 "$php_bin" scripts/check-framework-release-gate.php
 bash scripts/check-framework-release-gate-fixtures.sh
 bash scripts/check-observation-evidence-fixtures.sh
+bash scripts/check-gated-bridge-release-artifacts.sh
 git diff --check
 echo "SoFinder release checks passed."

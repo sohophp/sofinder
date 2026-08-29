@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- Preflight the still-gated Laravel and PSR-15 synchronized release path with
+  seven immutable archives, six split repositories, atomic local publication
+  and a clean consumer that installs all PHP 8 packages at one RC version.
 - Expand both monorepo and future split-package Laravel CI from boundary-only
   checks to every supported pair: Laravel 12 on PHP 8.2–8.5 and Laravel 13 on
   PHP 8.3–8.5, with executable example coverage for the same seven pairs.
