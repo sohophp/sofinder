@@ -64,8 +64,24 @@ final class BrowserControllerTest extends TestCase
         $config = $this->config(Request::create('/browser?select=1&type=Images&path=campaign/hero&pickerRequestId=12345678-abcd-4321-abcd-123456789012'));
 
         self::assertSame('campaign/hero', $config['initialPath']);
+        self::assertSame('Images', $config['pickerResource']);
         self::assertSame('12345678-abcd-4321-abcd-123456789012', $config['pickerRequestId']);
         self::assertSame('http://localhost', $config['pickerOrigin']);
+    }
+
+    public function testManagerDeepLinkDoesNotLockItsInitialResource(): void
+    {
+        $config = $this->config(Request::create('/browser?type=Files'));
+
+        self::assertNull($config['pickerResource']);
+    }
+
+    public function testHostCanUseThePickerResourceAsAnInitialLocationOnly(): void
+    {
+        $config = $this->config(Request::create('/browser?select=1&type=Images&resourceLock=0'));
+
+        self::assertSame('Images', $config['resource']);
+        self::assertNull($config['pickerResource']);
     }
 
     public function testCrossOriginPickerRequiresAnExactHostAllowlistMatch(): void
@@ -127,11 +143,15 @@ final class BrowserControllerTest extends TestCase
     private function config(Request $request, ?FeaturePolicy $features = null, array $allowedOrigins = [], ?WorkspaceProvider $workspaces = null, ?WorkspaceOptionProviderInterface $workspaceOptions = null): array
     {
         $resource = new ResourceType('Files', $this->directory, '/files');
+        $images = new ResourceType('Images', $this->directory, '/images');
         $authorization = new class implements AuthorizationInterface {
             public function isAuthenticated(): bool { return true; }
             public function isGranted(string $operation, ResourceType $resource, string $path): bool { return true; }
         };
-        $files = new FileManager(new ResourceRegistry([new ResourceStorage($resource, new LocalStorageAdapter($this->directory, '/files'))]), $authorization, new EventDispatcher());
+        $files = new FileManager(new ResourceRegistry([
+            new ResourceStorage($resource, new LocalStorageAdapter($this->directory, '/files')),
+            new ResourceStorage($images, new LocalStorageAdapter($this->directory, '/images')),
+        ]), $authorization, new EventDispatcher());
         $router = $this->createMock(RouterInterface::class);
         $router->method('generate')->willReturnCallback(static fn (string $name, array $parameters = []): string => $name === 'sofinder_asset' ? '/assets/' . $parameters['file'] : '/api/config');
         $csrf = $this->createMock(CsrfTokenManagerInterface::class);

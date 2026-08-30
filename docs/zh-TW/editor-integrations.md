@@ -27,6 +27,10 @@ SDK 使用彈窗回傳結果，並同時驗證彈窗物件、Origin、協議版�
 不使用萬用字元 `postMessage`。Host 與 Picker 必須同源，伺服器仍會執行登入、ACL
 及圖片格式驗證。
 
+傳入 `resource` 時預設會鎖定 Picker、隱藏其他資源並拒絕資源不符的結果。
+若它只應作為初始位置，請傳入 `lockResource: false`；直接建立 Picker URL 時
+使用 `resourceLock=0`。
+
 ## CKEditor 5
 
 在應用程式正常安裝 CKEditor 5 及 Image Plugin，再將編輯器實例交給 SoFinder：

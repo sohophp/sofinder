@@ -56,6 +56,7 @@ final class Configuration implements ConfigurationInterface
                 ->arrayNode('picker')
                     ->addDefaultsIfNotSet()
                     ->children()
+                        ->booleanNode('lock_resource')->defaultTrue()->end()
                         ->arrayNode('allowed_origins')
                             ->scalarPrototype()
                                 ->validate()

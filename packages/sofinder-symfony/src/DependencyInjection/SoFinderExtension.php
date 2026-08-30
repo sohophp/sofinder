@@ -650,6 +650,7 @@ final class SoFinderExtension extends Extension
             $config['picker']['allowed_origins'],
             $workspaceConfig['enabled'] ? new Reference(WorkspaceProvider::class) : null,
             $workspaceConfig['enabled'] && $workspaceConfig['option_provider_service'] !== null ? new Reference((string) $workspaceConfig['option_provider_service']) : null,
+            $config['picker']['lock_resource'],
         ]));
         $container->setDefinition(EntriesAction::class, new Definition(EntriesAction::class, [
             new Reference(FileManager::class),
@@ -873,6 +874,7 @@ final class SoFinderExtension extends Extension
             $workspaceConfig['enabled'] ? new Reference(WorkspaceProvider::class) : null,
             $workspaceConfig['enabled'] && $workspaceConfig['option_provider_service'] !== null ? new Reference((string) $workspaceConfig['option_provider_service']) : null,
             new Reference(BrowserPage::class),
+            $config['picker']['lock_resource'],
         ]);
         $this->controller($container, ApiController::class, [
             new Reference(FileManager::class),

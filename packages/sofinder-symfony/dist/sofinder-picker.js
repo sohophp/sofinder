@@ -1,18 +1,18 @@
 //#region src/picker.ts
 var e = "1.0", t = () => typeof crypto < "u" && typeof crypto.randomUUID == "function" ? crypto.randomUUID() : `sf-${Date.now().toString(36)}-${Math.random().toString(36).slice(2)}`, n = (e, n = t()) => {
 	let r = new URL(e.baseUrl, window.location.href);
-	return r.searchParams.set("select", "1"), r.searchParams.set("uiMode", "picker"), r.searchParams.set("selection", e.kind ?? "any"), r.searchParams.set("pickerRequestId", n), r.searchParams.set("pickerOrigin", window.location.origin), e.resource && r.searchParams.set("type", e.resource), e.path && r.searchParams.set("path", e.path), e.language && r.searchParams.set("lang", e.language), e.tools && r.searchParams.set("uiTools", e.tools), r;
+	return r.searchParams.set("select", "1"), r.searchParams.set("uiMode", "picker"), r.searchParams.set("selection", e.kind ?? "any"), r.searchParams.set("pickerRequestId", n), r.searchParams.set("pickerOrigin", window.location.origin), e.resource && r.searchParams.set("type", e.resource), e.resource && r.searchParams.set("resourceLock", e.lockResource === !1 ? "0" : "1"), e.path && r.searchParams.set("path", e.path), e.language && r.searchParams.set("lang", e.language), e.tools && r.searchParams.set("uiTools", e.tools), r;
 }, r = (e) => {
 	let r = t(), a = n(e, r), o = Math.max(640, e.width ?? 1100), s = Math.max(480, e.height ?? 760), c = window.open(a, e.windowName ?? "sofinder-picker", `popup=yes,width=${o},height=${s},resizable=yes,scrollbars=yes`);
-	return c ? new Promise((e, t) => {
-		let n = 0, o = () => {
-			window.removeEventListener("message", s), n && window.clearInterval(n);
-		}, s = (t) => {
-			let n = t.data;
-			t.source !== c || t.origin !== a.origin || n?.type !== "sofinder:select" || n.version !== "1.0" || n.requestId !== r || !i(n.entry) || (o(), e(n.entry));
+	return c ? new Promise((t, n) => {
+		let o = 0, s = () => {
+			window.removeEventListener("message", l), o && window.clearInterval(o);
+		}, l = (n) => {
+			let o = n.data;
+			n.source !== c || n.origin !== a.origin || o?.type !== "sofinder:select" || o.version !== "1.0" || o.requestId !== r || !i(o.entry) || e.resource && e.lockResource !== !1 && o.entry.resource !== e.resource || (s(), t(o.entry));
 		};
-		window.addEventListener("message", s), n = window.setInterval(() => {
-			c.closed && (o(), t(new DOMException("The SoFinder picker was closed.", "AbortError")));
+		window.addEventListener("message", l), o = window.setInterval(() => {
+			c.closed && (s(), n(new DOMException("The SoFinder picker was closed.", "AbortError")));
 		}, 300);
 	}) : Promise.reject(/* @__PURE__ */ Error("SoFinder picker was blocked by the browser."));
 }, i = (e) => {

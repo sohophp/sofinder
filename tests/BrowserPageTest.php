@@ -54,6 +54,41 @@ final class BrowserPageTest extends TestCase
         self::assertSame('csrf-token', $config['csrfToken']);
         self::assertSame('picker', $config['uiDefaults']['mode']);
         self::assertFalse($config['uiDefaults']['header']);
+        self::assertNull($config['pickerResource']);
+    }
+
+    public function testLocksAnExplicitPickerResource(): void
+    {
+        $html = $this->page()->render(new RequestContext(query: ['select' => '1', 'type' => 'Files']));
+        preg_match('/data-config="([^"]+)"/', $html, $matches);
+        $config = json_decode(html_entity_decode($matches[1], ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8'), true, 32, JSON_THROW_ON_ERROR);
+
+        self::assertSame('Files', $config['pickerResource']);
+    }
+
+    public function testRejectsAnUnknownPickerResourceDuringBootstrap(): void
+    {
+        $this->expectException(\SohoPHP\SoFinder\Exception\NotFoundException::class);
+
+        $this->page()->render(new RequestContext(query: ['select' => '1', 'type' => 'Images']));
+    }
+
+    public function testPickerResourceLockCanBeDisabledPerInvocation(): void
+    {
+        $html = $this->page()->render(new RequestContext(query: ['select' => '1', 'type' => 'Files', 'resourceLock' => '0']));
+        preg_match('/data-config="([^"]+)"/', $html, $matches);
+        $config = json_decode(html_entity_decode($matches[1], ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8'), true, 32, JSON_THROW_ON_ERROR);
+
+        self::assertNull($config['pickerResource']);
+    }
+
+    public function testHostCanDisableTheDefaultPickerResourceLock(): void
+    {
+        $html = $this->page(false)->render(new RequestContext(query: ['select' => '1', 'type' => 'Files']));
+        preg_match('/data-config="([^"]+)"/', $html, $matches);
+        $config = json_decode(html_entity_decode($matches[1], ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8'), true, 32, JSON_THROW_ON_ERROR);
+
+        self::assertNull($config['pickerResource']);
     }
 
     public function testRejectsAnUntrustedPickerOrigin(): void
@@ -66,7 +101,7 @@ final class BrowserPageTest extends TestCase
         ));
     }
 
-    private function page(): BrowserPage
+    private function page(bool $pickerLockResource = true): BrowserPage
     {
         $resource = new ResourceType('Files', $this->directory, '/files');
         $authorization = new class implements AuthorizationInterface {
@@ -99,6 +134,7 @@ final class BrowserPageTest extends TestCase
             'abc123',
             new Theme(\SohoPHP\SoFinder\Configuration\ConfigurationNormalizer::DEFAULTS['theme']),
             ['mode' => 'auto', 'header' => true, 'logo' => true, 'search' => true, 'language_switcher' => true, 'view_switcher' => true, 'folder_tree' => false, 'scale' => 'standard'],
+            pickerLockResource: $pickerLockResource,
         );
     }
 }

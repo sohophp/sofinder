@@ -27,6 +27,10 @@ SDK 使用弹窗返回结果，并同时校验弹窗对象、Origin、协议版�
 不会使用通配符 `postMessage`。同源无需配置；跨域 Host 必须精确列入
 `picker.allowed_origins`，Picker 服务端仍会执行登录、ACL 和图片格式验证。
 
+传入 `resource` 时，默认会将 Picker 锁定在该资源，隐藏其他资源，并拒绝资源
+不匹配的返回结果。如果它只应作为初始位置，可传入 `lockResource: false`；
+直接构造 Picker URL 时使用 `resourceLock=0`。
+
 ## CKEditor 5
 
 在应用中正常安装 CKEditor 5 和 Image Plugin，将编辑器实例交给 SoFinder：

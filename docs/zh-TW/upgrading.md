@@ -5,6 +5,13 @@ description: 各 SoFinder 預發布版本的相容性、設定與 adapter 升級
 
 # 升級 SoFinder
 
+## 從 1.1.1 升級至 1.1.2
+
+請完整部署重新建置的 `dist/`。傳入 `resource` 的 Picker 預設會將導覽及回傳結果
+鎖定於該資源。若直接 Picker URL 只應將資源作為初始位置，請設定
+`picker.lock_resource: false`；單次 SDK 呼叫則傳入 `lockResource: false`。
+儲存檔案與 Metadata 不需移轉。
+
 ## 從 1.1.0 升級至 1.1.1
 
 請完整部署重新建置的 `dist/`。複製了 Symfony S3 範例同源 `entry_url` 設定的應用，

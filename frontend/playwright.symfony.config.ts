@@ -19,7 +19,7 @@ export default defineConfig({
   },
   projects: [{ name: "chromium", use: { ...devices["Desktop Chrome"] } }],
   webServer: {
-    command: `${repositoryRoot}/scripts/php-bin.sh -S 127.0.0.1:18083 -t public public/index.php`,
+    command: `${repositoryRoot}/scripts/php-bin.sh -d variables_order=EGPCS -S 127.0.0.1:18083 -t public public/index.php`,
     cwd: resolve(repositoryRoot, "examples/symfony"),
     env: { APP_ENV: "prod", APP_DEBUG: "0" },
     url: `${baseURL}/sofinder/live`,

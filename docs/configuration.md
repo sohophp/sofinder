@@ -42,8 +42,16 @@ allow each exact caller origin; wildcards and paths are rejected:
 ```yaml
 so_finder:
   picker:
+    lock_resource: true
     allowed_origins: ['https://cms.example.com']
 ```
+
+`lock_resource` controls the host-wide default when a picker receives a
+resource. The default `true` hides other resources and confines the result to
+that resource. Set it to `false` to use the resource only as the initial
+location for direct picker URLs that omit `resourceLock`. The picker SDK sends
+its own secure default (`lockResource: true`); pass `lockResource: false` on an
+SDK call when switching resources should be allowed.
 
 ## Temporary signed URLs
 

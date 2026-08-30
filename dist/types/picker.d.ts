@@ -28,6 +28,8 @@ export interface PickerOptions {
     baseUrl: string;
     kind?: "any" | "file" | "image";
     resource?: string;
+    /** Lock navigation and results to `resource`; defaults to true. */
+    lockResource?: boolean;
     path?: string;
     language?: "en" | "zh-cn" | "zh-tw";
     tools?: "common" | "full";

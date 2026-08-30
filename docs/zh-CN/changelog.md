@@ -7,6 +7,15 @@ description: SoFinder 每个公开版本的重要变更。
 
 ## 尚未发布
 
+## 1.1.2 - 2026-08-30
+
+- Picker 显式传入 `resource` 时，默认将导航与返回结果锁定在该资源，并在启动时
+  验证资源可见性；SDK 会拒绝资源不匹配的弹窗结果。
+- 宿主可通过 `picker.lock_resource: false` 设置直接 Picker URL 的全局默认行为，
+  或在单次 SDK 调用中传入 `lockResource: false` 以允许显示和切换其他授权资源。
+- 保留 Laravel 和 PSR-15 拆分仓库的连续生成历史，同时继续拒绝发布任何非生成的
+  远端变更。
+
 ## 1.1.1 - 2026-08-30
 
 - 新增 Laravel 12／13、Slim 4、Mezzio 3 和纯 PHP 的完整框架集成指南，涵盖安装、

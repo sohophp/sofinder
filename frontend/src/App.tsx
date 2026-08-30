@@ -53,6 +53,7 @@ export default function App({ config, initialMessages }: { config: SoFinderConfi
   const pageSizeOptionsId = useId();
   const api = useMemo(() => new Api(config), [config]);
   const uiMode = config.uiDefaults.mode ?? (config.selectMode ? "picker" : "manager");
+  const pickerResource = uiMode === "picker" ? config.pickerResource ?? null : null;
   const featureAvailability = config.featureAvailability ?? defaultFeatureAvailability;
   const [language, setLanguage] = useState<Language>(() => {
     const saved = localStorage.getItem("sofinder.language");
@@ -364,7 +365,8 @@ export default function App({ config, initialMessages }: { config: SoFinderConfi
   });
 
   useEffect(() => {
-    api.configData().then(({ resources: available, plugins: activePlugins, imagePresets: presets, imageCapabilities: capabilities, signedUrls: signedUrlCapabilities, assetCatalog, assetSearch, assetUsage }) => {
+    api.configData().then(({ resources: availableResources, plugins: activePlugins, imagePresets: presets, imageCapabilities: capabilities, signedUrls: signedUrlCapabilities, assetCatalog, assetSearch, assetUsage }) => {
+      const available = pickerResource === null ? availableResources : availableResources.filter(item => item.name === pickerResource);
       setResources(available);
       setPlugins(activePlugins || []);
       setAssetCatalogEnabled(assetCatalog?.enabled === true);
@@ -374,16 +376,16 @@ export default function App({ config, initialMessages }: { config: SoFinderConfi
       setImagePresets(presets || {});
       setImageCapabilities(capabilities || { driver: "", formats: [] });
       setSignedUrls(signedUrlCapabilities || { enabled: false, defaultTtlSeconds: 300, maxTtlSeconds: 3600 });
-      const initial = available.some(item => item.name === config.resource) ? config.resource : available[0]?.name || "";
+      const initial = pickerResource ?? (available.some(item => item.name === config.resource) ? config.resource : available[0]?.name || "");
       setResource(initial);
       if (initial) { setCursorHistory([]); void load(initial, config.initialPath || "", "", 0, sort, direction, "name", null); }
     }).catch(report);
-  }, [api, config.initialPath, config.resource]);
+  }, [api, config.initialPath, config.resource, pickerResource]);
 
   useEffect(() => {
     const restore = () => {
       const url = new URL(window.location.href);
-      const nextResource = url.searchParams.get("type") || config.resource;
+      const nextResource = pickerResource ?? (url.searchParams.get("type") || config.resource);
       const nextPath = url.searchParams.get("path") || "";
       const nextCollection = url.searchParams.get("collection") === "favorites" ? "favorites" : null;
       restoringHistory.current = true;
@@ -396,7 +398,7 @@ export default function App({ config, initialMessages }: { config: SoFinderConfi
     };
     window.addEventListener("popstate", restore);
     return () => window.removeEventListener("popstate", restore);
-  }, [config.resource, load]);
+  }, [config.resource, load, pickerResource]);
 
   useEffect(() => {
     if (!resource || loading) return;
@@ -619,6 +621,7 @@ export default function App({ config, initialMessages }: { config: SoFinderConfi
   };
 
   const choose = async (entry = selected) => {
+    if (pickerResource !== null && resource !== pickerResource) return;
     if (!canChooseEntry(entry)) {
       if (entry && config.selectionKind === "image") setNotice(t("webImageUnsupported"));
       return;

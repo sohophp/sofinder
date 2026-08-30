@@ -33,6 +33,14 @@ a wildcard `postMessage` target. Same-origin works without configuration. A
 cross-origin host must be listed exactly in `picker.allowed_origins`; login,
 resource ACLs and selection validation still run on the picker server.
 
+When `resource` is provided, picker mode treats it as a resource boundary rather
+than only an initial location. Other resources are excluded from navigation and
+search, and the SDK ignores any returned entry whose `resource` does not match.
+Pass `lockResource: false` when the resource should only be the initial location
+and all other authorized resources should remain visible. Direct picker URLs can
+use `resourceLock=0`. Manager deep links continue to use `type` only as their
+initial resource.
+
 ## CKEditor 5
 
 Keep CKEditor itself in the host application's build. Add a button using the

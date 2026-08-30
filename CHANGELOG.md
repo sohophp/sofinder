@@ -2,11 +2,19 @@
 
 ## Unreleased
 
+## 1.1.2 - 2026-08-30
+
+- Treat an explicit picker `resource` as a locked navigation and result
+  boundary, validate that it is visible during browser bootstrap, and reject
+  mismatched popup results in the SDK while preserving manager deep links;
+  allow hosts to opt out globally with `picker.lock_resource` or per invocation
+  with `lockResource: false`/`resourceLock=0`.
+
+## 1.1.1 - 2026-08-30
+
 - Preserve Laravel and PSR-15 split-repository history when consecutive
   generated frontend distribution commits diverge, while continuing to reject
   any non-generated remote changes during publication.
-
-## 1.1.1 - 2026-08-30
 
 - Add complete framework integration guides for Laravel 12/13, Slim 4,
   Mezzio 3 and plain PHP, including installation, host-owned authorization,

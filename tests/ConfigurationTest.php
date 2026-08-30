@@ -25,6 +25,7 @@ final class ConfigurationTest extends TestCase
         self::assertNull($config['ui']['lowercase_upload_extensions']);
         self::assertTrue($config['uploads']['naming']['lowercase_extensions']);
         self::assertFalse($config['ckeditor4']['overwrite_on_upload']);
+        self::assertTrue($config['picker']['lock_resource']);
         self::assertSame(['en', 'zh-cn', 'zh-tw'], $config['asset_catalog']['alt_locales']);
         self::assertTrue($config['asset_search']['enabled']);
         self::assertNull($config['asset_search']['provider_service']);

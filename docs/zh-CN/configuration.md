@@ -39,8 +39,15 @@ Picker 默认同源。跨域 CMS 必须逐个配置精确 Origin，不接受通�
 ```yaml
 so_finder:
   picker:
+    lock_resource: true
     allowed_origins: ['https://cms.example.com']
 ```
+
+`lock_resource` 控制 Picker 收到 `resource` 时的宿主级默认行为。默认值 `true`
+会隐藏其他资源并把返回结果限制在指定资源；设置为 `false` 后，该资源仅作为
+未携带 `resourceLock` 的直接 Picker URL 的初始位置。Picker SDK 会发送自己的
+安全默认值 `lockResource: true`；需要允许切换资源时，应在该 SDK 调用中明确
+传入 `lockResource: false`。
 
 ## 临时签名 URL
 

@@ -573,7 +573,7 @@ test("drags sidebar sections between sides and preserves their order", async ({ 
   await page.keyboard.press("ArrowRight");
   await expect.poll(() => sectionOrder("right")).toEqual(["favorites"]);
 
-  await page.locator('[data-sidebar-section="favorites"] .sf-sidebar-drag-handle').dragTo(page.locator('[data-sidebar-section="quickAccess"]'));
+  await page.locator('[data-sidebar-section="favorites"] .sf-sidebar-drag-handle').dragTo(page.locator('[data-sidebar-section="quickAccess"]'), { targetPosition: { x: 10, y: 1 } });
   await expect.poll(() => sectionOrder("left")).toEqual(["folderNavigation", "favorites", "quickAccess", "recent"]);
   await expect.poll(() => sectionOrder("right")).toEqual([]);
   await expect.poll(() => page.evaluate(() => JSON.parse(localStorage.getItem("sofinder.sidebarLayout.v1") || "null"))).toEqual({ left: ["folderNavigation", "favorites", "quickAccess", "recent"], right: [] });
@@ -1276,6 +1276,36 @@ test("supports keyboard selection and keeps the picker confirmation bar compact"
   expect(bounds!.x + bounds!.width).toBeLessThanOrEqual(560);
   const results = await new AxeBuilder({ page }).analyze();
   expect(results.violations.filter(item => ["serious", "critical"].includes(item.impact || ""))).toEqual([]);
+});
+
+test("locks a resource-scoped picker against resource navigation", async ({ page }) => {
+  await page.route("http://sofinder.test/sofinder/api/config", route => route.fulfill({ json: { success: true, data: {
+    apiVersion: "1.0",
+    resources: [
+      { name: "Files", publicUrl: "/files", allowedExtensions: ["txt"], maxSize: 1000000, readOnly: false, quotaBytes: 0, usedBytes: 0, maxFileNameLength: 120, maxFolderNameLength: 50, maxFolderDepth: 5, deliveryMode: "public", storageCapabilities: { search: true, sort: true } },
+      { name: "Images", publicUrl: "/images", allowedExtensions: ["png"], maxSize: 1000000, readOnly: false, quotaBytes: 0, usedBytes: 0, maxFileNameLength: 120, maxFolderNameLength: 50, maxFolderDepth: 5, deliveryMode: "public", storageCapabilities: { search: true, sort: true } },
+    ],
+    plugins: [], imagePresets: {}, imageCapabilities: { driver: "auto", formats: [] },
+  } } }));
+  await page.setContent(`<!doctype html><html lang="zh-CN"><head><title>Scoped picker</title></head><body><main id="sofinder-root" data-config='${JSON.stringify({ ...config, selectMode: true, pickerResource: "Files", uiDefaults: { ...config.uiDefaults, mode: "picker" } })}'></main></body></html>`);
+  await page.addStyleTag({ path: resolve(import.meta.dirname, "../../dist/sofinder.css") });
+  await page.addScriptTag({ path: resolve(import.meta.dirname, "../../dist/sofinder.js"), type: "module" });
+
+  await expect(page.getByText("guide.txt").first()).toBeVisible();
+  await expect(page.locator(".sf-sidebar")).toHaveCount(0);
+  await page.evaluate(() => {
+    const url = new URL(window.location.href);
+    url.searchParams.set("type", "Images");
+    history.pushState({}, "", url);
+    window.dispatchEvent(new PopStateEvent("popstate"));
+  });
+  await expect.poll(() => page.evaluate(() => new URL(window.location.href).searchParams.get("type"))).toBe("Files");
+
+  await page.setContent(`<!doctype html><html lang="zh-CN"><head><title>Unlocked picker</title></head><body><main id="sofinder-root" data-config='${JSON.stringify({ ...config, selectMode: true, pickerResource: null, uiDefaults: { ...config.uiDefaults, mode: "picker" } })}'></main></body></html>`);
+  await page.addStyleTag({ path: resolve(import.meta.dirname, "../../dist/sofinder.css") });
+  await page.addScriptTag({ path: resolve(import.meta.dirname, "../../dist/sofinder.js"), type: "module" });
+  await expect(page.locator(".sf-sidebar")).toBeVisible();
+  await expect(page.getByRole("button", { name: "图片" })).toBeVisible();
 });
 
 test("keeps picker selection while exposing full ACL-controlled tools", async ({ page }) => {

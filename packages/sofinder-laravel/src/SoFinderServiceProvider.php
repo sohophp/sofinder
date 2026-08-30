@@ -416,6 +416,7 @@ final class SoFinderServiceProvider extends ServiceProvider
                 array_values(array_filter((array) ($configuration['malware_scanning']['status_roles'] ?? []), 'is_string')),
                 array_values(array_filter((array) ($configuration['picker']['allowed_origins'] ?? []), 'is_string')),
                 $app->make(WorkspaceProvider::class),
+                pickerLockResource: (bool) ($configuration['picker']['lock_resource'] ?? true),
             );
         });
         $this->app->singleton(EndpointDispatcher::class, static function ($app): EndpointDispatcher {

@@ -62,7 +62,7 @@ cleanup()
 trap cleanup EXIT
 
 cd "$example_dir"
-APP_ENV=prod APP_DEBUG=0 "$php_bin" -S "127.0.0.1:$port" -t public public/index.php \
+APP_ENV=prod APP_DEBUG=0 "$php_bin" -d variables_order=EGPCS -S "127.0.0.1:$port" -t public public/index.php \
     > "$test_dir/server.log" 2>&1 &
 server_pid=$!
 

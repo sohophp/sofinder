@@ -3,6 +3,8 @@ export interface SoFinderConfig {
     csrfToken: string;
     language: "en" | "zh-cn" | "zh-tw";
     resource: string;
+    /** Non-null when picker navigation and results are confined to one resource. */
+    pickerResource?: string | null;
     initialPath: string;
     selectMode: boolean;
     selectionKind: "any" | "file" | "image";

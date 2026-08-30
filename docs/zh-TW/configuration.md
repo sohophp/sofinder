@@ -31,6 +31,20 @@ description: SoFinder 全域、UI、維護、圖片、請求限制與資源設�
 `cache_dir/document-previews`，完成後設定 `cluster.shared_preview_cache: true`；
 `sofinder:security:audit` 會檢查此確認項。詳見[正式環境運作](/zh-TW/production)。
 
+## Picker 資源與 Origin
+
+```yaml
+so_finder:
+  picker:
+    lock_resource: true
+    allowed_origins: ['https://cms.example.com']
+```
+
+`lock_resource` 預設會在 Picker 收到 `resource` 時隱藏其他資源並限制回傳結果；
+設為 `false` 後，未帶 `resourceLock` 的直接 Picker URL 只會把它當成初始位置。
+Picker SDK 使用自己的安全預設值；需要允許切換時請明確傳入
+`lockResource: false`。跨網域 Host 必須逐一設定精確 Origin。
+
 ## 臨時簽章 URL
 
 ```yaml

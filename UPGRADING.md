@@ -1,5 +1,13 @@
 # Upgrading SoFinder
 
+## From 1.1.1 to 1.1.2
+
+Deploy the complete rebuilt `dist/` directory. Picker integrations that pass a
+`resource` now lock navigation and returned entries to that resource by
+default. Set `picker.lock_resource: false` for direct picker URLs that should
+use the resource only as an initial location, or pass `lockResource: false` to
+an individual SDK call. Stored files and metadata require no migration.
+
 ## From 1.1.0 to 1.1.1
 
 Deploy the complete rebuilt `dist/` directory. Applications that copied the

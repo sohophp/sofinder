@@ -11,9 +11,17 @@ describe("picker SDK", () => {
     expect(url.pathname).toBe("/sofinder/browser");
     expect(url.searchParams.get("selection")).toBe("image");
     expect(url.searchParams.get("type")).toBe("Images");
+    expect(url.searchParams.get("resourceLock")).toBe("1");
     expect(url.searchParams.get("path")).toBe("campaign/hero");
     expect(url.searchParams.get("pickerRequestId")).toBe("12345678-abcd-4321-abcd-123456789012");
     expect(url.searchParams.get("pickerOrigin")).toBe(window.location.origin);
+  });
+
+  it("can use a resource only as the initial location", () => {
+    const url = pickerUrl({ baseUrl: "/sofinder/browser", resource: "Images", lockResource: false }, "12345678-abcd-4321-abcd-123456789012");
+
+    expect(url.searchParams.get("type")).toBe("Images");
+    expect(url.searchParams.get("resourceLock")).toBe("0");
   });
 
   it("inserts a selected entry through the Markdown adapter", async () => {
@@ -41,6 +49,33 @@ describe("picker SDK", () => {
     window.dispatchEvent(new MessageEvent("message", { source: popup, origin: "https://attacker.invalid", data: { type: "sofinder:select", version: "1.0", requestId: id, entry } }));
     window.dispatchEvent(new MessageEvent("message", { source: popup, origin: window.location.origin, data: { type: "sofinder:select", version: "1.0", requestId: id, entry: { ...entry, resource: "" } } }));
     window.dispatchEvent(new MessageEvent("message", { source: popup, origin: window.location.origin, data: { type: "sofinder:select", version: "1.0", requestId: id, entry } }));
+
+    await expect(promise).resolves.toEqual(entry);
+  });
+
+  it("rejects a result outside the requested resource", async () => {
+    const popup = { closed: false } as Window;
+    vi.spyOn(window, "open").mockReturnValue(popup);
+    const promise = openPicker({ baseUrl: "/sofinder/browser", kind: "image", resource: "Images" });
+    const opened = new URL(String(vi.mocked(window.open).mock.calls[0][0]), window.location.href);
+    const id = opened.searchParams.get("pickerRequestId");
+    const filesEntry = { resource: "Files", path: "photo.png", name: "photo.png", directory: false, size: 12, modifiedAt: 1, mimeType: "image/png", url: "/files/photo.png", width: 320, height: 180, capabilities: {} };
+    const imagesEntry = { ...filesEntry, resource: "Images", url: "/images/photo.png" };
+
+    window.dispatchEvent(new MessageEvent("message", { source: popup, origin: window.location.origin, data: { type: "sofinder:select", version: "1.0", requestId: id, entry: filesEntry } }));
+    window.dispatchEvent(new MessageEvent("message", { source: popup, origin: window.location.origin, data: { type: "sofinder:select", version: "1.0", requestId: id, entry: imagesEntry } }));
+
+    await expect(promise).resolves.toEqual(imagesEntry);
+  });
+
+  it("accepts another visible resource when locking is disabled", async () => {
+    const popup = { closed: false } as Window;
+    vi.spyOn(window, "open").mockReturnValue(popup);
+    const promise = openPicker({ baseUrl: "/sofinder/browser", resource: "Images", lockResource: false });
+    const opened = new URL(String(vi.mocked(window.open).mock.calls[0][0]), window.location.href);
+    const entry = { resource: "Files", path: "manual.pdf", name: "manual.pdf", directory: false, size: 12, modifiedAt: 1, mimeType: "application/pdf", url: "/files/manual.pdf", width: null, height: null, capabilities: {} };
+
+    window.dispatchEvent(new MessageEvent("message", { source: popup, origin: window.location.origin, data: { type: "sofinder:select", version: "1.0", requestId: opened.searchParams.get("pickerRequestId"), entry } }));
 
     await expect(promise).resolves.toEqual(entry);
   });

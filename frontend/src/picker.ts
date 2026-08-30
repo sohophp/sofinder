@@ -25,6 +25,8 @@ export interface PickerOptions {
   baseUrl: string;
   kind?: "any" | "file" | "image";
   resource?: string;
+  /** Lock navigation and results to `resource`; defaults to true. */
+  lockResource?: boolean;
   path?: string;
   language?: "en" | "zh-cn" | "zh-tw";
   tools?: "common" | "full";
@@ -55,6 +57,7 @@ export const pickerUrl = (options: PickerOptions, id = requestId()): URL => {
   url.searchParams.set("pickerRequestId", id);
   url.searchParams.set("pickerOrigin", window.location.origin);
   if (options.resource) url.searchParams.set("type", options.resource);
+  if (options.resource) url.searchParams.set("resourceLock", options.lockResource === false ? "0" : "1");
   if (options.path) url.searchParams.set("path", options.path);
   if (options.language) url.searchParams.set("lang", options.language);
   if (options.tools) url.searchParams.set("uiTools", options.tools);
@@ -79,6 +82,7 @@ export const openPicker = (options: PickerOptions): Promise<PickerEntry> => {
     const receive = (event: MessageEvent<unknown>) => {
       const message = event.data as Partial<PickerMessage> | null;
       if (event.source !== popup || event.origin !== url.origin || message?.type !== "sofinder:select" || message.version !== PICKER_PROTOCOL_VERSION || message.requestId !== id || !validEntry(message.entry)) return;
+      if (options.resource && options.lockResource !== false && message.entry.resource !== options.resource) return;
       cleanup();
       resolve(message.entry);
     };

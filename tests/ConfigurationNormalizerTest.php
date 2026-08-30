@@ -35,6 +35,7 @@ final class ConfigurationNormalizerTest extends TestCase
         self::assertEquals($symfony, $plain);
         self::assertSame([640], $plain['image_variants']['widths']);
         self::assertSame(['jpg'], $plain['resources']['Files']['allowed_extensions']);
+        self::assertTrue($plain['picker']['lock_resource']);
         self::assertSame(['php', 'phtml', 'phar', 'cgi', 'pl', 'exe', 'sh', 'html', 'htm', 'js'], $plain['resources']['Files']['denied_extensions']);
     }
 
