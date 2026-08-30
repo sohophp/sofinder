@@ -48,6 +48,9 @@
             "SohoPHP\\SoFinder\\Tests\\": "tests/"
         }
     },
+    "archive": {
+        "exclude": ["/docs/public/screenshots"]
+    },
     "extra": {
         "branch-alias": {
             "dev-main": "1.x-dev"

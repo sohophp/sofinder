@@ -52,7 +52,7 @@ const yaml = `so_finder:
       <div class="sf-quick-grid">
         <article class="sf-step-card">
           <b>01</b><h3>{{ content.steps[0] }}</h3>
-          <CodePanel code="composer require sohophp/sofinder:^0.1@beta" language="Bash" :copy-label="content.copy" :copied-label="content.copied" />
+          <CodePanel code="composer require sohophp/sofinder-symfony:^1.1" language="Bash" :copy-label="content.copy" :copied-label="content.copied" />
         </article>
         <article class="sf-step-card">
           <b>02</b><h3>{{ content.steps[1] }}</h3>

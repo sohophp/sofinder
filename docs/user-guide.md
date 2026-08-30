@@ -80,9 +80,9 @@ Name search applies to the current folder and waits briefly while you type. Sort
 
 The pagination bar accepts a typed page size or a common value from its suggestion list. The allowed range is 10–500 files per page; changing it returns to the first page and the browser remembers the choice.
 
-Settings can enable:
-
 The **Preference profiles** section saves the current tools, optional features, list columns, grid/list sizes, folder-navigation position, Quick access scope, interface scale and same-name upload strategy as a named profile. Up to 10 profiles are stored in the current browser; saving the same name updates it, and applying a profile changes the interface immediately. **Restore system defaults** resets the complete preference set, including panel and list-column widths; it is separate from layout presets.
+
+Settings can also enable:
 
 - **Recent**: records recently selected paths for your account.
 - **Favorite files**: marks files only and lists up to eight shortcuts in the sidebar. The heading links to a dedicated, searchable page at `collection=favorites`, where every saved file can be opened or removed.

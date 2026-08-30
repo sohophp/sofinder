@@ -19,7 +19,7 @@ const labels = computed(() => lang.value.startsWith('zh-Hant')
       <span>{{ labels.eyebrow }}</span>
     </div>
     <CodePanel
-      code="composer require sohophp/sofinder:^0.1@beta"
+      code="composer require sohophp/sofinder-symfony:^1.1"
       language="Composer"
       :copy-label="labels.copy"
       :copied-label="labels.copied"

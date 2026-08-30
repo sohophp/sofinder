@@ -1,10 +1,55 @@
-# SoFinder
+<p align="center">
+	<a href="https://sofinder.sohophp.app/zh-CN/">
+		<img src="docs/public/logo.svg" width="96" height="96" alt="SoFinder 标志">
+	</a>
+</p>
 
-其他语言：[English](README.md) · [繁體中文](README.zh-TW.md)
+<h1 align="center">SoFinder</h1>
+
+<p align="center"><strong>面向现代 PHP 应用的安全、可扩展文件管理器。</strong></p>
+
+<p align="center">
+	<a href="https://github.com/sohophp/sofinder/actions/workflows/ci.yml"><img src="https://github.com/sohophp/sofinder/actions/workflows/ci.yml/badge.svg" alt="持续集成状态"></a>
+	<a href="https://packagist.org/packages/sohophp/sofinder-symfony"><img src="https://img.shields.io/packagist/v/sohophp/sofinder-symfony.svg?label=stable" alt="最新稳定版本"></a>
+	<a href="https://packagist.org/packages/sohophp/sofinder-symfony"><img src="https://img.shields.io/packagist/dt/sohophp/sofinder-symfony.svg" alt="总下载量"></a>
+	<a href="https://packagist.org/packages/sohophp/sofinder-symfony"><img src="https://img.shields.io/packagist/dependency-v/sohophp/sofinder-symfony/php.svg" alt="PHP 版本要求"></a>
+	<a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-16865c.svg" alt="MIT 许可证"></a>
+</p>
+
+<p align="center">
+	<a href="https://sofinder.sohophp.app/zh-CN/">完整文档</a> ·
+	<a href="https://sofinder.sohophp.app/zh-CN/getting-started">快速开始</a> ·
+	<a href="https://sofinder.sohophp.app/zh-CN/api-reference">API 参考</a> ·
+	<a href="README.md">English</a> ·
+	<a href="README.zh-TW.md">繁體中文</a>
+</p>
 
 SoFinder 是原创、采 MIT 授权的网页文件管理器，支持 PHP 8.2 至 8.5，包含与框架无关的核心、Symfony 6.4／7.4 Bundle，以及 React 用户界面。
 
 本项目采独立设计，不包含专有文件管理器的程序码、美术、翻译、样式或其他资产。Runtime 相依软件包声明记录于 `THIRD_PARTY_NOTICES.md`。
+
+## 界面预览
+
+<p align="center">
+	<a href="docs/public/screenshots/browser.png">
+		<img src="docs/public/screenshots/browser.png" alt="包含资源导航、缩略图与文件详情的 SoFinder 文件管理器" width="100%">
+	</a>
+	<br>
+	<sub><strong>文件工作区</strong> — 资源导航、可视化浏览、收藏与文件详情。</sub>
+</p>
+
+<table>
+	<tr>
+		<td width="50%" align="center">
+			<a href="docs/public/screenshots/image-editor.png"><img src="docs/public/screenshots/image-editor.png" alt="SoFinder 图片裁剪编辑器"></a>
+			<br><sub><strong>图片编辑器</strong> — 裁剪、旋转、缩放、优化与水印。</sub>
+		</td>
+		<td width="50%" align="center">
+			<a href="docs/public/screenshots/security-status.png"><img src="docs/public/screenshots/security-status.png" alt="SoFinder 安全与文档预览状态"></a>
+			<br><sub><strong>运行状态</strong> — 病毒扫描与文档预览就绪状态。</sub>
+		</td>
+	</tr>
+</table>
 
 完整支持的宿主包括 Symfony 6.4／7.4、Laravel 12／13，以及供 Slim 4、Mezzio 3 和
 纯 PHP 使用的共享 PSR-15 Bridge；同时保留已测试且不依赖框架 Request／Container
@@ -14,19 +59,27 @@ SoFinder 是原创、采 MIT 授权的网页文件管理器，支持 PHP 8.2 至
 
 普通用户可阅读[文件管理器指南](https://sofinder.sohophp.app/zh-CN/user-guide)、[图片管理](https://sofinder.sohophp.app/zh-CN/image-guide)和[编辑器集成](https://sofinder.sohophp.app/zh-CN/editor-integrations)。开发者请使用[集成指南](https://sofinder.sohophp.app/zh-CN/developer-guide)及 [HTTP API 参考](https://sofinder.sohophp.app/zh-CN/api-reference)。
 
-## Symfony 安装
+## 安装
+
+请按宿主框架选择软件包：
+
+| 应用 | Composer 软件包 | 完整步骤 |
+| --- | --- | --- |
+| Symfony 6.4／7.4 | `sohophp/sofinder-symfony:^1.1` | [Symfony 安装](https://sofinder.sohophp.app/zh-CN/getting-started) |
+| Laravel 12／13 | `sohophp/sofinder-laravel:^1.1` | [Laravel 集成](https://sofinder.sohophp.app/zh-CN/framework-integrations#laravel-12-和-13) |
+| Slim 4／Mezzio 3／纯 PHP | `sohophp/sofinder-psr15:^1.1` | [PSR-15 集成](https://sofinder.sohophp.app/zh-CN/framework-integrations#共享-psr-15-runtime) |
+| 仅领域服务，无浏览器/API | `sohophp/sofinder-core:^1.1` | [Core 集成](https://sofinder.sohophp.app/zh-CN/framework-integrations#仅使用-core-和其他框架) |
+
+### Symfony
 
 新的 Symfony 应用应直接安装稳定 Bridge：
 
 ```bash
-composer require sohophp/sofinder-symfony:^1.0
+composer require sohophp/sofinder-symfony:^1.1
 ```
 
-现有应用可以继续使用兼容 Meta Package `sohophp/sofinder:^1.0`；两个包名都公开相同的
+现有应用可以继续使用兼容 Meta Package `sohophp/sofinder:^1.1`；两个包名都公开相同的
 `SohoPHP\SoFinder` namespace。
-
-Laravel 应用安装 `sohophp/sofinder-laravel:^1.1`；Slim、Mezzio 与纯 PHP PSR-15
-应用安装 `sohophp/sofinder-psr15:^1.1`。
 
 完整文件站位于 <https://sofinder.sohophp.app/zh-CN/>。注册 `SohoPHP\SoFinder\SoFinderBundle`，导入 `@SoFinderBundle/Resources/config/routes.yaml`，并在 `so_finder.resources` 配置一个或多个资源类型。完整示例请见[简体中文 Symfony 整合](https://sofinder.sohophp.app/zh-CN/symfony)。
 

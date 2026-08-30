@@ -114,12 +114,9 @@ The complete executable host is available in
 
 ## Shared PSR-15 runtime
 
-Slim, Mezzio and plain PHP use the same application factory. Install the bridge
-and one PSR-7/PSR-17 implementation:
-
-```bash
-composer require sohophp/sofinder-psr15:^1.1 nyholm/psr7:^1.8
-```
+Slim, Mezzio and plain PHP use the same application factory. Each host must
+install the bridge plus its own PSR-7/PSR-17 implementation. Use the complete
+command in the matching host section below rather than combining examples.
 
 Create the four mandatory host services. They must use the application's real
 identity, policy and session; omitting them is intentionally a construction-time
@@ -168,7 +165,7 @@ Install Slim and its PSR-7 implementation, then register the central route
 catalog before running the app:
 
 ```bash
-composer require slim/slim:^4.15 slim/psr7:^1.7
+composer require sohophp/sofinder-psr15:^1.1 slim/slim:^4.15 slim/psr7:^1.7
 ```
 
 ```php
@@ -193,7 +190,7 @@ Install Mezzio and a router, create the shared runtime, then register it before
 the normal routing and dispatch middleware run:
 
 ```bash
-composer require mezzio/mezzio:^3.24 mezzio/mezzio-fastroute:^3.13 laminas/laminas-diactoros:^3.6
+composer require sohophp/sofinder-psr15:^1.1 mezzio/mezzio:^3.24 mezzio/mezzio-fastroute:^3.13 laminas/laminas-diactoros:^3.6
 ```
 
 ```php
@@ -205,6 +202,12 @@ $app->pipe(new DispatchMiddleware());
 ```
 
 ### Plain PHP
+
+Install the bridge, PSR-7 factories and the SAPI response emitter used below:
+
+```bash
+composer require sohophp/sofinder-psr15:^1.1 laminas/laminas-diactoros:^3.6 laminas/laminas-httphandlerrunner:^2.13
+```
 
 A framework-free front controller can send the request through the supplied
 middleware and emit its PSR-7 response:
@@ -226,6 +229,13 @@ The fallback handler receives every request outside `/sofinder` and every
 unmatched path. A ready-to-run implementation of the shared factory and all
 three front controllers is in
 [`examples/psr15`](https://github.com/sohophp/sofinder/tree/main/examples/psr15).
+
+For every PSR-15 host, make the state and file directories writable by the PHP
+runtime and configure the web server to send application requests through the
+front controller. Then verify `/sofinder/live`, `/sofinder/health` and
+`/sofinder/browser`. A `403 access_denied` response means routing works but the
+host actor or authorization service denied access; do not replace it with an
+anonymous allow fallback.
 
 ## Core-only and other frameworks
 

@@ -105,12 +105,8 @@ php artisan sofinder:security:audit
 
 ## 共享 PSR-15 Runtime
 
-Slim、Mezzio 和纯 PHP 共用同一个 Application Factory。先安装 Bridge 和一套
-PSR-7／PSR-17 实现：
-
-```bash
-composer require sohophp/sofinder-psr15:^1.1 nyholm/psr7:^1.8
-```
+Slim、Mezzio 和纯 PHP 共用同一个 Application Factory。每种宿主都必须安装 Bridge 和
+自己使用的 PSR-7／PSR-17 实现。请直接使用对应宿主章节中的完整命令，不要混合示例。
 
 然后建立四个必须由宿主提供的 Service。它们必须连接应用真实的身份、权限和 Session；
 缺失任何一项都会在构造阶段失败。
@@ -155,7 +151,7 @@ Provider 必须把 Token 绑定到可信宿主 Session 并进行安全比较，�
 安装 Slim 及其 PSR-7 实现，并在运行应用前注册中央路由清单：
 
 ```bash
-composer require slim/slim:^4.15 slim/psr7:^1.7
+composer require sohophp/sofinder-psr15:^1.1 slim/slim:^4.15 slim/psr7:^1.7
 ```
 
 ```php
@@ -178,7 +174,7 @@ $app->run();
 安装 Mezzio 和 Router，建立共享 Runtime，并在常规路由与 Dispatch Middleware 运行前注册：
 
 ```bash
-composer require mezzio/mezzio:^3.24 mezzio/mezzio-fastroute:^3.13 laminas/laminas-diactoros:^3.6
+composer require sohophp/sofinder-psr15:^1.1 mezzio/mezzio:^3.24 mezzio/mezzio-fastroute:^3.13 laminas/laminas-diactoros:^3.6
 ```
 
 ```php
@@ -190,6 +186,12 @@ $app->pipe(new DispatchMiddleware());
 ```
 
 ### 纯 PHP
+
+安装 Bridge、PSR-7 Factory 和下例使用的 SAPI Response Emitter：
+
+```bash
+composer require sohophp/sofinder-psr15:^1.1 laminas/laminas-diactoros:^3.6 laminas/laminas-httphandlerrunner:^2.13
+```
 
 无框架 Front Controller 可以把请求交给 Bridge 的 Middleware，再发送 PSR-7 Response：
 
@@ -209,6 +211,11 @@ $response = $sofinder->middleware()->process(
 `/sofinder` 以外及无法匹配的请求会交给 `$fallbackHandler`。共享 Factory 和三种 Front
 Controller 的可运行实现位于
 [`examples/psr15`](https://github.com/sohophp/sofinder/tree/main/examples/psr15)。
+
+对每种 PSR-15 宿主，都要确保 PHP Runtime 可写状态目录和文件目录，并由 Web Server 把应用
+请求转发到 Front Controller。然后检查 `/sofinder/live`、`/sofinder/health` 和
+`/sofinder/browser`。出现 `403 access_denied` 表示路由有效，但宿主 Actor 或授权 Service
+拒绝了访问；不要改成匿名放行来消除错误。
 
 ## 仅使用 Core 和其他框架
 

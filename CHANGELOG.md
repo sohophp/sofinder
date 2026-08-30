@@ -2,6 +2,19 @@
 
 ## Unreleased
 
+## 1.1.3 - 2026-08-30
+
+- Rework installation guidance around explicit Symfony, Laravel, Slim,
+  Mezzio, framework-free PSR-15 and Core-only paths, update public install
+  commands to the current 1.1 line, and add checks that reject retired
+  release commands.
+- Add a three-language CMS editor guide with real product screenshots and
+  expose it through the documentation home page, navigation, footer and
+  post-install guidance.
+- Refresh the three repository READMEs with a clearer project overview,
+  framework-specific package selection and an authentic interface gallery;
+  keep documentation screenshots outside Composer distribution archives.
+
 ## 1.1.2 - 2026-08-30
 
 - Treat an explicit picker `resource` as a locked navigation and result

@@ -8,13 +8,13 @@ and the compiled React browser assets.
 Existing applications should keep the compatibility package:
 
 ```bash
-composer require sohophp/sofinder:^1.0
+composer require sohophp/sofinder:^1.1
 ```
 
 Direct bridge installation is also supported:
 
 ```bash
-composer require sohophp/sofinder-symfony:^1.0
+composer require sohophp/sofinder-symfony:^1.1
 ```
 
 Both package names expose the existing `SohoPHP\\SoFinder` namespace. Import

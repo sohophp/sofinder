@@ -131,6 +131,26 @@ test('Simplified Chinese navigation keeps localized routes', async ({ page }) =>
   expect(hrefs.every((href) => href.startsWith('/zh-CN/') || /^https:\/\//.test(href))).toBe(true)
 })
 
+test('CMS editor guides load real screenshots and localized navigation', async ({ page }) => {
+  for (const [path, heading, guideLabel] of [
+    ['/cms-user-guide', 'CMS editor guide', 'CMS editor quick guide'],
+    ['/zh-CN/cms-user-guide', 'CMS 内容编辑者指南', 'CMS 内容编辑快速指南'],
+    ['/zh-TW/cms-user-guide', 'CMS 內容編輯者指南', 'CMS 內容編輯快速指南'],
+  ]) {
+    await page.setViewportSize({ width: 1280, height: 900 })
+    await page.goto(path, { waitUntil: 'networkidle' })
+    await expect(page.getByRole('heading', { level: 1, name: new RegExp(`^${heading}`) })).toBeVisible()
+    await expect(page.locator('.VPSidebar')).toContainText(guideLabel)
+    const screenshots = page.locator('.vp-doc img[src*="/screenshots/"]')
+    await expect(screenshots).toHaveCount(2)
+    await expect.poll(() => screenshots.evaluateAll((images) => images.every((image) => (image as HTMLImageElement).naturalWidth === 1440))).toBe(true)
+    expect(await page.evaluate(() => document.documentElement.scrollWidth <= document.documentElement.clientWidth)).toBe(true)
+
+    await page.setViewportSize({ width: 390, height: 844 })
+    expect(await page.evaluate(() => document.documentElement.scrollWidth <= document.documentElement.clientWidth)).toBe(true)
+  }
+})
+
 test('local search exposes page and section results', async ({ page }) => {
   await page.setViewportSize({ width: 1280, height: 900 })
   await page.goto('/', { waitUntil: 'networkidle' })

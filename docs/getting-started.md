@@ -1,13 +1,33 @@
 ---
 title: Installation and quick start
-description: Install SoFinder in Symfony 6.4 or 7.4 and configure a secure local file resource.
+description: Choose and install SoFinder for Symfony, Laravel, Slim, Mezzio or framework-free PHP.
 ---
 
 # Installation and quick start
 
-This guide creates an authenticated file browser at `/sofinder/browser` backed by a local directory outside the public web root.
+Choose the package for the application that will host SoFinder. Framework
+bridges provide the browser and HTTP API; Core by itself provides neither.
 
-## Requirements
+| Your application | Install | Detailed steps |
+| --- | --- | --- |
+| Symfony 6.4 or 7.4 | `sohophp/sofinder-symfony:^1.1` | Continue below |
+| Laravel 12 or 13 | `sohophp/sofinder-laravel:^1.1` | [Laravel integration](/framework-integrations#laravel-12-and-13) |
+| Slim 4 | `sohophp/sofinder-psr15:^1.1` | [Slim integration](/framework-integrations#slim-4) |
+| Mezzio 3 | `sohophp/sofinder-psr15:^1.1` | [Mezzio integration](/framework-integrations#mezzio-3) |
+| No framework | `sohophp/sofinder-psr15:^1.1` | [Plain PHP integration](/framework-integrations#plain-php) |
+| Domain services only, no browser/API | `sohophp/sofinder-core:^1.1` | [Core-only integration](/framework-integrations#core-only-and-other-frameworks) |
+
+Do not install the Symfony compatibility Meta Package in Laravel or PSR-15
+applications: `sohophp/sofinder` resolves the Symfony bridge. With the
+documented defaults, every full integration opens at `/sofinder/browser`.
+
+## Symfony quick start
+
+The following steps create an authenticated browser backed by a private local
+directory. For advanced ACL, delivery and UI options, continue with the
+[complete Symfony integration guide](/symfony).
+
+### Requirements
 
 - PHP 8.2 through 8.5
 - Symfony 6.4 or 7.4
@@ -16,17 +36,17 @@ This guide creates an authenticated file browser at `/sofinder/browser` backed b
 - Optional `ext-gd` or `ext-imagick` for thumbnails and image editing
 - Optional `ext-zip` for ZIP downloads
 
-## 1. Install the package
+### 1. Install the package
 
 ```bash
-composer require sohophp/sofinder-symfony:^1.0
+composer require sohophp/sofinder-symfony:^1.1
 ```
 
-Existing applications may keep the compatible `sohophp/sofinder:^1.0` Meta
+Existing applications may keep the compatible `sohophp/sofinder:^1.1` Meta
 Package. Both package names expose the same namespace and Bundle entry point.
 Review the [upgrade guide](/upgrading) before changing an existing installation.
 
-## 2. Register the bundle
+### 2. Register the bundle
 
 Add the bundle to `config/bundles.php` if your application does not register it automatically:
 
@@ -39,7 +59,7 @@ return [
 ];
 ```
 
-## 3. Import the routes
+### 3. Import the routes
 
 Create `config/routes/so_finder.yaml`:
 
@@ -51,7 +71,7 @@ sofinder:
 
 The browser is now routed at `/sofinder/browser`; JSON, upload, content and asset routes share the same prefix.
 
-## 4. Configure a private local resource
+### 4. Configure a private local resource
 
 Create `config/packages/so_finder.yaml`:
 
@@ -86,7 +106,7 @@ with a narrower purpose. PHP, scripts, HTML and executable formats remain on
 the default denylist; an empty `allowed_extensions` list means “allow every
 extension not denied”, not “allow nothing”.
 
-## 5. Protect the route
+### 5. Protect the route
 
 SoFinder's default authorization requires a fully authenticated Symfony user. Your application must ensure that the route prefix is covered by an appropriate firewall and access policy. For example:
 
@@ -100,7 +120,7 @@ security:
 
 The host application remains responsible for its login flow and user provider.
 
-## 6. Validate the installation
+### 6. Validate the installation
 
 ```bash
 bin/console cache:warmup
@@ -112,7 +132,9 @@ Then open `/sofinder/browser` as an authenticated user. Confirm that you can cre
 
 ## Next steps
 
-- Give users the [file manager](/user-guide), [image](/image-guide) and [CKEditor 4](/ckeditor4) guides.
+- Give content editors the [CMS editor guide](/cms-user-guide) first. Use the
+  [complete file manager guide](/user-guide), [image guide](/image-guide) and
+  [editor integration guides](/editor-integrations) as deeper references.
 - Review every option in [configuration](/configuration).
 - Choose the correct [public or proxy delivery model](/symfony#host-application-entry-routes).
 - Add [S3-compatible storage](/s3) without pulling AWS dependencies into the core package.

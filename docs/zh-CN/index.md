@@ -29,8 +29,8 @@ features:
   - title: 完整文件浏览器
     icon: { src: /feature-browser.svg, alt: '' }
     details: 响应式文件浏览器，支持目录、预览、搜索、拖放、批量操作与回收站。
-    link: /zh-CN/user-guide
-    linkText: 浏览界面能力
+    link: /zh-CN/cms-user-guide
+    linkText: 内容编辑快速入门
   - title: 弹性存储
     icon: { src: /feature-storage.svg, alt: '' }
     details: 支持本机存储及 AWS S3、Cloudflare R2、MinIO 等 S3 兼容存储。
@@ -56,10 +56,10 @@ features:
 ## 安装
 
 ```bash
-composer require sohophp/sofinder-symfony:^1.0
+composer require sohophp/sofinder-symfony:^1.1
 ```
 
-现有应用可以继续使用兼容 Meta Package `sohophp/sofinder:^1.0`；两个包名都公开相同的
+现有应用可以继续使用兼容 Meta Package `sohophp/sofinder:^1.1`；两个包名都公开相同的
 namespace。接着注册 Bundle、导入路由并建立至少一个存储资源。请从
 [安装与快速开始](/zh-CN/getting-started)开始，完整选项可参考[配置参考](/zh-CN/configuration)。
 
@@ -70,4 +70,7 @@ Symfony 6.4／7.4、Laravel 12／13 与共享 PSR-15 Host 均是正式支持的 
 PHP 7.2 降级；Legacy 可行性始终独立评估。
 :::
 
-已经在使用 SoFinder？请阅读[文件管理器指南](/zh-CN/user-guide)、[图片管理](/zh-CN/image-guide)和[主流编辑器集成](/zh-CN/editor-integrations)。开发集成请查看[开发者指南](/zh-CN/developer-guide)及 [HTTP API 参考](/zh-CN/api-reference)。
+在 CMS 中使用 SoFinder？请先阅读 [CMS 内容编辑者指南](/zh-CN/cms-user-guide)。
+需要了解全部文件操作时，继续阅读[完整文件管理器指南](/zh-CN/user-guide)和
+[图片管理](/zh-CN/image-guide)。开发集成请查看[开发者指南](/zh-CN/developer-guide)及
+[HTTP API 参考](/zh-CN/api-reference)。

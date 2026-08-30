@@ -29,8 +29,8 @@ features:
   - title: Productive file browser
     icon: { src: /feature-browser.svg, alt: '' }
     details: Responsive file browser with folders, previews, search, drag and drop, bulk operations and recycle bin.
-    link: /user-guide
-    linkText: Explore the interface
+    link: /cms-user-guide
+    linkText: Start as a content editor
   - title: Flexible storage
     icon: { src: /feature-storage.svg, alt: '' }
     details: Local and S3-compatible storage including AWS S3, Cloudflare R2 and MinIO.
@@ -56,10 +56,10 @@ features:
 ## Install in a Symfony application
 
 ```bash
-composer require sohophp/sofinder-symfony:^1.0
+composer require sohophp/sofinder-symfony:^1.1
 ```
 
-Existing applications may keep `sohophp/sofinder:^1.0`, the compatible Meta
+Existing applications may keep `sohophp/sofinder:^1.1`, the compatible Meta
 Package. Both package names expose the same namespace. Register the bundle,
 import its routes and define at least one storage resource. The [installation
 guide](/getting-started) provides a working minimal configuration; the
@@ -87,4 +87,7 @@ downgraded for PHP 7.2; Legacy feasibility is evaluated independently.
 
 Start with the [storage adapter guide](/storage-adapters), or go directly to [S3-compatible storage](/s3).
 
-Using an existing installation? Start with the [file manager user guide](/user-guide), [image guide](/image-guide) or [editor integrations](/editor-integrations). Building an integration? See the [developer guide](/developer-guide) and [HTTP API reference](/api-reference).
+Using SoFinder inside a CMS? Start with the [CMS editor guide](/cms-user-guide).
+For every file-management control, continue with the [complete user guide](/user-guide)
+and [image guide](/image-guide). Building an integration? See the [developer
+guide](/developer-guide) and [HTTP API reference](/api-reference).

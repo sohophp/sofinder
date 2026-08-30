@@ -8,7 +8,13 @@ const sourcePages = readdirSync(docsRoot)
   .sort()
 const sourceRoutes = new Set(sourcePages.map((name) => name === 'index.md' ? '' : basename(name, '.md')))
 const errors = []
-const stableSymfonyInstall = 'composer require sohophp/sofinder-symfony:^1.0'
+const stableSymfonyInstall = 'composer require sohophp/sofinder-symfony:^1.1'
+const retiredInstallPatterns = [
+  'composer require sohophp/sofinder:^1.0',
+  'composer require sohophp/sofinder-symfony:^1.0',
+  'composer require sohophp/sofinder:^0.1@beta',
+  'composer require sohophp/sofinder-symfony:^0.1@beta',
+]
 
 const openApi = JSON.parse(readFileSync(join(docsRoot, 'public', 'openapi.json'), 'utf8'))
 const httpRoutes = []
@@ -71,9 +77,20 @@ for (const prefix of ['', ...locales]) {
     if (!content.includes(stableSymfonyInstall)) {
       errors.push(`${relativePath}: missing stable Symfony install command`)
     }
-    if (content.includes('composer require sohophp/sofinder:^0.1@beta')) {
-      errors.push(`${relativePath}: still recommends the retired beta line`)
+    for (const retiredInstall of retiredInstallPatterns) {
+      if (content.includes(retiredInstall)) errors.push(`${relativePath}: still recommends a retired release line`)
     }
+  }
+}
+
+for (const component of ['HomeInstallCard.vue', 'HomeSections.vue']) {
+  const relativePath = `.vitepress/theme/components/${component}`
+  const content = readFileSync(join(docsRoot, relativePath), 'utf8')
+  if (!content.includes(stableSymfonyInstall)) {
+    errors.push(`${relativePath}: missing stable Symfony install command`)
+  }
+  for (const retiredInstall of retiredInstallPatterns) {
+    if (content.includes(retiredInstall)) errors.push(`${relativePath}: still recommends a retired release line`)
   }
 }
 
