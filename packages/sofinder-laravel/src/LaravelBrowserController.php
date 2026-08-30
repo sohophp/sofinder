@@ -10,9 +10,9 @@ use SohoPHP\SoFinder\Contract\RequestContextProviderInterface;
 use SohoPHP\SoFinder\Http\BrowserPage;
 use SohoPHP\SoFinder\Http\SecurityHeaders;
 
-final readonly class LaravelBrowserController
+final class LaravelBrowserController
 {
-    public function __construct(private BrowserPage $page, private RequestContextProviderInterface $contexts)
+    public function __construct(private readonly BrowserPage $page, private readonly RequestContextProviderInterface $contexts)
     {
     }
 

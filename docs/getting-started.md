@@ -29,8 +29,8 @@ directory. For advanced ACL, delivery and UI options, continue with the
 
 ### Requirements
 
-- PHP 8.2 through 8.5
-- Symfony 6.4 or 7.4
+- PHP 8.1 through 8.5 with Symfony 6.4
+- PHP 8.2 through 8.5 with Symfony 7.4
 - `ext-fileinfo`, `ext-json` and `ext-mbstring`
 - A Symfony security firewall that authenticates users accessing SoFinder
 - Optional `ext-gd` or `ext-imagick` for thumbnails and image editing

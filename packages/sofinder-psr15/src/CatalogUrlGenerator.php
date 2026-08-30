@@ -7,9 +7,9 @@ namespace SohoPHP\SoFinder\Psr15;
 use SohoPHP\SoFinder\Contract\EndpointUrlGeneratorInterface;
 use SohoPHP\SoFinder\Http\EndpointCatalog;
 
-final readonly class CatalogUrlGenerator implements EndpointUrlGeneratorInterface
+final class CatalogUrlGenerator implements EndpointUrlGeneratorInterface
 {
-    public function __construct(private string $prefix = '/sofinder', private string $baseUrl = '')
+    public function __construct(private readonly string $prefix = '/sofinder', private readonly string $baseUrl = '')
     {
     }
 

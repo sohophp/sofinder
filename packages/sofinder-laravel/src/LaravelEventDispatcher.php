@@ -7,9 +7,9 @@ namespace SohoPHP\SoFinder\Laravel;
 use Illuminate\Contracts\Events\Dispatcher;
 use Psr\EventDispatcher\EventDispatcherInterface;
 
-final readonly class LaravelEventDispatcher implements EventDispatcherInterface
+final class LaravelEventDispatcher implements EventDispatcherInterface
 {
-    public function __construct(private Dispatcher $events)
+    public function __construct(private readonly Dispatcher $events)
     {
     }
 

@@ -18,17 +18,17 @@ use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use SohoPHP\SoFinder\Asset\AssetOperationPublisher;
 
-final readonly class AssetApiController
+final class AssetApiController
 {
     public function __construct(
-        private FileManager $files,
-        private AssetReferenceFactory $references,
-        private AssetCatalogInterface $catalog,
-        private WorkspaceProvider $workspaces,
-        private CsrfGuard $csrf,
-        private bool $enabled,
-        private ?AssetOperationPublisher $events = null,
-        private ?AssetActions $actions = null,
+        private readonly FileManager $files,
+        private readonly AssetReferenceFactory $references,
+        private readonly AssetCatalogInterface $catalog,
+        private readonly WorkspaceProvider $workspaces,
+        private readonly CsrfGuard $csrf,
+        private readonly bool $enabled,
+        private readonly ?AssetOperationPublisher $events = null,
+        private readonly ?AssetActions $actions = null,
     ) {
     }
 

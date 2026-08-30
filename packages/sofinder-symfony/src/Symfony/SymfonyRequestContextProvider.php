@@ -9,9 +9,9 @@ use SohoPHP\SoFinder\Value\RequestContext;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\RequestStack;
 
-final readonly class SymfonyRequestContextProvider implements RequestContextProviderInterface
+final class SymfonyRequestContextProvider implements RequestContextProviderInterface
 {
-    public function __construct(private RequestStack $requests)
+    public function __construct(private readonly RequestStack $requests)
     {
     }
 

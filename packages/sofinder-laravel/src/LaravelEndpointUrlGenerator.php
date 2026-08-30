@@ -7,9 +7,9 @@ namespace SohoPHP\SoFinder\Laravel;
 use Illuminate\Routing\UrlGenerator;
 use SohoPHP\SoFinder\Contract\EndpointUrlGeneratorInterface;
 
-final readonly class LaravelEndpointUrlGenerator implements EndpointUrlGeneratorInterface
+final class LaravelEndpointUrlGenerator implements EndpointUrlGeneratorInterface
 {
-    public function __construct(private UrlGenerator $urls)
+    public function __construct(private readonly UrlGenerator $urls)
     {
     }
 

@@ -9,12 +9,12 @@ use Psr\Http\Message\ServerRequestInterface;
 use Psr\Http\Server\MiddlewareInterface;
 use Psr\Http\Server\RequestHandlerInterface;
 
-final readonly class SoFinderMiddleware implements MiddlewareInterface
+final class SoFinderMiddleware implements MiddlewareInterface
 {
     public function __construct(
-        private RequestHandlerInterface $soFinder,
-        private string $prefix = '/sofinder',
-        private RouteMatcher $routes = new RouteMatcher(),
+        private readonly RequestHandlerInterface $soFinder,
+        private readonly string $prefix = '/sofinder',
+        private readonly RouteMatcher $routes = new RouteMatcher(),
     ) {
     }
 

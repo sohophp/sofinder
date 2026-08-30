@@ -15,11 +15,11 @@ use Symfony\Component\HttpKernel\Event\ExceptionEvent;
 use Symfony\Component\HttpKernel\KernelEvents;
 use SohoPHP\SoFinder\Exception\SoFinderException;
 
-final readonly class VersionedOperationSubscriber implements EventSubscriberInterface
+final class VersionedOperationSubscriber implements EventSubscriberInterface
 {
     private const OPERATIONS = ['upload', 'overwrite', 'rename', 'copy', 'move', 'delete', 'trash_restore', 'trash_delete'];
 
-    public function __construct(private EventDispatcherInterface $events, private WorkspaceProvider $workspaces, private AssetCatalogInterface $assets, private RequestStack $requests, private bool $assetsEnabled)
+    public function __construct(private readonly EventDispatcherInterface $events, private readonly WorkspaceProvider $workspaces, private readonly AssetCatalogInterface $assets, private readonly RequestStack $requests, private readonly bool $assetsEnabled)
     {
     }
 

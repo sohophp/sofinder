@@ -8,9 +8,9 @@ use Illuminate\Http\Request;
 use SohoPHP\SoFinder\Contract\RequestContextProviderInterface;
 use SohoPHP\SoFinder\Value\RequestContext;
 
-final readonly class LaravelRequestContextProvider implements RequestContextProviderInterface
+final class LaravelRequestContextProvider implements RequestContextProviderInterface
 {
-    private \Closure $requests;
+    private readonly \Closure $requests;
 
     /** @param callable():Request $requests */
     public function __construct(callable $requests)

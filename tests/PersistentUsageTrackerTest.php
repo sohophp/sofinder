@@ -72,7 +72,7 @@ final class PersistentUsageTrackerTest extends TestCase
         $tracker = new PersistentUsageTracker($this->state);
         self::assertSame(4, $tracker->usage($resource));
         $marker = $this->state . '/child-entered';
-        $autoload = dirname(__DIR__) . '/vendor/autoload.php';
+        $autoload = dirname((new \ReflectionClass(\Composer\Autoload\ClassLoader::class))->getFileName()) . '/../autoload.php';
         $code = sprintf(
             'require %s; $resource=new SohoPHP\\SoFinder\\Value\\ResourceStorage(new SohoPHP\\SoFinder\\Value\\ResourceType("Files",%s,"/files",["txt"]),new SohoPHP\\SoFinder\\Storage\\LocalStorageAdapter(%s,"/files")); $tracker=new SohoPHP\\SoFinder\\Usage\\PersistentUsageTracker(%s); $tracker->mutate($resource,static function(int $current):array{file_put_contents(%s,"1");usleep(400000);return ["value"=>null,"delta"=>0];});',
             var_export($autoload, true),

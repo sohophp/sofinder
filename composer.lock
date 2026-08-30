@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "fddc2555566a6a1fb105a38cfb946441",
+    "content-hash": "7abca2b8af504f7117df9dbd6c69abe5",
     "packages": [
         {
             "name": "nyholm/psr7",
@@ -407,13 +407,13 @@
             "dist": {
                 "type": "path",
                 "url": "packages/sofinder-core",
-                "reference": "14a9e0282aee2b957fd62bbd7e2787f8d9d5140b"
+                "reference": "e82d47ce1d48e863205a9a5eb1d48fbd67e4b143"
             },
             "require": {
                 "ext-fileinfo": "*",
                 "ext-json": "*",
                 "ext-mbstring": "*",
-                "php": "^8.2",
+                "php": "^8.1",
                 "psr/event-dispatcher": "^1.0",
                 "psr/log": "^3.0"
             },
@@ -456,10 +456,10 @@
             "dist": {
                 "type": "path",
                 "url": "packages/sofinder-http",
-                "reference": "e1ed89ec67561a488ab05d9242e64cc203bc424d"
+                "reference": "b74059c74f49bb99af837f67e2ed8db9fece876b"
             },
             "require": {
-                "php": "^8.2",
+                "php": "^8.1",
                 "psr/http-factory": "^1.1",
                 "psr/http-message": "^1.1 || ^2.0",
                 "psr/http-server-handler": "^1.0",
@@ -504,14 +504,14 @@
             "dist": {
                 "type": "path",
                 "url": "packages/sofinder-symfony",
-                "reference": "feaf3e728b0e86946f3fde36c07a685f2dfaa98a"
+                "reference": "5d076c731af2a3896389db750d9acc9e5fda00da"
             },
             "require": {
                 "ext-fileinfo": "*",
                 "ext-json": "*",
                 "ext-mbstring": "*",
                 "nyholm/psr7": "^1.8",
-                "php": "^8.2",
+                "php": "^8.1",
                 "psr/event-dispatcher": "^1.0",
                 "psr/log": "^3.0",
                 "sohophp/sofinder-core": "self.version",
@@ -9286,7 +9286,7 @@
             "dist": {
                 "type": "path",
                 "url": "packages/sofinder-laravel",
-                "reference": "6beccf6c6970205e61c2589a5a3e58ecf19e4387"
+                "reference": "1257a1810360929d8b3b5709d6697d4eddc25568"
             },
             "require": {
                 "illuminate/auth": "^12.0 || ^13.0",
@@ -9329,7 +9329,7 @@
             "license": [
                 "MIT"
             ],
-            "description": "Experimental Laravel 12/13 bridge for SoFinder",
+            "description": "Laravel 12/13 bridge for SoFinder",
             "homepage": "https://sofinder.sohophp.app/",
             "keywords": [
                 "file-manager",
@@ -9352,10 +9352,10 @@
             "dist": {
                 "type": "path",
                 "url": "packages/sofinder-psr15",
-                "reference": "2340ca2ee3a5c9600c84413aa494b9a96cc46067"
+                "reference": "46ba5385c012bcf6c54317a3510507f995c25a46"
             },
             "require": {
-                "php": "^8.2",
+                "php": "^8.1",
                 "psr/event-dispatcher": "^1.0",
                 "psr/http-factory": "^1.1",
                 "psr/http-message": "^1.1 || ^2.0",
@@ -9386,7 +9386,7 @@
             "license": [
                 "MIT"
             ],
-            "description": "Experimental PSR-15 bridge for SoFinder",
+            "description": "PSR-15 bridge for SoFinder, supporting Slim 4, Mezzio 3 and framework-free PHP",
             "homepage": "https://sofinder.sohophp.app/",
             "keywords": [
                 "file-manager",
@@ -10998,7 +10998,7 @@
     "prefer-stable": true,
     "prefer-lowest": false,
     "platform": {
-        "php": "^8.2"
+        "php": "^8.1"
     },
     "platform-dev": {},
     "platform-overrides": {

@@ -10,12 +10,12 @@ use SohoPHP\SoFinder\Contract\MetadataStoreInterface;
 use SohoPHP\SoFinder\Event\OperationEvent;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 
-final readonly class MetadataOperationSubscriber implements EventSubscriberInterface
+final class MetadataOperationSubscriber implements EventSubscriberInterface
 {
     public function __construct(
-        private MetadataStoreInterface $metadata,
-        private ActorProviderInterface $actors,
-        private LoggerInterface $logger,
+        private readonly MetadataStoreInterface $metadata,
+        private readonly ActorProviderInterface $actors,
+        private readonly LoggerInterface $logger,
     ) {
     }
 

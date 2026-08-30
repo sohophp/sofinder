@@ -12,12 +12,12 @@ use Psr\Http\Server\RequestHandlerInterface;
  * Requiring HostServices here makes omission of authorization, actor, CSRF or
  * event dispatching a construction-time error instead of an anonymous default.
  */
-final readonly class SoFinderApplication
+final class SoFinderApplication
 {
     public function __construct(
-        private RequestHandlerInterface $dispatcher,
-        private HostServices $services,
-        private string $prefix = '/sofinder',
+        private readonly RequestHandlerInterface $dispatcher,
+        private readonly HostServices $services,
+        private readonly string $prefix = '/sofinder',
     ) {
     }
 

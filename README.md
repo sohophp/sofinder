@@ -24,7 +24,7 @@
 	<a href="README.zh-TW.md">繁體中文</a>
 </p>
 
-SoFinder is an MIT-licensed web file manager for PHP 8.2–8.5. It combines a
+SoFinder is an MIT-licensed web file manager for PHP 8.1–8.5. It combines a
 framework-independent core, first-party Symfony, Laravel, and PSR-15
 integrations, and a responsive React interface.
 
@@ -74,12 +74,12 @@ dependency notices are listed in [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md
 
 | Runtime or framework | Supported versions | Package |
 | --- | --- | --- |
-| PHP | 8.2–8.5 | — |
-| Symfony | 6.4, 7.4 | `sohophp/sofinder-symfony` |
-| Laravel | 12, 13 | `sohophp/sofinder-laravel` |
-| Slim | 4 | `sohophp/sofinder-psr15` |
-| Mezzio | 3 | `sohophp/sofinder-psr15` |
-| Framework-free PSR-15 | PSR-7/15 compatible | `sohophp/sofinder-psr15` |
+| PHP | 8.1–8.5 | — |
+| Symfony | 6.4 on PHP 8.1–8.5; 7.4 on PHP 8.2–8.5 | `sohophp/sofinder-symfony` |
+| Laravel | 12 on PHP 8.2–8.5; 13 on PHP 8.3–8.5 | `sohophp/sofinder-laravel` |
+| Slim | 4 on PHP 8.1–8.5 | `sohophp/sofinder-psr15` |
+| Mezzio | 3 on PHP 8.1–8.5 | `sohophp/sofinder-psr15` |
+| Framework-free PSR-15 | PHP 8.1–8.5, PSR-7/15 compatible | `sohophp/sofinder-psr15` |
 
 See the [framework support policy](docs/framework-support.md) for the tested PHP
 matrix and exact support levels. A future PHP 7.2 port, if provided, will use a

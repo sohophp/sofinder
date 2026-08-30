@@ -8,9 +8,9 @@ use Illuminate\Contracts\Bus\Dispatcher;
 use SohoPHP\SoFinder\Contract\MaintenanceDispatcherInterface;
 use SohoPHP\SoFinder\Maintenance\MaintenanceTask;
 
-final readonly class LaravelMaintenanceDispatcher implements MaintenanceDispatcherInterface
+final class LaravelMaintenanceDispatcher implements MaintenanceDispatcherInterface
 {
-    public function __construct(private Dispatcher $bus)
+    public function __construct(private readonly Dispatcher $bus)
     {
     }
 

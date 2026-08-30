@@ -6,9 +6,9 @@ namespace SohoPHP\SoFinder\Preview;
 
 use SohoPHP\SoFinder\Contract\DocumentPreviewDispatcherInterface;
 
-final readonly class MessengerDocumentPreviewDispatcher implements DocumentPreviewDispatcherInterface
+final class MessengerDocumentPreviewDispatcher implements DocumentPreviewDispatcherInterface
 {
-    public function __construct(private ?object $bus)
+    public function __construct(private readonly ?object $bus)
     {
     }
 

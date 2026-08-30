@@ -7,8 +7,8 @@ namespace SohoPHP\SoFinder\Symfony;
 use SohoPHP\SoFinder\Contract\RoleAuthorizationInterface;
 use Symfony\Component\Security\Core\Authorization\AuthorizationCheckerInterface;
 
-final readonly class SymfonyRoleAuthorization implements RoleAuthorizationInterface
+final class SymfonyRoleAuthorization implements RoleAuthorizationInterface
 {
-    public function __construct(private AuthorizationCheckerInterface $authorization) {}
+    public function __construct(private readonly AuthorizationCheckerInterface $authorization) {}
     public function isGranted(string $role): bool { return $this->authorization->isGranted($role); }
 }

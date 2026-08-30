@@ -10,10 +10,11 @@ SoFinder 1.1 為下列 Host 提供完整瀏覽器介面和 HTTP API。所有 Bri
 
 | Host | Composer Package | 支援的 Runtime |
 | --- | --- | --- |
-| Symfony 6.4／7.4 | `sohophp/sofinder-symfony` | PHP 8.2～8.5 |
+| Symfony 6.4 | `sohophp/sofinder-symfony` | PHP 8.1～8.5 |
+| Symfony 7.4 | `sohophp/sofinder-symfony` | PHP 8.2～8.5 |
 | Laravel 12 | `sohophp/sofinder-laravel` | PHP 8.2～8.5 |
 | Laravel 13 | `sohophp/sofinder-laravel` | PHP 8.3～8.5 |
-| Slim 4、Mezzio 3、純 PHP | `sohophp/sofinder-psr15` | PHP 8.2～8.5 |
+| Slim 4、Mezzio 3、純 PHP | `sohophp/sofinder-psr15` | PHP 8.1～8.5 |
 
 Symfony 請直接閱讀 [Symfony 整合指南](/zh-TW/symfony)。以下章節說明 Laravel 和
 PSR-15 Host 的接入方式。

@@ -5,12 +5,12 @@ description: 框架支援層級、無框架核心入口及 PHP 7.2 隔離策略�
 
 # 框架支援
 
-目前發布線支援 PHP 8.2～8.5。Symfony 6.4 LTS／7.4 LTS 是瀏覽器介面、HTTP
-API、命令、安全及依賴注入的完整穩定目標。
+目前發布線支援 PHP 8.1～8.5。Symfony 6.4 LTS 在 PHP 8.1～8.5 上提供完整
+瀏覽器介面、HTTP API、命令、安全及依賴注入支援；Symfony 7.4 LTS 支援 PHP 8.2～8.5。
 
 | Host | 目前層級 | 發布門檻 |
 | --- | --- | --- |
-| Symfony 6.4／7.4 | 完整、穩定 | PHP 8.2～8.5 CI Matrix 全部通過 |
+| Symfony 6.4／7.4 | 完整、穩定 | Symfony 6.4 × PHP 8.1～8.5；Symfony 7.4 × PHP 8.2～8.5 |
 | 純 PHP／任意 Container | 完整瀏覽器/API Runtime | Host 明確提供授權、CSRF、Actor、事件及 PSR Factory |
 | Laravel 12/13 | 全棧支援：瀏覽器、51 個共用 Handler、Artisan/Queue、Auth/Gate 與 Session CSRF | 完整相容 Matrix 與黑盒一致性 Matrix |
 | Slim／Mezzio | 透過 PSR-15 提供全棧支援及全部 52 個共用 Handler | 完整相容 Matrix 與黑盒一致性 Matrix |
@@ -21,7 +21,7 @@ Laravel 12／13、Slim 4、Mezzio 3 和純 PHP；Symfony 請閱讀單獨的
 [整合指南](/zh-TW/symfony)。
 
 正式支援的 PSR-15 Package 提供 Middleware、`RouteRegistrar` 及完整 52 Route 瀏覽器/API
-的本地 Runtime Factory。真實 Slim 4、Mezzio 3 與純 PHP Front Controller 已在 PHP 8.2 和
+的本地 Runtime Factory。真實 Slim 4、Mezzio 3 與純 PHP Front Controller 已在 PHP 8.1 和
 8.5 上提供共用 `/browser` 外殼及前端資源，並執行全部 51 條非展示 Route，以及 Liveness、
 Capabilities、Health、拒絕及寫入路徑；Chromium 會在三個真實 Host 啟動 React UI 且不得
 產生 Runtime Error，共用 API 清單會把狀態／錯誤 Contract 與安全 Response Header 跟 Symfony 比較。
@@ -78,7 +78,7 @@ base path；後續 Bridge 必須沿用此模式，避免安全設定產生差異
 
 ## 實作順序
 
-1. 保持 Symfony 6.4／7.4 在 PHP 8.2、8.3、8.4、8.5 及可執行範例中全部穩定。
+1. 保持 Symfony 6.4 在 PHP 8.1～8.5、Symfony 7.4 在 PHP 8.2～8.5 及可執行範例中全部穩定。
 2. 固化與框架無關的 Request、Response、Upload、Actor 及 Workspace 邊界。
 3. 先加入 Laravel 完整 Bridge、可執行範例及共用 HTTP 契約測試。
 4. 只有可執行 Slim／Mezzio 範例持續通過相同 Contract Suite 時，才維持共用 PSR-7／PSR-15 Bridge 的正式支援。
@@ -87,7 +87,7 @@ base path；後續 Bridge 必須沿用此模式，避免安全設定產生差異
 ## PHP 7.2 必須使用獨立產品線
 
 PHP 7.2 已停止維護，不能加入 `main` 或 1.x Composer 約束。
-PHP 8.2～8.5 主線絕不會為了實現 PHP 7.2 而降低語法、相依、架構或測試標準。
+PHP 8.1～8.5 主線絕不會為了實現 PHP 7.2 而降低語法、相依、架構或測試標準。
 PHP 7.2 Runtime 是否具備開發可行性、是否值得繼續，是只能在 Legacy Repository
 內另行作出的產品決策。任何 Legacy 可行性結論都不能要求削弱或限制 PHP 8 主線。
 

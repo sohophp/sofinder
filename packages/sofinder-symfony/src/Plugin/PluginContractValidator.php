@@ -9,7 +9,7 @@ use SohoPHP\SoFinder\Event\AssetOperationEvent;
 use Symfony\Component\HttpFoundation\Response;
 
 /** Public contract helper for third-party plugin CI and installation checks. */
-final readonly class PluginContractValidator
+final class PluginContractValidator
 {
     /** @return array<string,mixed> */
     public function validate(PluginInterface $plugin): array

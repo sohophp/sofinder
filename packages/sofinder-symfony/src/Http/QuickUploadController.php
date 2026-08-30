@@ -17,15 +17,15 @@ use Symfony\Component\HttpFoundation\Response;
 use SohoPHP\SoFinder\Upload\UploadNamePolicy;
 use SohoPHP\SoFinder\Http\Action\QuickUploadAction;
 
-final readonly class QuickUploadController
+final class QuickUploadController
 {
     public function __construct(
-        private FileManager $files,
-        private CsrfGuard $csrf,
-        private ?ImageCapabilityProviderInterface $imageCapabilities = null,
-        private bool $overwriteOnUpload = false,
-        private UploadNamePolicy $uploadNames = new UploadNamePolicy(),
-        private ?QuickUploadAction $action = null,
+        private readonly FileManager $files,
+        private readonly CsrfGuard $csrf,
+        private readonly ?ImageCapabilityProviderInterface $imageCapabilities = null,
+        private readonly bool $overwriteOnUpload = false,
+        private readonly UploadNamePolicy $uploadNames = new UploadNamePolicy(),
+        private readonly ?QuickUploadAction $action = null,
     ) {
     }
 

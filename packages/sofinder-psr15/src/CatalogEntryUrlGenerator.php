@@ -9,9 +9,9 @@ use SohoPHP\SoFinder\Framework\RoutingEntryUrlGenerator;
 use SohoPHP\SoFinder\Value\Entry;
 use SohoPHP\SoFinder\Value\ResourceType;
 
-final readonly class CatalogEntryUrlGenerator implements EntryUrlGeneratorInterface
+final class CatalogEntryUrlGenerator implements EntryUrlGeneratorInterface
 {
-    private RoutingEntryUrlGenerator $entries;
+    private readonly RoutingEntryUrlGenerator $entries;
 
     public function __construct(CatalogUrlGenerator $urls)
     {

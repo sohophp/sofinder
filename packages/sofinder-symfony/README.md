@@ -1,6 +1,7 @@
 # SoFinder Symfony Bridge
 
-The supported Symfony 6.4/7.4 full-stack bridge for SoFinder on PHP 8.2–8.5.
+The supported Symfony full-stack bridge for SoFinder: Symfony 6.4 runs on PHP
+8.1–8.5, while Symfony 7.4 runs on PHP 8.2–8.5.
 It contains the Bundle, dependency-injection extension, HttpFoundation adapters,
 routes, security/CSRF integration, console commands, optional Messenger support
 and the compiled React browser assets.

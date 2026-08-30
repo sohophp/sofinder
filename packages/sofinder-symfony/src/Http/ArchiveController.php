@@ -15,13 +15,13 @@ use Symfony\Component\HttpFoundation\BinaryFileResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\ResponseHeaderBag;
 
-final readonly class ArchiveController
+final class ArchiveController
 {
     public function __construct(
-        private ArchiveManager $archives,
-        private CsrfGuard $csrf,
-        private ?FeaturePolicy $features = null,
-        private ?ArchiveDownloadAction $action = null,
+        private readonly ArchiveManager $archives,
+        private readonly CsrfGuard $csrf,
+        private readonly ?FeaturePolicy $features = null,
+        private readonly ?ArchiveDownloadAction $action = null,
     ) {
     }
 

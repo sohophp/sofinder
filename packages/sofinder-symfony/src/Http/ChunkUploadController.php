@@ -19,17 +19,17 @@ use SohoPHP\SoFinder\Upload\UploadNamePolicy;
 use SohoPHP\SoFinder\Asset\AssetReferenceFactory;
 use SohoPHP\SoFinder\Workspace\WorkspaceProvider;
 
-final readonly class ChunkUploadController
+final class ChunkUploadController
 {
     public function __construct(
-        private FileManager $files,
-        private ChunkUploadStoreInterface $chunks,
-        private CsrfGuard $csrf,
-        private ?MaintenanceCoordinator $maintenance = null,
-        private UploadNamePolicy $uploadNames = new UploadNamePolicy(),
-        private ?AssetReferenceFactory $assetReferences = null,
-        private ?WorkspaceProvider $workspaces = null,
-        private ?ChunkUploadActions $actions = null,
+        private readonly FileManager $files,
+        private readonly ChunkUploadStoreInterface $chunks,
+        private readonly CsrfGuard $csrf,
+        private readonly ?MaintenanceCoordinator $maintenance = null,
+        private readonly UploadNamePolicy $uploadNames = new UploadNamePolicy(),
+        private readonly ?AssetReferenceFactory $assetReferences = null,
+        private readonly ?WorkspaceProvider $workspaces = null,
+        private readonly ?ChunkUploadActions $actions = null,
     )
     {
     }

@@ -10,12 +10,12 @@ use SohoPHP\SoFinder\Http\Action\MetricsAction;
 use SohoPHP\SoFinder\Symfony\SymfonyStreamResponseFactory;
 use Symfony\Component\HttpFoundation\Response;
 
-final readonly class MetricsController
+final class MetricsController
 {
     public function __construct(
-        private MetricsStoreInterface $metrics,
-        private HealthManager $health,
-        private ?MetricsAction $action = null,
+        private readonly MetricsStoreInterface $metrics,
+        private readonly HealthManager $health,
+        private readonly ?MetricsAction $action = null,
     ) {
     }
 

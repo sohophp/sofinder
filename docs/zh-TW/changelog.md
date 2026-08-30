@@ -7,6 +7,22 @@ description: SoFinder 每個公開版本的重要變更。
 
 ## 尚未發佈
 
+## 1.2.0 - 2026-08-30
+
+- Core、HTTP、PSR-15、S3 和 Symfony 6.4 Bridge 新增 PHP 8.1 支援，同時
+  Symfony 7.4 與 Laravel 12／13 繼續以 PHP 8.2 為最低版本。
+- 在相容 PHP 8.1 語法的同時保留唯讀屬性語意，並新增 PHP 8.1 相依套件解析與
+  Runtime 測試覆蓋。
+
+## 1.1.3 - 2026-08-30
+
+- 重新整理 Symfony、Laravel、Slim、Mezzio、純 PHP PSR-15 與 Core-only
+  安裝指南，並將公開安裝指令更新至目前 1.1 系列。
+- 新增包含真實產品截圖的三語 CMS 編輯器指南，並從文件首頁、導覽、頁尾與
+  安裝後指引提供入口。
+- 更新三份 Repository README，說明 Framework 對應的 Package 選擇並展示真實
+  介面；文件截圖不會進入 Composer 發佈 Archive。
+
 ## 1.1.2 - 2026-08-30
 
 - Picker 明確傳入 `resource` 時，預設將導覽與回傳結果鎖定於該資源，並在啟動時

@@ -11,9 +11,9 @@ use Symfony\Component\HttpFoundation\BinaryFileResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 
-final readonly class AssetController
+final class AssetController
 {
-    public function __construct(private string $packageDir, private ?FrontendAssetAction $action = null)
+    public function __construct(private readonly string $packageDir, private readonly ?FrontendAssetAction $action = null)
     {
     }
 

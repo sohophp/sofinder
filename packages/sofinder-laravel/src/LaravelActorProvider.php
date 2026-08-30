@@ -7,9 +7,9 @@ namespace SohoPHP\SoFinder\Laravel;
 use Illuminate\Contracts\Auth\Factory as AuthFactory;
 use SohoPHP\SoFinder\Contract\ActorProviderInterface;
 
-final readonly class LaravelActorProvider implements ActorProviderInterface
+final class LaravelActorProvider implements ActorProviderInterface
 {
-    public function __construct(private AuthFactory $auth)
+    public function __construct(private readonly AuthFactory $auth)
     {
     }
 

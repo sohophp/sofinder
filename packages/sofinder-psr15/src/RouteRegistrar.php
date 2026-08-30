@@ -11,12 +11,12 @@ use SohoPHP\SoFinder\Http\EndpointCatalog;
 use SohoPHP\SoFinder\Http\EndpointDefinition;
 
 /** Registers the canonical endpoint catalog without taking a Slim or Mezzio dependency. */
-final readonly class RouteRegistrar
+final class RouteRegistrar
 {
     public function __construct(
-        private RequestHandlerInterface $dispatcher,
-        private string $prefix = '/sofinder',
-        private bool $includeBrowser = true,
+        private readonly RequestHandlerInterface $dispatcher,
+        private readonly string $prefix = '/sofinder',
+        private readonly bool $includeBrowser = true,
     ) {
     }
 

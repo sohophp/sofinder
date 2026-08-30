@@ -9,11 +9,11 @@ use SohoPHP\SoFinder\Exception\AccessDeniedException;
 use Symfony\Component\HttpFoundation\RequestStack;
 use Symfony\Component\Security\Core\Authentication\Token\Storage\TokenStorageInterface;
 
-final readonly class SymfonyActorProvider implements ActorProviderInterface
+final class SymfonyActorProvider implements ActorProviderInterface
 {
     public function __construct(
-        private TokenStorageInterface $tokens,
-        private RequestStack $requests,
+        private readonly TokenStorageInterface $tokens,
+        private readonly RequestStack $requests,
     ) {
     }
 

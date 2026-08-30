@@ -11,9 +11,9 @@ use SohoPHP\SoFinder\Framework\RoutingEntryUrlGenerator;
 use SohoPHP\SoFinder\Value\Entry;
 use SohoPHP\SoFinder\Value\ResourceType;
 
-final readonly class LaravelEntryUrlGenerator implements EntryUrlGeneratorInterface
+final class LaravelEntryUrlGenerator implements EntryUrlGeneratorInterface
 {
-    private RoutingEntryUrlGenerator $generator;
+    private readonly RoutingEntryUrlGenerator $generator;
 
     /** @param iterable<EntryUrlContextProviderInterface> $contextProviders */
     public function __construct(UrlGenerator $urls, iterable $contextProviders = [])

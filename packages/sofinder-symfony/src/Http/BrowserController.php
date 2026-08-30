@@ -19,24 +19,24 @@ use SohoPHP\SoFinder\Contract\CsrfTokenProviderInterface;
 use SohoPHP\SoFinder\Contract\WorkspaceOptionProviderInterface;
 use SohoPHP\SoFinder\Symfony\SymfonyRequestContextProvider;
 
-final readonly class BrowserController
+final class BrowserController
 {
     public function __construct(
-        private FileManager $files,
-        private RouterInterface $router,
-        private CsrfTokenProviderInterface $csrf,
-        private string $assetVersion,
-        private Theme $theme,
+        private readonly FileManager $files,
+        private readonly RouterInterface $router,
+        private readonly CsrfTokenProviderInterface $csrf,
+        private readonly string $assetVersion,
+        private readonly Theme $theme,
         /** @var array{mode:string,header:bool,logo:bool,search:bool,language_switcher:bool,view_switcher:bool,folder_tree:bool,scale:string,upload_conflict_strategy?:string,lowercase_upload_extensions?:bool} */
-        private array $ui,
-        private ?FeaturePolicy $features = null,
-        private ?AuthorizationCheckerInterface $authorization = null,
-        /** @var list<string> */ private array $securityStatusRoles = [],
-        /** @var list<string> */ private array $pickerAllowedOrigins = [],
-        private ?WorkspaceProvider $workspaces = null,
-        private ?WorkspaceOptionProviderInterface $workspaceOptions = null,
-        private ?BrowserPage $page = null,
-        private bool $pickerLockResource = true,
+        private readonly array $ui,
+        private readonly ?FeaturePolicy $features = null,
+        private readonly ?AuthorizationCheckerInterface $authorization = null,
+        /** @var list<string> */ private readonly array $securityStatusRoles = [],
+        /** @var list<string> */ private readonly array $pickerAllowedOrigins = [],
+        private readonly ?WorkspaceProvider $workspaces = null,
+        private readonly ?WorkspaceOptionProviderInterface $workspaceOptions = null,
+        private readonly ?BrowserPage $page = null,
+        private readonly bool $pickerLockResource = true,
     ) {
     }
 

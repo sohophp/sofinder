@@ -11,12 +11,12 @@ use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 
 /** Thin HttpFoundation adapter for every framework-neutral HTTP action. */
-final readonly class SymfonyEndpointController
+final class SymfonyEndpointController
 {
     public function __construct(
-        private EndpointDispatcher $dispatcher,
-        private PsrHttpFactory $requests,
-        private HttpFoundationFactory $responses,
+        private readonly EndpointDispatcher $dispatcher,
+        private readonly PsrHttpFactory $requests,
+        private readonly HttpFoundationFactory $responses,
     ) {
     }
 

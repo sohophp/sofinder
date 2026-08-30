@@ -8,9 +8,9 @@ use SohoPHP\SoFinder\FileManager;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 
-final readonly class PluginInspectorController
+final class PluginInspectorController
 {
-    public function __construct(private FileManager $files) {}
+    public function __construct(private readonly FileManager $files) {}
 
     public function __invoke(Request $request): Response
     {

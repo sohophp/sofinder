@@ -6,13 +6,13 @@ description: Support levels, headless bootstrap seam and the order for adding PH
 # Framework support
 
 SoFinder separates the file-management domain from delivery concerns. The
-current release line supports PHP 8.2–8.5. Its full browser, HTTP API, console,
-security and dependency-injection integration is supported on Symfony 6.4 LTS
-and 7.4 LTS.
+current release line supports PHP 8.1–8.5. Its full browser, HTTP API, console,
+security and dependency-injection integration supports Symfony 6.4 LTS on PHP
+8.1–8.5 and Symfony 7.4 LTS on PHP 8.2–8.5.
 
 | Host | Current level | Release gate |
 | --- | --- | --- |
-| Symfony 6.4/7.4 | Full, stable target | Complete PHP 8.2–8.5 CI matrix |
+| Symfony 6.4/7.4 | Full, stable target | Symfony 6.4 on PHP 8.1–8.5; Symfony 7.4 on PHP 8.2–8.5 |
 | Plain PHP / any container | Full browser/API runtime | Host supplies explicit authorization, CSRF, actor, events and PSR factories |
 | Laravel 12/13 | Full-stack supported: browser, 51 shared handlers, Artisan/Queue, Auth/Gate and session CSRF | Complete compatibility and black-box parity matrices |
 | Slim / Mezzio | Full-stack supported through PSR-15 with all 52 shared handlers | Complete compatibility and black-box parity matrices |
@@ -26,7 +26,7 @@ The supported PSR-15 package supplies middleware, a `RouteRegistrar` and a
 local runtime factory for the complete 52-route browser/API surface. Real Slim
 4, Mezzio 3 and plain PHP front controllers serve the shared `/browser` shell
 and frontend assets, and execute all 51 non-presentation routes plus liveness,
-capabilities, health, denial and mutation paths on PHP 8.2 and 8.5. Chromium
+capabilities, health, denial and mutation paths on PHP 8.1 and 8.5. Chromium
 boots the React UI against each real host without runtime errors. The shared API
 inventory compares status/error contracts and security headers against Symfony.
 The complete black-box suite runs before every synchronized release.
@@ -121,8 +121,8 @@ bridges and prevents configuration/security behavior from drifting by host.
 
 ## Implementation order
 
-1. Keep Symfony 6.4/7.4 green across PHP 8.2, 8.3, 8.4 and 8.5, including the
-   runnable example.
+1. Keep Symfony 6.4 green across PHP 8.1–8.5 and Symfony 7.4 green across PHP
+   8.2–8.5, including the runnable example.
 2. Freeze framework-neutral request, response, upload, actor and workspace
    boundaries and move full-stack-only code behind bridge packages.
 3. Add Laravel as the first additional full bridge, with an executable example
@@ -139,7 +139,7 @@ constraint. The current code intentionally uses PHP 8.1/8.2 language features,
 and current Symfony, PHPUnit and PSR dependency versions do not form a safe
 drop-in PHP 7.2 matrix.
 
-The compatibility boundary is non-negotiable: the PHP 8.2–8.5 main line is
+The compatibility boundary is non-negotiable: the PHP 8.1–8.5 main line is
 never downgraded in syntax, dependencies, architecture or tests to make PHP 7.2
 possible. Whether PHP 7.2 runtime development is feasible or worth continuing
 is a separate product decision made only inside the Legacy repository. A

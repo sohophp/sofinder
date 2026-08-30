@@ -8,9 +8,9 @@ use SohoPHP\SoFinder\Contract\AuthorizationInterface;
 use SohoPHP\SoFinder\Value\ResourceType;
 use Symfony\Component\Security\Core\Authorization\AuthorizationCheckerInterface;
 
-final readonly class SymfonyAuthorization implements AuthorizationInterface
+final class SymfonyAuthorization implements AuthorizationInterface
 {
-    public function __construct(private AuthorizationCheckerInterface $authorizationChecker)
+    public function __construct(private readonly AuthorizationCheckerInterface $authorizationChecker)
     {
     }
 

@@ -16,9 +16,9 @@ use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpFoundation\ResponseHeaderBag;
 
-final readonly class DocumentPreviewController
+final class DocumentPreviewController
 {
-    public function __construct(private DocumentPreviewManager $previews, private ?FeaturePolicy $features = null, private ?DocumentPreviewJobManager $jobs = null, private ?DocumentPreviewAction $action = null) {}
+    public function __construct(private readonly DocumentPreviewManager $previews, private readonly ?FeaturePolicy $features = null, private readonly ?DocumentPreviewJobManager $jobs = null, private readonly ?DocumentPreviewAction $action = null) {}
 
     public function __invoke(Request $request): Response
     {

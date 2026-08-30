@@ -11,9 +11,9 @@ use SohoPHP\SoFinder\Value\Entry;
 use SohoPHP\SoFinder\Workspace\WorkspaceProvider;
 use Symfony\Component\Routing\RouterInterface;
 
-final readonly class AssetReferenceFactory
+final class AssetReferenceFactory
 {
-    private AssetReferenceBuilder $builder;
+    private readonly AssetReferenceBuilder $builder;
 
     /**
      * @param list<int> $variantWidths

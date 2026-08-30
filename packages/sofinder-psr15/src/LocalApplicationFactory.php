@@ -15,26 +15,26 @@ use SohoPHP\SoFinder\Http\EndpointDispatcher;
 use SohoPHP\SoFinder\Http\LocalRuntime;
 use SohoPHP\SoFinder\Http\PsrEndpointHandler;
 
-final readonly class LocalApplicationFactory
+final class LocalApplicationFactory
 {
-    private ScopedRequestContextProvider $contexts;
+    private readonly ScopedRequestContextProvider $contexts;
     /**
      * @param array<string,mixed> $configuration
      * @param iterable<StorageAdapterFactoryInterface> $storageFactories
      */
     public function __construct(
-        private ResponseFactoryInterface $responses,
-        private StreamFactoryInterface $streams,
-        private HostServices $services,
-        private array $configuration,
-        private string $stateDirectory,
-        private string $resourceRoot,
-        private ?string $packageDirectory = null,
-        private string $prefix = '/sofinder',
-        private string $baseUrl = '',
-        private iterable $storageFactories = [],
-        private ?MaintenanceDispatcherInterface $maintenanceDispatcher = null,
-        private ?DocumentPreviewDispatcherInterface $documentPreviewDispatcher = null,
+        private readonly ResponseFactoryInterface $responses,
+        private readonly StreamFactoryInterface $streams,
+        private readonly HostServices $services,
+        private readonly array $configuration,
+        private readonly string $stateDirectory,
+        private readonly string $resourceRoot,
+        private readonly ?string $packageDirectory = null,
+        private readonly string $prefix = '/sofinder',
+        private readonly string $baseUrl = '',
+        private readonly iterable $storageFactories = [],
+        private readonly ?MaintenanceDispatcherInterface $maintenanceDispatcher = null,
+        private readonly ?DocumentPreviewDispatcherInterface $documentPreviewDispatcher = null,
     ) {
         $this->contexts = new ScopedRequestContextProvider();
     }

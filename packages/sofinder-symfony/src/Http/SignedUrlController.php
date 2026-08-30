@@ -16,14 +16,14 @@ use Symfony\Component\Routing\RouterInterface;
 use SohoPHP\SoFinder\Symfony\SymfonyRequestContextProvider;
 use SohoPHP\SoFinder\Symfony\SymfonyStreamResponseFactory;
 
-final readonly class SignedUrlController
+final class SignedUrlController
 {
     public function __construct(
-        private SignedUrlManager $signedUrls,
-        private ContentController $content,
-        private RouterInterface $router,
-        private ?SignedUrlIssueAction $issueAction = null,
-        private ?SignedContentAction $contentAction = null,
+        private readonly SignedUrlManager $signedUrls,
+        private readonly ContentController $content,
+        private readonly RouterInterface $router,
+        private readonly ?SignedUrlIssueAction $issueAction = null,
+        private readonly ?SignedContentAction $contentAction = null,
     ) {
     }
 

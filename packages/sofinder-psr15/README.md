@@ -10,7 +10,7 @@ Hosts that render their own page can construct `RouteRegistrar` with
 composer require sohophp/sofinder-psr15:^1.1
 ```
 
-The bridge is supported on PHP 8.2–8.5. Slim 4, Mezzio 3 and framework-free
+The bridge is supported on PHP 8.1–8.5. Slim 4, Mezzio 3 and framework-free
 PHP run the same complete HTTP, security, lifecycle and browser contracts as
 the Symfony and Laravel bridges.
 

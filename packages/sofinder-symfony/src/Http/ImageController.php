@@ -18,16 +18,16 @@ use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use SohoPHP\SoFinder\Asset\AssetOperationPublisher;
 
-final readonly class ImageController
+final class ImageController
 {
     public function __construct(
-        private ImageManager $images,
-        private CsrfGuard $csrf,
-        private ?FeaturePolicy $features = null,
-        private ?AssetOperationPublisher $events = null,
-        private ?ImageInfoAction $infoAction = null,
-        private ?ImageStreamActions $streamActions = null,
-        private ?ImageMutationActions $mutationActions = null,
+        private readonly ImageManager $images,
+        private readonly CsrfGuard $csrf,
+        private readonly ?FeaturePolicy $features = null,
+        private readonly ?AssetOperationPublisher $events = null,
+        private readonly ?ImageInfoAction $infoAction = null,
+        private readonly ?ImageStreamActions $streamActions = null,
+        private readonly ?ImageMutationActions $mutationActions = null,
     ) {
     }
 

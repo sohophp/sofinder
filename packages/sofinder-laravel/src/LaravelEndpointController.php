@@ -10,12 +10,12 @@ use Symfony\Bridge\PsrHttpMessage\Factory\HttpFoundationFactory;
 use Symfony\Bridge\PsrHttpMessage\Factory\PsrHttpFactory;
 use Symfony\Component\HttpFoundation\Response;
 
-final readonly class LaravelEndpointController
+final class LaravelEndpointController
 {
     public function __construct(
-        private EndpointDispatcher $dispatcher,
-        private PsrHttpFactory $requests,
-        private HttpFoundationFactory $responses,
+        private readonly EndpointDispatcher $dispatcher,
+        private readonly PsrHttpFactory $requests,
+        private readonly HttpFoundationFactory $responses,
     ) {
     }
 

@@ -8,9 +8,9 @@ use SohoPHP\SoFinder\Contract\MetricsStoreInterface;
 use SohoPHP\SoFinder\Event\OperationEvent;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 
-final readonly class OperationMetricsSubscriber implements EventSubscriberInterface
+final class OperationMetricsSubscriber implements EventSubscriberInterface
 {
-    public function __construct(private MetricsStoreInterface $metrics) {}
+    public function __construct(private readonly MetricsStoreInterface $metrics) {}
     public function onOperation(OperationEvent $event): void
     {
         if (!str_starts_with($event->operation, 'after.')) return;

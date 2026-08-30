@@ -3,7 +3,7 @@ layout: home
 markdownStyles: false
 title: SoFinder documentation
 titleTemplate: Secure file management for PHP and Symfony
-description: Install, configure and extend SoFinder, a secure web file manager for PHP 8.2–8.5 and Symfony 6.4/7.4.
+description: Install, configure and extend SoFinder, a secure web file manager for PHP 8.1–8.5 and Symfony 6.4/7.4.
 
 hero:
   name: Secure file management

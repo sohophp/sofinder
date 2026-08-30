@@ -6,9 +6,9 @@ namespace SohoPHP\SoFinder\Maintenance;
 
 use SohoPHP\SoFinder\Contract\MaintenanceDispatcherInterface;
 
-final readonly class MessengerMaintenanceDispatcher implements MaintenanceDispatcherInterface
+final class MessengerMaintenanceDispatcher implements MaintenanceDispatcherInterface
 {
-    public function __construct(private object $bus)
+    public function __construct(private readonly object $bus)
     {
     }
 

@@ -17,16 +17,16 @@ use SohoPHP\SoFinder\Workspace\WorkspaceProvider;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 
-final readonly class AssetUsageController
+final class AssetUsageController
 {
     public function __construct(
-        private AssetCatalogInterface $catalog,
-        private AssetUsageStoreInterface $usages,
-        private WorkspaceProvider $workspaces,
-        private FileManager $files,
-        private CsrfGuard $csrf,
-        private bool $enabled,
-        private ?AssetUsageActions $actions = null,
+        private readonly AssetCatalogInterface $catalog,
+        private readonly AssetUsageStoreInterface $usages,
+        private readonly WorkspaceProvider $workspaces,
+        private readonly FileManager $files,
+        private readonly CsrfGuard $csrf,
+        private readonly bool $enabled,
+        private readonly ?AssetUsageActions $actions = null,
     ) {
     }
 

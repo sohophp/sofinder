@@ -7,11 +7,11 @@ namespace SohoPHP\SoFinder\Psr15;
 use SohoPHP\SoFinder\Contract\CsrfTokenProviderInterface;
 use SohoPHP\SoFinder\Value\RequestContext;
 
-final readonly class NativeSessionCsrfTokenProvider implements CsrfTokenProviderInterface
+final class NativeSessionCsrfTokenProvider implements CsrfTokenProviderInterface
 {
     public function __construct(
-        private string $sessionKey = '_sofinder_csrf',
-        private bool $startSession = true,
+        private readonly string $sessionKey = '_sofinder_csrf',
+        private readonly bool $startSession = true,
     ) {
         if ($sessionKey === '') {
             throw new \InvalidArgumentException('The CSRF session key cannot be empty.');

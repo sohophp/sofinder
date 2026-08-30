@@ -9,9 +9,9 @@ use SohoPHP\SoFinder\Contract\DocumentPreviewDispatcherInterface;
 use SohoPHP\SoFinder\Preview\DocumentPreviewMessage;
 
 /** Translates the shared preview message into a self-handling Laravel queue job. */
-final readonly class LaravelDocumentPreviewDispatcher implements DocumentPreviewDispatcherInterface
+final class LaravelDocumentPreviewDispatcher implements DocumentPreviewDispatcherInterface
 {
-    public function __construct(private Dispatcher $bus)
+    public function __construct(private readonly Dispatcher $bus)
     {
     }
 

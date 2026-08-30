@@ -9,9 +9,9 @@ use Psr\Http\Message\ServerRequestInterface;
 use Psr\Http\Server\RequestHandlerInterface;
 use SohoPHP\SoFinder\Http\EndpointDefinition;
 
-final readonly class EndpointRouteHandler implements RequestHandlerInterface
+final class EndpointRouteHandler implements RequestHandlerInterface
 {
-    public function __construct(private RequestHandlerInterface $dispatcher, private EndpointDefinition $endpoint)
+    public function __construct(private readonly RequestHandlerInterface $dispatcher, private readonly EndpointDefinition $endpoint)
     {
     }
 

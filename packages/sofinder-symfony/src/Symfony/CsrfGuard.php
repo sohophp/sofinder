@@ -12,11 +12,11 @@ use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\Security\Csrf\CsrfToken;
 use Symfony\Component\Security\Csrf\CsrfTokenManagerInterface;
 
-final readonly class CsrfGuard implements CsrfTokenProviderInterface
+final class CsrfGuard implements CsrfTokenProviderInterface
 {
     public function __construct(
-        private CsrfTokenManagerInterface $tokens,
-        private AuthorizationInterface $authorization,
+        private readonly CsrfTokenManagerInterface $tokens,
+        private readonly AuthorizationInterface $authorization,
     ) {
     }
 

@@ -26,37 +26,37 @@ use Symfony\Component\HttpFoundation\File\UploadedFile;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 
-final readonly class ApiController
+final class ApiController
 {
     public function __construct(
-        private FileManager $files,
-        private CsrfGuard $csrf,
-        private PluginRegistry $plugins,
+        private readonly FileManager $files,
+        private readonly CsrfGuard $csrf,
+        private readonly PluginRegistry $plugins,
         /** @var array<string, array{width:int,height:int,quality:int}> */
-        private array $imagePresets = [],
-        private ?MetadataManager $metadata = null,
-        private ?ImageCapabilityProviderInterface $imageCapabilities = null,
+        private readonly array $imagePresets = [],
+        private readonly ?MetadataManager $metadata = null,
+        private readonly ?ImageCapabilityProviderInterface $imageCapabilities = null,
         /** @var array{mode?:string,header?:bool,logo?:bool,search?:bool,language_switcher?:bool,view_switcher?:bool,folder_tree?:bool,scale?:string,upload_conflict_strategy?:string,lowercase_upload_extensions?:bool} */
-        private array $ui = [],
-        private ?FeaturePolicy $features = null,
-        private bool $signedUrlsEnabled = false,
-        private int $signedUrlDefaultTtl = 300,
-        private int $signedUrlMaxTtl = 3600,
-        private UploadNamePolicy $uploadNames = new UploadNamePolicy(),
-        private ?AssetReferenceFactory $assetReferences = null,
-        private bool $assetCatalogEnabled = false,
-        private bool $imageVariantsEnabled = false,
+        private readonly array $ui = [],
+        private readonly ?FeaturePolicy $features = null,
+        private readonly bool $signedUrlsEnabled = false,
+        private readonly int $signedUrlDefaultTtl = 300,
+        private readonly int $signedUrlMaxTtl = 3600,
+        private readonly UploadNamePolicy $uploadNames = new UploadNamePolicy(),
+        private readonly ?AssetReferenceFactory $assetReferences = null,
+        private readonly bool $assetCatalogEnabled = false,
+        private readonly bool $imageVariantsEnabled = false,
         /** @var list<string> */
-        private array $assetAltLocales = ['en', 'zh-cn', 'zh-tw'],
-        private bool $assetSearchEnabled = true,
-        private bool $assetUsageEnabled = false,
-        private bool $assetAccessSessionsEnabled = false,
-        private ?EntriesAction $entriesAction = null,
-        private ?ConfigAction $configAction = null,
-        private ?FileMutationActions $mutationActions = null,
-        private ?BatchMutationActions $batchActions = null,
-        private ?TrashActions $trashActions = null,
-        private ?UploadAction $uploadAction = null,
+        private readonly array $assetAltLocales = ['en', 'zh-cn', 'zh-tw'],
+        private readonly bool $assetSearchEnabled = true,
+        private readonly bool $assetUsageEnabled = false,
+        private readonly bool $assetAccessSessionsEnabled = false,
+        private readonly ?EntriesAction $entriesAction = null,
+        private readonly ?ConfigAction $configAction = null,
+        private readonly ?FileMutationActions $mutationActions = null,
+        private readonly ?BatchMutationActions $batchActions = null,
+        private readonly ?TrashActions $trashActions = null,
+        private readonly ?UploadAction $uploadAction = null,
     ) {
     }
 

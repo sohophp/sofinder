@@ -9,9 +9,9 @@ use Illuminate\Contracts\Auth\Factory as AuthFactory;
 use SohoPHP\SoFinder\Contract\AuthorizationInterface;
 use SohoPHP\SoFinder\Value\ResourceType;
 
-final readonly class LaravelAuthorization implements AuthorizationInterface
+final class LaravelAuthorization implements AuthorizationInterface
 {
-    public function __construct(private AuthFactory $auth, private Gate $gate)
+    public function __construct(private readonly AuthFactory $auth, private readonly Gate $gate)
     {
     }
 

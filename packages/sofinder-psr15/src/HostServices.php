@@ -11,14 +11,14 @@ use SohoPHP\SoFinder\Contract\CsrfTokenProviderInterface;
 use SohoPHP\SoFinder\Contract\RoleAuthorizationInterface;
 
 /** Required host-owned security and identity services for a PSR-15 runtime. */
-final readonly class HostServices
+final class HostServices
 {
     public function __construct(
-        public AuthorizationInterface $authorization,
-        public ActorProviderInterface $actor,
-        public CsrfTokenProviderInterface $csrf,
-        public EventDispatcherInterface $events,
-        public ?RoleAuthorizationInterface $roles = null,
+        public readonly AuthorizationInterface $authorization,
+        public readonly ActorProviderInterface $actor,
+        public readonly CsrfTokenProviderInterface $csrf,
+        public readonly EventDispatcherInterface $events,
+        public readonly ?RoleAuthorizationInterface $roles = null,
     ) {
     }
 }

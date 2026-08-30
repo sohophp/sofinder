@@ -10,9 +10,9 @@ use SohoPHP\SoFinder\Value\Entry;
 use SohoPHP\SoFinder\Workspace\WorkspaceProvider;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 
-final readonly class AssetCatalogSubscriber implements EventSubscriberInterface
+final class AssetCatalogSubscriber implements EventSubscriberInterface
 {
-    public function __construct(private AssetCatalogInterface $catalog, private WorkspaceProvider $workspaces, private bool $enabled)
+    public function __construct(private readonly AssetCatalogInterface $catalog, private readonly WorkspaceProvider $workspaces, private readonly bool $enabled)
     {
     }
 

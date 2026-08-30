@@ -11,15 +11,15 @@ use SohoPHP\SoFinder\Contract\AtomicStateStoreInterface;
 use SohoPHP\SoFinder\Exception\SoFinderException;
 
 /** Uses the host's configured Laravel cache store and distributed locks. */
-final readonly class LaravelCacheAtomicStateStore implements AtomicStateStoreInterface
+final class LaravelCacheAtomicStateStore implements AtomicStateStoreInterface
 {
-    private LockProvider $locks;
+    private readonly LockProvider $locks;
 
     public function __construct(
-        private Repository $cache,
-        private string $prefix = 'sofinder:',
-        private int $lockSeconds = 60,
-        private int $waitSeconds = 2,
+        private readonly Repository $cache,
+        private readonly string $prefix = 'sofinder:',
+        private readonly int $lockSeconds = 60,
+        private readonly int $waitSeconds = 2,
     ) {
         $store = $cache->getStore();
         if (!$store instanceof LockProvider) {

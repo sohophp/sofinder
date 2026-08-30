@@ -11,10 +11,11 @@ rules and frontend distribution.
 
 | Host | Package | Supported runtime |
 | --- | --- | --- |
-| Symfony 6.4/7.4 | `sohophp/sofinder-symfony` | PHP 8.2–8.5 |
+| Symfony 6.4 | `sohophp/sofinder-symfony` | PHP 8.1–8.5 |
+| Symfony 7.4 | `sohophp/sofinder-symfony` | PHP 8.2–8.5 |
 | Laravel 12 | `sohophp/sofinder-laravel` | PHP 8.2–8.5 |
 | Laravel 13 | `sohophp/sofinder-laravel` | PHP 8.3–8.5 |
-| Slim 4, Mezzio 3, plain PHP | `sohophp/sofinder-psr15` | PHP 8.2–8.5 |
+| Slim 4, Mezzio 3, plain PHP | `sohophp/sofinder-psr15` | PHP 8.1–8.5 |
 
 For Symfony, follow the dedicated [Symfony integration guide](/symfony). The
 sections below cover Laravel and the PSR-15 hosts.

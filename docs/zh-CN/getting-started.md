@@ -28,8 +28,8 @@ Laravel 或 PSR-15 应用不要安装 Symfony 兼容 Meta Package：`sohophp/sof
 
 ### 系统需求
 
-- PHP 8.2–8.5
-- Symfony 6.4 或 7.4
+- Symfony 6.4 搭配 PHP 8.1–8.5
+- Symfony 7.4 搭配 PHP 8.2–8.5
 - `ext-fileinfo`、`ext-json` 与 `ext-mbstring`
 - 可验证 SoFinder 用户的 Symfony Security firewall
 - 可选 GD 或 Imagick，提供缩略图与图片编辑功能

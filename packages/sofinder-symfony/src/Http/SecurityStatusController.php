@@ -14,18 +14,18 @@ use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException;
 use Symfony\Component\Security\Core\Authorization\AuthorizationCheckerInterface;
 
-final readonly class SecurityStatusController
+final class SecurityStatusController
 {
     public function __construct(
-        private bool $enabled,
-        private MalwareScanStatusStoreInterface $scans,
-        private ?ClamAvScanner $scanner = null,
-        private ?AuthorizationCheckerInterface $authorization = null,
-        /** @var list<string> */ private array $roles = [],
-        private ?FeaturePolicy $features = null,
-        private ?DocumentPreviewManager $documentPreviews = null,
-        private ?DocumentPreviewJobManager $documentPreviewJobs = null,
-        private ?SecurityStatusAction $action = null,
+        private readonly bool $enabled,
+        private readonly MalwareScanStatusStoreInterface $scans,
+        private readonly ?ClamAvScanner $scanner = null,
+        private readonly ?AuthorizationCheckerInterface $authorization = null,
+        /** @var list<string> */ private readonly array $roles = [],
+        private readonly ?FeaturePolicy $features = null,
+        private readonly ?DocumentPreviewManager $documentPreviews = null,
+        private readonly ?DocumentPreviewJobManager $documentPreviewJobs = null,
+        private readonly ?SecurityStatusAction $action = null,
     ) {
     }
 

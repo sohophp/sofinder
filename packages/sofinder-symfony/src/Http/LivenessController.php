@@ -7,9 +7,9 @@ namespace SohoPHP\SoFinder\Http;
 use SohoPHP\SoFinder\Http\Action\LivenessAction;
 use Symfony\Component\HttpFoundation\JsonResponse;
 
-final readonly class LivenessController
+final class LivenessController
 {
-    public function __construct(private LivenessAction $action = new LivenessAction())
+    public function __construct(private readonly LivenessAction $action = new LivenessAction())
     {
     }
 

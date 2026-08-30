@@ -3,7 +3,7 @@ layout: home
 markdownStyles: false
 title: SoFinder 文件
 titleTemplate: PHP 与 Symfony 安全文件管理
-description: 安装、配置及扩充适用于 PHP 8.2–8.5 和 Symfony 6.4/7.4 的 SoFinder。
+description: 安装、配置及扩充适用于 PHP 8.1–8.5 和 Symfony 6.4/7.4 的 SoFinder。
 
 hero:
   name: 安全的文件管理

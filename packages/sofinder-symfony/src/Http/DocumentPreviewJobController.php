@@ -14,9 +14,9 @@ use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\Routing\RouterInterface;
 
-final readonly class DocumentPreviewJobController
+final class DocumentPreviewJobController
 {
-    public function __construct(private DocumentPreviewJobManager $jobs, private CsrfGuard $csrf, private RouterInterface $router, private ?FeaturePolicy $features = null, private ?DocumentPreviewJobActions $actions = null) {}
+    public function __construct(private readonly DocumentPreviewJobManager $jobs, private readonly CsrfGuard $csrf, private readonly RouterInterface $router, private readonly ?FeaturePolicy $features = null, private readonly ?DocumentPreviewJobActions $actions = null) {}
 
     public function create(Request $request): JsonResponse
     {

@@ -28,6 +28,7 @@ final class PackageReleaseMetadataTest extends TestCase
         $composer = json_decode((string) file_get_contents($package . '/composer.json'), true, 32, JSON_THROW_ON_ERROR);
 
         self::assertSame($name, $composer['name']);
+        self::assertSame($name === 'sohophp/sofinder-laravel' ? '^8.2' : '^8.1', $composer['require']['php']);
         self::assertSame('MIT', $composer['license']);
         self::assertSame('1.x-dev', $composer['extra']['branch-alias']['dev-main']);
         self::assertNotEmpty($composer['support']['issues']);

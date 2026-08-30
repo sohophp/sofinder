@@ -15,13 +15,13 @@ use SohoPHP\SoFinder\Workspace\WorkspaceProvider;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 
-final readonly class AssetSearchController
+final class AssetSearchController
 {
     public function __construct(
-        private AssetSearchProviderInterface $search,
-        private WorkspaceProvider $workspaces,
-        private bool $enabled = true,
-        private ?AssetSearchAction $action = null,
+        private readonly AssetSearchProviderInterface $search,
+        private readonly WorkspaceProvider $workspaces,
+        private readonly bool $enabled = true,
+        private readonly ?AssetSearchAction $action = null,
     ) {
     }
 

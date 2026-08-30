@@ -8,7 +8,7 @@ use Illuminate\Routing\Router;
 use SohoPHP\SoFinder\Http\EndpointCatalog;
 use SohoPHP\SoFinder\Http\EndpointDefinition;
 
-final readonly class LaravelRouteRegistrar
+final class LaravelRouteRegistrar
 {
     /** Shared actions validate the Laravel session token and own the stable JSON error contract. */
     private const FRAMEWORK_CSRF_MIDDLEWARE = [
@@ -17,7 +17,7 @@ final readonly class LaravelRouteRegistrar
     ];
 
     /** @param array<string,mixed> $config */
-    public function __construct(private Router $router, private array $config)
+    public function __construct(private readonly Router $router, private readonly array $config)
     {
     }
 

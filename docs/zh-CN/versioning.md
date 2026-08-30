@@ -15,7 +15,7 @@ SoFinder 遵循 Semantic Versioning。1.0 前的 Release 可变更 PHP Extension
 - Security Fix 及 Data-integrity Fix 可在没有 Deprecation Period 的情况下收紧验证。
 - 已发布的 Composer Tag 不可变。
 
-1.0 Support Matrix 为 PHP 8.2–8.5 搭配 Symfony 6.4 LTS 或 7.4 LTS。内建 Local Adapter 是唯一纳入 1.0 Support Promise 的 Storage Backend。React Application 是 Composer Package 随附的私有 Build Input；1.0 不发布 npm Package。
+当前 1.x Support Matrix 为 PHP 8.1–8.5。Symfony 6.4 LTS 支持完整范围，Symfony 7.4 LTS 从 PHP 8.2 开始支持。内建 Local Adapter 纳入 Support Promise。React Application 是 Composer Package 随附的私有 Build Input；不发布 npm Package。
 
 PHP 7.2 不属于此矩阵，也不会加入 `main` 或 1.x Composer 约束。Symfony 支持矩阵
 稳定之后，如果移植具备可维护性，仍必须使用独立仓库、Composer 包、版本空间、依赖

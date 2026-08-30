@@ -16,9 +16,9 @@ use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
 use Symfony\Component\Routing\RouterInterface;
 
-final readonly class AssetAccessSessionController
+final class AssetAccessSessionController
 {
-    public function __construct(private AssetAccessSessionManager $sessions, private CsrfGuard $csrf, private RouterInterface $router, private ContentController $content, private ?AssetAccessSessionActions $actions = null) {}
+    public function __construct(private readonly AssetAccessSessionManager $sessions, private readonly CsrfGuard $csrf, private readonly RouterInterface $router, private readonly ContentController $content, private readonly ?AssetAccessSessionActions $actions = null) {}
 
     public function create(Request $request): JsonResponse
     {

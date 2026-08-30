@@ -7,9 +7,9 @@ namespace SohoPHP\SoFinder\Symfony;
 use SohoPHP\SoFinder\Contract\EndpointUrlGeneratorInterface;
 use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
 
-final readonly class SymfonyEndpointUrlGenerator implements EndpointUrlGeneratorInterface
+final class SymfonyEndpointUrlGenerator implements EndpointUrlGeneratorInterface
 {
-    public function __construct(private UrlGeneratorInterface $router) {}
+    public function __construct(private readonly UrlGeneratorInterface $router) {}
 
     public function generate(string $endpoint, array $parameters = [], bool $absolute = false): string
     {

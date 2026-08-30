@@ -2,6 +2,13 @@
 
 ## Unreleased
 
+## 1.2.0 - 2026-08-30
+
+- Add PHP 8.1 support for Core, HTTP, PSR-15, S3 and the Symfony 6.4 bridge
+  while retaining PHP 8.2 as the floor for Symfony 7.4 and Laravel 12/13;
+  preserve readonly property semantics and add PHP 8.1 dependency and runtime
+  coverage.
+
 ## 1.1.3 - 2026-08-30
 
 - Rework installation guidance around explicit Symfony, Laravel, Slim,

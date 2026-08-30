@@ -7,9 +7,9 @@ namespace SohoPHP\SoFinder\Preview;
 use SohoPHP\SoFinder\Contract\PluginInterface;
 use Symfony\Component\Routing\RouterInterface;
 
-final readonly class DocumentPreviewPlugin implements PluginInterface
+final class DocumentPreviewPlugin implements PluginInterface
 {
-    public function __construct(private RouterInterface $router, private bool $pdfEnabled = true, private bool $officeEnabled = false) {}
+    public function __construct(private readonly RouterInterface $router, private readonly bool $pdfEnabled = true, private readonly bool $officeEnabled = false) {}
 
     public function descriptor(): array
     {

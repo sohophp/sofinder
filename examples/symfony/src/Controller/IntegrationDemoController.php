@@ -7,9 +7,9 @@ namespace App\Controller;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Security\Csrf\CsrfTokenManagerInterface;
 
-final readonly class IntegrationDemoController
+final class IntegrationDemoController
 {
-    public function __construct(private CsrfTokenManagerInterface $csrf) {}
+  public function __construct(private readonly CsrfTokenManagerInterface $csrf) {}
 
     public function __invoke(): Response
     {

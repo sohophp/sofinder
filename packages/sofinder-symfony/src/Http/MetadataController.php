@@ -13,13 +13,13 @@ use SohoPHP\SoFinder\Value\OperationResult;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 
-final readonly class MetadataController
+final class MetadataController
 {
     public function __construct(
-        private MetadataManager $metadata,
-        private CsrfGuard $csrf,
-        private ?FeaturePolicy $features = null,
-        private ?MetadataActions $actions = null,
+        private readonly MetadataManager $metadata,
+        private readonly CsrfGuard $csrf,
+        private readonly ?FeaturePolicy $features = null,
+        private readonly ?MetadataActions $actions = null,
     ) {
     }
 

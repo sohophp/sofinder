@@ -14,9 +14,9 @@ use Symfony\Component\HttpFoundation\ResponseHeaderBag;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 
-final readonly class HostFileController
+final class HostFileController
 {
-    public function __construct(private FileManager $files, private ResourceRegistry $resources) {}
+    public function __construct(private readonly FileManager $files, private readonly ResourceRegistry $resources) {}
 
     public function output(Request $request, string $resource, string $name): Response
     {

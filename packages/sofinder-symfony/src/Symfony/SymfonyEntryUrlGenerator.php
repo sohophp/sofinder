@@ -11,9 +11,9 @@ use SohoPHP\SoFinder\Value\Entry;
 use SohoPHP\SoFinder\Value\ResourceType;
 use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
 
-final readonly class SymfonyEntryUrlGenerator implements EntryUrlGeneratorInterface
+final class SymfonyEntryUrlGenerator implements EntryUrlGeneratorInterface
 {
-    private RoutingEntryUrlGenerator $generator;
+    private readonly RoutingEntryUrlGenerator $generator;
 
     /** @param iterable<EntryUrlContextProviderInterface> $contextProviders */
     public function __construct(UrlGeneratorInterface $router, iterable $contextProviders = [])

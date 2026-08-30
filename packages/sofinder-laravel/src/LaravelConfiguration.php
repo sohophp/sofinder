@@ -6,10 +6,10 @@ namespace SohoPHP\SoFinder\Laravel;
 
 use SohoPHP\SoFinder\Configuration\ConfigurationNormalizer;
 
-final readonly class LaravelConfiguration
+final class LaravelConfiguration
 {
     /** @var array<string,mixed> */
-    private array $values;
+    private readonly array $values;
 
     /**
      * @param array<string,mixed> $config

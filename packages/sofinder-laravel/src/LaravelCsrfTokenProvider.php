@@ -8,9 +8,9 @@ use Illuminate\Http\Request;
 use SohoPHP\SoFinder\Contract\CsrfTokenProviderInterface;
 use SohoPHP\SoFinder\Value\RequestContext;
 
-final readonly class LaravelCsrfTokenProvider implements CsrfTokenProviderInterface
+final class LaravelCsrfTokenProvider implements CsrfTokenProviderInterface
 {
-    private \Closure $request;
+    private readonly \Closure $request;
 
     /** @param callable():Request $request */
     public function __construct(callable $request)

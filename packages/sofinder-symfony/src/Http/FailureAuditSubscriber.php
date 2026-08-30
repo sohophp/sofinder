@@ -11,9 +11,9 @@ use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 use Symfony\Component\HttpKernel\Event\ExceptionEvent;
 use Symfony\Component\HttpKernel\KernelEvents;
 
-final readonly class FailureAuditSubscriber implements EventSubscriberInterface
+final class FailureAuditSubscriber implements EventSubscriberInterface
 {
-    public function __construct(private LoggerInterface $logger, private ?MetricsStoreInterface $metrics = null)
+    public function __construct(private readonly LoggerInterface $logger, private readonly ?MetricsStoreInterface $metrics = null)
     {
     }
 

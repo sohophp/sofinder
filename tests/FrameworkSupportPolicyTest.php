@@ -12,8 +12,11 @@ final class FrameworkSupportPolicyTest extends TestCase
     {
         $policy = json_decode((string) file_get_contents(__DIR__ . '/../config/framework-support.json'), true, 32, JSON_THROW_ON_ERROR);
 
-        self::assertSame(['8.2', '8.3', '8.4', '8.5'], $policy['stable']['symfony']['php']);
         self::assertSame(['6.4', '7.4'], $policy['stable']['symfony']['versions']);
+        self::assertSame([
+            '6.4' => ['8.1', '8.2', '8.3', '8.4', '8.5'],
+            '7.4' => ['8.2', '8.3', '8.4', '8.5'],
+        ], $policy['stable']['symfony']['phpByVersion']);
         self::assertSame(['laravel', 'psr15'], $policy['promotionGate']['targets']);
         self::assertSame('1.0.0', $policy['promotionGate']['requiresMainVersion']);
         self::assertSame(30, $policy['promotionGate']['minimumStableDays']);
@@ -57,7 +60,8 @@ final class FrameworkSupportPolicyTest extends TestCase
             '13' => ['8.3', '8.4', '8.5'],
         ], $policy['stable']['laravel']['phpByVersion']);
         self::assertSame(['slim-4', 'mezzio-3', 'plain-php'], $policy['stable']['psr15']['hosts']);
-        self::assertSame(['8.2', '8.3', '8.4', '8.5'], $policy['stable']['psr15']['php']);
+        self::assertSame(['8.1', '8.2', '8.3', '8.4', '8.5'], $policy['stable']['psr15']['php']);
+        self::assertSame(['8.1', '8.2', '8.3', '8.4', '8.5'], $policy['stable']['headless-core']['php']);
     }
 
     public function testPublishedPackageCheckReadsTheCurrentStableVersionFromPolicy(): void

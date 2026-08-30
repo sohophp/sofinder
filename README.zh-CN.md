@@ -24,7 +24,7 @@
 	<a href="README.zh-TW.md">繁體中文</a>
 </p>
 
-SoFinder 是原创、采 MIT 授权的网页文件管理器，支持 PHP 8.2 至 8.5，包含与框架无关的核心、Symfony 6.4／7.4 Bundle，以及 React 用户界面。
+SoFinder 是原创、采 MIT 授权的网页文件管理器，支持 PHP 8.1 至 8.5，包含与框架无关的核心、Symfony 6.4／7.4 Bundle，以及 React 用户界面。PHP 8.1 支持 Core、HTTP、PSR-15、S3 与 Symfony 6.4；Symfony 7.4 和 Laravel 12／13 仍要求 PHP 8.2 或更高版本。
 
 本项目采独立设计，不包含专有文件管理器的程序码、美术、翻译、样式或其他资产。Runtime 相依软件包声明记录于 `THIRD_PARTY_NOTICES.md`。
 

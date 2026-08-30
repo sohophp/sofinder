@@ -18,17 +18,17 @@ use Symfony\Component\HttpFoundation\ResponseHeaderBag;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 
 /** Streams authenticated file content without exposing storage internals. */
-final readonly class ContentController
+final class ContentController
 {
     private const MAX_TEXT_PREVIEW_BYTES = 262_144;
     private const MAX_CHECKSUM_BYTES = 536_870_912;
 
     public function __construct(
-        private FileManager $files,
-        private ImageFormatRegistry $imageFormats = new ImageFormatRegistry(),
-        private ?FeaturePolicy $features = null,
-        private ?ContentReadActions $actions = null,
-        private ?ContentStreamActions $streamActions = null,
+        private readonly FileManager $files,
+        private readonly ImageFormatRegistry $imageFormats = new ImageFormatRegistry(),
+        private readonly ?FeaturePolicy $features = null,
+        private readonly ?ContentReadActions $actions = null,
+        private readonly ?ContentStreamActions $streamActions = null,
     ) {
     }
 

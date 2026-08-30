@@ -9,11 +9,11 @@ use SohoPHP\SoFinder\Event\OperationEvent;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 use Symfony\Component\HttpFoundation\RequestStack;
 
-final readonly class OperationAuditSubscriber implements EventSubscriberInterface
+final class OperationAuditSubscriber implements EventSubscriberInterface
 {
     public function __construct(
-        private LoggerInterface $logger,
-        private RequestStack $requests,
+        private readonly LoggerInterface $logger,
+        private readonly RequestStack $requests,
     ) {
     }
 

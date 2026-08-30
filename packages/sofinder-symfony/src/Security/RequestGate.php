@@ -12,13 +12,13 @@ use Symfony\Component\HttpKernel\Event\ControllerEvent;
 use Symfony\Component\HttpKernel\Event\ResponseEvent;
 use Symfony\Component\HttpKernel\KernelEvents;
 
-final readonly class RequestGate implements EventSubscriberInterface
+final class RequestGate implements EventSubscriberInterface
 {
     /** @param array<string, array{max_requests:int,interval:int,max_concurrent:int}> $limits */
     public function __construct(
-        private RequestGateStoreInterface $store,
-        private ActorProviderInterface $actors,
-        private array $limits,
+        private readonly RequestGateStoreInterface $store,
+        private readonly ActorProviderInterface $actors,
+        private readonly array $limits,
     ) {
     }
 

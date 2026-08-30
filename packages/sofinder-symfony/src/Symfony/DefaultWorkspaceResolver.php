@@ -12,9 +12,9 @@ use SohoPHP\SoFinder\Value\WorkspaceContext;
 use SohoPHP\SoFinder\Workspace\DefaultWorkspaceResolver as CoreDefaultWorkspaceResolver;
 
 /** @deprecated Use the framework-neutral Workspace\DefaultWorkspaceResolver. */
-final readonly class DefaultWorkspaceResolver implements WorkspaceResolverInterface
+final class DefaultWorkspaceResolver implements WorkspaceResolverInterface
 {
-    private CoreDefaultWorkspaceResolver $resolver;
+    private readonly CoreDefaultWorkspaceResolver $resolver;
 
     public function __construct(ActorProviderInterface $actors, ResourceRegistry $resources, string $default = 'main')
     {

@@ -96,9 +96,9 @@ final class FakeSlimApplication
     }
 }
 
-final readonly class FakeSlimRoute
+final class FakeSlimRoute
 {
-    private \Closure $namer;
+    private readonly \Closure $namer;
 
     /** @param callable(string):void $namer */
     public function __construct(callable $namer)
