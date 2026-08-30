@@ -44,13 +44,14 @@ if [[ -n "$bridge_record" ]]; then
     bridge_source="$happy_dir/bridge-source"
     git clone --quiet --branch package-release-main "$split_dir/$bridge_bundle" "$bridge_source"
     bridge_parent=$(git -C "$bridge_source" rev-parse "$bridge_commit^")
-    bridge_parent_tree=$(git -C "$bridge_source" rev-parse "$bridge_parent^{tree}")
+    bridge_base=$(git -C "$bridge_source" rev-parse "$bridge_parent^")
+    bridge_base_tree=$(git -C "$bridge_source" rev-parse "$bridge_base^{tree}")
     previous_bridge_commit=$(printf '%s\n' 'Include previous synchronized frontend distribution and notices' | \
         GIT_AUTHOR_NAME='SoFinder Release Automation' \
         GIT_AUTHOR_EMAIL='release@sofinder.sohophp.app' \
         GIT_COMMITTER_NAME='SoFinder Release Automation' \
         GIT_COMMITTER_EMAIL='release@sofinder.sohophp.app' \
-        git -C "$bridge_source" commit-tree "$bridge_parent_tree" -p "$bridge_parent")
+        git -C "$bridge_source" commit-tree "$bridge_base_tree" -p "$bridge_base")
     bridge_bare="$happy_dir/$bridge_repository.git"
     git -C "$bridge_source" push --quiet --force "$bridge_bare" "$previous_bridge_commit:refs/heads/main"
 

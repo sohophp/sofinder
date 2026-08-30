@@ -54,6 +54,11 @@ while IFS=$'\t' read -r package_name target_repository expected_commit tag bundl
             # commit to the package history. Preserve that merge on retries.
             publish_commit=$remote_main
         elif [[ "$package_name" == sohophp/sofinder-psr15 || "$package_name" == sohophp/sofinder-laravel ]]; then
+            divergence_base=$(git -C "$checkout" merge-base "$remote_main" "$expected_commit" || true)
+            if [[ -z "$divergence_base" ]]; then
+                echo "Remote $target_repository main has no common package history with $expected_commit." >&2
+                exit 1
+            fi
             while IFS= read -r changed_path; do
                 case "$changed_path" in
                     dist/*|THIRD_PARTY_NOTICES.md) ;;
@@ -62,7 +67,7 @@ while IFS=$'\t' read -r package_name target_repository expected_commit tag bundl
                         exit 1
                         ;;
                 esac
-            done < <(git -C "$checkout" diff --name-only "$remote_main" "$expected_commit")
+            done < <(git -C "$checkout" diff --name-only "$divergence_base" "$remote_main")
             tag_date=$(git -C "$checkout" show -s --format=%cI "$expected_commit")
             publish_commit=$(printf '%s\n' "Merge $tag synchronized frontend distribution" | \
                 GIT_AUTHOR_NAME='SoFinder Release Automation' \

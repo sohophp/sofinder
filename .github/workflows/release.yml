@@ -36,7 +36,9 @@ jobs:
           if [[ "${{ github.event_name }}" == workflow_dispatch ]]; then
             unexpected_changes=$(git diff --name-only "$release_sha" HEAD -- . \
               ':(exclude).github/workflows/release.yml' \
-              ':(exclude)scripts/prepare-package-splits.sh')
+              ':(exclude)scripts/prepare-package-splits.sh' \
+              ':(exclude)scripts/publish-package-splits.sh' \
+              ':(exclude)scripts/check-package-split-publication.sh')
             test -z "$unexpected_changes"
           else
             test "$release_sha" = "$(git rev-parse HEAD)"
