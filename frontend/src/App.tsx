@@ -34,6 +34,7 @@ const FolderTree = lazy(() => import("./components/FolderTree").then(module => (
 const DetailsPanel = lazy(() => import("./components/DetailsPanel").then(module => ({ default: module.DetailsPanel })));
 const ShareDialog = lazy(() => import("./components/ShareDialog"));
 const FavoritesPage = lazy(() => import("./components/FavoritesPage"));
+const RecentPage = lazy(() => import("./components/RecentPage"));
 const QuickAccessPanel = lazy(() => import("./components/MetadataSidebarPanels").then(module => ({ default: module.QuickAccessPanel })));
 const FavoritesPanel = lazy(() => import("./components/MetadataSidebarPanels").then(module => ({ default: module.FavoritesPanel })));
 const RecentPanel = lazy(() => import("./components/MetadataSidebarPanels").then(module => ({ default: module.RecentPanel })));
@@ -66,7 +67,10 @@ export default function App({ config, initialMessages }: { config: SoFinderConfi
   const { resource, setResource, path, setPath, resolvedPath, setResolvedPath, entries, setEntries, search, setSearch, searchMode, setSearchMode, sort, setSort, direction, setDirection, offset, setOffset, total, setTotal, pageCursor, setPageCursor, nextCursor, setNextCursor, cursorHistory, setCursorHistory, pageSize, setPageSize, pageSizeDraft, setPageSizeDraft, pageSizeRef, view, setView, loading, setLoading, notice, setNotice, directoryCapabilities, setDirectoryCapabilities, loadSequence, historyReady, restoringHistory, searchInitialized } = useBrowserState(config.resource, config.initialPath || "");
   const [metadata, setMetadata] = useState<MetadataState>({ favorites: [], quickAccess: [], quickAccessEntries: [], tags: {}, recent: [] });
   const [quickAccessByResource, setQuickAccessByResource] = useState<Record<string, QuickAccessEntry[]>>({});
-  const [collectionView, setCollectionView] = useState<"favorites" | null>(() => new URL(window.location.href).searchParams.get("collection") === "favorites" ? "favorites" : null);
+  const [collectionView, setCollectionView] = useState<"favorites" | "recent" | null>(() => {
+    const collection = new URL(window.location.href).searchParams.get("collection");
+    return collection === "favorites" || collection === "recent" ? collection : null;
+  });
   const [imageInfo, setImageInfo] = useState<ImageInfo | null>(null);
   const [tools, setTools] = useState<ToolPreferences>(() => config.uiDefaults.fullTools ? { resize: true, crop: true, rotate: true, presets: true, process: true, batchRename: true } : loadToolPreferences());
   const [features, setFeatures] = useState<FeaturePreferences>(() => {
@@ -94,6 +98,7 @@ export default function App({ config, initialMessages }: { config: SoFinderConfi
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [securityStatusOpen, setSecurityStatusOpen] = useState(false);
   const [utilityOpen, setUtilityOpen] = useState(false);
+  const [uploadMenuOpen, setUploadMenuOpen] = useState(false);
   const [selectionMenuOpen, setSelectionMenuOpen] = useState(false);
   const [selectionMenuPosition, setSelectionMenuPosition] = useState({ left: 0, top: 0 });
   const [groupMode, setGroupMode] = useState<EntryGroupMode>(savedGroupMode);
@@ -136,6 +141,8 @@ export default function App({ config, initialMessages }: { config: SoFinderConfi
   const entriesList = useRef<HTMLDivElement>(null);
   const utility = useRef<HTMLDivElement>(null);
   const utilityButton = useRef<HTMLButtonElement>(null);
+  const uploadMenu = useRef<HTMLDivElement>(null);
+  const uploadMenuButton = useRef<HTMLButtonElement>(null);
   const selectionMenu = useRef<HTMLDivElement>(null);
   const selectionMenuPopup = useRef<HTMLDivElement>(null);
   const activeResource = useRef(resource);
@@ -195,6 +202,25 @@ export default function App({ config, initialMessages }: { config: SoFinderConfi
       document.removeEventListener("keydown", closeWithKeyboard);
     };
   }, [utilityOpen]);
+
+  useEffect(() => {
+    if (!uploadMenuOpen) return;
+    const closeOutside = (event: PointerEvent) => {
+      if (event.target instanceof Node && !uploadMenu.current?.contains(event.target)) setUploadMenuOpen(false);
+    };
+    const closeWithKeyboard = (event: KeyboardEvent) => {
+      if (event.key !== "Escape") return;
+      event.preventDefault();
+      setUploadMenuOpen(false);
+      uploadMenuButton.current?.focus();
+    };
+    document.addEventListener("pointerdown", closeOutside);
+    document.addEventListener("keydown", closeWithKeyboard);
+    return () => {
+      document.removeEventListener("pointerdown", closeOutside);
+      document.removeEventListener("keydown", closeWithKeyboard);
+    };
+  }, [uploadMenuOpen]);
 
   useEffect(() => {
     if (!selectionMenuOpen) return;
@@ -387,7 +413,8 @@ export default function App({ config, initialMessages }: { config: SoFinderConfi
       const url = new URL(window.location.href);
       const nextResource = pickerResource ?? (url.searchParams.get("type") || config.resource);
       const nextPath = url.searchParams.get("path") || "";
-      const nextCollection = url.searchParams.get("collection") === "favorites" ? "favorites" : null;
+      const collection = url.searchParams.get("collection");
+      const nextCollection = collection === "favorites" || collection === "recent" ? collection : null;
       restoringHistory.current = true;
       setResource(nextResource);
       setCollectionView(nextCollection);
@@ -405,7 +432,8 @@ export default function App({ config, initialMessages }: { config: SoFinderConfi
     const url = new URL(window.location.href);
     const currentResource = url.searchParams.get("type") || "";
     const currentPath = url.searchParams.get("path") || "";
-    const currentCollection = url.searchParams.get("collection") === "favorites" ? "favorites" : null;
+    const collection = url.searchParams.get("collection");
+    const currentCollection = collection === "favorites" || collection === "recent" ? collection : null;
     if (currentResource === resource && currentPath === path && currentCollection === collectionView) {
       historyReady.current = true;
       restoringHistory.current = false;
@@ -456,7 +484,8 @@ export default function App({ config, initialMessages }: { config: SoFinderConfi
 
   useEffect(() => {
     if (!features.favorites && collectionView === "favorites") setCollectionView(null);
-  }, [collectionView, features.favorites]);
+    if (!features.recent && collectionView === "recent") setCollectionView(null);
+  }, [collectionView, features.favorites, features.recent]);
 
   useEffect(() => {
     const paste = (event: ClipboardEvent) => {
@@ -1035,6 +1064,7 @@ export default function App({ config, initialMessages }: { config: SoFinderConfi
       || (entry.directory && (destinationDialog.path === entry.path || destinationDialog.path.startsWith(`${entry.path}/`)));
   });
   const uploadActive = uploads.some(task => task.status === "queued" || task.status === "uploading");
+  const uploadProgress = uploads.length === 0 ? 0 : Math.round(uploads.reduce((total, task) => total + task.progress, 0) / uploads.length);
   const fullTools = config.uiDefaults.fullTools === true;
   const hasLogo = config.uiDefaults.logo !== false;
   const recoverableDelete = currentResource?.storageCapabilities?.recoverableDelete !== false;
@@ -1049,8 +1079,10 @@ export default function App({ config, initialMessages }: { config: SoFinderConfi
         : features.recent;
   const leftSidebarSections = sidebarLayout.left.filter(sidebarSectionVisible);
   const rightSidebarSections = sidebarLayout.right.filter(sidebarSectionVisible);
-  const showSidebar = resources.length > 1 || leftSidebarSections.length > 0 || Boolean(currentResource?.readOnly || currentResource?.quotaBytes) || draggedSidebarSection !== null;
-  const recentPanel = (variant: "sidebar" | "mobile") => features.recent ? <Suspense fallback={null}><RecentPanel variant={variant} items={metadata.recent} labels={{ title: t("recent"), empty: t("recentEmpty"), home: t("home") }} onOpen={item => void openRecent(item)}/></Suspense> : null;
+  const trashSidebarVisible = (uiMode === "manager" || fullTools) && features.trash && recoverableDelete;
+  const trashOnlySidebar = trashSidebarVisible && resources.length <= 1 && leftSidebarSections.length === 0 && !currentResource?.readOnly && !currentResource?.quotaBytes;
+  const showSidebar = resources.length > 1 || leftSidebarSections.length > 0 || trashSidebarVisible || Boolean(currentResource?.readOnly || currentResource?.quotaBytes) || draggedSidebarSection !== null;
+  const recentPanel = (variant: "sidebar" | "mobile") => features.recent ? <Suspense fallback={null}><RecentPanel variant={variant} items={metadata.recent} currentResource={resource} active={collectionView === "recent"} labels={{ title: t("recent"), empty: t("recentEmpty"), home: t("home") }} onOpen={item => void openRecent(item)} onOpenAll={() => openRecentCollection()}/></Suspense> : null;
   const detailsPaneAvailable = uiMode === "manager" || fullTools;
   const showDetails = detailsPaneVisible && detailsPaneAvailable && selectedEntries.length > 0;
   const showRightPanel = showDetails || rightSidebarSections.length > 0 || draggedSidebarSection !== null;
@@ -1072,6 +1104,13 @@ export default function App({ config, initialMessages }: { config: SoFinderConfi
     setSearch("");
     setSearchMode("name");
     setCollectionView("favorites");
+  };
+  const openRecentCollection = () => {
+    setSelectedPaths(new Set());
+    setSelectionAnchor(null);
+    setSearch("");
+    setSearchMode("name");
+    setCollectionView("recent");
   };
   const sidebarPath = async (targetResource: string, targetPath: string, kind: "favorite" | "quick_access", knownExists?: boolean) => {
     const parent = targetPath.includes("/") ? targetPath.slice(0, targetPath.lastIndexOf("/")) : "";
@@ -1203,9 +1242,9 @@ export default function App({ config, initialMessages }: { config: SoFinderConfi
     <div className={`sf-commandbar ${hasLogo ? "sf-has-brand" : "sf-no-brand"}`}>
       {hasLogo ? <div className="sf-brand" title="SoFinder"><span className="sf-brand-mark" aria-hidden="true">S</span>{config.uiDefaults.header === true ? <strong>SoFinder</strong> : <span className="sf-sr-only">SoFinder</span>}</div> : <nav className="sf-breadcrumb sf-command-breadcrumb" aria-label="Breadcrumb">
         <button onClick={() => resetAndLoad(resource, "")}>{t("home")}</button>
-        {collectionView === "favorites" ? <span>› <strong>{t("favorites")}</strong></span> : crumbs.map((crumb, index) => <span key={`${crumb}-${index}`}>› <button onClick={() => resetAndLoad(resource, crumbs.slice(0, index + 1).join("/"))}>{crumb}</button></span>)}
+        {collectionView ? <span>› <strong>{t(collectionView === "favorites" ? "favorites" : "recent")}</strong></span> : crumbs.map((crumb, index) => <span key={`${crumb}-${index}`}>› <button onClick={() => resetAndLoad(resource, crumbs.slice(0, index + 1).join("/"))}>{crumb}</button></span>)}
       </nav>}
-      {config.uiDefaults.search !== false && <div className="sf-search"><UiIcon name="search"/><select value={searchMode} disabled={collectionView !== null} onChange={event => { const next = event.target.value as "name" | "tags"; setSearchMode(next); setOffset(0); }} aria-label={t("searchScope")}><option value="name" disabled={currentResource?.storageCapabilities?.search === false}>{t("name")}</option><option value="tags">{t("tags")}</option></select><input disabled={collectionView === null && searchMode === "name" && currentResource?.storageCapabilities?.search === false} value={search} onChange={e => setSearch(e.target.value)} placeholder={collectionView === "favorites" ? t("searchFavorites") : searchMode === "tags" ? t("searchTags") : t("search")} aria-label={collectionView === "favorites" ? t("searchFavorites") : searchMode === "tags" ? t("searchTags") : t("search")}/>{assetSearchEnabled && <button className="sf-advanced-search-trigger" type="button" onClick={() => setAssetSearchOpen(true)} title={t("advancedSearch")} aria-label={t("advancedSearch")}><UiIcon name="filter"/></button>}</div>}
+      {config.uiDefaults.search !== false && <div className="sf-search"><UiIcon name="search"/><select value={searchMode} disabled={collectionView !== null} onChange={event => { const next = event.target.value as "name" | "tags"; setSearchMode(next); setOffset(0); }} aria-label={t("searchScope")}><option value="name" disabled={currentResource?.storageCapabilities?.search === false}>{t("name")}</option><option value="tags">{t("tags")}</option></select><input disabled={collectionView === null && searchMode === "name" && currentResource?.storageCapabilities?.search === false} value={search} onChange={e => setSearch(e.target.value)} placeholder={collectionView === "favorites" ? t("searchFavorites") : collectionView === "recent" ? t("searchRecent") : searchMode === "tags" ? t("searchTags") : t("search")} aria-label={collectionView === "favorites" ? t("searchFavorites") : collectionView === "recent" ? t("searchRecent") : searchMode === "tags" ? t("searchTags") : t("search")}/>{assetSearchEnabled && <button className="sf-advanced-search-trigger" type="button" onClick={() => setAssetSearchOpen(true)} title={t("advancedSearch")} aria-label={t("advancedSearch")}><UiIcon name="filter"/></button>}</div>}
       <div className="sf-command-actions">
       {(config.workspace?.options?.length ?? 0) > 1 && <label className="sf-workspace-switcher"><span className="sf-sr-only">{t("workspace")}</span><select aria-label={t("workspace")} value={config.workspace?.id} disabled={uploadActive} title={uploadActive ? t("workspaceUploadBlocked") : t("workspace")} onChange={event => { const option = config.workspace?.options?.find(item => item.id === event.target.value); if (option) window.location.assign(option.url); }}>{config.workspace?.options?.map(option => <option key={option.id} value={option.id}>{option.label}</option>)}</select></label>}
       <SortMenu sort={sort} direction={direction} group={presentationGroupMode} available={collectionView === null && currentResource?.storageCapabilities?.sort !== false} groupingAvailable={collectionView === null} tagsEnabled={features.tags} labels={{ sort: t("sort"), name: t("name"), modified: t("modified"), type: t("type"), size: t("size"), ascending: t("ascending"), descending: t("descending"), groupBy: t("groupBy"), groupNone: t("groupNone"), tags: t("tags") }} onSortChange={mode => changeSort(mode, false)} onDirectionChange={setSortDirection} onGroupChange={changeGroup} onOpen={() => setUtilityOpen(false)}/>
@@ -1236,7 +1275,6 @@ export default function App({ config, initialMessages }: { config: SoFinderConfi
           <button role="menuitem" onClick={() => { setUtilityOpen(false); if (collectionView === "favorites") void fetchMetadata(resource, true).catch(report); else void load(); }}>{iconButton("refresh", t("refresh"))}</button>
           <button role="menuitem" onClick={() => { setUtilityOpen(false); setSettingsOpen(true); }}>{iconButton("settings", t("settings"))}</button>
           {(uiMode === "manager" || fullTools) && config.securityStatusAvailable !== false && <button role="menuitem" onClick={() => { setUtilityOpen(false); setSecurityStatusOpen(true); }}>{iconButton("security", t("securityStatus"))}</button>}
-          {(uiMode === "manager" || fullTools) && features.trash && recoverableDelete && <button role="menuitem" onClick={() => { setUtilityOpen(false); setTrashOpen(true); }}>{iconButton("trash", t("trash"))}</button>}
           {(uiMode === "manager" || fullTools) && features.favorites && <button role="menuitem" onClick={() => { setUtilityOpen(false); openFavorites(); }}>{iconButton("favorite", t("favorites"))}</button>}
           {(uiMode === "manager" || fullTools) && pluginActions.filter(action => action.slot === "utility" && pluginActionAvailable(action, null)).map(action => <button role="menuitem" key={`${action.plugin}:${action.id}`} onClick={() => { setUtilityOpen(false); openPluginAction(action, null); }}>{pluginLabel(action, language)}</button>)}
         </div>}
@@ -1245,11 +1283,20 @@ export default function App({ config, initialMessages }: { config: SoFinderConfi
     </div>
     <div className="sf-toolbar" role="toolbar" aria-label={t("fileActions")} title={t("keyboardHelp")}>
       <button onClick={createFolder} disabled={collectionView !== null || currentResource?.readOnly || directoryCapabilities.create_folder === false || (currentResource !== undefined && currentDepth >= currentResource.maxFolderDepth)} title={currentResource && currentDepth >= currentResource.maxFolderDepth ? t("folderDepthReached") : undefined}>{iconButton("add-folder", t("newFolder"))}</button>
-      <button className={`primary sf-upload-trigger${uploadActive ? " is-active" : ""}`} aria-busy={uploadActive} onClick={() => uploadInput.current?.click()} disabled={collectionView !== null || currentResource?.readOnly || directoryCapabilities.upload === false}>{iconButton("upload", `${t("upload")}${uploadActive ? ` (${uploads.filter(task => task.status === "queued" || task.status === "uploading").length})` : ""}`)}</button>
+      {uploads.length > 0 && <button className="sf-upload-progress-trigger" style={{ "--sf-upload-progress": uploadProgress } as React.CSSProperties} onClick={() => setUploadsCollapsed(false)} aria-expanded={!uploadsCollapsed} title={`${t("uploadQueue")}: ${uploadProgress}%`} aria-label={`${t("uploadQueue")}: ${uploadProgress}%`}><span>{uploadProgress}%</span></button>}
+      <div ref={uploadMenu} className="sf-upload-split">
+        <button className={`primary sf-upload-trigger${uploadActive ? " is-active" : ""}`} aria-busy={uploadActive} onClick={() => uploadInput.current?.click()} disabled={collectionView !== null || currentResource?.readOnly || directoryCapabilities.upload === false}>{iconButton("upload", `${t("upload")}${uploadActive ? ` (${uploads.filter(task => task.status === "queued" || task.status === "uploading").length})` : ""}`)}</button>
+        {featureAvailability.folderUpload !== false && <button ref={uploadMenuButton} className="primary sf-upload-menu-trigger" onClick={() => setUploadMenuOpen(open => !open)} disabled={collectionView !== null || currentResource?.readOnly || directoryCapabilities.upload === false} aria-haspopup="menu" aria-expanded={uploadMenuOpen} title={t("uploadOptions")} aria-label={t("uploadOptions")}><UiIcon name="chevron-down"/></button>}
+        {uploadMenuOpen && <div className="sf-utility-menu sf-upload-menu" role="menu"><button role="menuitem" onClick={() => { setUploadMenuOpen(false); uploadInput.current?.click(); }}>{iconButton("file", t("uploadFile"))}</button><button role="menuitem" onClick={() => { setUploadMenuOpen(false); directoryUploadInput.current?.click(); }}>{iconButton("add-folder", t("uploadFolder"))}</button></div>}
+      </div>
       <input ref={uploadInput} type="file" multiple hidden onChange={event => { if (event.target.files) void upload(event.target.files); event.target.value = ""; }}/>
-      {featureAvailability.folderUpload !== false && <><button onClick={() => directoryUploadInput.current?.click()} disabled={collectionView !== null || currentResource?.readOnly || directoryCapabilities.upload === false}>{iconButton("add-folder", t("uploadFolder"))}</button>
-      <input ref={element => { directoryUploadInput.current = element; element?.setAttribute("webkitdirectory", ""); }} type="file" multiple hidden onChange={event => { if (event.target.files) void uploadDirectory(event.target.files); event.target.value = ""; }}/></>}
-      {(uiMode === "manager" || fullTools) && features.trash && recoverableDelete && <button onClick={() => setTrashOpen(true)}>{iconButton("trash", t("trash"))}</button>}
+      {featureAvailability.folderUpload !== false && <input
+        ref={element => { directoryUploadInput.current = element; element?.setAttribute("webkitdirectory", ""); }}
+        type="file"
+        multiple
+        hidden
+        onChange={event => { if (event.target.files) void uploadDirectory(event.target.files); event.target.value = ""; }}
+      />}
       {(uiMode === "manager" || fullTools) && <div ref={selectionMenu} className="sf-utility sf-selection-menu"><button onClick={toggleSelectionMenu} aria-expanded={selectionMenuOpen} aria-haspopup="menu">{iconButton("select", t("selection"))}</button></div>}
       {(uiMode === "manager" || fullTools) && selectedEntries.length > 0 && <><span className="sf-separator"/><div className="sf-context-actions">
       <button onClick={rename} disabled={selectedEntries.length !== 1 || !canSelected("rename") || currentResource?.readOnly}>{iconButton("rename", t("rename"))}</button>
@@ -1268,13 +1315,14 @@ export default function App({ config, initialMessages }: { config: SoFinderConfi
     </div>
     {selectionMenuOpen && createPortal(<div ref={selectionMenuPopup} className="sf-utility-menu sf-selection-menu-popup" role="menu" style={selectionMenuPosition}><button role="menuitem" disabled={displayedEntries.length === 0} onClick={() => { selectAll(); setSelectionMenuOpen(false); }}>{t("selectAll")}</button><button role="menuitem" disabled={selectedPaths.size === 0} onClick={() => { clearSelection(); setSelectionMenuOpen(false); }}>{t("clearSelection")}</button><button role="menuitem" disabled={displayedEntries.length === 0} onClick={() => { invertSelection(); setSelectionMenuOpen(false); }}>{t("invertSelection")}</button></div>, document.body)}
     {notice && <div className="sf-notice" role="alert">{notice}<button onClick={() => setNotice("")} aria-label={t("close")}><UiIcon name="close"/></button></div>}
-    {uploads.length > 0 && <Suspense fallback={null}><UploadQueue tasks={uploads} collapsed={uploadsCollapsed} labels={{ title: t("uploadQueue"), expand: t("expand"), collapse: t("collapse"), cancel: t("cancel"), cancelAll: t("cancelAll"), clearFinished: t("clearFinished"), retry: t("retryUpload"), remove: t("removeUploadTask"), status: status => t(status) }} onToggle={() => setUploadsCollapsed(current => !current)} onCancel={cancelUpload} onCancelAll={cancelAllUploads} onClearFinished={clearFinishedUploads} onRetry={retryUpload} onRemove={removeUploadTask}/></Suspense>}
+    {uploads.length > 0 && <Suspense fallback={null}><UploadQueue tasks={uploads} collapsed={uploadsCollapsed} labels={{ title: t("uploadQueue"), close: t("close"), cancel: t("cancel"), cancelAll: t("cancelAll"), clearFinished: t("clearFinished"), retry: t("retryUpload"), remove: t("removeUploadTask"), status: status => t(status) }} onToggle={() => setUploadsCollapsed(true)} onCancel={cancelUpload} onCancelAll={cancelAllUploads} onClearFinished={clearFinishedUploads} onRetry={retryUpload} onRemove={removeUploadTask}/></Suspense>}
     <div className="sf-layout" style={{ "--sf-sidebar-width": `${leftWidth}px`, "--sf-details-width": `${rightWidth}px` } as React.CSSProperties}>
-      {showSidebar && <aside className="sf-sidebar" aria-label="Resources">
+      {showSidebar && <aside className={`sf-sidebar${trashOnlySidebar ? " sf-trash-only-sidebar" : ""}`} aria-label="Resources">
         {resources.map(item => <button key={item.name} className={item.name === resource && collectionView === null ? "active" : ""} onClick={() => { setCollectionView(null); setResource(item.name); setSearch(""); setSearchMode("name"); if (item.storageCapabilities?.sort === false) { setSort("name"); setDirection("asc"); setCursorHistory([]); void load(item.name, "", "", 0, "name", "asc", "name", null); } else resetAndLoad(item.name, "", ""); }}>
           <span className="sf-resource-icon"><Icon kind={item.name.toLowerCase().includes("image") ? "image" : "folder"}/></span>
           {item.name.toLowerCase().includes("image") ? t("images") : item.name.toLowerCase() === "files" ? t("files") : item.name}
         </button>)}
+        {trashSidebarVisible && <button onClick={() => setTrashOpen(true)}><span className="sf-resource-icon"><UiIcon name="trash"/></span>{t("trash")}</button>}
         {currentResource && (currentResource.readOnly || currentResource.quotaBytes > 0) && <div className="sf-resource-status">
           {currentResource.readOnly && <strong>{t("readOnly")}</strong>}
           {currentResource.quotaBytes > 0 && <><span>{t("storageUsage")}: {formatSize(currentResource.usedBytes)} / {formatSize(currentResource.quotaBytes)}</span><progress max={currentResource.quotaBytes} value={Math.min(currentResource.usedBytes, currentResource.quotaBytes)}/></>}
@@ -1286,9 +1334,9 @@ export default function App({ config, initialMessages }: { config: SoFinderConfi
         {recentPanel("mobile")}
         {hasLogo && <nav className="sf-breadcrumb" aria-label="Breadcrumb">
           <button onClick={() => resetAndLoad(resource, "")}>{t("home")}</button>
-          {collectionView === "favorites" ? <span>› <strong>{t("favorites")}</strong></span> : crumbs.map((crumb, index) => <span key={`${crumb}-${index}`}>› <button onClick={() => resetAndLoad(resource, crumbs.slice(0, index + 1).join("/"))}>{crumb}</button></span>)}
+          {collectionView ? <span>› <strong>{t(collectionView === "favorites" ? "favorites" : "recent")}</strong></span> : crumbs.map((crumb, index) => <span key={`${crumb}-${index}`}>› <button onClick={() => resetAndLoad(resource, crumbs.slice(0, index + 1).join("/"))}>{crumb}</button></span>)}
         </nav>}
-        {collectionView === "favorites" ? <Suspense fallback={<div className="sf-state">{t("loading")}</div>}><FavoritesPage paths={metadata.favorites} search={search} locale={language} labels={{ title: t("favorites"), hint: t("favoritesPageHint"), empty: t("favoritesEmpty"), noMatch: t("filterEmpty"), home: t("home"), open: t("open"), remove: t("removeFavorite") }} onOpen={item => void sidebarPath(resource, item, "favorite")} onRemove={item => void removeFavorite(item)}/></Suspense> : loading ? <div className="sf-state">{t("loading")}</div> : displayedEntries.length === 0 ? <div className="sf-state">{entries.length === 0 ? t("empty") : t("filterEmpty")}</div> :
+        {collectionView === "favorites" ? <Suspense fallback={<div className="sf-state">{t("loading")}</div>}><FavoritesPage paths={metadata.favorites} search={search} locale={language} labels={{ title: t("favorites"), hint: t("favoritesPageHint"), empty: t("favoritesEmpty"), noMatch: t("filterEmpty"), home: t("home"), open: t("open"), remove: t("removeFavorite") }} onOpen={item => void sidebarPath(resource, item, "favorite")} onRemove={item => void removeFavorite(item)}/></Suspense> : collectionView === "recent" ? <Suspense fallback={<div className="sf-state">{t("loading")}</div>}><RecentPage items={metadata.recent} search={search} locale={language} labels={{ title: t("recent"), hint: t("recentPageHint"), empty: t("recentEmpty"), noMatch: t("filterEmpty"), home: t("home"), open: t("open") }} onOpen={item => void openRecent(item)}/></Suspense> : loading ? <div className="sf-state">{t("loading")}</div> : displayedEntries.length === 0 ? <div className="sf-state">{entries.length === 0 ? t("empty") : t("filterEmpty")}</div> :
           <div ref={entriesList} className={`sf-entries ${view} sf-grid-size-${viewSizes.grid} sf-list-size-${viewSizes.list}${view === "list" && listColumns.size ? " sf-list-has-size" : ""}`} style={view === "list" ? { "--sf-list-columns": listGridTemplate } as React.CSSProperties : undefined} role="listbox" aria-multiselectable={uiMode === "manager"} aria-label={t("files")}>
             {view === "list" && <div className="sf-list-head">{visibleListColumns.map(column => sortHeading(column, columnLabel(column), columnClass(column), true))}</div>}
             {entryGroups.flatMap(group => [
@@ -1307,13 +1355,13 @@ export default function App({ config, initialMessages }: { config: SoFinderConfi
           </div>}
         {collectionView === null && <nav className="sf-pagination" aria-label={t("pagination")}>
           <div className="sf-page-navigation">
-            <button disabled={cursorHistory.length === 0} onClick={previousPage}><UiIcon name="chevron-left"/> {t("previous")}</button>
-            <span>{t("page")} {cursorHistory.length + 1}{total !== null ? ` / ${Math.max(1, Math.ceil(total / pageSize))}` : ""}</span>
-            <button disabled={nextCursor === null} onClick={followingPage}>{t("next")} <UiIcon name="chevron-right"/></button>
+            <button disabled={cursorHistory.length === 0} onClick={previousPage} aria-label={t("previous")} title={t("previous")}><UiIcon name="chevron-left"/></button>
+            <span className="sf-page-indicator"><span>{t("page")}</span><strong>{cursorHistory.length + 1}</strong>{total !== null && <><i aria-hidden="true">/</i><span>{Math.max(1, Math.ceil(total / pageSize))}</span></>}</span>
+            <button disabled={nextCursor === null} onClick={followingPage} aria-label={t("next")} title={t("next")}><UiIcon name="chevron-right"/></button>
           </div>
           <label className="sf-page-size">
-            <span>{t("itemsPerPage")} ({pageSizeLimits.min}–{pageSizeLimits.max})</span>
-            <input type="number" min={pageSizeLimits.min} max={pageSizeLimits.max} step="10" list={pageSizeOptionsId} value={pageSizeDraft} onChange={event => setPageSizeDraft(event.target.value)} onBlur={commitPageSize} onKeyDown={event => { if (event.key === "Enter") event.currentTarget.blur(); }}/>
+            <span>{t("itemsPerPage")}</span>
+            <input type="number" min={pageSizeLimits.min} max={pageSizeLimits.max} step="10" list={pageSizeOptionsId} value={pageSizeDraft} aria-label={`${t("itemsPerPage")} (${pageSizeLimits.min}–${pageSizeLimits.max})`} onChange={event => setPageSizeDraft(event.target.value)} onBlur={commitPageSize} onKeyDown={event => { if (event.key === "Enter") event.currentTarget.blur(); }}/>
           </label>
           <datalist id={pageSizeOptionsId}>{[20, 50, 100, 200, 500].map(value => <option key={value} value={value}/>)}</datalist>
         </nav>}

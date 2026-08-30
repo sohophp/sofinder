@@ -2,6 +2,17 @@
 
 ## Unreleased
 
+## 1.2.1 - 2026-08-30
+
+- Move uploads into a draggable progress window that can be dismissed and
+  restored from its toolbar percentage, and combine file and folder uploads
+  into one split action with file upload as the default.
+- Move Trash into the left sidebar, give Recent files a searchable standalone
+  page, and limit the Recent and Favorite sidebar previews to five items.
+- Refine desktop and mobile pagination with compact icon controls, a stable
+  page indicator and a clearer per-page input; use Trash consistently in the
+  English interface.
+
 ## 1.2.0 - 2026-08-30
 
 - Add PHP 8.1 support for Core, HTTP, PSR-15, S3 and the Symfony 6.4 bridge

@@ -706,7 +706,7 @@ test("removes a pinned folder that disappears while opening", async ({ page }) =
   expect(directoryRequests).toBe(1);
 });
 
-test("configures Favorites sidebar sections and keeps the collection link below Recycle bin", async ({ page }) => {
+test("configures Favorites sidebar sections and keeps the collection link below Trash", async ({ page }) => {
   await page.route("**/sofinder/api/metadata**", route => route.fulfill({ json: { success: true, data: { favorites: ["guide.txt"], quickAccess: ["manuals"], tags: {}, recent: [] } } }));
   await page.evaluate(() => localStorage.setItem("sofinder.features.v2", JSON.stringify({ favorites: true })));
   await page.setContent(`<!doctype html><html lang="zh-CN"><body><main id="sofinder-root" data-config='${JSON.stringify(config)}'></main></body></html>`);
@@ -729,7 +729,7 @@ test("configures Favorites sidebar sections and keeps the collection link below 
 
   await page.getByRole("button", { name: "更多操作" }).click();
   const menuItems = await page.getByRole("menuitem").allTextContents();
-  expect(menuItems.indexOf("收藏文件")).toBe(menuItems.indexOf("回收站") + 1);
+  expect(menuItems).not.toContain("回收站");
   await page.getByRole("menuitem", { name: "收藏文件" }).click();
   await expect(page).toHaveURL(/collection=favorites/);
 });
@@ -1202,6 +1202,40 @@ test("shows recent files immediately when enabled and keeps them accessible on m
   await expect(page.locator(".sf-recent-mobile").getByRole("button", { name: /guide\.txt/ })).toBeVisible();
 });
 
+test("shows five recent files in the sidebar and opens the full recent page", async ({ page }) => {
+  const recent = Array.from({ length: 7 }, (_, index) => ({ path: `folder/recent-${index + 1}.txt`, touchedAt: 7 - index }));
+  await page.route("**/sofinder/api/metadata**", route => route.fulfill({ json: { success: true, data: { favorites: [], quickAccess: [], tags: {}, recent } } }));
+  await page.evaluate(() => localStorage.setItem("sofinder.features.v2", JSON.stringify({ recent: true })));
+  await page.setContent(`<!doctype html><html lang="zh-CN"><body><main id="sofinder-root" data-config='${JSON.stringify(config)}'></main></body></html>`);
+  await page.addStyleTag({ path: resolve(import.meta.dirname, "../../dist/sofinder.css") });
+  await page.addScriptTag({ path: resolve(import.meta.dirname, "../../dist/sofinder.js"), type: "module" });
+
+  const recentPanel = page.locator(".sf-recent-sidebar", { has: page.getByText("最近使用", { exact: true }) });
+  await expect(recentPanel.locator(".sf-sidebar-section-content > div > button")).toHaveCount(5);
+  const recentLink = recentPanel.locator(".sf-sidebar-section-link");
+  await expect(recentLink).toHaveAttribute("href", /collection=recent/);
+  await recentLink.click();
+  await expect(page).toHaveURL(/collection=recent/);
+  await expect(page.getByRole("heading", { name: "最近使用" })).toBeVisible();
+  await expect(page.locator(".sf-favorites-links article")).toHaveCount(7);
+  await page.getByRole("textbox", { name: "搜索最近使用" }).fill("recent-7");
+  await expect(page.locator(".sf-favorites-links article")).toHaveCount(1);
+});
+
+test("shows five favorite files in the sidebar", async ({ page }) => {
+  const favorites = Array.from({ length: 7 }, (_, index) => `folder/favorite-${index + 1}.txt`);
+  await page.route("**/sofinder/api/metadata**", route => route.fulfill({ json: { success: true, data: { favorites, quickAccess: [], tags: {}, recent: [] } } }));
+  await page.evaluate(() => localStorage.setItem("sofinder.features.v2", JSON.stringify({ favorites: true, sidebarFavorites: true })));
+  await page.setContent(`<!doctype html><html lang="zh-CN"><body><main id="sofinder-root" data-config='${JSON.stringify(config)}'></main></body></html>`);
+  await page.addStyleTag({ path: resolve(import.meta.dirname, "../../dist/sofinder.css") });
+  await page.addScriptTag({ path: resolve(import.meta.dirname, "../../dist/sofinder.js"), type: "module" });
+
+  const favoritesPanel = page.locator(".sf-recent-sidebar", { has: page.getByText("收藏文件", { exact: true }) });
+  await expect(favoritesPanel.locator(".sf-sidebar-section-content > div > button")).toHaveCount(5);
+  await expect(favoritesPanel.locator(".sf-sidebar-overflow")).toHaveText("+2 项未展开");
+  await expect(favoritesPanel.locator(".sf-sidebar-section-link")).toHaveAttribute("href", /collection=favorites/);
+});
+
 test("removes a recent entry that disappeared outside SoFinder", async ({ page }) => {
   let recent = [{ path: "missing/file.txt", touchedAt: 1 }];
   let forgotten = false;
@@ -1555,7 +1589,7 @@ test("keeps the crop editor open and presents save errors", async ({ page }) => 
 test("navigates cursor pages with unknown totals", async ({ page }) => {
   await page.getByRole("button", { name: /下一页/ }).click();
   await expect(page.getByText("later.txt")).toBeVisible();
-  await expect(page.getByText(/第 2/)).toBeVisible();
+  await expect(page.locator(".sf-page-indicator")).toContainText("第2");
   await page.getByRole("button", { name: /上一页/ }).click();
   await expect(page.getByText("guide.txt").first()).toBeVisible();
 });
@@ -1741,9 +1775,13 @@ test("previews and submits a deterministic batch rename", async ({ page }) => {
   await expect(page.getByRole("alert")).toContainText("2 项完成");
 });
 
-test("exposes separate file and folder upload controls", async ({ page }) => {
+test("uses file upload by default and offers folder upload from one control", async ({ page }) => {
   await expect(page.getByRole("button", { name: "上传", exact: true })).toBeVisible();
-  await expect(page.getByRole("button", { name: "上传文件夹", exact: true })).toBeVisible();
+  await expect(page.getByRole("button", { name: "上传文件夹", exact: true })).toHaveCount(0);
+  await page.getByRole("button", { name: "上传选项" }).click();
+  const menu = page.getByRole("menu");
+  await expect(menu.getByRole("menuitem", { name: "上传文件", exact: true })).toBeVisible();
+  await expect(menu.getByRole("menuitem", { name: "上传文件夹", exact: true })).toBeVisible();
   await expect(page.locator('input[type="file"][webkitdirectory]')).toHaveCount(1);
 });
 
@@ -1909,9 +1947,8 @@ test("switches language and remembers the choice", async ({ page }) => {
 });
 
 test("asks how to resolve a recycle-bin restore conflict", async ({ page }) => {
-  await expect(page.locator(".sf-toolbar").getByRole("button", { name: "回收站" })).toBeVisible();
-  await page.getByRole("button", { name: "更多操作" }).click();
-  await page.getByRole("menuitem", { name: /回收站/ }).click();
+  await expect(page.locator(".sf-toolbar").getByRole("button", { name: "回收站" })).toHaveCount(0);
+  await page.locator(".sf-sidebar").getByRole("button", { name: "回收站" }).click();
   await page.getByRole("button", { name: "恢复" }).click();
   const conflict = page.getByRole("dialog", { name: "原位置已经存在同名项目" });
   await expect(conflict).toBeVisible();

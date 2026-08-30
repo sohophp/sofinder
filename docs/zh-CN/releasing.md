@@ -21,8 +21,8 @@ description: SoFinder 维护者测试、建立标签与发布软件包的检查�
 6. 在全新的 Symfony 项目安装确切版本，执行安全审计后才宣布发布。
 
 当前稳定 Symfony Bridge 的确切 Composer 版本限制是
-`sohophp/sofinder-symfony:1.2.0`；现有应用可以使用兼容 Meta Package
-`sohophp/sofinder:1.2.0`。已发布的标签不得移动。
+`sohophp/sofinder-symfony:1.2.1`；现有应用可以使用兼容 Meta Package
+`sohophp/sofinder:1.2.1`。已发布的标签不得移动。
 
 ## 同步发布 1.x 软件包
 

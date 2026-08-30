@@ -3,41 +3,50 @@ import { t } from "./react-B5TC723I.js";
 import { t as n } from "./UiIcon-JdLj8VHV.js";
 //#region src/components/MetadataSidebarPanels.tsx
 var r = t(), i = e();
-function a({ variant: e, items: t, labels: a, onOpen: o }) {
-	let [s, d] = (0, r.useState)(!1);
+function a({ variant: e, items: t, currentResource: a, active: o, labels: s, onOpen: d, onOpenAll: f }) {
+	let [p, m] = (0, r.useState)(!1), h = new URL(window.location.href);
+	h.searchParams.set("type", a), h.searchParams.set("collection", "recent");
+	let g = `${h.pathname}${h.search}${h.hash}`;
 	return e === "sidebar" ? /* @__PURE__ */ (0, i.jsxs)("div", {
-		className: `sf-recent sf-recent-sidebar${s ? " collapsed" : ""}`,
+		className: `sf-recent sf-recent-sidebar${p ? " collapsed" : ""}`,
 		children: [/* @__PURE__ */ (0, i.jsx)(c, {
-			title: a.title,
+			title: s.title,
 			count: t.length,
-			collapsed: s,
-			onToggle: () => d((e) => !e)
-		}), /* @__PURE__ */ (0, i.jsx)(l, {
-			collapsed: s,
-			children: t.length === 0 ? /* @__PURE__ */ (0, i.jsx)("p", {
+			collapsed: p,
+			onToggle: () => m((e) => !e)
+		}), /* @__PURE__ */ (0, i.jsxs)(l, {
+			collapsed: p,
+			children: [t.length === 0 ? /* @__PURE__ */ (0, i.jsx)("p", {
 				className: "sf-recent-empty",
-				children: a.empty
-			}) : t.slice(0, 8).map((e) => /* @__PURE__ */ (0, i.jsxs)("button", {
+				children: s.empty
+			}) : t.slice(0, 5).map((e) => /* @__PURE__ */ (0, i.jsxs)("button", {
 				title: e.path,
-				onClick: () => o(e.path),
+				onClick: () => d(e.path),
 				children: [/* @__PURE__ */ (0, i.jsx)("span", {
 					className: "sf-recent-icon",
 					children: /* @__PURE__ */ (0, i.jsx)(n, { name: "history" })
-				}), /* @__PURE__ */ (0, i.jsxs)("span", { children: [/* @__PURE__ */ (0, i.jsx)("b", { children: e.path.split("/").pop() }), /* @__PURE__ */ (0, i.jsx)("small", { children: u(e.path, a.home) })] })]
-			}, e.path))
+				}), /* @__PURE__ */ (0, i.jsxs)("span", { children: [/* @__PURE__ */ (0, i.jsx)("b", { children: e.path.split("/").pop() }), /* @__PURE__ */ (0, i.jsx)("small", { children: u(e.path, s.home) })] })]
+			}, e.path)), /* @__PURE__ */ (0, i.jsxs)("a", {
+				className: `sf-sidebar-section-link${o ? " active" : ""}`,
+				href: g,
+				onClick: (e) => {
+					e.preventDefault(), f();
+				},
+				children: [/* @__PURE__ */ (0, i.jsx)("span", { children: s.title }), /* @__PURE__ */ (0, i.jsx)(n, { name: "chevron-right" })]
+			})]
 		})]
 	}) : /* @__PURE__ */ (0, i.jsxs)("div", {
 		className: `sf-recent sf-recent-${e}`,
-		children: [/* @__PURE__ */ (0, i.jsxs)("header", { children: [/* @__PURE__ */ (0, i.jsx)("strong", { children: a.title }), /* @__PURE__ */ (0, i.jsx)("span", { children: t.length })] }), t.length === 0 ? /* @__PURE__ */ (0, i.jsx)("p", {
+		children: [/* @__PURE__ */ (0, i.jsxs)("header", { children: [/* @__PURE__ */ (0, i.jsx)("strong", { children: s.title }), /* @__PURE__ */ (0, i.jsx)("span", { children: t.length })] }), t.length === 0 ? /* @__PURE__ */ (0, i.jsx)("p", {
 			className: "sf-recent-empty",
-			children: a.empty
-		}) : t.slice(0, 8).map((e) => /* @__PURE__ */ (0, i.jsxs)("button", {
+			children: s.empty
+		}) : t.slice(0, 5).map((e) => /* @__PURE__ */ (0, i.jsxs)("button", {
 			title: e.path,
-			onClick: () => o(e.path),
+			onClick: () => d(e.path),
 			children: [/* @__PURE__ */ (0, i.jsx)("span", {
 				className: "sf-recent-icon",
 				children: /* @__PURE__ */ (0, i.jsx)(n, { name: "history" })
-			}), /* @__PURE__ */ (0, i.jsxs)("span", { children: [/* @__PURE__ */ (0, i.jsx)("b", { children: e.path.split("/").pop() }), /* @__PURE__ */ (0, i.jsx)("small", { children: u(e.path, a.home) })] })]
+			}), /* @__PURE__ */ (0, i.jsxs)("span", { children: [/* @__PURE__ */ (0, i.jsx)("b", { children: e.path.split("/").pop() }), /* @__PURE__ */ (0, i.jsx)("small", { children: u(e.path, s.home) })] })]
 		}, e.path))]
 	});
 }
@@ -99,7 +108,7 @@ function s({ favorites: e, currentResource: t, favoritesActive: a, labels: o, on
 				e.length === 0 ? /* @__PURE__ */ (0, i.jsx)("p", {
 					className: "sf-recent-empty",
 					children: o.favoritesEmpty
-				}) : e.slice(0, 8).map((e) => /* @__PURE__ */ (0, i.jsxs)("button", {
+				}) : e.slice(0, 5).map((e) => /* @__PURE__ */ (0, i.jsxs)("button", {
 					title: e,
 					onClick: () => d(e),
 					onContextMenu: (t) => f(e, t),
@@ -108,11 +117,11 @@ function s({ favorites: e, currentResource: t, favoritesActive: a, labels: o, on
 						children: /* @__PURE__ */ (0, i.jsx)(n, { name: "favorite" })
 					}), /* @__PURE__ */ (0, i.jsxs)("span", { children: [/* @__PURE__ */ (0, i.jsx)("b", { children: e.split("/").pop() }), /* @__PURE__ */ (0, i.jsx)("small", { children: u(e, o.home) })] })]
 				}, e)),
-				e.length > 8 && /* @__PURE__ */ (0, i.jsxs)("small", {
+				e.length > 5 && /* @__PURE__ */ (0, i.jsxs)("small", {
 					className: "sf-sidebar-overflow",
 					children: [
 						"+",
-						e.length - 8,
+						e.length - 5,
 						" ",
 						o.more
 					]

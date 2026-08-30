@@ -13,12 +13,14 @@ import { entryIconKind } from "../src/components/EntryVisuals";
 afterEach(cleanup);
 
 describe("UploadQueue", () => {
+  const labels = { title: "Uploads", close: "Close", cancel: "Cancel", cancelAll: "Cancel all", clearFinished: "Clear", retry: "Retry", remove: "Remove", status: (status: string) => status };
+
   it("exposes progress and individual cancellation", () => {
     const cancel = vi.fn();
     render(<UploadQueue
       tasks={[{ id: "one", name: "large.jpg", progress: 40, status: "uploading" }]}
       collapsed={false}
-      labels={{ title: "Uploads", expand: "Expand", collapse: "Collapse", cancel: "Cancel", cancelAll: "Cancel all", clearFinished: "Clear", retry: "Retry", remove: "Remove", status: status => status }}
+      labels={labels}
       onToggle={vi.fn()} onCancel={cancel} onCancelAll={vi.fn()} onClearFinished={vi.fn()} onRetry={vi.fn()} onRemove={vi.fn()}
     />);
 
@@ -32,7 +34,7 @@ describe("UploadQueue", () => {
     render(<UploadQueue
       tasks={[{ id: "failed", name: "archive.zip", progress: 55, status: "error" }]}
       collapsed={false}
-      labels={{ title: "Uploads", expand: "Expand", collapse: "Collapse", cancel: "Cancel", cancelAll: "Cancel all", clearFinished: "Clear", retry: "Retry", remove: "Remove", status: status => status }}
+      labels={labels}
       onToggle={vi.fn()} onCancel={vi.fn()} onCancelAll={vi.fn()} onClearFinished={vi.fn()} onRetry={retry} onRemove={vi.fn()}
     />);
 
@@ -42,9 +44,25 @@ describe("UploadQueue", () => {
 
   it("keeps one hundred upload tasks independently observable", () => {
     const tasks = Array.from({ length: 100 }, (_, index) => ({ id: String(index), name: `upload-${index}.bin`, progress: index, status: index % 3 === 0 ? "uploading" as const : "queued" as const }));
-    render(<UploadQueue tasks={tasks} collapsed={false} labels={{ title: "Uploads", expand: "Expand", collapse: "Collapse", cancel: "Cancel", cancelAll: "Cancel all", clearFinished: "Clear", retry: "Retry", remove: "Remove", status: status => status }} onToggle={vi.fn()} onCancel={vi.fn()} onCancelAll={vi.fn()} onClearFinished={vi.fn()} onRetry={vi.fn()} onRemove={vi.fn()}/>);
+    render(<UploadQueue tasks={tasks} collapsed={false} labels={labels} onToggle={vi.fn()} onCancel={vi.fn()} onCancelAll={vi.fn()} onClearFinished={vi.fn()} onRetry={vi.fn()} onRemove={vi.fn()}/>);
     expect(screen.getAllByRole("progressbar")).toHaveLength(100);
     expect(screen.getByText("upload-99.bin")).toBeInTheDocument();
+  });
+
+  it("closes without removing tasks and can be dragged by its header", () => {
+    const close = vi.fn();
+    const { container } = render(<UploadQueue tasks={[{ id: "one", name: "large.jpg", progress: 100, status: "done" }]} collapsed={false} labels={labels} onToggle={close} onCancel={vi.fn()} onCancelAll={vi.fn()} onClearFinished={vi.fn()} onRetry={vi.fn()} onRemove={vi.fn()}/>);
+    const panel = container.querySelector<HTMLElement>(".sf-upload-panel")!;
+    Object.defineProperties(panel, { offsetWidth: { value: 400 }, offsetHeight: { value: 240 } });
+    panel.getBoundingClientRect = () => ({ left: 100, top: 80, width: 400, height: 240, right: 500, bottom: 320, x: 100, y: 80, toJSON: () => ({}) });
+    const header = container.querySelector<HTMLElement>(".sf-upload-header")!;
+    header.setPointerCapture = vi.fn();
+    fireEvent.pointerDown(header, { button: 0, pointerId: 1, clientX: 130, clientY: 100 });
+    fireEvent.pointerMove(header, { pointerId: 1, clientX: 230, clientY: 170 });
+    expect(panel).toHaveStyle({ left: "200px", top: "150px" });
+    fireEvent.click(screen.getByRole("button", { name: "Close" }));
+    expect(close).toHaveBeenCalledOnce();
+    expect(screen.getByText("large.jpg")).toBeInTheDocument();
   });
 });
 

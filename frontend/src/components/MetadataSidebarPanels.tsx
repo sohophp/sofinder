@@ -5,15 +5,21 @@ import type { QuickAccessEntry } from "../types";
 export interface QuickAccessLink extends QuickAccessEntry { resource: string }
 export interface RecentLink { path: string; touchedAt: number }
 
-export function RecentPanel({ variant, items, labels, onOpen }: { variant: "sidebar" | "mobile"; items: RecentLink[]; labels: { title: string; empty: string; home: string }; onOpen: (path: string) => void }) {
+export function RecentPanel({ variant, items, currentResource, active, labels, onOpen, onOpenAll }: { variant: "sidebar" | "mobile"; items: RecentLink[]; currentResource: string; active: boolean; labels: { title: string; empty: string; home: string }; onOpen: (path: string) => void; onOpenAll: () => void }) {
   const [collapsed, setCollapsed] = useState(false);
+  const recentUrl = new URL(window.location.href);
+  recentUrl.searchParams.set("type", currentResource);
+  recentUrl.searchParams.set("collection", "recent");
+  const recentHref = `${recentUrl.pathname}${recentUrl.search}${recentUrl.hash}`;
   if (variant === "sidebar") return <div className={`sf-recent sf-recent-sidebar${collapsed ? " collapsed" : ""}`}>
     <SectionHeader title={labels.title} count={items.length} collapsed={collapsed} onToggle={() => setCollapsed(value => !value)}/>
-    <SectionContent collapsed={collapsed}>{items.length === 0 ? <p className="sf-recent-empty">{labels.empty}</p> : items.slice(0, 8).map(item => <button key={item.path} title={item.path} onClick={() => onOpen(item.path)}><span className="sf-recent-icon"><UiIcon name="history"/></span><span><b>{item.path.split("/").pop()}</b><small>{parent(item.path, labels.home)}</small></span></button>)}</SectionContent>
+    <SectionContent collapsed={collapsed}>{items.length === 0 ? <p className="sf-recent-empty">{labels.empty}</p> : items.slice(0, 5).map(item => <button key={item.path} title={item.path} onClick={() => onOpen(item.path)}><span className="sf-recent-icon"><UiIcon name="history"/></span><span><b>{item.path.split("/").pop()}</b><small>{parent(item.path, labels.home)}</small></span></button>)}
+      <a className={`sf-sidebar-section-link${active ? " active" : ""}`} href={recentHref} onClick={event => { event.preventDefault(); onOpenAll(); }}><span>{labels.title}</span><UiIcon name="chevron-right"/></a>
+    </SectionContent>
   </div>;
   return <div className={`sf-recent sf-recent-${variant}`}>
     <header><strong>{labels.title}</strong><span>{items.length}</span></header>
-    {items.length === 0 ? <p className="sf-recent-empty">{labels.empty}</p> : items.slice(0, 8).map(item => <button key={item.path} title={item.path} onClick={() => onOpen(item.path)}><span className="sf-recent-icon"><UiIcon name="history"/></span><span><b>{item.path.split("/").pop()}</b><small>{parent(item.path, labels.home)}</small></span></button>)}
+    {items.length === 0 ? <p className="sf-recent-empty">{labels.empty}</p> : items.slice(0, 5).map(item => <button key={item.path} title={item.path} onClick={() => onOpen(item.path)}><span className="sf-recent-icon"><UiIcon name="history"/></span><span><b>{item.path.split("/").pop()}</b><small>{parent(item.path, labels.home)}</small></span></button>)}
   </div>;
 }
 
@@ -58,8 +64,8 @@ export function FavoritesPanel({ favorites, currentResource, favoritesActive, la
   return <div className={`sf-recent sf-recent-sidebar${favoritesCollapsed ? " collapsed" : ""}`}>
       <SectionHeader title={labels.favorites} count={favorites.length} collapsed={favoritesCollapsed} onToggle={() => setFavoritesCollapsed(value => !value)}/>
       <SectionContent collapsed={favoritesCollapsed}>
-      {favorites.length === 0 ? <p className="sf-recent-empty">{labels.favoritesEmpty}</p> : favorites.slice(0, 8).map(path => <button key={path} title={path} onClick={() => onOpenFavorite(path)} onContextMenu={event => onFavoriteContext(path, event)}><span className="sf-recent-icon"><UiIcon name="favorite"/></span><span><b>{path.split("/").pop()}</b><small>{parent(path, labels.home)}</small></span></button>)}
-      {favorites.length > 8 && <small className="sf-sidebar-overflow">+{favorites.length - 8} {labels.more}</small>}
+      {favorites.length === 0 ? <p className="sf-recent-empty">{labels.favoritesEmpty}</p> : favorites.slice(0, 5).map(path => <button key={path} title={path} onClick={() => onOpenFavorite(path)} onContextMenu={event => onFavoriteContext(path, event)}><span className="sf-recent-icon"><UiIcon name="favorite"/></span><span><b>{path.split("/").pop()}</b><small>{parent(path, labels.home)}</small></span></button>)}
+      {favorites.length > 5 && <small className="sf-sidebar-overflow">+{favorites.length - 5} {labels.more}</small>}
       <a className={`sf-sidebar-section-link${favoritesActive ? " active" : ""}`} href={favoritesHref} onClick={event => { event.preventDefault(); onOpenFavorites(); }}><span>{labels.favorites}</span><UiIcon name="chevron-right"/></a>
       </SectionContent>
     </div>;
