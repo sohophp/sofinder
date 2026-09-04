@@ -22,7 +22,7 @@ jobs:
           coverage: none
       - run: ../../scripts/composer.sh config repositories.sofinder-core '{"type":"path","url":"../sofinder-core","options":{"versions":{"sohophp/sofinder-core":"dev-main"}}}'
         working-directory: packages/sofinder-s3
-      - run: ../../scripts/composer.sh update sohophp/sofinder-core --with-dependencies --no-interaction --prefer-dist
+      - run: ../../scripts/composer.sh update --no-interaction --prefer-dist
         working-directory: packages/sofinder-s3
       - run: docker run -d --name sofinder-minio -p 9000:9000 -e MINIO_ROOT_USER=minioadmin -e MINIO_ROOT_PASSWORD=minioadmin minio/minio@sha256:d249d1fb6966de4d8ad26c04754b545205ff15a62e4fd19ebd0f26fa5baacbc0 server /data
       - run: for attempt in {1..30}; do curl --fail --silent http://127.0.0.1:9000/minio/health/ready && exit 0; sleep 1; done; exit 1

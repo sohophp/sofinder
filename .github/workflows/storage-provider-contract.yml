@@ -30,7 +30,7 @@ jobs:
           coverage: none
       - run: ../../scripts/composer.sh config repositories.sofinder-core '{"type":"path","url":"../sofinder-core","options":{"versions":{"sohophp/sofinder-core":"dev-main"}}}'
         working-directory: packages/sofinder-s3
-      - run: ../../scripts/composer.sh update sohophp/sofinder-core --with-dependencies --no-interaction --prefer-dist
+      - run: ../../scripts/composer.sh update --no-interaction --prefer-dist
         working-directory: packages/sofinder-s3
       - run: ../../scripts/php-bin.sh vendor/bin/phpunit tests/S3ProviderContractTest.php
         working-directory: packages/sofinder-s3
