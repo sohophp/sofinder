@@ -37,3 +37,15 @@ final class AcmeStorageFactory implements StorageAdapterFactoryInterface
 没有 `LocalPathProviderInterface` 的 Adapter 必须使用兼容的自订 `RecycleBinInterface`，或停用可恢复删除。没有 `StorageUsageProviderInterface` 的 Adapter 在启用 Quota 前，必须使用已具有 Authoritative Baseline 的 Usage Tracker。
 
 只有已配置的 Recycle-bin Service 能恢复该 Adapter Entry 时，`recoverableDelete` 才能为 True。SoFinder 会通过报告 False 的 Adapter 永久删除，并在 Browser 显示明确的不可恢复警告。可选的 `sohophp/sofinder-s3` 软件包遵循此模型。
+
+## 可执行契约验证
+
+第三方 Adapter 可以运行 SoFinder 周期性供应商检查所使用的同一套公开、框架无关兼容性探针：
+
+```php
+use SohoPHP\SoFinder\Testing\StorageAdapterContractVerifier;
+
+StorageAdapterContractVerifier::verify($adapter);
+```
+
+探针会在随机的 `sofinder-contract-<16 位小写十六进制字符>` 目录中执行变更并将其删除。只能在凭证权限受限的专用空白测试资源运行；切勿用于生产环境或用户可控制的命名空间。

@@ -7,6 +7,13 @@ description: SoFinder 每個公開版本的重要變更。
 
 ## 尚未發佈
 
+## 1.3.0 - 2026-09-04
+
+- 新增公開、框架無關的儲存 Adapter 契約驗證器，以及每週 MinIO 與依 Secret
+  啟用的 AWS S3、Cloudflare R2、Backblaze B2 供應商檢查。
+- 固定 Symfony 整合示範中的全部第三方 Runtime 版本，並新增要求六個真實編輯器
+  實例完成初始化的每週瀏覽器契約。
+
 ## 1.2.2 - 2026-09-04
 
 - 將不可變的 1.0 缺陷觀察證據與乾淨 Consumer 巡檢分離；由 Packagist 安裝前，先確認

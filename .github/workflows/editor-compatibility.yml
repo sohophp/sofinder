@@ -1,0 +1,39 @@
+name: Editor network compatibility
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '19 5 * * 2'
+
+permissions:
+  contents: read
+
+env:
+  PHP_BIN: php
+
+jobs:
+  browser:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: shivammathur/setup-php@f3e473d116dcccaddc5834248c87452386958240 # v2
+        with:
+          php-version: '8.5'
+          coverage: none
+          extensions: gd, imagick
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: '22'
+      - run: cp composer-7.4.json composer.json
+        working-directory: examples/symfony
+      - run: ../../scripts/composer.sh install --no-interaction --prefer-dist
+        working-directory: examples/symfony
+      - run: corepack enable
+      - run: pnpm install --frozen-lockfile
+        working-directory: frontend
+      - run: pnpm exec playwright install --with-deps chromium
+        working-directory: frontend
+      - run: pnpm exec playwright test --config playwright.symfony.config.ts --grep 'initializes every pinned third-party editor'
+        working-directory: frontend
+        env:
+          SOFINDER_EDITOR_NETWORK_CONTRACT: '1'

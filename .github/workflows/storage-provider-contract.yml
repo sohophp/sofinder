@@ -1,0 +1,45 @@
+name: Storage provider contract
+
+on:
+  workflow_call:
+    inputs:
+      provider: { required: true, type: string }
+      region: { required: true, type: string }
+      path_style: { required: false, type: boolean, default: false }
+    secrets:
+      access_key: { required: true }
+      secret_key: { required: true }
+      bucket: { required: true }
+      endpoint: { required: false }
+      session_token: { required: false }
+
+permissions:
+  contents: read
+
+env:
+  PHP_BIN: php
+
+jobs:
+  contract:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: shivammathur/setup-php@f3e473d116dcccaddc5834248c87452386958240 # v2
+        with:
+          php-version: '8.5'
+          coverage: none
+      - run: ../../scripts/composer.sh config repositories.sofinder-core '{"type":"path","url":"../sofinder-core","options":{"versions":{"sohophp/sofinder-core":"dev-main"}}}'
+        working-directory: packages/sofinder-s3
+      - run: ../../scripts/composer.sh update sohophp/sofinder-core --with-dependencies --no-interaction --prefer-dist
+        working-directory: packages/sofinder-s3
+      - run: ../../scripts/php-bin.sh vendor/bin/phpunit tests/S3ProviderContractTest.php
+        working-directory: packages/sofinder-s3
+        env:
+          SOFINDER_S3_CONTRACT_PROVIDER: ${{ inputs.provider }}
+          SOFINDER_S3_ENDPOINT: ${{ secrets.endpoint }}
+          SOFINDER_S3_BUCKET: ${{ secrets.bucket }}
+          SOFINDER_S3_REGION: ${{ inputs.region }}
+          SOFINDER_S3_ACCESS_KEY: ${{ secrets.access_key }}
+          SOFINDER_S3_SECRET_KEY: ${{ secrets.secret_key }}
+          SOFINDER_S3_SESSION_TOKEN: ${{ secrets.session_token }}
+          SOFINDER_S3_PATH_STYLE: ${{ inputs.path_style }}

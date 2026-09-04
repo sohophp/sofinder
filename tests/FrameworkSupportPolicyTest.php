@@ -95,6 +95,26 @@ final class FrameworkSupportPolicyTest extends TestCase
         self::assertSame('0.0.0-private', $manifest['version']);
     }
 
+    public function testScheduledCompatibilityWorkflowsExerciseRealProvidersAndEditors(): void
+    {
+        $storage = (string) file_get_contents(__DIR__ . '/../.github/workflows/storage-compatibility.yml');
+        $provider = (string) file_get_contents(__DIR__ . '/../.github/workflows/storage-provider-contract.yml');
+        $editor = (string) file_get_contents(__DIR__ . '/../.github/workflows/editor-compatibility.yml');
+        $demo = (string) file_get_contents(__DIR__ . '/../examples/symfony/src/Controller/IntegrationDemoController.php');
+
+        self::assertStringContainsString('schedule:', $storage);
+        self::assertStringContainsString('SOFINDER_S3_CREATE_BUCKET', $storage);
+        foreach (['aws:', 'r2:', 'backblaze:'] as $job) {
+            self::assertStringContainsString($job, $storage);
+        }
+        self::assertStringContainsString('StorageAdapterContractVerifier', (string) file_get_contents(__DIR__ . '/../packages/sofinder-s3/tests/S3ProviderContractTest.php'));
+        self::assertStringContainsString('workflow_call:', $provider);
+        self::assertStringContainsString("SOFINDER_EDITOR_NETWORK_CONTRACT: '1'", $editor);
+        self::assertStringContainsString('initializes every pinned third-party editor', $editor);
+        self::assertStringNotContainsString("esm.sh/@tiptap/core')", $demo);
+        self::assertStringContainsString('esm.sh/@tiptap/core@', $demo);
+    }
+
     public function testLaravelCiCoversEveryPublishedCompatibilityPair(): void
     {
         $policy = json_decode((string) file_get_contents(__DIR__ . '/../config/framework-support.json'), true, 32, JSON_THROW_ON_ERROR);

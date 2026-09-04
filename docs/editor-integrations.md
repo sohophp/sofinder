@@ -218,6 +218,11 @@ plain input against the local SoFinder checkout. Third-party editors load from
 their documented CDN endpoints; the picker SDK and backend remain local. Review
 each editor's license and replace demonstration keys before deployment.
 
+The integration demo pins every third-party CDN version. The weekly opt-in
+**Editor network compatibility** workflow opens the page in Chromium and waits
+for the real CKEditor, TinyMCE, TipTap, Quill, wangEditor and Jodit instances;
+it does not treat script downloads or placeholder DOM as successful startup.
+
 Deep links use `type` and `path`, for example:
 
 ```text

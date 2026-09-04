@@ -163,6 +163,8 @@ Markdown 编辑器使用 `selectForMarkdown(textarea, options)`，会在当前�
 wangEditor 5、Jodit 4 和普通表单。第三方编辑器从其文档所列 CDN 加载；部署前须检查各编辑器授权并替换
 演示 Key。
 
+集成演示固定了所有第三方 CDN 版本。每周按需运行的 **Editor network compatibility** 工作流会在 Chromium 中打开页面并等待真实 CKEditor、TinyMCE、TipTap、Quill、wangEditor 和 Jodit 实例；仅下载脚本或出现占位 DOM 不算初始化成功。
+
 目录深链接可以直接收藏：
 
 ```text

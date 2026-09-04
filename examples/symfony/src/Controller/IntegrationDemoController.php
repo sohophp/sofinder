@@ -79,7 +79,7 @@ final class IntegrationDemoController
   let tinyUploadHandler;
   window.tinymce.init({ selector: '#tinymce-editor', height: 280, base_url: 'https://cdn.jsdelivr.net/npm/tinymce@8.0.2', suffix: '.min', license_key: 'gpl', plugins: 'sofinder link lists image', toolbar: 'undo redo | bold italic | link image sofinder', setup: editor => { tinyUploadHandler = createTinyMceUploadIntegration(editor, editorOptions); }, images_upload_handler: (...args) => tinyUploadHandler(...args), automatic_uploads: true, paste_data_images: true, promotion: false });
 
-  const [{ Editor }, { default: StarterKit }, { default: Image }] = await Promise.all([import('https://esm.sh/@tiptap/core'), import('https://esm.sh/@tiptap/starter-kit'), import('https://esm.sh/@tiptap/extension-image')]);
+  const [{ Editor }, { default: StarterKit }, { default: Image }] = await Promise.all([import('https://esm.sh/@tiptap/core@3.31.3'), import('https://esm.sh/@tiptap/starter-kit@3.31.3'), import('https://esm.sh/@tiptap/extension-image@3.31.3')]);
   const tiptap = new Editor({ element: document.getElementById('tiptap-editor'), extensions: [StarterKit, Image], content: '<p>在这里编辑内容，然后从 SoFinder 插入图片。</p>' });
   installTiptapUploads(tiptap, editorOptions);
   document.getElementById('tiptap-choose').addEventListener('click', async () => status('tiptap-status', await selectForTiptap(tiptap, imageOptions)));

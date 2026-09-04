@@ -24,3 +24,22 @@ test("boots the real Symfony browser shell and shared API", async ({ page }) => 
   expect(payload.data.resources.length).toBeGreaterThan(0);
   expect(runtimeErrors).toEqual([]);
 });
+
+test("initializes every pinned third-party editor in the integration demo", async ({ page }) => {
+  test.skip(process.env.SOFINDER_EDITOR_NETWORK_CONTRACT !== "1", "External editor compatibility runs in its scheduled workflow.");
+  test.setTimeout(120_000);
+  const pageErrors: string[] = [];
+  page.on("pageerror", error => pageErrors.push(error.message));
+
+  const response = await page.goto("/integrations", { waitUntil: "domcontentloaded" });
+  expect(response?.status()).toBe(200);
+
+  await expect(page.locator(".ck-editor")).toHaveCount(1, { timeout: 90_000 });
+  await expect(page.locator(".tox-tinymce")).toHaveCount(1, { timeout: 90_000 });
+  await expect(page.locator("#tiptap-editor .ProseMirror")).toHaveCount(1, { timeout: 90_000 });
+  await expect(page.locator("#quill-editor.ql-container")).toHaveCount(1, { timeout: 90_000 });
+  await expect(page.locator("#wangeditor-editor [data-slate-editor]")).toHaveCount(1, { timeout: 90_000 });
+  await expect(page.locator(".jodit-container")).toHaveCount(1, { timeout: 90_000 });
+  await expect(page.locator("#ckeditor-status")).not.toContainText("初始化失败");
+  expect(pageErrors).toEqual([]);
+});

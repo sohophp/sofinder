@@ -2,6 +2,13 @@
 
 ## Unreleased
 
+## 1.3.0 - 2026-09-04
+
+- Add a public framework-neutral storage adapter contract verifier, plus weekly
+  MinIO and opt-in AWS S3, Cloudflare R2 and Backblaze B2 provider checks.
+- Pin all third-party runtimes in the Symfony integration demo and add a weekly
+  browser contract that requires six real editor instances to initialize.
+
 ## 1.2.2 - 2026-09-04
 
 - Keep the immutable 1.0 defect observation evidence separate from the daily

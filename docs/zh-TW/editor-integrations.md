@@ -160,6 +160,8 @@ Jodit 內建圖片對話框、貼上及拖入會使用公開的自訂上傳介�
 wangEditor 5、Jodit 4 和一般表單。第三方編輯器從其文件列出的 CDN 載入；部署前必須檢查各編輯器授權並
 替換示範 Key。
 
+整合示範固定所有第三方 CDN 版本。每週按需執行的 **Editor network compatibility** 工作流程會在 Chromium 開啟頁面並等待真實 CKEditor、TinyMCE、TipTap、Quill、wangEditor 與 Jodit 實例；僅下載 Script 或出現佔位 DOM 不算初始化成功。
+
 目錄深層連結可以直接收藏：
 
 ```text

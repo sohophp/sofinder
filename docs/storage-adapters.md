@@ -59,3 +59,19 @@ authoritative baseline before quotas are enabled.
 can restore that adapter's entries. SoFinder permanently deletes through an
 adapter that reports false and presents an explicit non-recoverable warning in
 the browser. The optional `sohophp/sofinder-s3` package follows this model.
+
+## Executable contract verification
+
+Third-party adapters can run the same public, framework-neutral compatibility
+probe used by SoFinder's scheduled provider checks:
+
+```php
+use SohoPHP\SoFinder\Testing\StorageAdapterContractVerifier;
+
+StorageAdapterContractVerifier::verify($adapter);
+```
+
+The verifier mutates and then removes a randomized
+`sofinder-contract-<16 lowercase hex characters>` directory. Run it only on a
+dedicated, empty test resource whose credentials are restricted to that
+resource; never run it against production or a user-controlled namespace.
