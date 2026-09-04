@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- Retry bounded transient Packagist advisory endpoint failures during stable
+  package observation without weakening real vulnerability failures.
+
 ## 1.3.0 - 2026-09-04
 
 - Add a public framework-neutral storage adapter contract verifier, plus weekly
