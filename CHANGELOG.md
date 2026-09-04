@@ -2,6 +2,14 @@
 
 ## Unreleased
 
+## 1.2.2 - 2026-09-04
+
+- Keep the immutable 1.0 defect observation evidence separate from the daily
+  clean-consumer check, and verify the latest stable release across all seven
+  synchronized repositories before installing it from Packagist.
+- Mark the private frontend workspace with a non-release version so its
+  internal package metadata cannot drift from Composer releases.
+
 ## 1.2.1 - 2026-08-30
 
 - Move uploads into a draggable progress window that can be dismissed and

@@ -75,20 +75,23 @@ packages use `self.version`; use a root `minimum-stability` of `RC` together
 with `prefer-stable: true`, or wait for the stable tag. Stable 1.x consumers do
 not need this override.
 
-The daily `Symfony 1.0 observation` workflow starts only after the immutable
-`1.0.0` GitHub Release exists. In addition to collecting defect evidence, it
-installs the exact Core, HTTP, Symfony, compatibility Meta and S3 versions from
-Packagist into empty projects on PHP 8.2 and 8.5, verifies their repository
-provenance and runtime boundaries, and audits the resulting Symfony and S3
-dependency locks.
+The daily `Stable release observation` workflow keeps two concerns separate.
+Its historical evidence job starts only after the immutable `1.0.0` GitHub
+Release exists and continues to collect the original P0/P1 defect evidence.
+Its clean-consumer jobs resolve GitHub's latest non-prerelease SoFinder
+Release, require that exact tag in all seven synchronized repositories, and
+then install Core, HTTP, Symfony, compatibility Meta, S3, PSR-15 and Laravel
+from Packagist into empty projects on PHP 8.2 and 8.5. They verify repository
+provenance and runtime boundaries and audit the resulting dependency locks.
 Maintainers must apply the exact `priority:p0` or `priority:p1` label to
 qualifying issues. Each run uploads a 90-day JSON artifact with the release
 timestamp, covered days, open count and every P0/P1 issue created during
 observation; any such issue fails the run, even when it is already closed. Use
 the final successful workflow run, including both published-package jobs, as
 the defect-audit URL when opening the framework promotion gate. Run
-`scripts/check-published-package-install.sh` locally to repeat the registry
-check with an isolated Composer cache.
+`scripts/check-synchronized-package-tags.sh <version>` followed by
+`SOFINDER_PUBLISHED_VERSION=<version> scripts/check-published-package-install.sh`
+locally to repeat the tag and registry checks with an isolated Composer cache.
 
 Once the policy is marked eligible, `scripts/check-live-promotion-evidence.sh`
 also resolves both recorded Actions URLs through the GitHub API. It requires a

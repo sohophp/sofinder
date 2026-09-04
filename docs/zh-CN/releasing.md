@@ -61,15 +61,18 @@ Monorepo。
 `minimum-stability: RC` 并启用 `prefer-stable: true`，或者等待正式版 Tag。稳定 1.x
 使用者无需这个覆盖。
 
-每日 `Symfony 1.0 observation` Workflow 只会在不可变的 `1.0.0` GitHub Release
-存在后开始。除了收集缺陷证据，它还会在 PHP 8.2 与 8.5 的空项目中从 Packagist 安装精确的
-Core、HTTP、Symfony、兼容 Meta 与 S3 版本，校验仓库来源、运行时边界，并审计 Symfony
-与 S3 消费项目的依赖锁。维护者必须为符合条件的 Issue 加上精确 `priority:p0` 或
+每日 `Stable release observation` Workflow 会分开处理两类证据。历史证据任务只会在
+不可变的 `1.0.0` GitHub Release 存在后开始，并继续收集原有 P0/P1 缺陷记录；干净消费者
+任务则解析 GitHub 最新的非预发布 SoFinder Release，先确认七个同步仓库都存在该精确 Tag，
+再于 PHP 8.2 与 8.5 的空项目中从 Packagist 安装 Core、HTTP、Symfony、兼容 Meta、S3、
+PSR-15 与 Laravel，校验仓库来源、运行时边界及依赖锁。维护者必须为符合条件的 Issue 加上精确 `priority:p0` 或
 `priority:p1` Label。
 每次运行都会上传保留 90 天的 JSON Artifact，包含发布时间、覆盖天数、未关闭数量以及观察期内
 建立的全部 P0/P1 Issue；即使 Issue 已关闭也会令运行失败。开启框架晋级门禁时，使用包含两个
-公开包安装任务的最终成功 Workflow Run 作为缺陷审计 URL。本地可运行
-`scripts/check-published-package-install.sh`，以独立 Composer 缓存重复 Registry 校验。
+公开包安装任务的最终成功 Workflow Run 作为缺陷审计 URL。本地可先运行
+`scripts/check-synchronized-package-tags.sh <version>`，再以
+`SOFINDER_PUBLISHED_VERSION=<version> scripts/check-published-package-install.sh` 和独立 Composer
+缓存重复 Tag 与 Registry 校验。
 
 政策标记 eligible 后，`scripts/check-live-promotion-evidence.sh` 还会通过 GitHub API 解析
 两个已记录的 Actions URL。Symfony 矩阵必须是成功的 `main` CI，其 SHA 与已记录 Commit

@@ -62,15 +62,17 @@ Split 只是發布邊界，並不改變 Monorepo 開發模式：[Packagist 要�
 Project 設定 `minimum-stability: RC` 並啟用 `prefer-stable: true`，或等待正式版 Tag。
 穩定 1.x 使用者不需要此 Override。
 
-每日 `Symfony 1.0 observation` Workflow 只會在不可變的 `1.0.0` GitHub Release
-存在後開始。除了收集缺陷證據，它也會在 PHP 8.2 與 8.5 的空白專案中由 Packagist 安裝
-精確的 Core、HTTP、Symfony、相容 Meta 與 S3 版本，驗證 Repository 來源、Runtime 邊界，
-並稽核 Symfony 與 S3 Consumer 的相依鎖。維護者必須為符合條件的 Issue 加上精確
+每日 `Stable release observation` Workflow 會分開處理兩類證據。歷史證據工作只會在
+不可變的 `1.0.0` GitHub Release 存在後開始，並繼續收集原有 P0/P1 缺陷記錄；乾淨 Consumer
+工作則解析 GitHub 最新的非預發佈 SoFinder Release，先確認七個同步 Repository 都存在該精確
+Tag，再於 PHP 8.2 與 8.5 的空白專案中由 Packagist 安裝 Core、HTTP、Symfony、相容 Meta、
+S3、PSR-15 與 Laravel，驗證 Repository 來源、Runtime 邊界及相依鎖。維護者必須為符合條件的 Issue 加上精確
 `priority:p0` 或 `priority:p1` Label。每次執行都會上傳保留 90 天的 JSON Artifact，包含發布時間、覆蓋日數、
 未關閉數量及觀察期內建立的全部 P0/P1 Issue；即使 Issue 已關閉也會令執行失敗。開啟
 Framework 晉級門禁時，使用包含兩個公開 Package 安裝工作的最終成功 Workflow Run 作為
-缺陷稽核 URL。本機可執行 `scripts/check-published-package-install.sh`，以獨立 Composer Cache
-重複 Registry 驗證。
+缺陷稽核 URL。本機可先執行 `scripts/check-synchronized-package-tags.sh <version>`，再以
+`SOFINDER_PUBLISHED_VERSION=<version> scripts/check-published-package-install.sh` 和獨立 Composer
+Cache 重複 Tag 與 Registry 驗證。
 
 政策標記 eligible 後，`scripts/check-live-promotion-evidence.sh` 還會透過 GitHub API 解析
 兩個已記錄的 Actions URL。Symfony Matrix 必須是成功的 `main` CI，其 SHA 與記錄的 Commit

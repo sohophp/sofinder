@@ -64,13 +64,35 @@ final class FrameworkSupportPolicyTest extends TestCase
         self::assertSame(['8.1', '8.2', '8.3', '8.4', '8.5'], $policy['stable']['headless-core']['php']);
     }
 
-    public function testPublishedPackageCheckReadsTheCurrentStableVersionFromPolicy(): void
+    public function testPublishedPackageCheckSupportsAnExactStableVersion(): void
     {
         $script = (string) file_get_contents(__DIR__ . '/../scripts/check-published-package-install.sh');
 
         self::assertStringContainsString('config/framework-support.json', $script);
         self::assertStringContainsString('releasedMainVersion', $script);
         self::assertStringNotContainsString('SOFINDER_PUBLISHED_VERSION:-1.', $script);
+    }
+
+    public function testObservationChecksTheLatestSynchronizedStableRelease(): void
+    {
+        $workflow = (string) file_get_contents(__DIR__ . '/../.github/workflows/symfony-observation.yml');
+        $tagCheck = (string) file_get_contents(__DIR__ . '/../scripts/check-synchronized-package-tags.sh');
+
+        self::assertStringContainsString('name: Stable release observation', $workflow);
+        self::assertStringContainsString('releases/latest', $workflow);
+        self::assertStringContainsString('check-synchronized-package-tags.sh', $workflow);
+        self::assertStringNotContainsString('SOFINDER_PUBLISHED_VERSION: 1.', $workflow);
+        foreach (['sofinder', 'sofinder-core', 'sofinder-http', 'sofinder-symfony', 'sofinder-s3', 'sofinder-psr15', 'sofinder-laravel'] as $repository) {
+            self::assertStringContainsString($repository, $tagCheck);
+        }
+    }
+
+    public function testPrivateFrontendVersionCannotDriftWithComposerReleases(): void
+    {
+        $manifest = json_decode((string) file_get_contents(__DIR__ . '/../frontend/package.json'), true, 16, JSON_THROW_ON_ERROR);
+
+        self::assertTrue($manifest['private']);
+        self::assertSame('0.0.0-private', $manifest['version']);
     }
 
     public function testLaravelCiCoversEveryPublishedCompatibilityPair(): void
