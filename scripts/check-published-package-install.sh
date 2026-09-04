@@ -37,6 +37,21 @@ verify_package() {
         "$repository_root/scripts/verify-published-composer-package.php" "$@"
 }
 
+audit_locked() {
+    local attempt
+    for attempt in 1 2 3; do
+        if "$repository_root/scripts/composer.sh" audit --locked --no-interaction; then
+            return 0
+        fi
+        if (( attempt < 3 )); then
+            echo "Composer audit request failed; retrying ($attempt/3)." >&2
+            sleep $((attempt * 5))
+        fi
+    done
+
+    return 1
+}
+
 core_dir="$test_root/core"
 create_consumer "$core_dir" sohophp/published-core-install-test
 "$repository_root/scripts/composer.sh" require "sohophp/sofinder-core:$version" --prefer-dist --no-interaction
@@ -57,7 +72,7 @@ verify_package sohophp/sofinder-core "$version" https://github.com/sohophp/sofin
 verify_package sohophp/sofinder-http "$version" https://github.com/sohophp/sofinder-http
 verify_package sohophp/sofinder-symfony "$version" https://github.com/sohophp/sofinder-symfony
 "$repository_root/scripts/php-bin.sh" -r 'require "vendor/autoload.php"; $class = new ReflectionClass("SohoPHP\\SoFinder\\SoFinderBundle"); $package = dirname((string) $class->getFileName(), 2); $routes = SohoPHP\SoFinder\Routing\SymfonyRouteCollectionFactory::create(); exit(is_file($package . "/dist/manifest.json") && is_file($package . "/src/Resources/config/routes.php") && class_exists("SohoPHP\\SoFinder\\Symfony\\SymfonyEndpointController") && count($routes) === 52 && str_contains((string) $class->getFileName(), "/vendor/sohophp/sofinder-symfony/src/") ? 0 : 1);'
-"$repository_root/scripts/composer.sh" audit --locked --no-interaction
+audit_locked
 
 meta_dir="$test_root/meta"
 create_consumer "$meta_dir" sohophp/published-meta-install-test
@@ -78,7 +93,7 @@ if [[ -e vendor/sohophp/sofinder-s3/src/SoFinderS3Bundle.php || -e vendor/sohoph
     exit 1
 fi
 "$repository_root/scripts/php-bin.sh" -r 'require "vendor/autoload.php"; exit(class_exists("SohoPHP\\SoFinderS3\\S3StorageAdapter") && !class_exists("Symfony\\Component\\HttpKernel\\Bundle\\Bundle") && !class_exists("Symfony\\Component\\HttpFoundation\\Request") ? 0 : 1);'
-"$repository_root/scripts/composer.sh" audit --locked --no-interaction
+audit_locked
 
 bridge_eligible=$("$repository_root/scripts/php-bin.sh" -r '
     $policy = json_decode((string) file_get_contents($argv[1]), true, 32, JSON_THROW_ON_ERROR);
@@ -93,7 +108,7 @@ if [[ "$bridge_eligible" == yes ]]; then
     verify_package sohophp/sofinder-http "$version" https://github.com/sohophp/sofinder-http
     verify_package sohophp/sofinder-psr15 "$version" https://github.com/sohophp/sofinder-psr15
     "$repository_root/scripts/php-bin.sh" -r 'require "vendor/autoload.php"; exit(class_exists("SohoPHP\\SoFinder\\Psr15\\SoFinderMiddleware") && class_exists("SohoPHP\\SoFinder\\Psr15\\LocalApplicationFactory") && !class_exists("Symfony\\Component\\HttpFoundation\\Request") && !class_exists("Illuminate\\Foundation\\Application") ? 0 : 1);'
-    "$repository_root/scripts/composer.sh" audit --locked --no-interaction
+    audit_locked
 
     laravel_dir="$test_root/laravel"
     create_consumer "$laravel_dir" sohophp/published-laravel-install-test
@@ -102,7 +117,7 @@ if [[ "$bridge_eligible" == yes ]]; then
     verify_package sohophp/sofinder-http "$version" https://github.com/sohophp/sofinder-http
     verify_package sohophp/sofinder-laravel "$version" https://github.com/sohophp/sofinder-laravel
     "$repository_root/scripts/php-bin.sh" -r 'require "vendor/autoload.php"; exit(class_exists("SohoPHP\\SoFinder\\Laravel\\SoFinderServiceProvider") && class_exists("Illuminate\\Foundation\\Application") ? 0 : 1);'
-    "$repository_root/scripts/composer.sh" audit --locked --no-interaction
+    audit_locked
 fi
 
 echo "Published SoFinder $version synchronized packages passed clean-project installation."

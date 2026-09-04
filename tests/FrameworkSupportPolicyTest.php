@@ -70,6 +70,7 @@ final class FrameworkSupportPolicyTest extends TestCase
 
         self::assertStringContainsString('config/framework-support.json', $script);
         self::assertStringContainsString('releasedMainVersion', $script);
+        self::assertStringContainsString('audit_locked', $script);
         self::assertStringNotContainsString('SOFINDER_PUBLISHED_VERSION:-1.', $script);
     }
 
