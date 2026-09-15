@@ -41,14 +41,21 @@ final class LocalApplicationFactory
 
     public function create(): SoFinderApplication
     {
-        $runtime = $this->runtime();
+        $configuration = $this->normalizedConfiguration();
+        $runtime = $this->runtime($configuration);
         $handlers = array_map(
             fn ($action): PsrEndpointHandler => new PsrEndpointHandler($action, $this->responses, $this->streams, scope: $this->contexts),
             $runtime->actions(),
         );
 
         return new SoFinderApplication(
-            new EndpointDispatcher($this->responses, $this->streams, $handlers),
+            new EndpointDispatcher(
+                $this->responses,
+                $this->streams,
+                $handlers,
+                (bool) $configuration['security']['production_strict'],
+                $this->allowedImageOrigins($configuration),
+            ),
             $this->services,
             $this->prefix,
         );
@@ -57,23 +64,12 @@ final class LocalApplicationFactory
     /** @return list<\SohoPHP\SoFinder\Http\EndpointActionInterface> */
     public function actions(): array
     {
-        return $this->runtime()->actions();
+        return $this->runtime($this->normalizedConfiguration())->actions();
     }
 
-    private function runtime(): LocalRuntime
+    /** @param array<string,mixed> $configuration */
+    private function runtime(array $configuration): LocalRuntime
     {
-        $state = rtrim($this->stateDirectory, '/');
-        $configuration = (new ConfigurationNormalizer())->normalize($this->configuration, [
-            'route_prefix' => '/' . trim($this->prefix, '/'),
-            'cache_dir' => $state . '/cache',
-            'metadata_file' => $state . '/metadata.json',
-            'quarantine_dir' => $state . '/quarantine',
-            'chunk_dir' => $state . '/chunks',
-            'usage_dir' => $state . '/usage',
-            'trash_dir' => $state . '/trash',
-            'signed_urls' => ['secret' => hash('sha256', $state . '|' . $this->resourceRoot)],
-            'resources' => ['Files' => ['root' => $this->resourceRoot, 'delivery_mode' => 'proxy']],
-        ]);
         if (($configuration['maintenance']['mode'] ?? null) === 'messenger' && $this->maintenanceDispatcher === null) {
             throw new \InvalidArgumentException('PSR-15 local runtime requires an explicit maintenance dispatcher for messenger mode.');
         }
@@ -97,6 +93,45 @@ final class LocalApplicationFactory
             $this->maintenanceDispatcher,
             $this->documentPreviewDispatcher,
         );
+    }
+
+    /** @return array<string,mixed> */
+    private function normalizedConfiguration(): array
+    {
+        $state = rtrim($this->stateDirectory, '/');
+        return (new ConfigurationNormalizer())->normalize($this->configuration, [
+            'route_prefix' => '/' . trim($this->prefix, '/'),
+            'cache_dir' => $state . '/cache',
+            'metadata_file' => $state . '/metadata.json',
+            'quarantine_dir' => $state . '/quarantine',
+            'chunk_dir' => $state . '/chunks',
+            'usage_dir' => $state . '/usage',
+            'trash_dir' => $state . '/trash',
+            'signed_urls' => ['secret' => hash('sha256', $state . '|' . $this->resourceRoot)],
+            'resources' => ['Files' => ['root' => $this->resourceRoot, 'delivery_mode' => 'proxy']],
+        ]);
+    }
+
+    /**
+     * @param array<string,mixed> $configuration
+     * @return list<string>
+     */
+    private function allowedImageOrigins(array $configuration): array
+    {
+        $origins = $configuration['security']['allowed_image_origins'] ?? null;
+        if (!is_array($origins)) {
+            throw new \InvalidArgumentException('security.allowed_image_origins must be a list of origins.');
+        }
+
+        $result = [];
+        foreach ($origins as $origin) {
+            if (!is_string($origin)) {
+                throw new \InvalidArgumentException('security.allowed_image_origins must contain only strings.');
+            }
+            $result[] = $origin;
+        }
+
+        return $result;
     }
 
     private function resolvePackageDirectory(): string

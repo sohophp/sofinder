@@ -263,6 +263,15 @@ that route public access. Tokens are HMAC protected, work only with
 `delivery_mode: proxy`, and are bound to the file size and modified time.
 Expired or replaced files return 410; token tampering returns 403.
 
+### Share links
+
+`GET /api/share-link?resource=Files&path=manual.pdf` resolves the URL shown by
+the Share dialog. The response contains `url`, an explicit `access` value
+(`public`, `login_required`, or `restricted`), nullable `expiresAt`, and
+`qrCode`. Copy URL and QR Code always use the same returned URL. Applications
+may implement `ShareLinkProviderInterface` to supply stable host-owned links;
+SoFinder does not assume how those links are stored or routed.
+
 ### `GET /api/preview/text?resource=Files&path=readme.txt`
 
 Returns at most the first 256 KiB of an authorized UTF-8 text, JSON, XML or YAML file as JSON `{content,truncated,mimeType,size}`. Content is rendered as text by the bundled UI and is never treated as HTML.

@@ -37,6 +37,7 @@ final class BrowserController
         private readonly ?WorkspaceOptionProviderInterface $workspaceOptions = null,
         private readonly ?BrowserPage $page = null,
         private readonly bool $pickerLockResource = true,
+        private readonly bool $productionStrict = false,
     ) {
     }
 
@@ -64,6 +65,13 @@ final class BrowserController
         $selectMode = $request->query->has('CKEditorFuncNum') || $request->query->getBoolean('select');
         $mode = $this->enumOverride($request, 'uiMode', ['auto', 'manager', 'picker'], (string) ($this->ui['mode'] ?? 'auto'));
         $resolvedMode = $mode === 'auto' ? ($selectMode ? 'picker' : 'manager') : $mode;
+        $profile = $this->enumOverride($request, 'uiProfile', ['auto', 'standalone', 'embedded', 'picker'], 'auto');
+        if ($profile !== 'auto') {
+            $resolvedMode = $profile === 'picker' ? 'picker' : 'manager';
+            $selectMode = $profile === 'picker';
+        } else {
+            $profile = $resolvedMode === 'picker' ? 'picker' : ($request->query->getBoolean('uiEmbedded') ? 'embedded' : 'standalone');
+        }
         $resource = (string) $request->query->get('type', '');
         $lockResource = $this->booleanOverride($request, 'resourceLock', $this->pickerLockResource);
         $pickerResource = $resolvedMode === 'picker' && $resource !== '' && $lockResource ? $resource : null;
@@ -71,7 +79,9 @@ final class BrowserController
             throw new NotFoundException('The requested picker resource type does not exist or is not accessible.');
         }
         $ui = [
+            'profile' => $profile,
             'mode' => $resolvedMode,
+            'embedded' => $profile === 'embedded',
             'header' => $this->booleanOverride($request, 'uiHeader', (bool) ($this->ui['header'] ?? true)),
             'logo' => $this->booleanOverride($request, 'uiLogo', (bool) ($this->ui['logo'] ?? true)),
             'search' => $this->booleanOverride($request, 'uiSearch', (bool) ($this->ui['search'] ?? true)),
@@ -100,6 +110,7 @@ final class BrowserController
                 'scale' => (string) ($this->ui['scale'] ?? 'standard'),
                 'uploadConflictStrategy' => (string) ($this->ui['upload_conflict_strategy'] ?? 'ask'),
                 'lowercaseUploadExtensions' => (bool) ($this->ui['lowercase_upload_extensions'] ?? true),
+                'securityProfile' => $this->productionStrict ? 'strict' : 'standard',
                 ...$ui,
             ],
             'workspace' => $this->workspaceConfiguration($request),

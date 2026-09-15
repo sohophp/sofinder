@@ -32,8 +32,8 @@ final class DocumentPreviewController
         $response->headers->set('Content-Type', 'application/pdf');
         $response->headers->set('Content-Disposition', ContentDisposition::make(ResponseHeaderBag::DISPOSITION_INLINE, $preview['name']));
         $response->headers->set('X-Content-Type-Options', 'nosniff');
-        $response->headers->set('Content-Security-Policy', "default-src 'none'; sandbox");
-        $response->setPrivate();
+        $response->headers->set('Content-Security-Policy', "frame-ancestors 'self'");
+        $response->headers->set('Cache-Control', 'private, no-store');
 
         return $response;
     }

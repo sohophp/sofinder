@@ -14,9 +14,29 @@ use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpKernel\Event\ExceptionEvent;
 use Symfony\Component\HttpKernel\Event\ResponseEvent;
 use Symfony\Component\HttpKernel\HttpKernelInterface;
+use Psr\Log\LoggerInterface;
+use SohoPHP\SoFinder\Http\FailureAuditSubscriber;
 
 final class HttpContractTest extends TestCase
 {
+    public function testFailedBatchAuditIncludesBoundedFileNamesAndErrorCode(): void
+    {
+        $request = Request::create('/sofinder/api/batch', 'POST', server: ['CONTENT_TYPE' => 'application/json'], content: json_encode([
+            'resource' => 'Files', 'operation' => 'move', 'destination' => 'archive', 'paths' => ['private/folder/one.txt', "two\n.pdf"],
+        ], JSON_THROW_ON_ERROR));
+        $request->attributes->set('_sofinder', true);
+        $request->attributes->set('_route', 'sofinder_api_batch');
+        $logger = $this->createMock(LoggerInterface::class);
+        $logger->expects(self::once())->method('warning')->with('SoFinder request failed.', self::callback(static fn (array $context): bool =>
+            $context['error_code'] === 'not_found'
+            && $context['operation_context']['item_names'] === ['one.txt', 'two.pdf']
+            && $context['operation_context']['item_count'] === 2
+            && $context['operation_context']['destination'] === 'archive'
+        ));
+        $event = new ExceptionEvent($this->createMock(HttpKernelInterface::class), $request, HttpKernelInterface::MAIN_REQUEST, new SoFinderException('Missing.', 'not_found', 404));
+        (new FailureAuditSubscriber($logger))->onException($event);
+    }
+
     public function testSoFinderFailuresUseTheStableEnvelopeAndRetryHeader(): void
     {
         $request = Request::create('/sofinder/api/entries');
@@ -66,6 +86,20 @@ final class HttpContractTest extends TestCase
 
         self::assertSame(202, $event->getResponse()?->getStatusCode());
         self::assertSame('1', $event->getResponse()?->headers->get('Retry-After'));
+    }
+
+    public function testStrictImagePolicyUsesOnlyConfiguredOrigins(): void
+    {
+        $request = Request::create('/sofinder/browser');
+        $request->attributes->set('_sofinder', true);
+        $response = new Response();
+        $event = new ResponseEvent($this->createMock(HttpKernelInterface::class), $request, HttpKernelInterface::MAIN_REQUEST, $response);
+
+        (new SecurityResponseSubscriber(true, ['https://cdn.example.test']))->onResponse($event);
+
+        $policy = (string) $response->headers->get('Content-Security-Policy');
+        self::assertStringContainsString("img-src 'self' data: blob: https://cdn.example.test", $policy);
+        self::assertStringNotContainsString('http:', $policy);
     }
 
     public function testLegacyFieldsReceiveMachineReadableDeprecationHeaders(): void

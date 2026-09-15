@@ -53,6 +53,25 @@ describe("picker SDK", () => {
     await expect(promise).resolves.toEqual(entry);
   });
 
+  it("rejects unsafe URLs, non-finite metadata and the wrong selection kind", async () => {
+    const popup = { closed: false } as Window;
+    vi.spyOn(window, "open").mockReturnValue(popup);
+    const promise = openPicker({ baseUrl: "/sofinder/browser", kind: "image", allowedResultOrigins: [window.location.origin] });
+    const opened = new URL(String(vi.mocked(window.open).mock.calls[0][0]), window.location.href);
+    const id = opened.searchParams.get("pickerRequestId");
+    const baseEntry = { resource: "Images", path: "photo.png", name: "photo.png", directory: false, size: 12, modifiedAt: 1, mimeType: "image/png", url: "/files/photo.png", width: 320, height: 180, capabilities: {} };
+    const send = (entry: object) => window.dispatchEvent(new MessageEvent("message", { source: popup, origin: window.location.origin, data: { type: "sofinder:select", version: "1.0", requestId: id, entry } }));
+
+    send({ ...baseEntry, url: "javascript:alert(1)" });
+    send({ ...baseEntry, size: Number.POSITIVE_INFINITY });
+    send({ ...baseEntry, mimeType: "application/pdf" });
+    send({ ...baseEntry, url: "https://cdn.invalid/photo.png" });
+    send(baseEntry);
+
+    await expect(promise).resolves.toEqual(baseEntry);
+    expect(vi.mocked(window.open).mock.calls[0][1]).toMatch(/^sofinder-picker-/);
+  });
+
   it("rejects a result outside the requested resource", async () => {
     const popup = { closed: false } as Window;
     vi.spyOn(window, "open").mockReturnValue(popup);

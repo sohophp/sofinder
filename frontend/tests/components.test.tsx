@@ -42,6 +42,18 @@ describe("UploadQueue", () => {
     expect(retry).toHaveBeenCalledWith("failed");
   });
 
+  it("keeps an ordinary skipped result on the task row", () => {
+    const { container } = render(<UploadQueue
+      tasks={[{ id: "skipped", name: "existing.jpg", progress: 0, status: "skipped" }]}
+      collapsed={false}
+      labels={labels}
+      onToggle={vi.fn()} onCancel={vi.fn()} onCancelAll={vi.fn()} onClearFinished={vi.fn()} onRetry={vi.fn()} onRemove={vi.fn()}
+    />);
+
+    expect(container.querySelector(".sf-upload-task.skipped .sf-upload-status")).toHaveTextContent("skipped");
+    expect(container.querySelector(".sf-upload-task.skipped small")).not.toBeInTheDocument();
+  });
+
   it("keeps one hundred upload tasks independently observable", () => {
     const tasks = Array.from({ length: 100 }, (_, index) => ({ id: String(index), name: `upload-${index}.bin`, progress: index, status: index % 3 === 0 ? "uploading" as const : "queued" as const }));
     render(<UploadQueue tasks={tasks} collapsed={false} labels={labels} onToggle={vi.fn()} onCancel={vi.fn()} onCancelAll={vi.fn()} onClearFinished={vi.fn()} onRetry={vi.fn()} onRemove={vi.fn()}/>);

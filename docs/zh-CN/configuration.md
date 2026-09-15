@@ -49,6 +49,30 @@ so_finder:
 安全默认值 `lockResource: true`；需要允许切换资源时，应在该 SDK 调用中明确
 传入 `lockResource: false`。
 
+浏览器 SDK 还支持用 `allowedResultOrigins` 指定返回的公开资源或 CDN
+精确 Origin。无论是否配置该列表，SDK 都会拒绝非 HTTP(S) URL、非有限
+数字元数据，以及不符合图片选择类型的项目。
+
+## 严格生产安全档位
+
+```yaml
+so_finder:
+  security:
+    production_strict: true
+    allowed_image_origins: ['https://cdn.example.com']
+  malware_scanning:
+    enabled: true
+  resources:
+    Files:
+      delivery_mode: proxy
+```
+
+`production_strict` 是显式启用的启动 Gate：要求病毒扫描 fail-closed，并要求
+所有资源使用代理交付。同时，图片 CSP 只允许 `'self'`、`data:`、`blob:`
+和上述精确 Origin。使用标准档位时，管理界面会向有权查看安全状态的
+管理员持续提示。多节点部署还必须按[生产运行](/zh-CN/production)配置共享
+State 和私有共享分块目录；安全档位无法自动推断节点拓扑。
+
 ## 临时签名 URL
 
 ```yaml

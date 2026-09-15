@@ -3,7 +3,7 @@ import type { EntrySize, FeaturePreferences, FolderTreePlacement, ListColumnName
 
 export const defaultTools: ToolPreferences = { resize: false, crop: false, rotate: false, presets: false, process: false, batchRename: false };
 export const defaultViewSizes: ViewSizePreferences = { grid: "medium", list: "medium" };
-export const defaultFeatures: FeaturePreferences = { recent: false, favorites: false, sidebarFavorites: true, sidebarQuickAccess: true, quickAccessFiles: false, tags: false, archive: false, trash: true, folderTree: false, qrCode: false, autoCollapseUploads: true };
+export const defaultFeatures: FeaturePreferences = { recent: false, favorites: false, sidebarFavorites: true, sidebarQuickAccess: true, quickAccessFiles: false, tags: false, archive: false, trash: true, folderTree: false, qrCode: true, autoCollapseUploads: true };
 export const defaultListColumns: ListColumnPreferences = { size: true, modified: true, type: false };
 export const defaultFeatureAvailability = { recent: true, favorites: true, quickAccess: true, quickAccessFiles: false, tags: true, archive: true, trash: true, folderTree: true, batchRename: true, imageEditing: true, imageProcessing: true, documentPreview: true, securityStatus: true, folderUpload: true, textPreview: true, checksum: true, qrCode: true } as const;
 
@@ -31,13 +31,15 @@ export const loadScale = (fallback: UiScale): UiScale => {
 
 export const loadUploadConflictStrategy = (fallback: UploadConflictStrategy): UploadConflictStrategy => {
   const saved = localStorage.getItem("sofinder.uploadConflictStrategy.v1");
-  return saved === "ask" || saved === "rename" || saved === "overwrite" || saved === "skip" ? saved : fallback;
+  // A prior explicit overwrite choice must never become a silent browser-wide default.
+  if (saved === "overwrite") localStorage.removeItem("sofinder.uploadConflictStrategy.v1");
+  return saved === "ask" || saved === "rename" || saved === "skip" ? saved : fallback;
 };
 
 export const loadFolderTreePlacement = (): FolderTreePlacement => localStorage.getItem("sofinder.folderNavigation.position.v1") === "right" ? "right" : "left";
 export const loadQuickAccessScope = (): QuickAccessScope => localStorage.getItem("sofinder.quickAccess.scope.v1") === "resource" ? "resource" : "all";
 
-export const columnLimits = { left: { initial: 220, min: 110, max: 330 }, right: { initial: 270, min: 135, max: 405 } } as const;
+export const columnLimits = { left: { initial: 220, min: 48, max: 330 }, right: { initial: 270, min: 135, max: 405 } } as const;
 export const listColumnLimits: Record<ListColumnName, { initial: number; min: number; max: number }> = {
   name: { initial: 360, min: 180, max: 720 },
   size: { initial: 100, min: 72, max: 180 },

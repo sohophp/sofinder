@@ -19,6 +19,7 @@ pnpm typecheck
 pnpm test:unit
 pnpm build
 pnpm check:size
+bash "$project_dir/scripts/check-dist-sync.sh"
 git -C "$project_dir" diff --exit-code -- dist
 diff -qr "$project_dir/dist" "$project_dir/packages/sofinder-symfony/dist"
 pnpm audit --audit-level=high --registry=https://registry.npmjs.org

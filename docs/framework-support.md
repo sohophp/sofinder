@@ -15,7 +15,7 @@ security and dependency-injection integration supports Symfony 6.4 LTS on PHP
 | Symfony 6.4/7.4 | Full, stable target | Symfony 6.4 on PHP 8.1–8.5; Symfony 7.4 on PHP 8.2–8.5 |
 | Plain PHP / any container | Full browser/API runtime | Host supplies explicit authorization, CSRF, actor, events and PSR factories |
 | Laravel 12/13 | Full-stack supported: browser, 51 shared handlers, Artisan/Queue, Auth/Gate and session CSRF | Complete compatibility and black-box parity matrices |
-| Slim / Mezzio | Full-stack supported through PSR-15 with all 52 shared handlers | Complete compatibility and black-box parity matrices |
+| Slim / Mezzio | Full-stack supported through PSR-15 with all 53 shared handlers | Complete compatibility and black-box parity matrices |
 | Other frameworks | Headless core only | Implement the same public contracts; do not subclass internal controllers |
 
 For installation, authorization and bootstrap examples, use the
@@ -23,7 +23,7 @@ For installation, authorization and bootstrap examples, use the
 Slim 4, Mezzio 3 and plain PHP; Symfony has its own [integration guide](/symfony).
 
 The supported PSR-15 package supplies middleware, a `RouteRegistrar` and a
-local runtime factory for the complete 52-route browser/API surface. Real Slim
+local runtime factory for the complete 53-route browser/API surface. Real Slim
 4, Mezzio 3 and plain PHP front controllers serve the shared `/browser` shell
 and frontend assets, and execute all 51 non-presentation routes plus liveness,
 capabilities, health, denial and mutation paths on PHP 8.1 and 8.5. Chromium

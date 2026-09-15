@@ -36,6 +36,8 @@ export interface PickerOptions {
     width?: number;
     height?: number;
     windowName?: string;
+    /** Optional exact origin allowlist for returned public/CDN asset URLs. */
+    allowedResultOrigins?: string[];
     defaultAlt?: (asset: PickerEntry) => string;
     sizes?: string | ((asset: PickerEntry) => string);
 }

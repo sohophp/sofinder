@@ -53,6 +53,33 @@ location for direct picker URLs that omit `resourceLock`. The picker SDK sends
 its own secure default (`lockResource: true`); pass `lockResource: false` on an
 SDK call when switching resources should be allowed.
 
+The browser SDK also accepts `allowedResultOrigins` as an exact origin list for
+returned public or CDN URLs. Independently of that optional list, it rejects
+non-HTTP(S) URLs, non-finite metadata and entries that do not match the requested
+image selection kind.
+
+## Strict production security profile
+
+```yaml
+so_finder:
+  security:
+    production_strict: true
+    allowed_image_origins: ['https://cdn.example.com']
+  malware_scanning:
+    enabled: true
+  resources:
+    Files:
+      delivery_mode: proxy
+```
+
+`production_strict` is an opt-in startup gate. It requires fail-closed malware
+scanning and proxy delivery for every resource, and replaces the broad HTTP(S)
+image CSP with `'self'`, `data:`, `blob:` and the exact origins listed above.
+The manager shows a persistent advisory to authorized administrators while the
+standard profile is active. Multi-node installations must additionally use the
+shared state and private shared chunk storage described in
+[production operation](/production); the profile cannot infer node topology.
+
 ## Temporary signed URLs
 
 ```yaml

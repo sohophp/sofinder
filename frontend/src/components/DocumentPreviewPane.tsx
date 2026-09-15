@@ -50,7 +50,7 @@ export default function DocumentPreviewPane({ api, resource, entry, labels }: {
     return () => { active = false; if (timer !== undefined) window.clearTimeout(timer); };
   }, [api, attempt, entry.path, resource]);
 
-  if (job?.status === "ready" && job.previewUrl) return <div className="sf-document-preview-frame"><iframe className="sf-document-preview" src={job.previewUrl} title={entry.name} onLoad={() => setFrameLoaded(true)}/>{!frameLoaded && <div className="sf-document-preview-progress" role="status">{labels.loading}</div>}</div>;
+  if (job?.status === "ready" && job.previewUrl) return <div className="sf-document-preview-frame"><iframe className="sf-document-preview" src={job.previewUrl} title={entry.name} referrerPolicy="no-referrer" onLoad={() => setFrameLoaded(true)}/>{!frameLoaded && <div className="sf-document-preview-progress" role="status">{labels.loading}</div>}</div>;
   if (error || job?.status === "failed" || job?.status === "expired") return <div className="sf-file-preview-fallback"><p className="sf-warning" role="alert">{job?.error?.message || error || labels.failed}</p><button onClick={() => { setError(""); setJob(null); setAttempt(value => value + 1); }}>{labels.retry}</button></div>;
   if (!showProgress) return null;
   const phase = job?.status === "queued" ? labels.queued : job?.status === "running" ? labels.converting : labels.submitting;

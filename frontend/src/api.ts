@@ -1,4 +1,5 @@
-import type { ApiResponse, AssetDeleteCheck, AssetMetadata, AssetReference, AssetSearchOptions, AssetSearchResult, AssetUsage, BatchResult, DocumentPreviewJob, Entry, ImageAction, ImageBatchResult, ImageCapabilities, ImageEditResult, ImagePreset, ImageInfo, MetadataState, PluginDescriptor, ResourceType, SecurityStatus, SoFinderConfig, TrashPage } from "./types";
+import type { ApiResponse, AssetDeleteCheck, AssetMetadata, AssetReference, AssetSearchOptions, AssetSearchResult, AssetUsage, BatchResult, DocumentPreviewJob, Entry, ImageAction, ImageBatchResult, ImageCapabilities, ImageEditResult, ImagePreset, ImageInfo, MetadataState, PluginDescriptor, ResourceType, SecurityStatus, ShareDescriptor, SoFinderConfig, TrashPage } from "./types";
+import { responseFailureMessage } from "./responseError";
 
 export const isApiVersionSupported = (version: string): boolean => /^1(?:\.|$)/.test(version);
 
@@ -96,6 +97,10 @@ export class Api {
     return this.request<{ url: string; expiresAt: number }>(`/signed-url?${query}`);
   }
 
+  shareLink(resource: string, path: string) {
+    return this.request<ShareDescriptor>(`/share-link?${new URLSearchParams({ resource, path })}`);
+  }
+
   list(resource: string, path: string, search = "", sort = "name", direction = "asc", offset = 0, limit = 100, searchMode: "name" | "tags" = "name", cursor: string | null = null) {
     const query = new URLSearchParams({ resource, path, search, searchMode, sort, direction, offset: String(offset), limit: String(limit) });
     if (cursor !== null) query.set("cursor", cursor);
@@ -161,7 +166,7 @@ export class Api {
         try {
           payload = JSON.parse(request.responseText) as ApiResponse<{ entry: Entry }>;
         } catch {
-          reject(new ApiError(`Request failed (${request.status})`, "invalid_response", request.status));
+          reject(new ApiError(responseFailureMessage(request.status, request.responseText, request.getResponseHeader("Content-Type") || ""), "invalid_response", request.status));
           return;
         }
         if (request.status < 200 || request.status >= 300 || !payload.success || !payload.data) {
@@ -223,7 +228,7 @@ export class Api {
         if (options.autoRename) form.set("autoRename", "1");
         form.set("chunk", file.slice(index * chunkSize, Math.min(file.size, (index + 1) * chunkSize)), `${file.name}.part`);
         const response = await fetch(this.base + "/uploads/chunks", { method: "POST", headers: { "Accept": "application/json", "X-CSRF-TOKEN": this.config.csrfToken }, body: form, credentials: "same-origin", signal: options.signal });
-        const payload = await response.json() as ApiResponse<{ complete: boolean; entry?: Entry }>;
+        const payload = await this.jsonResponse<{ complete: boolean; entry?: Entry }>(response, "upload_failed");
         if (!response.ok || !payload.success || !payload.data) throw new ApiError(payload.error?.message || `Request failed (${response.status})`, payload.error?.code || "upload_failed", response.status);
         options.onProgress?.(Math.round((index + 1) / total * 100));
         this.savePendingUpload({ ...session, updatedAt: Date.now() });
@@ -350,7 +355,7 @@ export class Api {
       body: JSON.stringify({ resource, paths }),
     });
     if (!response.ok) {
-      const payload = await response.json() as ApiResponse<Record<string, never>>;
+      const payload = await this.jsonResponse<Record<string, never>>(response, "archive_failed");
       throw new ApiError(payload.error?.message || `Request failed (${response.status})`, payload.error?.code || "archive_failed", response.status);
     }
 
@@ -378,10 +383,19 @@ export class Api {
     if (!(init.body instanceof FormData) && init.body !== undefined) headers.set("Content-Type", "application/json");
     if (init.method && init.method !== "GET") headers.set("X-CSRF-TOKEN", this.config.csrfToken);
     const response = await fetch(this.base + path, { ...init, headers, credentials: "same-origin" });
-    const payload = await response.json() as ApiResponse<T>;
+    const payload = await this.jsonResponse<T>(response, "request_failed");
     if (!response.ok || !payload.success || !payload.data) {
       throw new ApiError(payload.error?.message || `Request failed (${response.status})`, payload.error?.code || "request_failed", response.status);
     }
     return payload.data;
+  }
+
+  private async jsonResponse<T>(response: Response, fallbackCode: string): Promise<ApiResponse<T>> {
+    const text = await response.text();
+    try {
+      return JSON.parse(text) as ApiResponse<T>;
+    } catch {
+      throw new ApiError(responseFailureMessage(response.status, text, response.headers.get("Content-Type") || ""), fallbackCode, response.status);
+    }
   }
 }

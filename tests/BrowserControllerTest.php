@@ -32,6 +32,28 @@ final class BrowserControllerTest extends TestCase
 {
     private string $directory;
 
+    public function testEmbeddedPresentationIsLimitedToManagerMode(): void
+    {
+        self::assertTrue($this->config(Request::create('/browser?uiMode=manager&uiEmbedded=1'))['uiDefaults']['embedded']);
+        self::assertFalse($this->config(Request::create('/browser?uiMode=picker&uiEmbedded=1'))['uiDefaults']['embedded']);
+        self::assertFalse($this->config(Request::create('/browser?uiMode=manager'))['uiDefaults']['embedded']);
+    }
+
+    public function testNamedPresentationProfilesResolveCoherently(): void
+    {
+        $embedded = $this->config(Request::create('/browser?uiProfile=embedded'))['uiDefaults'];
+        self::assertSame('embedded', $embedded['profile']);
+        self::assertSame('manager', $embedded['mode']);
+        self::assertTrue($embedded['embedded']);
+
+        $picker = $this->config(Request::create('/browser?uiProfile=picker&type=Images'));
+        self::assertSame('picker', $picker['uiDefaults']['profile']);
+        self::assertSame('picker', $picker['uiDefaults']['mode']);
+        self::assertTrue($picker['selectMode']);
+        self::assertFalse($picker['uiDefaults']['embedded']);
+        self::assertSame('Images', $picker['pickerResource']);
+    }
+
     protected function setUp(): void
     {
         $this->directory = sys_get_temp_dir() . '/sofinder-browser-' . bin2hex(random_bytes(8));

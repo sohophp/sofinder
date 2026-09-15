@@ -39,6 +39,7 @@ use SohoPHP\SoFinder\Contract\UploadScannerInterface;
 use SohoPHP\SoFinder\Contract\EntryUrlGeneratorInterface;
 use SohoPHP\SoFinder\Contract\EndpointUrlGeneratorInterface;
 use SohoPHP\SoFinder\Contract\EntryUrlContextProviderInterface;
+use SohoPHP\SoFinder\Contract\ShareLinkProviderInterface;
 use SohoPHP\SoFinder\Contract\MetadataStoreInterface;
 use SohoPHP\SoFinder\Contract\MaintenanceDispatcherInterface;
 use SohoPHP\SoFinder\Contract\MalwareScanStatusStoreInterface;
@@ -99,6 +100,7 @@ use SohoPHP\SoFinder\Http\Action\RenameAction;
 use SohoPHP\SoFinder\Http\Action\QuickUploadAction;
 use SohoPHP\SoFinder\Http\Action\RestoreTrashAction;
 use SohoPHP\SoFinder\Http\Action\SignedUrlIssueAction;
+use SohoPHP\SoFinder\Http\Action\ShareLinkAction;
 use SohoPHP\SoFinder\Http\Action\SignedContentAction;
 use SohoPHP\SoFinder\Http\Action\SecurityStatusAction;
 use SohoPHP\SoFinder\Http\Action\TrashListAction;
@@ -287,6 +289,7 @@ final class SoFinderExtension extends Extension
         DownloadAction::class,
         ContentAction::class,
         SignedUrlIssueAction::class,
+        ShareLinkAction::class,
         SignedContentAction::class,
         ChecksumAction::class,
         TextPreviewAction::class,
@@ -314,6 +317,16 @@ final class SoFinderExtension extends Extension
             $this->processConfiguration(new Configuration(), $configs),
             $configs,
         );
+        if ($config['security']['production_strict'] === true) {
+            if ($config['malware_scanning']['enabled'] !== true) {
+                throw new \InvalidArgumentException('SoFinder security.production_strict requires malware_scanning.enabled.');
+            }
+            foreach ($config['resources'] as $name => $resource) {
+                if ($resource['delivery_mode'] !== 'proxy') {
+                    throw new \InvalidArgumentException("SoFinder security.production_strict requires proxy delivery for resource $name.");
+                }
+            }
+        }
         $imageDriver = (string) $config['image_processing']['driver'];
         if ($imageDriver === 'gd' && !extension_loaded('gd')) {
             throw new \InvalidArgumentException('SoFinder image_processing.driver is gd, but ext-gd is not installed.');
@@ -351,6 +364,7 @@ final class SoFinderExtension extends Extension
         $container->registerForAutoconfiguration(QueueHealthProviderInterface::class)->addTag('sofinder.queue_health_provider');
         $container->registerForAutoconfiguration(StorageAdapterFactoryInterface::class)->addTag('sofinder.storage_factory');
         $container->registerForAutoconfiguration(EntryUrlContextProviderInterface::class)->addTag('sofinder.entry_url_context_provider');
+        $container->registerForAutoconfiguration(ShareLinkProviderInterface::class)->addTag('sofinder.share_link_provider');
         $container->registerForAutoconfiguration(WorkspaceStorageAuditProviderInterface::class)->addTag('sofinder.workspace_storage_audit_provider');
         $packageDir = dirname(__DIR__, 2);
         $container->setParameter('so_finder.package_dir', $packageDir);
@@ -358,6 +372,7 @@ final class SoFinderExtension extends Extension
         $assetFingerprint = hash_init('sha256');
         foreach ($assetFiles as $assetFile) {
             if (is_file($assetFile)) {
+                $container->addResource(new \Symfony\Component\Config\Resource\FileResource($assetFile));
                 hash_update_file($assetFingerprint, $assetFile);
             }
         }
@@ -483,6 +498,7 @@ final class SoFinderExtension extends Extension
                 $config['trash_retention_days'],
                 $config['trash_max_items'],
                 $config['trash_max_bytes'],
+                $config['trash_purge_guard_service'] !== null ? new Reference((string) $config['trash_purge_guard_service']) : null,
             ]));
         $container->setAlias(RecycleBinInterface::class, new Alias(TrashManager::class));
         $container->setDefinition(ChunkUploadManager::class, (new Definition(ChunkUploadManager::class))
@@ -651,6 +667,7 @@ final class SoFinderExtension extends Extension
             $workspaceConfig['enabled'] ? new Reference(WorkspaceProvider::class) : null,
             $workspaceConfig['enabled'] && $workspaceConfig['option_provider_service'] !== null ? new Reference((string) $workspaceConfig['option_provider_service']) : null,
             $config['picker']['lock_resource'],
+            $config['security']['production_strict'],
         ]));
         $container->setDefinition(EntriesAction::class, new Definition(EntriesAction::class, [
             new Reference(FileManager::class),
@@ -789,8 +806,16 @@ final class SoFinderExtension extends Extension
         $container->setDefinition(DocumentPreviewJobStatusAction::class, new Definition(DocumentPreviewJobStatusAction::class, [new Reference(DocumentPreviewJobService::class)]));
         $container->setDefinition(DocumentPreviewJobActions::class, new Definition(DocumentPreviewJobActions::class, [new Reference(DocumentPreviewJobCreateAction::class), new Reference(DocumentPreviewJobStatusAction::class)]));
         $container->setDefinition(SignedUrlIssueAction::class, new Definition(SignedUrlIssueAction::class, [new Reference(SignedUrlManager::class), new Reference(EndpointUrlGeneratorInterface::class)]));
+        $container->setDefinition(ShareLinkAction::class, new Definition(ShareLinkAction::class, [
+            new Reference(FileManager::class),
+            new Reference(ResourceRegistry::class),
+            new Reference(SignedUrlManager::class),
+            new Reference(EndpointUrlGeneratorInterface::class),
+            $signedUrlConfig['enabled'],
+            new TaggedIteratorArgument('sofinder.share_link_provider'),
+        ]));
         $container->setDefinition(SignedContentAction::class, new Definition(SignedContentAction::class, [new Reference(SignedUrlManager::class), new Reference(EntryStreamResponseBuilder::class)]));
-        $container->setDefinition(DocumentPreviewAction::class, new Definition(DocumentPreviewAction::class, [new Reference(DocumentPreviewManager::class), new Reference(FeaturePolicy::class), new Reference(DocumentPreviewJobManager::class)]));
+        $container->setDefinition(DocumentPreviewAction::class, new Definition(DocumentPreviewAction::class, [new Reference(DocumentPreviewManager::class), new Reference(FeaturePolicy::class), new Reference(DocumentPreviewJobManager::class), new Reference(CachedFileResponseBuilder::class)]));
         $container->setDefinition(SecurityStatusAction::class, new Definition(SecurityStatusAction::class, [
             $malwareConfig['enabled'],
             new Reference(MalwareScanStatusStoreInterface::class),
@@ -875,6 +900,7 @@ final class SoFinderExtension extends Extension
             $workspaceConfig['enabled'] && $workspaceConfig['option_provider_service'] !== null ? new Reference((string) $workspaceConfig['option_provider_service']) : null,
             new Reference(BrowserPage::class),
             $config['picker']['lock_resource'],
+            $config['security']['production_strict'],
         ]);
         $this->controller($container, ApiController::class, [
             new Reference(FileManager::class),
@@ -1027,6 +1053,8 @@ final class SoFinderExtension extends Extension
             new Reference(Psr17Factory::class),
             new Reference(Psr17Factory::class),
             new TaggedIteratorArgument('sofinder.http.endpoint_handler'),
+            $config['security']['production_strict'],
+            $config['security']['allowed_image_origins'],
         ]));
         $this->controller($container, SymfonyEndpointController::class, [
             new Reference(EndpointDispatcher::class),
@@ -1036,7 +1064,10 @@ final class SoFinderExtension extends Extension
 
         $container->setDefinition(ExceptionSubscriber::class, (new Definition(ExceptionSubscriber::class))
             ->addTag('kernel.event_subscriber'));
-        $container->setDefinition(SecurityResponseSubscriber::class, (new Definition(SecurityResponseSubscriber::class))
+        $container->setDefinition(SecurityResponseSubscriber::class, (new Definition(SecurityResponseSubscriber::class, [
+            $config['security']['production_strict'],
+            $config['security']['allowed_image_origins'],
+        ]))
             ->addTag('kernel.event_subscriber'));
         $container->setDefinition(RequestIdSubscriber::class, (new Definition(RequestIdSubscriber::class))
             ->addTag('kernel.event_subscriber'));

@@ -45,6 +45,30 @@ so_finder:
 Picker SDK 使用自己的安全預設值；需要允許切換時請明確傳入
 `lockResource: false`。跨網域 Host 必須逐一設定精確 Origin。
 
+瀏覽器 SDK 也支援以 `allowedResultOrigins` 指定回傳公開資源或 CDN 的
+精確 Origin。無論是否設定該清單，SDK 都會拒絕非 HTTP(S) URL、非有限
+數字中繼資料，以及不符合圖片選取類型的項目。
+
+## 嚴格正式環境安全層級
+
+```yaml
+so_finder:
+  security:
+    production_strict: true
+    allowed_image_origins: ['https://cdn.example.com']
+  malware_scanning:
+    enabled: true
+  resources:
+    Files:
+      delivery_mode: proxy
+```
+
+`production_strict` 是需明確啟用的啟動 Gate：必須啟用 fail-closed 病毒掃描，
+並要求所有資源使用代理交付。圖片 CSP 同時收緊為 `'self'`、`data:`、
+`blob:` 與上述精確 Origin。標準層級啟用時，管理介面會向可查看安全
+狀態的管理員持續提示。多節點部署仍必須依[正式環境運作](/zh-TW/production)
+設定共用 State 與私有共用分塊目錄；安全層級無法自動推斷節點拓撲。
+
 ## 臨時簽章 URL
 
 ```yaml

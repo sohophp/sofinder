@@ -1,4 +1,5 @@
 import type { AssetReference, Entry, ImageVariant, UploadConflictStrategy } from "./types";
+import { responseFailureMessage } from "./responseError";
 
 export type UploadTaskStatus = "queued" | "uploading" | "processing" | "ready" | "failed" | "canceled";
 export type UploadSource = "picker" | "input" | "paste" | "drop";
@@ -203,7 +204,7 @@ const uploadForm = (request: UploadRequest, strategy: UploadConflictStrategy, in
 const parsePayload = async <T>(text: string, status: number): Promise<T> => {
   let payload: ApiPayload<T>;
   try { payload = JSON.parse(text) as ApiPayload<T>; }
-  catch { throw new SoFinderSdkError("invalid_response", `Request failed (${status}).`, status); }
+  catch { throw new SoFinderSdkError("invalid_response", responseFailureMessage(status, text), status); }
   if (status < 200 || status >= 300 || !payload.success || !payload.data) throw new SoFinderSdkError(payload.error?.code ?? "upload_failed", payload.error?.message ?? `Request failed (${status}).`, status);
   return payload.data;
 };

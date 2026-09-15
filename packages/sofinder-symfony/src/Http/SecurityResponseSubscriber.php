@@ -10,6 +10,11 @@ use Symfony\Component\HttpKernel\KernelEvents;
 
 final class SecurityResponseSubscriber implements EventSubscriberInterface
 {
+    /** @param list<string> $allowedImageOrigins */
+    public function __construct(private readonly bool $strictImageSources = false, private readonly array $allowedImageOrigins = [])
+    {
+    }
+
     public function onResponse(ResponseEvent $event): void
     {
         if (!$event->getRequest()->attributes->getBoolean('_sofinder')) {
@@ -18,7 +23,7 @@ final class SecurityResponseSubscriber implements EventSubscriberInterface
 
         $response = $event->getResponse();
         $headers = $response->headers;
-        foreach (SecurityHeaders::defaults() as $name => $value) {
+        foreach (SecurityHeaders::defaults($this->strictImageSources, $this->allowedImageOrigins) as $name => $value) {
             if (!$headers->has($name)) $headers->set($name, $value);
         }
         $deprecatedFields = $event->getRequest()->attributes->get('_sofinder_deprecated_fields');

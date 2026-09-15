@@ -78,6 +78,9 @@ final class ConfigurationNormalizerTest extends TestCase
 
         yield 'unknown key' => [$resource + ['routePrefix' => '/files'], 'Unknown SoFinder configuration key routePrefix'];
         yield 'origin with path' => [$resource + ['picker' => ['allowed_origins' => ['https://example.test/path']]], 'exact HTTP(S) origin'];
+        yield 'image origin with path' => [$resource + ['security' => ['allowed_image_origins' => ['https://cdn.example.test/path']]], 'exact HTTP(S) origin'];
+        yield 'strict mode without scanning' => [$resource + ['security' => ['production_strict' => true]], 'requires malware_scanning.enabled'];
+        yield 'strict mode with public delivery' => [$resource + ['security' => ['production_strict' => true], 'malware_scanning' => ['enabled' => true]], 'requires proxy delivery'];
         yield 'duplicate locales' => [$resource + ['asset_catalog' => ['alt_locales' => ['en', 'en']]], '1 to 20 unique language tags'];
         yield 'unsafe variant width' => [$resource + ['image_variants' => ['widths' => [16]]], 'between 32 and 8192'];
         yield 'oversized file name limit' => [[
@@ -104,5 +107,17 @@ final class ConfigurationNormalizerTest extends TestCase
         ]);
 
         self::assertSame('unix:///run/clamav/clamd.sock', $config['malware_scanning']['endpoint']);
+    }
+
+    public function testProductionStrictProfileAcceptsScanningProxyResourcesAndImageOrigins(): void
+    {
+        $config = (new ConfigurationNormalizer())->normalize([
+            'security' => ['production_strict' => true, 'allowed_image_origins' => ['https://cdn.example.test']],
+            'malware_scanning' => ['enabled' => true],
+            'resources' => ['Files' => ['root' => '/srv/files', 'delivery_mode' => 'proxy']],
+        ]);
+
+        self::assertTrue($config['security']['production_strict']);
+        self::assertSame(['https://cdn.example.test'], $config['security']['allowed_image_origins']);
     }
 }

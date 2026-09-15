@@ -74,6 +74,19 @@ final class SharedDerivedStreamActionTest extends TestCase
         $uri = '/api/preview/document?resource=Files&path=manual.pdf'; $symfony = $controller(Request::create($uri)); ob_start(); $symfony->sendContent(); $body = ob_get_clean();
         $factory = new Psr17Factory(); $psr = (new PsrEndpointHandler($action, $factory, $factory))->handle(new ServerRequest('GET', $uri));
         self::assertSame('application/pdf', $psr->getHeaderLine('Content-Type')); self::assertSame($body, (string) $psr->getBody()); self::assertStringStartsWith('%PDF-', (string) $psr->getBody());
+        self::assertSame("frame-ancestors 'self'", $psr->getHeaderLine('Content-Security-Policy'));
+        self::assertStringNotContainsString('sandbox', $psr->getHeaderLine('Content-Security-Policy'));
+        self::assertStringNotContainsString('default-src', $psr->getHeaderLine('Content-Security-Policy'));
+        self::assertStringContainsString('no-store', $psr->getHeaderLine('Cache-Control'));
+        self::assertSame((string) strlen($body), $psr->getHeaderLine('Content-Length'));
+        self::assertSame('bytes', $psr->getHeaderLine('Accept-Ranges'));
+
+        $rangeRequest = Request::create($uri, server: ['HTTP_RANGE' => 'bytes=0-7']);
+        $rangeResponse = $controller($rangeRequest); ob_start(); $rangeResponse->sendContent(); $rangeBody = ob_get_clean();
+        self::assertSame(206, $rangeResponse->getStatusCode());
+        self::assertSame('bytes 0-7/' . strlen($body), $rangeResponse->headers->get('Content-Range'));
+        self::assertSame('8', $rangeResponse->headers->get('Content-Length'));
+        self::assertSame(substr($body, 0, 8), $rangeBody);
     }
 
     public function testSignedContentPreservesRangeAndPublicCacheContract(): void

@@ -13,13 +13,13 @@ isolated install test passes.
 | Package | Responsibility | Current release state |
 | --- | --- | --- |
 | `sohophp/sofinder-core` | Domain, storage, values and host contracts | Physical subtree and isolated install complete |
-| `sohophp/sofinder-http` | Endpoint catalog, PSR dispatcher and shared handlers | All 52 browser/API endpoints have shared actions |
+| `sohophp/sofinder-http` | Endpoint catalog, PSR dispatcher and shared handlers | All 53 browser/API endpoints have shared actions |
 | `sohophp/sofinder-symfony` | Bundle and HttpFoundation/Console/Messenger adapters | Physical subtree, release assets and isolated install complete |
 | `sohophp/sofinder-laravel` | Laravel 12/13 provider, auth, CSRF, routes and commands | Supported full-stack bridge with complete real-app and parity matrices |
 | `sohophp/sofinder-psr15` | Slim, Mezzio and plain PSR-15 middleware | Supported bridge with isolated install, real-host browser smoke and full endpoint parity |
 
 The source-level `FrameworkBoundaryTest` rejects Symfony, Illuminate, Slim or
-Mezzio imports from the physical Core package. Symfony now builds its 52-route
+Mezzio imports from the physical Core package. Symfony now builds its 53-route
 collection directly from the framework-neutral catalog; its compatibility YAML
 file only imports that generated collection. `EndpointCatalogTest` verifies the
 resulting path, method, requirement, adapter and special-default contract. The
@@ -62,7 +62,7 @@ Mutation actions require both an `AuthorizationInterface` and a
 body is decoded; a host cannot construct a permissive mutation stack by omitting
 either dependency.
 
-All 52 catalog endpoints now have framework-neutral actions. The 51 API and
+All 53 catalog endpoints now have framework-neutral actions. The 52 API and
 stream endpoints include
 metadata, bounded content reads, Range/ETag streaming, image thumbnail/variant
 delivery, document previews, Prometheus metrics, uploads, access sessions, archives,

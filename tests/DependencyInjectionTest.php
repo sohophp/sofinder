@@ -57,6 +57,9 @@ use SohoPHP\SoFinder\Http\Action\SecurityStatusAction;
 use SohoPHP\SoFinder\Http\Action\TrashListAction;
 use SohoPHP\SoFinder\Http\Action\TextPreviewAction;
 use SohoPHP\SoFinder\Http\Action\UploadAction;
+use SohoPHP\SoFinder\Http\BrowserPage;
+use SohoPHP\SoFinder\Http\EndpointDispatcher;
+use SohoPHP\SoFinder\Http\SecurityResponseSubscriber;
 use SohoPHP\SoFinder\Http\BatchMutationActions;
 use SohoPHP\SoFinder\Http\AssetUsageActions;
 use SohoPHP\SoFinder\Http\AssetUsageService;
@@ -135,6 +138,28 @@ final class DependencyInjectionTest extends TestCase
         self::assertTrue($definition->getArgument('$enabled'));
     }
 
+    public function testStrictProductionSecurityIsWiredIntoBrowserAndResponseServices(): void
+    {
+        $container = new ContainerBuilder();
+        (new SoFinderExtension())->load([[
+            'security' => [
+                'production_strict' => true,
+                'allowed_image_origins' => ['https://cdn.example.test'],
+            ],
+            'malware_scanning' => ['enabled' => true],
+            'resources' => ['Files' => [
+                'root' => sys_get_temp_dir() . '/sofinder-di-files',
+                'delivery_mode' => 'proxy',
+            ]],
+        ]], $container);
+
+        self::assertTrue($container->getDefinition(BrowserPage::class)->getArgument(13));
+        self::assertTrue($container->getDefinition(EndpointDispatcher::class)->getArgument(3));
+        self::assertSame(['https://cdn.example.test'], $container->getDefinition(EndpointDispatcher::class)->getArgument(4));
+        self::assertTrue($container->getDefinition(SecurityResponseSubscriber::class)->getArgument(0));
+        self::assertSame(['https://cdn.example.test'], $container->getDefinition(SecurityResponseSubscriber::class)->getArgument(1));
+    }
+
     public function testDisabledMalwareScanningRegistersANoOpScanner(): void
     {
         $container = new ContainerBuilder();
@@ -187,6 +212,7 @@ final class DependencyInjectionTest extends TestCase
             'asset_search' => ['enabled' => true, 'provider_service' => 'app.asset_search'],
             'asset_usage' => ['enabled' => true, 'store_service' => 'app.asset_usage'],
             'asset_access_sessions' => ['enabled' => true, 'store_service' => 'app.asset_access_sessions'],
+            'trash_purge_guard_service' => 'app.trash_purge_guard',
             'workspaces' => ['enabled' => true, 'default' => 'main', 'resolver_service' => 'app.workspace_resolver'],
             'image_variants' => ['enabled' => true, 'widths' => [320, 640], 'formats' => ['original'], 'quality' => 80],
             'resources' => ['Images' => ['root' => sys_get_temp_dir() . '/sofinder-di-images']],
@@ -196,6 +222,7 @@ final class DependencyInjectionTest extends TestCase
         self::assertSame('app.asset_search', (string) $container->getAlias(AssetSearchProviderInterface::class));
         self::assertSame('app.asset_usage', (string) $container->getAlias(AssetUsageStoreInterface::class));
         self::assertSame('app.asset_access_sessions', (string) $container->getAlias(AssetAccessSessionStoreInterface::class));
+        self::assertSame('app.trash_purge_guard', (string) $container->getDefinition(\SohoPHP\SoFinder\Trash\TrashManager::class)->getArgument(6));
         self::assertSame('app.workspace_resolver', (string) $container->getAlias(WorkspaceResolverInterface::class));
         self::assertTrue($container->getDefinition(\SohoPHP\SoFinder\Image\ImageManager::class)->getArgument(7));
         self::assertSame([320, 640], $container->getDefinition(\SohoPHP\SoFinder\Image\ImageManager::class)->getArgument(8));

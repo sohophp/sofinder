@@ -6,11 +6,13 @@ namespace SohoPHP\SoFinder\Tests;
 
 use PHPUnit\Framework\TestCase;
 use SohoPHP\SoFinder\Contract\ActorProviderInterface;
+use SohoPHP\SoFinder\Contract\TrashPurgeGuardInterface;
 use SohoPHP\SoFinder\Security\PathGuard;
 use SohoPHP\SoFinder\Storage\LocalStorageAdapter;
 use SohoPHP\SoFinder\Trash\TrashManager;
 use SohoPHP\SoFinder\Value\ResourceStorage;
 use SohoPHP\SoFinder\Value\ResourceType;
+use SohoPHP\SoFinder\Value\TrashItem;
 
 final class TrashManagerTest extends TestCase
 {
@@ -116,7 +118,49 @@ final class TrashManagerTest extends TestCase
         self::assertSame(['existing.txt'], array_map(static fn ($entry): string => $entry->path, $manager->list('Files')));
     }
 
-    private function manager(string $actor, int $maxItems = 1000, int $maxBytes = 1073741824): TrashManager
+    public function testExpiredReferencedItemIsSkippedWhileOtherItemsArePurged(): void
+    {
+        file_put_contents($this->directory . '/protected.txt', 'p');
+        file_put_contents($this->directory . '/free.txt', 'f');
+        $guard = new class implements TrashPurgeGuardInterface {
+            public function blockingReason(TrashItem $item): ?string
+            {
+                return $item->path === 'protected.txt' ? 'still referenced' : null;
+            }
+        };
+        $manager = $this->manager('actor-one', 1000, 1073741824, -1, $guard);
+        $protected = $manager->put($this->resource(), 'protected.txt')['item'];
+        $manager->put($this->resource(), 'free.txt');
+
+        self::assertSame(1, $manager->purgeExpired());
+        self::assertSame([$protected->id], array_map(static fn (TrashItem $item): string => $item->id, $manager->list('Files')));
+    }
+
+    public function testCapacityCleanupDoesNotPurgeReferencedOldestItem(): void
+    {
+        file_put_contents($this->directory . '/protected.txt', 'p');
+        file_put_contents($this->directory . '/new.txt', 'n');
+        $guard = new class implements TrashPurgeGuardInterface {
+            public function blockingReason(TrashItem $item): ?string
+            {
+                return $item->path === 'protected.txt' ? 'still referenced' : null;
+            }
+        };
+        $manager = $this->manager('actor-one', 1, 10, 30, $guard);
+        $manager->put($this->resource(), 'protected.txt');
+
+        try {
+            $manager->put($this->resource(), 'new.txt');
+            self::fail('Protected trash must not be purged to free capacity.');
+        } catch (\SohoPHP\SoFinder\Exception\SoFinderException $exception) {
+            self::assertSame('trash_capacity_protected', $exception->errorCode);
+        }
+
+        self::assertFileExists($this->directory . '/new.txt');
+        self::assertSame(['protected.txt'], array_map(static fn (TrashItem $item): string => $item->path, $manager->list('Files')));
+    }
+
+    private function manager(string $actor, int $maxItems = 1000, int $maxBytes = 1073741824, int $retentionDays = 30, ?TrashPurgeGuardInterface $guard = null): TrashManager
     {
         $provider = new class($actor) implements ActorProviderInterface {
             public function __construct(private readonly string $actor)
@@ -129,7 +173,7 @@ final class TrashManagerTest extends TestCase
             }
         };
 
-        return new TrashManager($this->trash, $provider, new PathGuard(), 30, $maxItems, $maxBytes);
+        return new TrashManager($this->trash, $provider, new PathGuard(), $retentionDays, $maxItems, $maxBytes, $guard);
     }
 
     private function resource(): ResourceStorage
@@ -150,6 +194,9 @@ final class TrashManagerTest extends TestCase
             return;
         }
         foreach (new \FilesystemIterator($path, \FilesystemIterator::SKIP_DOTS) as $entry) {
+            if (!$entry instanceof \SplFileInfo) {
+                continue;
+            }
             $this->remove($entry->getPathname());
         }
         @rmdir($path);

@@ -1,14 +1,14 @@
-import { t as e } from "./defineProperty-B_lfzbVN.js";
+import { n as e, t } from "./defineProperty-Crj45lTn.js";
 //#region src/sdk.ts
-var t = class extends Error {
-	constructor(t, n, r = 0, i = r === 0 || r >= 500) {
-		super(n), e(this, "code", void 0), e(this, "status", void 0), e(this, "retryable", void 0), this.code = t, this.status = r, this.retryable = i, this.name = "SoFinderSdkError";
+var n = class extends Error {
+	constructor(e, n, r = 0, i = r === 0 || r >= 500) {
+		super(n), t(this, "code", void 0), t(this, "status", void 0), t(this, "retryable", void 0), this.code = e, this.status = r, this.retryable = i, this.name = "SoFinderSdkError";
 	}
-}, n = (e) => ({ upload(t) {
-	return new r(e, t);
-} }), r = class {
-	constructor(t, n) {
-		e(this, "options", void 0), e(this, "request", void 0), e(this, "id", typeof crypto < "u" && crypto.randomUUID ? crypto.randomUUID() : `sf-${Date.now()}-${Math.random().toString(36).slice(2)}`), e(this, "source", void 0), e(this, "file", void 0), e(this, "status", "queued"), e(this, "progress", 0), e(this, "result", null), e(this, "error", null), e(this, "listeners", /* @__PURE__ */ new Set()), e(this, "controller", null), e(this, "completion", void 0), this.options = t, this.request = n, this.file = n.file, this.source = n.source ?? "input", this.completion = this.run();
+}, r = (e) => ({ upload(t) {
+	return new i(e, t);
+} }), i = class {
+	constructor(e, n) {
+		t(this, "options", void 0), t(this, "request", void 0), t(this, "id", typeof crypto < "u" && crypto.randomUUID ? crypto.randomUUID() : `sf-${Date.now()}-${Math.random().toString(36).slice(2)}`), t(this, "source", void 0), t(this, "file", void 0), t(this, "status", "queued"), t(this, "progress", 0), t(this, "result", null), t(this, "error", null), t(this, "listeners", /* @__PURE__ */ new Set()), t(this, "controller", null), t(this, "completion", void 0), this.options = e, this.request = n, this.file = n.file, this.source = n.source ?? "input", this.completion = this.run();
 	}
 	cancel() {
 		this.controller?.abort(), this.file.size > (this.options.chunkThreshold ?? 5e6) && this.discardChunkSession(), this.status = "canceled", this.emit();
@@ -25,27 +25,27 @@ var t = class extends Error {
 	async run() {
 		this.controller = new AbortController(), this.status = "uploading", this.emit();
 		try {
-			let e = this.request.conflictStrategy ?? "ask", n;
+			let e = this.request.conflictStrategy ?? "ask", t;
 			try {
-				n = await this.send(e);
+				t = await this.send(e);
 			} catch (r) {
-				if (r instanceof t && r.status === 409 && e === "skip") throw new t("upload_skipped", "A file with the same name was skipped.", 409, !1);
-				if (!(r instanceof t) || r.status !== 409 || e !== "ask") throw r;
-				let i = await (this.options.onConflict?.(this.file) ?? l(this.file, this.options.conflictLabels));
-				if (i === "cancel") throw new t("upload_canceled", "Upload canceled.", 0, !1);
-				if (i === "skip") throw new t("upload_skipped", "A file with the same name was skipped.", 409, !1);
-				e = i, n = await this.send(e);
+				if (r instanceof n && r.status === 409 && e === "skip") throw new n("upload_skipped", "A file with the same name was skipped.", 409, !1);
+				if (!(r instanceof n) || r.status !== 409 || e !== "ask") throw r;
+				let i = await (this.options.onConflict?.(this.file) ?? u(this.file, this.options.conflictLabels));
+				if (i === "cancel") throw new n("upload_canceled", "Upload canceled.", 0, !1);
+				if (i === "skip") throw new n("upload_skipped", "A file with the same name was skipped.", 409, !1);
+				e = i, t = await this.send(e);
 			}
 			this.status = "processing", this.progress = 100, this.emit();
-			let r = n.asset ?? c(this.request.resource, n.entry, this.options.apiBase);
+			let r = t.asset ?? l(this.request.resource, t.entry, this.options.apiBase);
 			return this.result = r, this.status = "ready", this.emit(), r;
 		} catch (e) {
-			let n = e instanceof t ? e : e instanceof DOMException && e.name === "AbortError" ? new t("upload_canceled", "Upload canceled.", 0, !1) : new t("upload_failed", e instanceof Error ? e.message : "Upload failed.");
-			throw this.status = n.code === "upload_canceled" ? "canceled" : "failed", this.error = {
-				code: n.code,
-				message: n.message,
-				retryable: n.retryable
-			}, this.emit(), n;
+			let t = e instanceof n ? e : e instanceof DOMException && e.name === "AbortError" ? new n("upload_canceled", "Upload canceled.", 0, !1) : new n("upload_failed", e instanceof Error ? e.message : "Upload failed.");
+			throw this.status = t.code === "upload_canceled" ? "canceled" : "failed", this.error = {
+				code: t.code,
+				message: t.message,
+				retryable: t.retryable
+			}, this.emit(), t;
 		}
 	}
 	async send(e) {
@@ -53,39 +53,39 @@ var t = class extends Error {
 		return this.file.size > t ? this.sendChunks(e) : this.sendWhole(e);
 	}
 	async sendWhole(e) {
-		let n = await a(this.options.csrfToken), r = o(this.request, e);
-		return new Promise((e, a) => {
+		let t = await o(this.options.csrfToken), r = s(this.request, e);
+		return new Promise((e, i) => {
 			let o = new XMLHttpRequest();
-			this.controller?.signal.addEventListener("abort", () => o.abort(), { once: !0 }), o.open("POST", i(this.options.apiBase) + "/uploads"), o.withCredentials = this.options.credentials !== "omit", o.setRequestHeader("Accept", "application/json"), o.setRequestHeader("X-CSRF-TOKEN", n), o.upload.onprogress = (e) => {
+			this.controller?.signal.addEventListener("abort", () => o.abort(), { once: !0 }), o.open("POST", a(this.options.apiBase) + "/uploads"), o.withCredentials = this.options.credentials !== "omit", o.setRequestHeader("Accept", "application/json"), o.setRequestHeader("X-CSRF-TOKEN", t), o.upload.onprogress = (e) => {
 				e.lengthComputable && (this.progress = Math.min(99, Math.round(e.loaded / e.total * 100)), this.emit());
-			}, o.onerror = () => a(new t("network_error", "The upload failed because of a network error.")), o.onabort = () => a(new DOMException("Upload canceled.", "AbortError")), o.onload = () => s(o.responseText, o.status).then(e, a), o.send(r);
+			}, o.onerror = () => i(new n("network_error", "The upload failed because of a network error.")), o.onabort = () => i(new DOMException("Upload canceled.", "AbortError")), o.onload = () => c(o.responseText, o.status).then(e, i), o.send(r);
 		});
 	}
 	async sendChunks(e) {
-		let n = await a(this.options.csrfToken), r = this.options.chunkSize ?? 4e6, c = Math.ceil(this.file.size / r), l = this.id.replace(/[^A-Za-z0-9_-]/g, "-"), u = `${i(this.options.apiBase)}/uploads/chunks/${encodeURIComponent(l)}`, d = await this.receivedChunks(u);
-		for (let t = 0; t < c; t++) {
-			if (d.has(t)) {
-				this.progress = Math.round((t + 1) / c * 100), this.emit();
+		let t = await o(this.options.csrfToken), r = this.options.chunkSize ?? 4e6, i = Math.ceil(this.file.size / r), l = this.id.replace(/[^A-Za-z0-9_-]/g, "-"), u = `${a(this.options.apiBase)}/uploads/chunks/${encodeURIComponent(l)}`, d = await this.receivedChunks(u);
+		for (let n = 0; n < i; n++) {
+			if (d.has(n)) {
+				this.progress = Math.round((n + 1) / i * 100), this.emit();
 				continue;
 			}
-			let a = o(this.request, e, !1);
-			a.set("name", this.file.name), a.set("uploadId", l), a.set("index", String(t)), a.set("total", String(c)), a.set("chunk", this.file.slice(t * r, Math.min(this.file.size, (t + 1) * r)), `${this.file.name}.part`);
-			let u = await fetch(i(this.options.apiBase) + "/uploads/chunks", {
+			let o = s(this.request, e, !1);
+			o.set("name", this.file.name), o.set("uploadId", l), o.set("index", String(n)), o.set("total", String(i)), o.set("chunk", this.file.slice(n * r, Math.min(this.file.size, (n + 1) * r)), `${this.file.name}.part`);
+			let u = await fetch(a(this.options.apiBase) + "/uploads/chunks", {
 				method: "POST",
 				headers: {
 					Accept: "application/json",
-					"X-CSRF-TOKEN": n
+					"X-CSRF-TOKEN": t
 				},
 				credentials: this.options.credentials ?? "same-origin",
-				body: a,
+				body: o,
 				signal: this.controller?.signal
-			}), f = await s(await u.text(), u.status);
-			if (this.progress = Math.round((t + 1) / c * 100), this.emit(), f.complete && f.entry) return {
+			}), f = await c(await u.text(), u.status);
+			if (this.progress = Math.round((n + 1) / i * 100), this.emit(), f.complete && f.entry) return {
 				entry: f.entry,
 				asset: f.asset
 			};
 		}
-		throw new t("chunk_incomplete", "The chunk upload did not complete.", 500);
+		throw new n("chunk_incomplete", "The chunk upload did not complete.", 500);
 	}
 	async receivedChunks(e) {
 		let t = await fetch(e, {
@@ -94,12 +94,12 @@ var t = class extends Error {
 			signal: this.controller?.signal
 		});
 		if (t.status === 404) return /* @__PURE__ */ new Set();
-		let n = await s(await t.text(), t.status);
+		let n = await c(await t.text(), t.status);
 		return new Set(n.received);
 	}
 	async discardChunkSession() {
-		let e = await a(this.options.csrfToken), t = this.id.replace(/[^A-Za-z0-9_-]/g, "-");
-		await fetch(`${i(this.options.apiBase)}/uploads/chunks/${encodeURIComponent(t)}`, {
+		let e = await o(this.options.csrfToken), t = this.id.replace(/[^A-Za-z0-9_-]/g, "-");
+		await fetch(`${a(this.options.apiBase)}/uploads/chunks/${encodeURIComponent(t)}`, {
 			method: "DELETE",
 			headers: {
 				Accept: "application/json",
@@ -124,19 +124,19 @@ var t = class extends Error {
 		let e = this.snapshot();
 		this.listeners.forEach((t) => t(e));
 	}
-}, i = (e) => e.replace(/\/config$/, "").replace(/\/$/, ""), a = async (e) => typeof e == "function" ? e() : e, o = (e, t, n = !0) => {
+}, a = (e) => e.replace(/\/config$/, "").replace(/\/$/, ""), o = async (e) => typeof e == "function" ? e() : e, s = (e, t, n = !0) => {
 	let r = new FormData();
 	return r.set("resource", e.resource), r.set("path", e.path ?? ""), n && r.set("upload", e.file), t === "overwrite" && r.set("overwrite", "1"), t === "rename" && r.set("autoRename", "1"), r;
-}, s = async (e, n) => {
-	let r;
+}, c = async (t, r) => {
+	let i;
 	try {
-		r = JSON.parse(e);
+		i = JSON.parse(t);
 	} catch {
-		throw new t("invalid_response", `Request failed (${n}).`, n);
+		throw new n("invalid_response", e(r, t), r);
 	}
-	if (n < 200 || n >= 300 || !r.success || !r.data) throw new t(r.error?.code ?? "upload_failed", r.error?.message ?? `Request failed (${n}).`, n);
-	return r.data;
-}, c = (e, t, n) => ({
+	if (r < 200 || r >= 300 || !i.success || !i.data) throw new n(i.error?.code ?? "upload_failed", i.error?.message ?? `Request failed (${r}).`, r);
+	return i.data;
+}, l = (e, t, n) => ({
 	schemaVersion: "1.0",
 	assetId: null,
 	resource: e,
@@ -148,7 +148,7 @@ var t = class extends Error {
 	modifiedAt: t.modifiedAt,
 	version: `${t.modifiedAt}-${t.size}`,
 	url: t.url ?? "",
-	downloadUrl: `${i(n)}/download?${new URLSearchParams({
+	downloadUrl: `${a(n)}/download?${new URLSearchParams({
 		resource: e,
 		path: t.path
 	})}`,
@@ -162,7 +162,7 @@ var t = class extends Error {
 		responsiveImages: !1,
 		assetMetadata: !1
 	}
-}), l = (e, t) => typeof document > "u" ? Promise.resolve("cancel") : new Promise((n) => {
+}), u = (e, t) => typeof document > "u" ? Promise.resolve("cancel") : new Promise((n) => {
 	let r = document.activeElement instanceof HTMLElement ? document.activeElement : null, i = document.documentElement.lang.toLowerCase(), a = i.startsWith("zh-tw") || i.startsWith("zh-hk") ? {
 		title: `「${e.name}」已存在`,
 		hint: "請選擇 SoFinder 處理此次上傳的方式。",
@@ -240,4 +240,4 @@ var t = class extends Error {
 	});
 });
 //#endregion
-export { t as SoFinderSdkError, n as createSoFinderClient };
+export { n as SoFinderSdkError, r as createSoFinderClient };

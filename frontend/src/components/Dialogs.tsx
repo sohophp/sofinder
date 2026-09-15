@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { Modal } from "./Modal";
+import { UiIcon } from "./UiIcon";
 import { entryNameIssue } from "../nameValidation";
 import type { UploadConflictStrategy } from "../types";
 
@@ -25,16 +26,18 @@ export function ConfirmDialog({ title, message, detail, confirmLabel, cancelLabe
   </Modal>;
 }
 
-export function UploadConflictDialog({ fileName, title, renameLabel, overwriteLabel, skipLabel, closeLabel, onChoose }: {
+export function UploadConflictDialog({ fileName, title, renameLabel, overwriteLabel, skipLabel, rememberLabel, closeLabel, onChoose }: {
   fileName: string;
   title: string;
   renameLabel: string;
   overwriteLabel: string;
   skipLabel: string;
+  rememberLabel: string;
   closeLabel: string;
-  onChoose: (strategy: Exclude<UploadConflictStrategy, "ask">) => void;
+  onChoose: (strategy: Exclude<UploadConflictStrategy, "ask">, remember: boolean) => void;
 }) {
-  return <Modal title={title} closeLabel={closeLabel} onClose={() => onChoose("skip")} className="sf-confirm-modal" footer={<><button onClick={() => onChoose("skip")}>{skipLabel}</button><button className="primary" onClick={() => onChoose("rename")}>{renameLabel}</button><button className="danger" onClick={() => onChoose("overwrite")}>{overwriteLabel}</button></>}>
-    <div className="sf-form-body"><p>{fileName}</p></div>
+  const [remember, setRemember] = useState(false);
+  return <Modal title={title} closeLabel={closeLabel} onClose={() => onChoose("skip", false)} className="sf-confirm-modal sf-upload-conflict-modal" footer={<><button onClick={() => onChoose("skip", remember)}>{skipLabel}</button><button className="primary" onClick={() => onChoose("rename", remember)}>{renameLabel}</button><button className="danger" onClick={() => onChoose("overwrite", remember)}>{overwriteLabel}</button></>}>
+    <div className="sf-form-body"><div className="sf-upload-conflict-file"><UiIcon name="file"/><span title={fileName}>{fileName}</span></div><label className="sf-upload-conflict-remember"><input type="checkbox" checked={remember} onChange={event => setRemember(event.target.checked)}/><span>{rememberLabel}</span></label></div>
   </Modal>;
 }

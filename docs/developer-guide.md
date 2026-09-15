@@ -23,11 +23,12 @@ Start with [installation](/getting-started) and [Symfony configuration](/symfony
 Presentation query parameters are optional and validated:
 
 ```text
-/sofinder/browser?uiMode=manager
-/sofinder/browser?select=1&type=Images&selection=image&uiMode=picker
+/sofinder/browser?uiProfile=standalone
+/sofinder/browser?uiProfile=embedded
+/sofinder/browser?uiProfile=picker&type=Images&selection=image
 ```
 
-`uiMode` is `auto`, `manager` or `picker`. `type` chooses the initial resource. `selection` is `any`, `file` or `image`; an image selection must be web-embeddable. `uiTools=common|full` keeps picker selection behavior while optionally exposing all ACL-controlled management, detail and image tools. `uiHeader`, `uiLogo`, `uiSearch`, `uiLanguage` and `uiView` accept only `0` or `1`. These options never add permissions.
+`uiProfile` selects the standalone manager, embedded manager or picker presentation as one coherent setting. `uiMode` and `uiEmbedded` remain backward compatible. `type` chooses the initial resource. `selection` is `any`, `file` or `image`; an image selection must be web-embeddable. `uiTools=common|full` keeps picker selection behavior while optionally exposing all ACL-controlled management, detail and image tools. `uiHeader`, `uiLogo`, `uiSearch`, `uiLanguage` and `uiView` accept only `0` or `1`. These options never add permissions.
 
 For an iframe or same-window picker without CKEditor, listen for the selection event:
 

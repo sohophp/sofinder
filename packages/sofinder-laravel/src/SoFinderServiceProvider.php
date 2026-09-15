@@ -384,7 +384,7 @@ final class SoFinderServiceProvider extends ServiceProvider
                 $packageDirectory = dirname(__DIR__, 3);
             }
             return new AdvancedEndpointActions(
-                $app->make(FileManager::class), $app->make(AuthorizationInterface::class), $app->make(CsrfTokenProviderInterface::class), $app->make(RoleAuthorizationInterface::class),
+                $app->make(FileManager::class), $app->make(ResourceRegistry::class), $app->make(AuthorizationInterface::class), $app->make(CsrfTokenProviderInterface::class), $app->make(RoleAuthorizationInterface::class),
                 $app->make(ChunkUploadStoreInterface::class), $app->make(MaintenanceCoordinator::class), $app->make(UploadNamePolicy::class), $app->make(WorkspaceProvider::class),
                 $app->make(\SohoPHP\SoFinder\Image\ImageManager::class), $app->make(AssetReferenceBuilder::class), $app->make(AssetOperationPublisher::class), $app->make(ArchiveManager::class),
                 $app->make(AssetSearchProviderInterface::class), $app->make(AssetCatalogInterface::class), $app->make(AssetUsageStoreInterface::class), $app->make(AssetAccessSessionManager::class),
@@ -417,6 +417,7 @@ final class SoFinderServiceProvider extends ServiceProvider
                 array_values(array_filter((array) ($configuration['picker']['allowed_origins'] ?? []), 'is_string')),
                 $app->make(WorkspaceProvider::class),
                 pickerLockResource: (bool) ($configuration['picker']['lock_resource'] ?? true),
+                productionStrict: (bool) ($configuration['security']['production_strict'] ?? false),
             );
         });
         $this->app->singleton(EndpointDispatcher::class, static function ($app): EndpointDispatcher {
@@ -424,10 +425,11 @@ final class SoFinderServiceProvider extends ServiceProvider
             $streams = $app->make(StreamFactoryInterface::class);
             $actions = [...$app->make(StandardEndpointActions::class)->all(), ...$app->make(AdvancedEndpointActions::class)->all(), ...$app->tagged(self::ACTION_TAG)];
 
+            $configuration = $app->make(LaravelConfiguration::class);
             return new EndpointDispatcher($responses, $streams, array_map(
                 static fn (EndpointActionInterface $action): PsrEndpointHandler => new PsrEndpointHandler($action, $responses, $streams),
                 $actions,
-            ));
+            ), (bool) $configuration->get('security.production_strict', false), (array) $configuration->get('security.allowed_image_origins', []));
         });
         $this->app->singleton(LaravelRouteRegistrar::class, static fn ($app): LaravelRouteRegistrar => new LaravelRouteRegistrar(
             $app->make(Router::class),

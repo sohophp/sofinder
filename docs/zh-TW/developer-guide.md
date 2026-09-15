@@ -23,11 +23,12 @@ description: 在 Symfony 應用中嵌入 SoFinder、接收選擇結果、呼叫�
 可使用經過驗證的顯示引數：
 
 ```text
-/sofinder/browser?uiMode=manager
-/sofinder/browser?select=1&type=Images&selection=image&uiMode=picker
+/sofinder/browser?uiProfile=standalone
+/sofinder/browser?uiProfile=embedded
+/sofinder/browser?uiProfile=picker&type=Images&selection=image
 ```
 
-`uiMode` 可以是 `auto`、`manager`、`picker`；`type` 選擇初始資源；`selection` 為 `any`、`file`、`image`，圖片必須可嵌入瀏覽器。`uiTools=common|full` 可在保留 picker 選擇行為的同時，選擇是否顯示全部受 ACL 控制的管理、詳細資訊和圖片工具。`uiHeader`、`uiLogo`、`uiSearch`、`uiLanguage`、`uiView` 只接受 `0` 或 `1`。這些引數不會增加權限。
+`uiProfile` 以一個設定選擇獨立管理器、嵌入式管理器或選擇器介面。`uiMode` 和 `uiEmbedded` 繼續相容。`type` 選擇初始資源；`selection` 為 `any`、`file`、`image`，圖片必須可嵌入瀏覽器。`uiTools=common|full` 可在保留 picker 選擇行為的同時，選擇是否顯示全部受 ACL 控制的管理、詳細資訊和圖片工具。`uiHeader`、`uiLogo`、`uiSearch`、`uiLanguage`、`uiView` 只接受 `0` 或 `1`。這些引數不會增加權限。
 
 不使用 CKEditor 的同視窗或 iframe 選擇器可監聽：
 

@@ -1,6 +1,7 @@
-export type UiIconName = "file" | "folder" | "pin" | "grip" | "warning" | "add-folder" | "upload" | "download" | "share" | "asset-metadata" | "select" | "rename" | "copy" | "move" | "delete" | "trash" | "refresh" | "settings" | "security" | "grid" | "list" | "more" | "archive" | "favorite" | "tags" | "rotate-left" | "rotate-right" | "resize" | "crop" | "sort" | "sort-asc" | "sort-desc" | "search" | "filter" | "close" | "add" | "history" | "fullscreen" | "fullscreen-exit" | "chevron-left" | "chevron-right" | "chevron-down";
+export type UiIconName = "notifications" | "file" | "folder" | "pin" | "grip" | "warning" | "add-folder" | "upload" | "download" | "share" | "asset-metadata" | "select" | "rename" | "copy" | "move" | "delete" | "trash" | "refresh" | "settings" | "security" | "grid" | "list" | "more" | "archive" | "favorite" | "tags" | "rotate-left" | "rotate-right" | "resize" | "crop" | "sort" | "sort-asc" | "sort-desc" | "search" | "filter" | "close" | "add" | "history" | "fullscreen" | "fullscreen-exit" | "chevron-left" | "chevron-right" | "chevron-down";
 
 const paths: Record<UiIconName, React.ReactNode> = {
+  notifications: <><path d="M6 9a6 6 0 0 1 12 0c0 7 3 7 3 9H3c0-2 3-2 3-9"/><path d="M10 21h4"/></>,
   file: <><path d="M6 3h8l4 4v14H6z"/><path d="M14 3v5h5"/></>,
   folder: <path d="M3 6.5h6l2 2h10v10.5H3z"/>,
   pin: <><path d="m9 4 6 6M8 9l7-4 4 4-4 7-3-3-6 6"/><path d="m6 18-2 2"/></>,

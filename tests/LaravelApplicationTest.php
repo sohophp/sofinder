@@ -70,7 +70,7 @@ final class LaravelApplicationTest extends TestCase
 
         $routes = $this->app->make(Router::class)->getRoutes();
         $routes->refreshNameLookups();
-        self::assertCount(52, array_filter(
+        self::assertCount(53, array_filter(
             iterator_to_array($routes),
             static fn ($route): bool => is_string($route->getAction('_sofinder_endpoint')),
         ));
@@ -165,7 +165,7 @@ final class LaravelApplicationTest extends TestCase
         self::assertCount(22, $endpoints);
         self::assertSame($endpoints, array_values(array_unique($endpoints)));
         $advanced = array_map(static fn ($action): string => $action->endpoint(), $this->app->make(AdvancedEndpointActions::class)->all());
-        self::assertCount(29, $advanced);
+        self::assertCount(30, $advanced);
         $implemented = [...$endpoints, ...$advanced];
         $expected = array_values(array_map(
             static fn ($endpoint): string => $endpoint->name,

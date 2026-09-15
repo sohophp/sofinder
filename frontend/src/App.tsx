@@ -2,8 +2,9 @@ import { lazy, Suspense, useCallback, useEffect, useId, useMemo, useRef, useStat
 import { createPortal } from "react-dom";
 import { Api, ApiError } from "./api";
 import { loadMessages, translator, type Language, type Messages } from "./i18n";
-import type { AssetMetadata, AssetReference, Entry, ImageCapabilities, ImageInfo, ImagePreset, MetadataState, PluginDescriptor, PluginUiAction, QuickAccessEntry, ResourceType, SoFinderConfig, UiScale, UploadConflictStrategy } from "./types";
+import type { AssetMetadata, AssetReference, BatchResult, Entry, ImageCapabilities, ImageInfo, ImagePreset, MetadataState, PluginDescriptor, PluginUiAction, QuickAccessEntry, ResourceType, SoFinderConfig, UiScale, UploadConflictStrategy } from "./types";
 import { ConfirmDialog, TextDialog, UploadConflictDialog } from "./components/Dialogs";
+import { NotificationCenter, ToastQueue, type NotificationItem, type ToastItem } from "./components/NotificationCenter";
 import { Modal } from "./components/Modal";
 import { EntryIcon as Icon, ThumbnailImage } from "./components/EntryVisuals";
 import { formatSize } from "./format";
@@ -46,14 +47,30 @@ const AssetSearchDialog = lazy(() => import("./components/AssetSearchDialog").th
 
 interface TextDialogState { kind: "folder" | "rename" | "resize"; title: string; label: string; initial: string; maximum: number; extension?: string }
 interface ConfirmState { title: string; message: string; detail?: string; danger?: boolean }
+interface NoticeAction { message: string; label: string; run: () => Promise<void>; expiresAt?: number; secondary?: NoticeAction }
 const savedGroupMode = (): EntryGroupMode => { const value = localStorage.getItem("sofinder.groupMode.v1"); return value === "name" || value === "type" || value === "size" || value === "modified" || value === "tags" ? value : "none"; };
 const savedTypeFilter = (): EntryTypeFilter => { const value = localStorage.getItem("sofinder.typeFilter.v1"); return value === "folder" || value === "image" || value === "document" || value === "audio" || value === "video" || value === "archive" || value === "other" ? value : "all"; };
 const savedDetailsPane = (): boolean => localStorage.getItem("sofinder.detailsPane.v1") !== "hidden";
+const notificationsStorageKey = "sofinder.notifications.v1";
+const notificationLifetime = 24 * 60 * 60 * 1000;
+const loadNotifications = (): NotificationItem[] => {
+  try {
+    const parsed = JSON.parse(sessionStorage.getItem(notificationsStorageKey) || "[]") as unknown;
+    if (!Array.isArray(parsed)) return [];
+    const oldest = Date.now() - notificationLifetime;
+    return parsed.filter((item): item is NotificationItem => Boolean(item && typeof item === "object"
+      && typeof (item as NotificationItem).id === "number" && typeof (item as NotificationItem).message === "string"
+      && typeof (item as NotificationItem).createdAt === "number" && (item as NotificationItem).createdAt >= oldest
+      && ["info", "success", "warning", "error"].includes((item as NotificationItem).kind))).slice(0, 100);
+  } catch { return []; }
+};
 
 export default function App({ config, initialMessages }: { config: SoFinderConfig; initialMessages: Messages }) {
   const pageSizeOptionsId = useId();
   const api = useMemo(() => new Api(config), [config]);
-  const uiMode = config.uiDefaults.mode ?? (config.selectMode ? "picker" : "manager");
+  const uiProfile = config.uiDefaults.profile ?? (config.selectMode || config.uiDefaults.mode === "picker" ? "picker" : config.uiDefaults.embedded ? "embedded" : "standalone");
+  const uiMode = uiProfile === "picker" ? "picker" : "manager";
+  const embedded = uiProfile === "embedded";
   const pickerResource = uiMode === "picker" ? config.pickerResource ?? null : null;
   const featureAvailability = config.featureAvailability ?? defaultFeatureAvailability;
   const [language, setLanguage] = useState<Language>(() => {
@@ -64,13 +81,14 @@ export default function App({ config, initialMessages }: { config: SoFinderConfi
   const t = useMemo(() => translator(messages), [messages]);
   const dateFormatter = useMemo(() => new Intl.DateTimeFormat(language, { dateStyle: "medium", timeStyle: "short" }), [language]);
   const [resources, setResources] = useState<ResourceType[]>([]);
-  const { resource, setResource, path, setPath, resolvedPath, setResolvedPath, entries, setEntries, search, setSearch, searchMode, setSearchMode, sort, setSort, direction, setDirection, offset, setOffset, total, setTotal, pageCursor, setPageCursor, nextCursor, setNextCursor, cursorHistory, setCursorHistory, pageSize, setPageSize, pageSizeDraft, setPageSizeDraft, pageSizeRef, view, setView, loading, setLoading, notice, setNotice, directoryCapabilities, setDirectoryCapabilities, loadSequence, historyReady, restoringHistory, searchInitialized } = useBrowserState(config.resource, config.initialPath || "");
+  const { resource, setResource, path, setPath, resolvedPath, setResolvedPath, entries, setEntries, search, setSearch, searchMode, setSearchMode, sort, setSort, direction, setDirection, offset, setOffset, total, setTotal, pageCursor, setPageCursor, nextCursor, setNextCursor, cursorHistory, setCursorHistory, pageSize, setPageSize, pageSizeDraft, setPageSizeDraft, pageSizeRef, view, setView, loading, setLoading, notice, setNotice: setVisibleNotice, directoryCapabilities, setDirectoryCapabilities, loadSequence, historyReady, restoringHistory, searchInitialized } = useBrowserState(config.resource, config.initialPath || "");
   const [metadata, setMetadata] = useState<MetadataState>({ favorites: [], quickAccess: [], quickAccessEntries: [], tags: {}, recent: [] });
   const [quickAccessByResource, setQuickAccessByResource] = useState<Record<string, QuickAccessEntry[]>>({});
   const [collectionView, setCollectionView] = useState<"favorites" | "recent" | null>(() => {
     const collection = new URL(window.location.href).searchParams.get("collection");
     return collection === "favorites" || collection === "recent" ? collection : null;
   });
+  const [noticeAction, setNoticeAction] = useState<NoticeAction | null>(null);
   const [imageInfo, setImageInfo] = useState<ImageInfo | null>(null);
   const [tools, setTools] = useState<ToolPreferences>(() => config.uiDefaults.fullTools ? { resize: true, crop: true, rotate: true, presets: true, process: true, batchRename: true } : loadToolPreferences());
   const [features, setFeatures] = useState<FeaturePreferences>(() => {
@@ -97,6 +115,9 @@ export default function App({ config, initialMessages }: { config: SoFinderConfi
   const [quickAccessScope, setQuickAccessScope] = useState<QuickAccessScope>(loadQuickAccessScope);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [securityStatusOpen, setSecurityStatusOpen] = useState(false);
+  const [securityAdvisoryDismissed, setSecurityAdvisoryDismissed] = useState(() => localStorage.getItem("sofinder.securityAdvisory.dismissed.v1") === "1");
+  const [notifications, setNotifications] = useState<NotificationItem[]>(loadNotifications);
+  const [toasts, setToasts] = useState<ToastItem[]>([]);
   const [utilityOpen, setUtilityOpen] = useState(false);
   const [uploadMenuOpen, setUploadMenuOpen] = useState(false);
   const [selectionMenuOpen, setSelectionMenuOpen] = useState(false);
@@ -120,7 +141,7 @@ export default function App({ config, initialMessages }: { config: SoFinderConfi
   const [previewEntry, setPreviewEntry] = useState<Entry | null>(null);
   const [textPreview, setTextPreview] = useState<{ path: string; content: string; truncated: boolean } | null>(null);
   const [checksum, setChecksum] = useState<{ path: string; value: string } | null>(null);
-  const [shareDialog, setShareDialog] = useState<{ url: string; fileName: string; loginRequired: boolean; expiresAt?: number } | null>(null);
+  const [shareDialog, setShareDialog] = useState<{ url: string; fileName: string; access: "public" | "login_required" | "restricted"; expiresAt?: number; qrCode: boolean } | null>(null);
   const [imagePresets, setImagePresets] = useState<Record<string, ImagePreset>>({});
   const [imageCapabilities, setImageCapabilities] = useState<ImageCapabilities>({ driver: "", formats: [] });
   const [plugins, setPlugins] = useState<PluginDescriptor[]>([]);
@@ -134,8 +155,8 @@ export default function App({ config, initialMessages }: { config: SoFinderConfi
   const [leftWidth, setLeftWidth] = useState(() => loadColumnWidth("left"));
   const [rightWidth, setRightWidth] = useState(() => loadColumnWidth("right"));
   const confirmResolver = useRef<((answer: boolean) => void) | null>(null);
-  const uploadConflictResolver = useRef<((strategy: Exclude<UploadConflictStrategy, "ask">) => void) | null>(null);
-  const longPress = useRef<number | null>(null);
+  const uploadConflictResolver = useRef<((answer: { strategy: Exclude<UploadConflictStrategy, "ask">; remember: boolean }) => void) | null>(null);
+  const longPress = useRef<{ timer: number; pointerId: number; x: number; y: number } | null>(null);
   const columnDrag = useRef<{ side: "left" | "right"; startX: number; startWidth: number; currentWidth: number; element: HTMLDivElement } | null>(null);
   const listColumnDrag = useRef<{ column: ListColumnName; startX: number; startWidth: number; currentWidth: number; element: HTMLDivElement } | null>(null);
   const entriesList = useRef<HTMLDivElement>(null);
@@ -149,6 +170,34 @@ export default function App({ config, initialMessages }: { config: SoFinderConfi
   const metadataSequence = useRef<Record<string, number>>({});
   const metadataMutations = useRef<Record<string, number>>({});
   const metadataChannel = useRef<BroadcastChannel | null>(null);
+  const notificationSequence = useRef(Math.max(Date.now(), ...notifications.map(item => item.id)));
+  const securityAdvisoryLogged = useRef(false);
+  const transferActive = useRef(false);
+  const transferSelection = useRef<Entry[]>([]);
+
+  const recordNotification = useCallback((message: string, details?: string[], kind: NotificationItem["kind"] = "info") => {
+    if (!message) return;
+    setNotifications(current => [{ id: ++notificationSequence.current, message, details, kind, createdAt: Date.now() }, ...current].slice(0, 100));
+  }, []);
+  const setNotice = useCallback((message: string, details?: string[], kind: NotificationItem["kind"] = "info") => {
+    setVisibleNotice(message);
+    recordNotification(message, details, kind);
+    if (message) {
+      const id = ++notificationSequence.current;
+      setToasts(current => [...current, { id, message, kind, expiresAt: Date.now() + (kind === "error" || kind === "warning" ? 8000 : 5000) }].slice(-5));
+    }
+  }, [recordNotification, setVisibleNotice]);
+  const dismissToast = useCallback((id: number) => setToasts(current => current.filter(item => item.id !== id)), []);
+  const showUploadToast = useCallback((message: string, details: string[], kind: "success" | "warning") => {
+    const id = ++notificationSequence.current;
+    setNotifications(current => [{ id, message, details, kind, createdAt: Date.now() }, ...current].slice(0, 100));
+    setToasts(current => [...current, { id, message, kind, expiresAt: Date.now() + 5000 }].slice(-5));
+  }, []);
+
+  useEffect(() => {
+    try { sessionStorage.setItem(notificationsStorageKey, JSON.stringify(notifications)); }
+    catch { /* Notifications remain available in memory when session storage is unavailable. */ }
+  }, [notifications]);
 
   useEffect(() => {
     const variableNames = {
@@ -173,8 +222,15 @@ export default function App({ config, initialMessages }: { config: SoFinderConfi
   }, [uiScale]);
 
   useEffect(() => {
-    localStorage.setItem("sofinder.uploadConflictStrategy.v1", uploadConflictStrategy);
+    if (uploadConflictStrategy === "overwrite") localStorage.removeItem("sofinder.uploadConflictStrategy.v1");
+    else localStorage.setItem("sofinder.uploadConflictStrategy.v1", uploadConflictStrategy);
   }, [uploadConflictStrategy]);
+
+  useEffect(() => {
+    if (!noticeAction?.expiresAt) return;
+    const timer = window.setTimeout(() => setNoticeAction(current => current === noticeAction ? null : current), Math.max(0, noticeAction.expiresAt - Date.now()));
+    return () => window.clearTimeout(timer);
+  }, [noticeAction]);
 
   useEffect(() => {
     localStorage.setItem("sofinder.language", language);
@@ -183,6 +239,12 @@ export default function App({ config, initialMessages }: { config: SoFinderConfi
     void loadMessages(language).then(value => { if (active) setMessages(value); });
     return () => { active = false; };
   }, [language]);
+
+  useEffect(() => {
+    if (securityAdvisoryLogged.current || uiMode !== "manager" || config.securityStatusAvailable !== true || config.uiDefaults.securityProfile !== "standard") return;
+    securityAdvisoryLogged.current = true;
+    setNotifications(current => [{ id: ++notificationSequence.current, message: t("standardSecurityProfileWarning"), kind: "warning" as const, createdAt: Date.now() }, ...current].slice(0, 100));
+  }, [config.securityStatusAvailable, config.uiDefaults.securityProfile, t, uiMode]);
 
   useEffect(() => {
     if (!utilityOpen) return;
@@ -257,7 +319,7 @@ export default function App({ config, initialMessages }: { config: SoFinderConfi
     setSelectionMenuOpen(true);
   };
 
-  const report = useCallback((error: unknown) => setNotice(error instanceof Error ? error.message : t("error")), [t]);
+  const report = useCallback((error: unknown) => setNotice(error instanceof Error ? error.message : t("error"), undefined, "error"), [setNotice, t]);
   const applyMetadata = useCallback((targetResource: string, value: MetadataState, sequence: number) => {
     if ((metadataSequence.current[targetResource] || 0) !== sequence) return false;
     if (activeResource.current === targetResource) setMetadata(value);
@@ -315,22 +377,24 @@ export default function App({ config, initialMessages }: { config: SoFinderConfi
     setConfirmDialog(null);
     resolve?.(answer);
   };
-  const chooseUploadConflict = useCallback((fileName: string) => new Promise<Exclude<UploadConflictStrategy, "ask">>(resolve => {
-    uploadConflictResolver.current?.("skip");
+  const chooseUploadConflict = useCallback((fileName: string) => new Promise<{ strategy: Exclude<UploadConflictStrategy, "ask">; remember: boolean }>(resolve => {
+    uploadConflictResolver.current?.({ strategy: "skip", remember: false });
     uploadConflictResolver.current = resolve;
     setUploadConflictFile(fileName);
   }), []);
-  const answerUploadConflict = (strategy: Exclude<UploadConflictStrategy, "ask">) => {
+  const answerUploadConflict = (strategy: Exclude<UploadConflictStrategy, "ask">, remember: boolean) => {
     const resolve = uploadConflictResolver.current;
     uploadConflictResolver.current = null;
     setUploadConflictFile(null);
-    resolve?.(strategy);
+    resolve?.({ strategy, remember });
   };
-  const load = useCallback(async (nextResource = resource, nextPath = path, term = search, nextOffset = offset, nextSort = sort, nextDirection = direction, nextSearchMode = searchMode, cursor: string | null = pageCursor) => {
+  const load = useCallback(async (nextResource = resource, nextPath = path, term = search, nextOffset = offset, nextSort = sort, nextDirection = direction, nextSearchMode = searchMode, cursor: string | null = pageCursor, background = false) => {
     if (!nextResource) return "error" as const;
     const sequence = ++loadSequence.current;
-    setLoading(true);
-    setNotice("");
+    if (!background) {
+      setLoading(true);
+      setNotice("");
+    }
     try {
       const result = await api.list(nextResource, nextPath, term, nextSort, nextDirection, nextOffset, pageSizeRef.current, nextSearchMode, cursor);
       if (sequence !== loadSequence.current) return "stale" as const;
@@ -368,15 +432,17 @@ export default function App({ config, initialMessages }: { config: SoFinderConfi
           error = fallbackError;
         }
       }
-      setEntries([]);
-      setPath(nextPath);
-      setOffset(nextOffset);
-      setTotal(null);
-      setPageCursor(cursor);
-      setNextCursor(null);
-      setDirectoryCapabilities({});
-      setSelectedPaths(new Set());
-      setSelectionAnchor(null);
+      if (!background) {
+        setEntries([]);
+        setPath(nextPath);
+        setOffset(nextOffset);
+        setTotal(null);
+        setPageCursor(cursor);
+        setNextCursor(null);
+        setDirectoryCapabilities({});
+        setSelectedPaths(new Set());
+        setSelectionAnchor(null);
+      }
       report(error);
       return "error" as const;
     } finally {
@@ -384,10 +450,15 @@ export default function App({ config, initialMessages }: { config: SoFinderConfi
     }
   }, [api, direction, offset, pageCursor, path, report, resource, search, searchMode, sort, t]);
 
+  const refresh = useCallback(async () => {
+    await load(resource, path, search, offset, sort, direction, searchMode, pageCursor, true);
+  }, [direction, load, offset, pageCursor, path, resource, search, searchMode, sort]);
+
   const currentResource = resources.find(item => item.name === resource);
   const currentDepth = path === "" ? 0 : path.split("/").length;
   const { uploads, uploadsCollapsed, setUploadsCollapsed, uploadInput, directoryUploadInput, upload, uploadTo, uploadDirectory, cancelUpload, cancelAllUploads, removeUploadTask, retryUpload, clearFinishedUploads } = useUploads({
-    api, resource, path, currentResource, currentDepth, autoCollapse: features.autoCollapseUploads, conflictStrategy: uploadConflictStrategy, lowercaseExtensions: lowercaseUploadExtensions, t, ask, chooseConflict: chooseUploadConflict, reload: async () => { await load(); }, setNotice, report,
+    api, resource, path, currentResource, currentDepth, autoCollapse: features.autoCollapseUploads, conflictStrategy: uploadConflictStrategy, lowercaseExtensions: lowercaseUploadExtensions, t, ask, chooseConflict: chooseUploadConflict, reload: refresh, setNotice, report,
+    onComplete: result => showUploadToast(`${t("uploadDone")}: ${result.completed}/${result.total}${result.failed > 0 ? ` · ${t("failed")}: ${result.failed}` : ""}`, result.details, result.failed > 0 ? "warning" : "success"),
   });
 
   useEffect(() => {
@@ -513,19 +584,10 @@ export default function App({ config, initialMessages }: { config: SoFinderConfi
   const canEditImage = (entry: Entry | null) => Boolean(entry && imageCapability(entry)?.edit);
   const editableSelectedImages = selectedEntries.filter(entry => canEditImage(entry));
   const canChooseEntry = (entry: Entry | null) => Boolean(entry && !entry.directory && entry.url && (config.selectionKind !== "image" || imageCapability(entry)?.webEmbeddable));
-  const resolveEntryUrl = async (entry: Entry): Promise<{ url: string; loginRequired: boolean; expiresAt?: number } | null> => {
+  const resolveEntryUrl = async (entry: Entry): Promise<{ url: string; access: "public" | "login_required" | "restricted"; expiresAt?: number; qrCode: boolean } | null> => {
     if (entry.directory) return null;
-    if (currentResource?.entryUrlConfigured && entry.url) {
-      return { url: new URL(entry.url, document.baseURI).href, loginRequired: true };
-    }
-    if (signedUrls.enabled && currentResource?.deliveryMode === "proxy") {
-      const result = await api.signedUrl(resource, entry.path, signedUrls.defaultTtlSeconds);
-      return { url: result.url, loginRequired: false, expiresAt: result.expiresAt };
-    }
-    return {
-      url: new URL(entry.url || api.downloadUrl(resource, entry.path), document.baseURI).href,
-      loginRequired: !entry.url,
-    };
+    const result = await api.shareLink(resource, entry.path);
+    return { url: new URL(result.url, document.baseURI).href, access: result.access, expiresAt: result.expiresAt ?? undefined, qrCode: result.qrCode };
   };
   const openShare = async (entry: Entry) => {
     try { const value = await resolveEntryUrl(entry); if (value) setShareDialog({ ...value, fileName: entry.name }); }
@@ -539,6 +601,11 @@ export default function App({ config, initialMessages }: { config: SoFinderConfi
     } catch (error) { report(error); }
   };
   const canSelected = (operation: string) => selectedEntries.length > 0 && selectedEntries.every(entry => entry.capabilities?.[operation] !== false);
+  const openEntryContextMenu = (entry: Entry, x: number, y: number) => {
+    if (!selectedPaths.has(entry.path)) setSelectedPaths(new Set([entry.path]));
+    setSelectionAnchor(entry.path);
+    setContextMenu({ x, y, entry });
+  };
   const canFavorite = (entry: Entry | null): entry is Entry => Boolean(entry && !entry.directory);
   const canQuickAccess = (entry: Entry | null): entry is Entry => Boolean(entry?.directory);
   const pluginActions = useMemo(() => plugins.flatMap(plugin => (plugin.uiActions || []).map(action => ({ ...action, plugin: plugin.name }))), [plugins]);
@@ -592,40 +659,99 @@ export default function App({ config, initialMessages }: { config: SoFinderConfi
 
   const remove = async () => {
     if (selectedEntries.length === 0) return;
+    const targets = [...selectedEntries];
     let usageDetail = "";
     if (assetUsageEnabled) {
       try {
-        const check = await api.checkAssetDeletion(resource, selectedEntries.map(entry => entry.path));
+        const check = await api.checkAssetDeletion(resource, targets.map(entry => entry.path));
         if (check.complete === false) usageDetail = t("assetDeleteCheckIncomplete");
         else if (!check.safe) usageDetail = `${t("assetUsedWarning").replace("{count}", String(check.total))} ${check.assets.flatMap(asset => asset.usages.slice(0, 3).map(usage => usage.label)).slice(0, 3).join("、")}`;
       } catch (error) { report(error); return; }
     }
     const retentionDetail = currentResource?.storageCapabilities?.recoverableDelete === false ? t("permanentDeleteWarning") : t("trashRetention");
-    if (!await ask({ title: t("remove"), message: selectedEntries.length === 1 ? t("confirmDelete") : `${t("confirmDeleteMany")} ${selectedEntries.length}`, detail: usageDetail ? `${usageDetail}\n${retentionDetail}` : retentionDetail, danger: true })) return;
+    if (!await ask({ title: t("remove"), message: targets.length === 1 ? t("confirmDelete") : `${t("confirmDeleteMany")} ${targets.length}`, detail: usageDetail ? `${usageDetail}\n${retentionDetail}` : retentionDetail, danger: true })) return;
     try {
-      const result = await api.batch("delete", resource, selectedEntries.map(entry => entry.path));
-      const summary = result.failed === 0 ? `${result.succeeded} ${t("completed")}` : `${result.succeeded} ${t("completed")}, ${result.failed} ${t("failed")}`;
-      await load();
-      setNotice(result.purgedItems > 0 ? `${summary} · ${t("trashAutoPurged")} ${result.purgedItems} ${t("items")} (${formatSize(result.purgedBytes)})` : summary);
+      const result = await api.batch("delete", resource, targets.map(entry => entry.path));
+      const summary = batchResultMessage(result);
+      await refresh();
+      const message = result.purgedItems > 0 ? `${summary} · ${t("trashAutoPurged")} ${result.purgedItems} ${t("items")} (${formatSize(result.purgedBytes)})` : result.results.some(item => item.trash?.item) ? `${summary} · ${t("deletedToTrash")}` : summary;
+      setNotice(message, result.results.map(item => item.success ? item.path : `${decodeEntities(item.path)}：${batchFailureReason(item.error?.code || "", item.error?.message || "")}`), result.failed > 0 ? "warning" : "success");
+      const trashIds = result.results.flatMap(item => item.success && item.trash?.item?.id ? [item.trash.item.id] : []);
+      const failedAction = result.failed > 0 ? retryBatchAction(message, result.results.filter(item => !item.success).map(item => item.path), paths => api.batch("delete", resource, paths)) : undefined;
+      if (trashIds.length > 0) setNoticeAction({ message, label: t("undoDelete"), expiresAt: Date.now() + 10000, run: async () => {
+        setNoticeAction(null);
+        try {
+          const restored = await Promise.allSettled(trashIds.map(id => api.restoreTrash(resource, id, "cancel")));
+          await refresh();
+          setNotice(restored.some(item => item.status === "rejected") ? t("undoDeleteFailed") : `${restored.length} ${t("completed")}`);
+        } catch (error) { report(error); }
+      }, secondary: failedAction });
+      else if (failedAction) setNoticeAction(failedAction);
     } catch (error) { report(error); }
   };
+
+  const decodeEntities = (value: string): string => {
+    if (!value.includes("&")) return value;
+    const textarea = document.createElement("textarea");
+    textarea.innerHTML = value;
+    return textarea.value;
+  };
+
+  const batchFailureReason = (code: string, message: string): string => {
+    if (code === "folder_delete_failed") return t("folderDeleteFailedReason");
+    if (code === "file_delete_failed") return t("fileDeleteFailedReason");
+    return decodeEntities(message) || t("operationFailedReason");
+  };
+
+  const batchResultMessage = (result: BatchResult): string => {
+    const summary = result.failed === 0 ? `${result.succeeded} ${t("completed")}` : `${result.succeeded} ${t("completed")}, ${result.failed} ${t("failed")}`;
+    const failures = result.results.filter(item => !item.success).slice(0, 3).map(item =>
+      `${decodeEntities(item.path)}：${batchFailureReason(item.error?.code || "", item.error?.message || "")}`
+    );
+    return failures.length > 0 ? `${summary} · ${failures.join("；")}` : summary;
+  };
+
+  const retryBatchAction = (message: string, paths: string[], retry: (paths: string[]) => Promise<BatchResult>): NoticeAction => ({ message, label: t("retryFailed"), run: async () => {
+    setNoticeAction(null);
+    try {
+      const next = await retry(paths);
+      await refresh();
+      const nextMessage = batchResultMessage(next);
+      setNotice(nextMessage);
+      if (next.failed > 0) setNoticeAction(retryBatchAction(nextMessage, next.results.filter(item => !item.success).map(item => item.path), retry));
+    } catch (error) { report(error); }
+  } });
 
   const batchRename = async (renames: Array<{ path: string; name: string }>) => {
     setBulkRenameOpen(false);
     try {
       const result = await api.batchRename(resource, renames);
-      await load();
-      setNotice(result.failed === 0 ? `${result.succeeded} ${t("completed")}` : `${result.succeeded} ${t("completed")}, ${result.failed} ${t("failed")}`);
+      await refresh();
+      const message = batchResultMessage(result);
+      setNotice(message, renames.map(item => `${item.path} → ${item.name}`), result.failed > 0 ? "warning" : "success");
+      if (result.failed > 0) setNoticeAction(retryBatchAction(message, result.results.filter(item => !item.success).map(item => item.path), paths => { const failed = new Set(paths); return api.batchRename(resource, renames.filter(item => failed.has(item.path))); }));
     } catch (error) { report(error); }
   };
 
   const transfer = async (operation: "copy" | "move", destination: string) => {
+    if (transferActive.current) return;
+    const targets = [...transferSelection.current];
+    if (targets.length === 0) return;
+    transferActive.current = true;
+    setDestinationDialog(current => current ? { ...current, loading: true } : current);
     try {
-      const result = await api.batch(operation, resource, selectedEntries.map(entry => entry.path), destination);
+      const result = await api.batch(operation, resource, targets.map(entry => entry.path), destination);
       setDestinationDialog(null);
-      await load();
-      setNotice(result.failed === 0 ? `${result.succeeded} ${t("completed")}` : `${result.succeeded} ${t("completed")}, ${result.failed} ${t("failed")}`);
-    } catch (error) { report(error); }
+      await refresh();
+      const message = batchResultMessage(result);
+      setNotice(message, targets.map(entry => `${entry.path} → /${destination}`), result.failed > 0 ? "warning" : "success");
+      if (result.failed > 0) setNoticeAction(retryBatchAction(message, result.results.filter(item => !item.success).map(item => item.path), paths => api.batch(operation, resource, paths, destination)));
+    } catch (error) {
+      setDestinationDialog(current => current ? { ...current, loading: false } : current);
+      report(error);
+    } finally {
+      transferActive.current = false;
+    }
   };
 
   const browseDestination = async (operation: "copy" | "move", destination: string) => {
@@ -649,6 +775,11 @@ export default function App({ config, initialMessages }: { config: SoFinderConfi
     }
   };
 
+  const beginTransfer = (operation: "copy" | "move") => {
+    transferSelection.current = [...selectedEntries];
+    void browseDestination(operation, path);
+  };
+
   const choose = async (entry = selected) => {
     if (pickerResource !== null && resource !== pickerResource) return;
     if (!canChooseEntry(entry)) {
@@ -669,7 +800,7 @@ export default function App({ config, initialMessages }: { config: SoFinderConfi
     if (config.ckeditorFunction > 0) {
       const target = window.opener || window.parent;
       const ckeditor = (target as Window & { CKEDITOR?: { tools?: { callFunction?: (id: number, url: string) => void } } }).CKEDITOR;
-      ckeditor?.tools?.callFunction?.(config.ckeditorFunction, entry.url);
+      ckeditor?.tools?.callFunction?.(config.ckeditorFunction, pickerEntry.url);
       window.close();
       return;
     }
@@ -701,7 +832,7 @@ export default function App({ config, initialMessages }: { config: SoFinderConfi
         : [{ type: "resize" as const, width, height }];
       const updated = await api.applyImageActions(resource, selected.path, actions, { mode: "copy" });
       setNotice(`${t("imageCreated")}: ${updated.entry.name} · ${updated.result.width} × ${updated.result.height} px`);
-      await load();
+      await refresh();
     } catch (error) {
       report(error);
       setLoading(false);
@@ -834,14 +965,21 @@ export default function App({ config, initialMessages }: { config: SoFinderConfi
     setTextDialog(null);
     if (!dialog) return;
     try {
-      if (dialog.kind === "folder") await api.createFolder(resource, path, value);
-      else if (dialog.kind === "rename" && selected && value !== selected.name) await api.rename(resource, selected.path, value);
+      if (dialog.kind === "folder") {
+        await api.createFolder(resource, path, value);
+        setNotice(`${t("newFolder")}: ${value}`, undefined, "success");
+      }
+      else if (dialog.kind === "rename" && selected && value !== selected.name) {
+        const previous = selected.path;
+        await api.rename(resource, previous, value);
+        setNotice(`${t("rename")}: ${value}`, [`${previous} → ${value}`], "success");
+      }
       else if (dialog.kind === "resize") {
         const match = /^(\d{1,4})[x×](\d{1,4})$/i.exec(value.replace(/\s/g, ""));
         if (!match) { setNotice(t("invalidDimensions")); return; }
         await editImage(0, Number(match[1]), Number(match[2]));
       }
-      if (dialog.kind === "folder" || dialog.kind === "rename") await load();
+      if (dialog.kind === "folder" || dialog.kind === "rename") await refresh();
     } catch (error) { report(error); }
   };
 
@@ -882,9 +1020,12 @@ export default function App({ config, initialMessages }: { config: SoFinderConfi
     else if (command === "preview" && target && !target.directory) setPreviewEntry(target);
     else if (command === "select" && target) void choose(target);
     else if (command === "rename") void rename();
-    else if (command === "copy") void browseDestination("copy", path);
-    else if (command === "move") void browseDestination("move", path);
+    else if (command === "batch-rename") setBulkRenameOpen(true);
+    else if (command === "copy") beginTransfer("copy");
+    else if (command === "move") beginTransfer("move");
+    else if (command === "download-archive") void downloadArchive();
     else if (command === "delete") void remove();
+    else if (command === "image-process") setImageProcessOpen(true);
     else if (command === "favorite" && target) void toggleFavorite(target);
     else if (command === "quick-access" && target) void toggleQuickAccess(target);
     else if (command === "download" && target && !target.directory) window.open(target.url || api.downloadUrl(resource, target.path), "_blank", "noopener,noreferrer");
@@ -897,7 +1038,7 @@ export default function App({ config, initialMessages }: { config: SoFinderConfi
     try {
       const result = await api.applyImageActions(resource, selected.path, [{ type: "preset", name }], { mode: "copy" });
       setNotice(`${t("imageCreated")}: ${result.entry.name} · ${result.result.width} × ${result.result.height} px`);
-      await load();
+      await refresh();
     } catch (error) { report(error); }
   };
 
@@ -909,7 +1050,7 @@ export default function App({ config, initialMessages }: { config: SoFinderConfi
 
   const setColumnWidth = (side: "left" | "right", value: number, persist = false) => {
     const limits = columnLimits[side];
-    const width = Math.round(Math.max(limits.min, Math.min(limits.max, value)));
+    const width = side === "left" && value < 110 ? 48 : Math.round(Math.max(limits.min, Math.min(limits.max, value)));
     if (side === "left") setLeftWidth(width); else setRightWidth(width);
     if (persist) localStorage.setItem(`sofinder.column.${side}`, String(width));
   };
@@ -941,7 +1082,7 @@ export default function App({ config, initialMessages }: { config: SoFinderConfi
     if (direction === 0) return;
     event.preventDefault();
     const current = side === "left" ? leftWidth : rightWidth;
-    setColumnWidth(side, current + (side === "left" ? direction : -direction) * 10, true);
+    setColumnWidth(side, side === "left" && current === 48 && direction > 0 ? 110 : current + (side === "left" ? direction : -direction) * 10, true);
   };
 
   const setListColumnWidth = (column: ListColumnName, value: number, persist = false) => {
@@ -1056,7 +1197,7 @@ export default function App({ config, initialMessages }: { config: SoFinderConfi
     }
   };
 
-  const destinationUnsafe = destinationDialog !== null && selectedEntries.some(entry => {
+  const destinationUnsafe = destinationDialog !== null && transferSelection.current.some(entry => {
     const parent = entry.path.includes("/") ? entry.path.slice(0, entry.path.lastIndexOf("/")) : "";
     const destinationDepth = destinationDialog.path === "" ? 0 : destinationDialog.path.split("/").length;
     return (destinationDialog.operation === "move" && destinationDialog.path === parent)
@@ -1066,7 +1207,7 @@ export default function App({ config, initialMessages }: { config: SoFinderConfi
   const uploadActive = uploads.some(task => task.status === "queued" || task.status === "uploading");
   const uploadProgress = uploads.length === 0 ? 0 : Math.round(uploads.reduce((total, task) => total + task.progress, 0) / uploads.length);
   const fullTools = config.uiDefaults.fullTools === true;
-  const hasLogo = config.uiDefaults.logo !== false;
+  const hasLogo = !embedded && config.uiDefaults.logo !== false;
   const recoverableDelete = currentResource?.storageCapabilities?.recoverableDelete !== false;
   const quickAccessEnabled = featureAvailability.quickAccess !== false;
   const hasQuickAccess = quickAccessScope === "resource" ? metadata.quickAccessEntries.length > 0 : Object.values(quickAccessByResource).some(items => items.length > 0);
@@ -1238,7 +1379,7 @@ export default function App({ config, initialMessages }: { config: SoFinderConfi
     {draggedSidebarSection && <div className="sf-sidebar-drop-end" aria-hidden="true"/>}
   </div>;
 
-  return <main className={`sf-app sf-mode-${uiMode}${showSidebar ? "" : " sf-no-sidebar"}${showRightPanel ? "" : " sf-no-details"}${(uiMode === "manager" || fullTools) && selectedEntries.length > 0 ? " sf-has-selection-actions" : ""}`} onKeyDown={handleKeyDown} onDragOver={event => event.preventDefault()} onDrop={event => { event.preventDefault(); if (collectionView === null && event.dataTransfer.files.length) void upload(event.dataTransfer.files); }}>
+  return <main className={`sf-app sf-mode-${uiMode}${embedded ? " sf-embedded" : ""}${showSidebar ? "" : " sf-no-sidebar"}${showRightPanel ? "" : " sf-no-details"}${(uiMode === "manager" || fullTools) && selectedEntries.length > 0 ? " sf-has-selection-actions" : ""}`} onKeyDown={handleKeyDown} onDragOver={event => event.preventDefault()} onDrop={event => { event.preventDefault(); if (collectionView === null && event.dataTransfer.files.length) void upload(event.dataTransfer.files); }}>
     <div className={`sf-commandbar ${hasLogo ? "sf-has-brand" : "sf-no-brand"}`}>
       {hasLogo ? <div className="sf-brand" title="SoFinder"><span className="sf-brand-mark" aria-hidden="true">S</span>{config.uiDefaults.header === true ? <strong>SoFinder</strong> : <span className="sf-sr-only">SoFinder</span>}</div> : <nav className="sf-breadcrumb sf-command-breadcrumb" aria-label="Breadcrumb">
         <button onClick={() => resetAndLoad(resource, "")}>{t("home")}</button>
@@ -1301,8 +1442,8 @@ export default function App({ config, initialMessages }: { config: SoFinderConfi
       {(uiMode === "manager" || fullTools) && selectedEntries.length > 0 && <><span className="sf-separator"/><div className="sf-context-actions">
       <button onClick={rename} disabled={selectedEntries.length !== 1 || !canSelected("rename") || currentResource?.readOnly}>{iconButton("rename", t("rename"))}</button>
       {featureAvailability.batchRename !== false && tools.batchRename && <button onClick={() => setBulkRenameOpen(true)} disabled={selectedEntries.length < 2 || !canSelected("rename") || currentResource?.readOnly}>{iconButton("rename", t("batchRename"))}</button>}
-      <button onClick={() => void browseDestination("copy", path)} disabled={!canSelected("copy") || currentResource?.readOnly}>{iconButton("copy", t("copy"))}</button>
-      <button onClick={() => void browseDestination("move", path)} disabled={!canSelected("move") || currentResource?.readOnly}>{iconButton("move", t("move"))}</button>
+      <button onClick={() => beginTransfer("copy")} disabled={!canSelected("copy") || currentResource?.readOnly}>{iconButton("copy", t("copy"))}</button>
+      <button onClick={() => beginTransfer("move")} disabled={!canSelected("move") || currentResource?.readOnly}>{iconButton("move", t("move"))}</button>
       {features.archive && <button onClick={() => void downloadArchive()}>{iconButton("archive", t("downloadZip"))}</button>}
       {features.favorites && canFavorite(selected) && <button onClick={() => void toggleFavorite()}>{iconButton("favorite", t("favorite"))}</button>}
       {quickAccessEnabled && features.sidebarQuickAccess && canQuickAccess(selected) && <button onClick={() => void toggleQuickAccess()}>{iconButton("pin", selected && metadata.quickAccess.includes(selected.path) ? t("unpinQuickAccess") : t("pinQuickAccess"))}</button>}
@@ -1313,16 +1454,19 @@ export default function App({ config, initialMessages }: { config: SoFinderConfi
       {selected && pluginActions.filter(action => action.slot === "toolbar" && pluginActionAvailable(action, selected)).map(action => <button key={`${action.plugin}:${action.id}`} onClick={() => openPluginAction(action, selected)}>{pluginLabel(action, language)}</button>)}
       </div></>}
     </div>
+    {uiMode === "manager" && config.securityStatusAvailable === true && config.uiDefaults.securityProfile === "standard" && !securityAdvisoryDismissed && <div className="sf-security-advisory" role="status"><UiIcon name="security"/><span>{t("standardSecurityProfileWarning")}</span><button type="button" onClick={() => setSecurityStatusOpen(true)}>{t("securityStatus")}</button><button type="button" className="sf-security-advisory-close" onClick={() => { localStorage.setItem("sofinder.securityAdvisory.dismissed.v1", "1"); setSecurityAdvisoryDismissed(true); }} aria-label={t("dismissForever")} title={t("dismissForever")}><UiIcon name="close"/></button></div>}
     {selectionMenuOpen && createPortal(<div ref={selectionMenuPopup} className="sf-utility-menu sf-selection-menu-popup" role="menu" style={selectionMenuPosition}><button role="menuitem" disabled={displayedEntries.length === 0} onClick={() => { selectAll(); setSelectionMenuOpen(false); }}>{t("selectAll")}</button><button role="menuitem" disabled={selectedPaths.size === 0} onClick={() => { clearSelection(); setSelectionMenuOpen(false); }}>{t("clearSelection")}</button><button role="menuitem" disabled={displayedEntries.length === 0} onClick={() => { invertSelection(); setSelectionMenuOpen(false); }}>{t("invertSelection")}</button></div>, document.body)}
-    {notice && <div className="sf-notice" role="alert">{notice}<button onClick={() => setNotice("")} aria-label={t("close")}><UiIcon name="close"/></button></div>}
-    {uploads.length > 0 && <Suspense fallback={null}><UploadQueue tasks={uploads} collapsed={uploadsCollapsed} labels={{ title: t("uploadQueue"), close: t("close"), cancel: t("cancel"), cancelAll: t("cancelAll"), clearFinished: t("clearFinished"), retry: t("retryUpload"), remove: t("removeUploadTask"), status: status => t(status) }} onToggle={() => setUploadsCollapsed(true)} onCancel={cancelUpload} onCancelAll={cancelAllUploads} onClearFinished={clearFinishedUploads} onRetry={retryUpload} onRemove={removeUploadTask}/></Suspense>}
+    {uploads.length > 0 && <Suspense fallback={null}><UploadQueue tasks={uploads} collapsed={uploadsCollapsed} riskLabel={uploadConflictStrategy === "overwrite" ? t("persistentOverwriteWarning") : undefined} labels={{ title: t("uploadQueue"), close: t("close"), cancel: t("cancel"), cancelAll: t("cancelAll"), clearFinished: t("clearFinished"), retry: t("retryUpload"), remove: t("removeUploadTask"), status: status => t(status) }} onToggle={() => setUploadsCollapsed(true)} onCancel={cancelUpload} onCancelAll={cancelAllUploads} onClearFinished={clearFinishedUploads} onRetry={retryUpload} onRemove={removeUploadTask}/></Suspense>}
     <div className="sf-layout" style={{ "--sf-sidebar-width": `${leftWidth}px`, "--sf-details-width": `${rightWidth}px` } as React.CSSProperties}>
-      {showSidebar && <aside className={`sf-sidebar${trashOnlySidebar ? " sf-trash-only-sidebar" : ""}`} aria-label="Resources">
-        {resources.map(item => <button key={item.name} className={item.name === resource && collectionView === null ? "active" : ""} onClick={() => { setCollectionView(null); setResource(item.name); setSearch(""); setSearchMode("name"); if (item.storageCapabilities?.sort === false) { setSort("name"); setDirection("asc"); setCursorHistory([]); void load(item.name, "", "", 0, "name", "asc", "name", null); } else resetAndLoad(item.name, "", ""); }}>
+      {showSidebar && <aside className={`sf-sidebar${leftWidth < 110 ? " sf-sidebar-collapsed" : ""}${trashOnlySidebar ? " sf-trash-only-sidebar" : ""}`} aria-label="Resources">
+        <button type="button" className="sf-sidebar-collapse" title={t(leftWidth < 110 ? "expand" : "collapse")} aria-label={t(leftWidth < 110 ? "expand" : "collapse")} aria-expanded={leftWidth >= 110} onClick={() => setColumnWidth("left", leftWidth < 110 ? columnLimits.left.initial : columnLimits.left.min, true)}>
+          <UiIcon name={leftWidth < 110 ? "chevron-right" : "chevron-left"}/><span className="sf-resource-label">{t(leftWidth < 110 ? "expand" : "collapse")}</span>
+        </button>
+        {resources.map(item => <button key={item.name} title={item.name.toLowerCase().includes("image") ? t("images") : item.name.toLowerCase() === "files" ? t("files") : item.name} className={item.name === resource && collectionView === null ? "active" : ""} onClick={() => { setCollectionView(null); setResource(item.name); setSearch(""); setSearchMode("name"); if (item.storageCapabilities?.sort === false) { setSort("name"); setDirection("asc"); setCursorHistory([]); void load(item.name, "", "", 0, "name", "asc", "name", null); } else resetAndLoad(item.name, "", ""); }}>
           <span className="sf-resource-icon"><Icon kind={item.name.toLowerCase().includes("image") ? "image" : "folder"}/></span>
-          {item.name.toLowerCase().includes("image") ? t("images") : item.name.toLowerCase() === "files" ? t("files") : item.name}
+          <span className="sf-resource-label">{item.name.toLowerCase().includes("image") ? t("images") : item.name.toLowerCase() === "files" ? t("files") : item.name}</span>
         </button>)}
-        {trashSidebarVisible && <button onClick={() => setTrashOpen(true)}><span className="sf-resource-icon"><UiIcon name="trash"/></span>{t("trash")}</button>}
+        {trashSidebarVisible && <button title={t("trash")} onClick={() => setTrashOpen(true)}><span className="sf-resource-icon"><UiIcon name="trash"/></span><span className="sf-resource-label">{t("trash")}</span></button>}
         {currentResource && (currentResource.readOnly || currentResource.quotaBytes > 0) && <div className="sf-resource-status">
           {currentResource.readOnly && <strong>{t("readOnly")}</strong>}
           {currentResource.quotaBytes > 0 && <><span>{t("storageUsage")}: {formatSize(currentResource.usedBytes)} / {formatSize(currentResource.quotaBytes)}</span><progress max={currentResource.quotaBytes} value={Math.min(currentResource.usedBytes, currentResource.quotaBytes)}/></>}
@@ -1344,7 +1488,7 @@ export default function App({ config, initialMessages }: { config: SoFinderConfi
               ...group.entries.map(entry => {
               const index = displayedEntries.findIndex(item => item.path === entry.path);
               const image = !entry.directory && canPreviewImage(entry);
-              return <button key={entry.path} data-entry-index={index} role="option" aria-selected={selectedPaths.has(entry.path)} aria-label={`${entry.name}, ${entry.directory ? t("folder") : formatSize(entry.size)}`} className={`sf-entry ${selectedPaths.has(entry.path) ? "selected" : ""}`} onClick={event => selectEntry(entry, event)} onDoubleClick={() => openEntry(entry)} onContextMenu={event => { event.preventDefault(); setSelectedPaths(new Set([entry.path])); setSelectionAnchor(entry.path); setContextMenu({ x: event.clientX, y: event.clientY, entry }); }} onPointerDown={event => { if (event.pointerType === "touch") longPress.current = window.setTimeout(() => { setSelectedPaths(new Set([entry.path])); setSelectionAnchor(entry.path); setContextMenu({ x: event.clientX, y: event.clientY, entry }); }, 550); }} onPointerUp={() => { if (longPress.current !== null) window.clearTimeout(longPress.current); longPress.current = null; }} onPointerCancel={() => { if (longPress.current !== null) window.clearTimeout(longPress.current); longPress.current = null; }} onDragOver={event => { if (entry.directory) event.preventDefault(); }} onDrop={event => { if (entry.directory && event.dataTransfer.files.length) { event.preventDefault(); void uploadTo(entry.path, event.dataTransfer.files); } }}>
+              return <button key={entry.path} data-entry-index={index} role="option" aria-selected={selectedPaths.has(entry.path)} aria-label={`${entry.name}, ${entry.directory ? t("folder") : formatSize(entry.size)}`} className={`sf-entry ${selectedPaths.has(entry.path) ? "selected" : ""}`} onClick={event => selectEntry(entry, event)} onDoubleClick={() => openEntry(entry)} onContextMenu={event => { event.preventDefault(); openEntryContextMenu(entry, event.clientX, event.clientY); }} onPointerDown={event => { if (event.pointerType === "touch") { const x = event.clientX, y = event.clientY, pointerId = event.pointerId; const timer = window.setTimeout(() => { if (longPress.current?.pointerId !== pointerId) return; openEntryContextMenu(entry, x, y); longPress.current = null; }, 550); longPress.current = { timer, pointerId, x, y }; } }} onPointerMove={event => { const press = longPress.current; if (press?.pointerId === event.pointerId && Math.hypot(event.clientX - press.x, event.clientY - press.y) > 10) { window.clearTimeout(press.timer); longPress.current = null; } }} onPointerUp={() => { if (longPress.current !== null) window.clearTimeout(longPress.current.timer); longPress.current = null; }} onPointerCancel={() => { if (longPress.current !== null) window.clearTimeout(longPress.current.timer); longPress.current = null; }} onDragOver={event => { if (entry.directory) event.preventDefault(); }} onDrop={event => { if (entry.directory && event.dataTransfer.files.length) { event.preventDefault(); void uploadTo(entry.path, event.dataTransfer.files); } }}>
                 <span className="sf-entry-icon">{image ? <ThumbnailImage src={api.thumbnailUrl(resource, entry)} alt="" lazy/> : <Icon name={entry.name} mimeType={entry.mimeType} directory={entry.directory}/>}</span>
                 <span className="sf-entry-name" title={entry.name}>{features.favorites && metadata.favorites.includes(entry.path) && <span aria-label={t("favorite")}><UiIcon name="favorite"/> </span>}{entry.name}</span>
                 {listColumns.size && <span className="sf-entry-size">{entry.directory ? "—" : formatSize(entry.size)}</span>}
@@ -1387,12 +1531,13 @@ export default function App({ config, initialMessages }: { config: SoFinderConfi
       renameLabel={t("uploadConflictRename")}
       overwriteLabel={t("uploadConflictOverwrite")}
       skipLabel={t("uploadConflictSkip")}
+      rememberLabel={t("uploadConflictRememberBatch")}
       closeLabel={t("close")}
       onChoose={answerUploadConflict}
     />}
     {trashOpen && <Suspense fallback={<div className="sf-state">{t("loading")}</div>}><TrashDialog
       api={api} resource={resource} locale={language}
-      labels={{ title: t("trash"), close: t("close"), cancel: t("cancel"), empty: t("trashEmpty"), restore: t("restore"), permanentDelete: t("permanentDelete"), expires: t("expires"), conflict: t("restoreConflict"), overwrite: t("restoreOverwrite"), autoRename: t("restoreAutoRename"), usage: t("trashUsage"), items: t("items"), previous: t("previous"), next: t("next"), search: t("searchTrash") }}
+      labels={{ title: t("trash"), close: t("close"), cancel: t("cancel"), empty: t("trashEmpty"), restore: t("restore"), permanentDelete: t("permanentDelete"), confirmPermanentDelete: t("confirmPermanentDelete"), typeNameToConfirm: t("typeNameToConfirm"), deleting: t("deleting"), expires: t("expires"), conflict: t("restoreConflict"), overwrite: t("restoreOverwrite"), autoRename: t("restoreAutoRename"), usage: t("trashUsage"), items: t("items"), previous: t("previous"), next: t("next"), search: t("searchTrash") }}
       onClose={() => setTrashOpen(false)} onChanged={() => void load()}
     /></Suspense>}
     {tagsOpen && selected && <Suspense fallback={<div className="sf-state">{t("loading")}</div>}><TagsDialog
@@ -1427,7 +1572,7 @@ export default function App({ config, initialMessages }: { config: SoFinderConfi
         <dl className="sf-file-preview-meta"><dt>{t("type")}</dt><dd>{previewEntry.mimeType || t("file")}</dd><dt>{t("size")}</dt><dd>{formatSize(previewEntry.size)}</dd><dt>{t("modified")}</dt><dd><time dateTime={new Date(previewEntry.modifiedAt * 1000).toISOString()}>{dateFormatter.format(previewEntry.modifiedAt * 1000)}</time></dd><dt>{t("location")}</dt><dd>{previewEntry.path}</dd>{featureAvailability.checksum !== false && <><dt>SHA-256</dt><dd>{checksum?.path === previewEntry.path ? <code className="sf-checksum">{checksum.value}</code> : <button onClick={() => void api.checksum(resource, previewEntry.path).then(result => setChecksum({ path: previewEntry.path, value: result.checksum })).catch(report)}>{t("calculateChecksum")}</button>}</dd></>}</dl>
       </div>
     </Modal>}
-    {shareDialog && <Suspense fallback={<div className="sf-state">{t("loading")}</div>}><ShareDialog {...shareDialog} showQrCode={features.qrCode && featureAvailability.qrCode !== false} labels={{ title: t("share"), close: t("close"), copyUrl: t("copyUrl"), copied: t("urlCopied"), copyFailed: t("copyUrlFailed"), downloadQr: t("downloadQrCode"), loginRequired: t("loginRequired"), expires: t("linkExpires"), hint: t("shareHint"), qrCode: t("qrCode"), qrFailed: t("qrCodeFailed") }} formatDate={timestamp => dateFormatter.format(timestamp * 1000)} onClose={() => setShareDialog(null)}/></Suspense>}
+    {shareDialog && <Suspense fallback={<div className="sf-state">{t("loading")}</div>}><ShareDialog {...shareDialog} showQrCode={shareDialog.qrCode && featureAvailability.qrCode !== false} labels={{ title: t("share"), close: t("close"), copyUrl: t("copyUrl"), copied: t("urlCopied"), copyFailed: t("copyUrlFailed"), downloadQr: t("downloadQrCode"), loginRequired: t("loginRequired"), restrictedAccess: t("restrictedAccess"), expires: t("linkExpires"), hint: t("shareHint"), qrCode: t("qrCode"), qrFailed: t("qrCodeFailed") }} formatDate={timestamp => dateFormatter.format(timestamp * 1000)} onClose={() => setShareDialog(null)}/></Suspense>}
     {imageProcessOpen && featureAvailability.imageProcessing !== false && editableSelectedImages.length > 0 && <Suspense fallback={<div className="sf-state">{t("loading")}</div>}><ImageProcessDialog
       entries={editableSelectedImages}
       resource={resource}
@@ -1443,7 +1588,7 @@ export default function App({ config, initialMessages }: { config: SoFinderConfi
           setNotice(`${t("completed")}: ${result.succeeded} · ${t("failed")}: ${result.failed}`);
         }
         setImageProcessOpen(false);
-        await load();
+        await refresh();
       }}
     /></Suspense>}
     {cropOpen && selected && imageInfo && <Suspense fallback={<div className="sf-state">{t("loading")}</div>}><ImageEditor
@@ -1462,7 +1607,7 @@ export default function App({ config, initialMessages }: { config: SoFinderConfi
         const result = await api.applyImageActions(resource, selected.path, actions, save);
         setCropOpen(false);
         setNotice(`${t("imageCreated")}: ${result.entry.name} · ${result.result.width} × ${result.result.height} px`);
-        await load();
+        await refresh();
         setSelectedPaths(new Set([result.entry.path]));
         setSelectionAnchor(result.entry.path);
         setImageEditorVersion(Date.now());
@@ -1481,7 +1626,14 @@ export default function App({ config, initialMessages }: { config: SoFinderConfi
         items={[{ id: "remove", label: t(sidebarMenu.favorite ? "removeFavorite" : "unpinQuickAccess") }]}
       />
     )}
-    {contextMenu && <ContextMenu x={contextMenu.x} y={contextMenu.y} onClose={() => setContextMenu(null)} onSelect={runContextCommand} items={[
+    {contextMenu && selectedEntries.length > 1 && selectedPaths.has(contextMenu.entry.path) ? <ContextMenu x={contextMenu.x} y={contextMenu.y} onClose={() => setContextMenu(null)} onSelect={runContextCommand} items={[
+      ...(featureAvailability.batchRename !== false && tools.batchRename ? [{ id: "batch-rename", label: t("batchRename"), disabled: !canSelected("rename") || currentResource?.readOnly }] : []),
+      { id: "copy", label: t("copy"), disabled: !canSelected("copy") || currentResource?.readOnly },
+      { id: "move", label: t("move"), disabled: !canSelected("move") || currentResource?.readOnly },
+      ...(features.archive ? [{ id: "download-archive", label: t("downloadZip") }] : []),
+      ...(featureAvailability.imageProcessing !== false && tools.process && editableSelectedImages.length === selectedEntries.length ? [{ id: "image-process", label: t("imageProcess"), disabled: currentResource?.readOnly }] : []),
+      { id: "delete", label: t("remove"), disabled: !canSelected("delete") || currentResource?.readOnly, danger: true },
+    ]}/> : contextMenu && <ContextMenu x={contextMenu.x} y={contextMenu.y} onClose={() => setContextMenu(null)} onSelect={runContextCommand} items={[
       { id: contextMenu.entry.directory ? "open" : "preview", label: contextMenu.entry.directory ? t("open") : t("preview") },
       ...(uiMode === "picker" && !contextMenu.entry.directory ? [{ id: "select", label: t("select"), disabled: !canChooseEntry(contextMenu.entry) }] : []),
       { id: "download", label: t("download"), disabled: contextMenu.entry.directory },
@@ -1499,6 +1651,8 @@ export default function App({ config, initialMessages }: { config: SoFinderConfi
     ]}/>}
     </Suspense>
     <div className="sf-sr-only" aria-live="polite">{selectedEntries.length > 0 ? `${selectedEntries.length} ${t("selectedCount")}` : notice}</div>
+    <ToastQueue items={toasts} closeLabel={t("close")} action={noticeAction} onDismiss={dismissToast}/>
+    <NotificationCenter items={notifications} labels={{ title: t("notifications"), empty: t("notificationsEmpty"), clear: t("clearNotifications"), details: t("viewDetails"), close: t("close") }} formatTime={timestamp => dateFormatter.format(timestamp)} onClear={() => { setNotifications([]); sessionStorage.removeItem(notificationsStorageKey); }}/>
   </main>;
 }
 

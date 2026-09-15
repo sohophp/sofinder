@@ -4,10 +4,11 @@ import { UiIcon } from "./UiIcon";
 export type UploadStatus = "queued" | "uploading" | "done" | "skipped" | "error" | "cancelled";
 export interface UploadTask { id: string; name: string; progress: number; status: UploadStatus; message?: string }
 
-export function UploadQueue({ tasks, collapsed, labels, onToggle, onCancel, onCancelAll, onClearFinished, onRetry, onRemove }: {
+export function UploadQueue({ tasks, collapsed, labels, riskLabel, onToggle, onCancel, onCancelAll, onClearFinished, onRetry, onRemove }: {
   tasks: UploadTask[];
   collapsed: boolean;
   labels: { title: string; close: string; cancel: string; cancelAll: string; clearFinished: string; retry: string; remove: string; status: (status: UploadStatus) => string };
+  riskLabel?: string;
   onToggle: () => void;
   onCancel: (id: string) => void;
   onCancelAll: () => void;
@@ -47,17 +48,18 @@ export function UploadQueue({ tasks, collapsed, labels, onToggle, onCancel, onCa
     if (drag.current?.pointerId === event.pointerId) drag.current = null;
   };
 
-  return <section ref={panel} className="sf-upload-panel" aria-label={labels.title} style={position ?? undefined}>
+  return <section ref={panel} className="sf-upload-panel" aria-label={labels.title} aria-busy={active} style={position ?? undefined}>
     <header className="sf-upload-header" onPointerDown={beginDrag} onPointerMove={moveDrag} onPointerUp={endDrag} onPointerCancel={endDrag}>
-      <strong>{labels.title}</strong><span>{finished}/{tasks.length}</span>
+      <strong>{labels.title}</strong><span aria-live="polite">{finished}/{tasks.length}</span>
       <div className="sf-upload-actions"><button onClick={onCancelAll} disabled={!active}>{labels.cancelAll}</button><button onClick={onClearFinished}>{labels.clearFinished}</button><button className="sf-upload-close" onClick={onToggle} title={labels.close} aria-label={labels.close}><UiIcon name="close"/></button></div>
     </header>
+    {riskLabel && <p className="sf-warning sf-upload-risk" role="status">{riskLabel}</p>}
     <div className="sf-upload-list">{tasks.map(task => <div className={`sf-upload-task ${task.status}`} key={task.id}>
-      <span className="sf-upload-name" title={task.name}>{task.name}</span><progress max="100" value={task.progress} aria-label={`${task.name}: ${task.progress}%`}/><span>{task.status === "uploading" ? `${task.progress}%` : labels.status(task.status)}</span>
+      <span className="sf-upload-name" title={task.name}>{task.name}</span><progress max="100" value={task.progress} aria-label={`${task.name}: ${task.progress}%`}/><span className="sf-upload-status">{task.status === "uploading" ? `${task.progress}%` : labels.status(task.status)}</span>
       {(task.status === "queued" || task.status === "uploading") && <button onClick={() => onCancel(task.id)}>{labels.cancel}</button>}
       {(task.status === "error" || task.status === "cancelled") && <button onClick={() => onRetry(task.id)}>{labels.retry}</button>}
       <button className="sf-upload-remove" onClick={() => onRemove(task.id)} title={labels.remove} aria-label={`${labels.remove}: ${task.name}`}><UiIcon name="close"/></button>
-      {task.message && <small title={task.message}>{task.message}</small>}
+      {task.message && <small title={task.message} role={task.status === "error" ? "alert" : undefined}>{task.message}</small>}
     </div>)}</div>
   </section>;
 }

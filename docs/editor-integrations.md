@@ -41,6 +41,18 @@ and all other authorized resources should remain visible. Direct picker URLs can
 use `resourceLock=0`. Manager deep links continue to use `type` only as their
 initial resource.
 
+## SoEditor
+
+[SoEditor](https://soeditor.sohophp.app/) pairs HTML editing with SoFinder asset management. Use the official `@soeditor/adapter-sofinder` adapter for images, attachments, video files and posters.
+
+Install matching versions of `@soeditor/editor`, `@soeditor/presets`, `@soeditor/file-manager` and `@soeditor/adapter-sofinder` (this example targets 1.4.0). Add `<textarea id="content"></textarea>` to your page, then use this module in your application build:
+
+<<< ./snippets/soeditor.js
+
+Replace the browser/asset routes and `Images` / `Files` with your own deployment. `media` requests use the file picker; the bridge checks the requested MIME types before returning a selection. Closing the popup cancels without inserting content; other failures remain errors. Null dimensions are omitted and explicit empty alternative text is preserved. Keep `cmsRuntimePreset.plugins` when supplying an explicit plugin list.
+
+This example selects existing assets. Direct paste/drop uploads need a separately configured `SoFinderUploadAdapter` and the host upload SDK. Authentication, resource permissions and stable delivery URLs remain the responsibility of your deployment. See the [SoEditor integration guide](https://soeditor.sohophp.app/en/guide/sofinder) for its editor-side setup.
+
 ## CKEditor 5
 
 Keep CKEditor itself in the host application's build. Add a button using the

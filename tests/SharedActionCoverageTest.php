@@ -32,7 +32,7 @@ final class SharedActionCoverageTest extends TestCase
         $actual = array_keys($actions);
         sort($actual);
 
-        self::assertCount(52, $actual);
+        self::assertCount(53, $actual);
         self::assertSame($expected, $actual);
     }
 }

@@ -33,6 +33,8 @@ export interface PickerOptions {
   width?: number;
   height?: number;
   windowName?: string;
+  /** Optional exact origin allowlist for returned public/CDN asset URLs. */
+  allowedResultOrigins?: string[];
   defaultAlt?: (asset: PickerEntry) => string;
   sizes?: string | ((asset: PickerEntry) => string);
 }
@@ -70,7 +72,7 @@ export const openPicker = (options: PickerOptions): Promise<PickerEntry> => {
   const url = pickerUrl(options, id);
   const width = Math.max(640, options.width ?? 1100);
   const height = Math.max(480, options.height ?? 760);
-  const popup = window.open(url, options.windowName ?? "sofinder-picker", `popup=yes,width=${width},height=${height},resizable=yes,scrollbars=yes`);
+  const popup = window.open(url, options.windowName ?? `sofinder-picker-${id}`, `popup=yes,width=${width},height=${height},resizable=yes,scrollbars=yes`);
   if (!popup) return Promise.reject(new Error("SoFinder picker was blocked by the browser."));
 
   return new Promise<PickerEntry>((resolve, reject) => {
@@ -81,7 +83,7 @@ export const openPicker = (options: PickerOptions): Promise<PickerEntry> => {
     };
     const receive = (event: MessageEvent<unknown>) => {
       const message = event.data as Partial<PickerMessage> | null;
-      if (event.source !== popup || event.origin !== url.origin || message?.type !== "sofinder:select" || message.version !== PICKER_PROTOCOL_VERSION || message.requestId !== id || !validEntry(message.entry)) return;
+      if (event.source !== popup || event.origin !== url.origin || message?.type !== "sofinder:select" || message.version !== PICKER_PROTOCOL_VERSION || message.requestId !== id || !validEntry(message.entry, options, url)) return;
       if (options.resource && options.lockResource !== false && message.entry.resource !== options.resource) return;
       cleanup();
       resolve(message.entry);
@@ -95,16 +97,24 @@ export const openPicker = (options: PickerOptions): Promise<PickerEntry> => {
   });
 };
 
-const validEntry = (value: unknown): value is PickerEntry => {
+const finiteNonNegative = (value: unknown): value is number => typeof value === "number" && Number.isFinite(value) && value >= 0;
+
+const validEntry = (value: unknown, options: PickerOptions, picker: URL): value is PickerEntry => {
   if (!value || typeof value !== "object") return false;
   const entry = value as Partial<PickerEntry>;
+  if (typeof entry.url !== "string" || entry.url === "") return false;
+  let assetUrl: URL;
+  try { assetUrl = new URL(entry.url, picker); } catch { return false; }
+  if (assetUrl.protocol !== "http:" && assetUrl.protocol !== "https:") return false;
+  if (options.allowedResultOrigins?.length && !options.allowedResultOrigins.includes(assetUrl.origin)) return false;
+  if (options.kind === "image" && !entry.mimeType?.toLowerCase().startsWith("image/")) return false;
   return typeof entry.resource === "string" && entry.resource !== ""
     && typeof entry.path === "string" && typeof entry.name === "string"
-    && entry.directory === false && typeof entry.size === "number"
-    && typeof entry.modifiedAt === "number" && typeof entry.url === "string" && entry.url !== ""
+    && entry.directory === false && finiteNonNegative(entry.size)
+    && finiteNonNegative(entry.modifiedAt)
     && (entry.mimeType === null || typeof entry.mimeType === "string")
-    && (entry.width === null || typeof entry.width === "number")
-    && (entry.height === null || typeof entry.height === "number")
+    && (entry.width === null || finiteNonNegative(entry.width))
+    && (entry.height === null || finiteNonNegative(entry.height))
     && typeof entry.capabilities === "object" && entry.capabilities !== null;
 };
 

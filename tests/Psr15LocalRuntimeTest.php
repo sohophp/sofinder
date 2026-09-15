@@ -58,7 +58,7 @@ final class Psr15LocalRuntimeTest extends TestCase
         $expected = array_map(static fn ($endpoint): string => $endpoint->name, EndpointCatalog::all());
         sort($implemented);
         sort($expected);
-        self::assertCount(52, $implemented);
+        self::assertCount(53, $implemented);
         self::assertSame($expected, $implemented);
 
         $application = $factory->create();
@@ -140,6 +140,36 @@ final class Psr15LocalRuntimeTest extends TestCase
         self::assertSame('services', $factoryServices->getName());
         self::assertFalse($factoryServices->isDefaultValueAvailable());
         self::assertSame(HostServices::class, (string) $factoryServices->getType());
+    }
+
+    public function testStrictProfileReachesThePsr15BrowserAndSecurityHeaders(): void
+    {
+        $psr17 = new Psr17Factory();
+        $application = (new LocalApplicationFactory(
+            $psr17,
+            $psr17,
+            $this->services(),
+            [
+                'security' => [
+                    'production_strict' => true,
+                    'allowed_image_origins' => ['https://cdn.example.test'],
+                ],
+                'malware_scanning' => ['enabled' => true],
+            ],
+            $this->directory . '/state-strict',
+            $this->directory . '/files',
+        ))->create();
+        $fallback = new class($psr17) implements RequestHandlerInterface {
+            public function __construct(private Psr17Factory $responses) {}
+            public function handle(ServerRequestInterface $request): ResponseInterface { return $this->responses->createResponse(404); }
+        };
+
+        $response = $application->middleware()->process(new ServerRequest('GET', '/sofinder/browser'), $fallback);
+
+        self::assertSame(200, $response->getStatusCode());
+        self::assertStringContainsString('&quot;securityProfile&quot;:&quot;strict&quot;', (string) $response->getBody());
+        self::assertStringContainsString("img-src 'self' data: blob: https://cdn.example.test", $response->getHeaderLine('Content-Security-Policy'));
+        self::assertStringNotContainsString('http:', $response->getHeaderLine('Content-Security-Policy'));
     }
 
     public function testMissingRoleProviderFailsClosedWhenAnEndpointRequiresARole(): void

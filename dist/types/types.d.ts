@@ -54,7 +54,9 @@ export interface SoFinderConfig {
     securityStatusAvailable?: boolean;
     uiDefaults: {
         scale: UiScale;
+        profile?: "standalone" | "embedded" | "picker";
         mode?: "manager" | "picker";
+        embedded?: boolean;
         header?: boolean;
         logo?: boolean;
         search?: boolean;
@@ -63,6 +65,7 @@ export interface SoFinderConfig {
         fullTools?: boolean;
         uploadConflictStrategy?: UploadConflictStrategy;
         lowercaseUploadExtensions?: boolean;
+        securityProfile?: "standard" | "strict";
     };
 }
 export type UiScale = "compact" | "standard" | "large" | "xlarge";
@@ -209,6 +212,12 @@ export interface Entry {
     mimeType: string | null;
     url: string | null;
     capabilities: Record<string, boolean>;
+}
+export interface ShareDescriptor {
+    url: string;
+    access: "public" | "login_required" | "restricted";
+    expiresAt: number | null;
+    qrCode: boolean;
 }
 export interface ImageVariant {
     width: number;
@@ -409,6 +418,11 @@ export interface BatchResult {
         path: string;
         success: boolean;
         entry?: Entry;
+        trash?: {
+            item: TrashItem;
+            purgedItems: number;
+            purgedBytes: number;
+        } | null;
         error?: {
             code: string;
             message: string;

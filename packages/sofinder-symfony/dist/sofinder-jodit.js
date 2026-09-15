@@ -1,2 +1,2 @@
-import { a as e } from "./editorAdapters-GlwQHMrq.js";
+import { a as e } from "./editorAdapters-DmmKMbAE.js";
 export { e as createJoditUploadIntegration };

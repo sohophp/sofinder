@@ -24,6 +24,23 @@ async function openAndAudit(page: Page, path: string) {
   expect(accessibility.violations.filter(({ impact }) => impact === 'serious' || impact === 'critical')).toEqual([])
 }
 
+test('home code stays readable and backgrounds respect scrollbar space', async ({ page }) => {
+  for (const path of ['/', '/zh-CN/', '/zh-TW/']) {
+    for (const width of [320, 390, 768, 1280, 1440]) {
+      await page.setViewportSize({ width, height: 800 })
+      await page.goto(path)
+      // Reserve the space occupied by non-overlay desktop scrollbars.
+      await page.addStyleTag({ content: 'html { scrollbar-gutter: stable; }' })
+      await expect.poll(() => page.locator('.VPHome .sf-code-panel pre').evaluateAll((panels) =>
+        panels.length > 0 && panels.every((panel) => panel.scrollWidth <= panel.clientWidth
+          && panel.scrollHeight <= panel.clientHeight),
+      )).toBe(true)
+      expect(await page.evaluate(() => document.body.scrollWidth <= document.body.clientWidth)).toBe(true)
+      await expect(page.locator('.sf-editor-products a', { hasText: 'SoEditor' })).toHaveAttribute('href', /editor-integrations#soeditor$/)
+    }
+  }
+})
+
 test('desktop home keeps its primary hierarchy', async ({ page }) => {
   await page.setViewportSize({ width: 1440, height: 1000 })
   await openAndAudit(page, '/')

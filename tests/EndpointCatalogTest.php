@@ -21,8 +21,8 @@ final class EndpointCatalogTest extends TestCase
             $catalog[$endpoint->name] = [$endpoint->path, $endpoint->methods, $endpoint->requirements];
         }
 
-        self::assertCount(52, $catalog);
-        self::assertCount(52, $published);
+        self::assertCount(53, $catalog);
+        self::assertCount(53, $published);
         foreach ($catalog as $name => $definition) {
             $route = $published->get($name);
             self::assertNotNull($route);

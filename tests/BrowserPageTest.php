@@ -53,6 +53,7 @@ final class BrowserPageTest extends TestCase
         self::assertSame('folder/image.jpg', $config['initialPath']);
         self::assertSame('csrf-token', $config['csrfToken']);
         self::assertSame('picker', $config['uiDefaults']['mode']);
+        self::assertSame('standard', $config['uiDefaults']['securityProfile']);
         self::assertFalse($config['uiDefaults']['header']);
         self::assertNull($config['pickerResource']);
     }
@@ -64,6 +65,27 @@ final class BrowserPageTest extends TestCase
         $config = json_decode(html_entity_decode($matches[1], ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8'), true, 32, JSON_THROW_ON_ERROR);
 
         self::assertSame('Files', $config['pickerResource']);
+    }
+
+    public function testEmbeddedPresentationProfileIsHostNeutral(): void
+    {
+        $html = $this->page()->render(new RequestContext(query: ['uiProfile' => 'embedded']));
+        preg_match('/data-config="([^"]+)"/', $html, $matches);
+        $config = json_decode(html_entity_decode($matches[1], ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8'), true, 32, JSON_THROW_ON_ERROR);
+
+        self::assertSame('embedded', $config['uiDefaults']['profile']);
+        self::assertSame('manager', $config['uiDefaults']['mode']);
+        self::assertTrue($config['uiDefaults']['embedded']);
+        self::assertStringNotContainsString('Winstar', $html);
+    }
+
+    public function testPublishesTheStrictSecurityProfileToTheManager(): void
+    {
+        $html = $this->page(productionStrict: true)->render(new RequestContext());
+        preg_match('/data-config="([^"]+)"/', $html, $matches);
+        $config = json_decode(html_entity_decode($matches[1], ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8'), true, 32, JSON_THROW_ON_ERROR);
+
+        self::assertSame('strict', $config['uiDefaults']['securityProfile']);
     }
 
     public function testRejectsAnUnknownPickerResourceDuringBootstrap(): void
@@ -101,7 +123,7 @@ final class BrowserPageTest extends TestCase
         ));
     }
 
-    private function page(bool $pickerLockResource = true): BrowserPage
+    private function page(bool $pickerLockResource = true, bool $productionStrict = false): BrowserPage
     {
         $resource = new ResourceType('Files', $this->directory, '/files');
         $authorization = new class implements AuthorizationInterface {
@@ -135,6 +157,7 @@ final class BrowserPageTest extends TestCase
             new Theme(\SohoPHP\SoFinder\Configuration\ConfigurationNormalizer::DEFAULTS['theme']),
             ['mode' => 'auto', 'header' => true, 'logo' => true, 'search' => true, 'language_switcher' => true, 'view_switcher' => true, 'folder_tree' => false, 'scale' => 'standard'],
             pickerLockResource: $pickerLockResource,
+            productionStrict: $productionStrict,
         );
     }
 }

@@ -2,6 +2,23 @@
 
 ## Unreleased
 
+- Resolve sharing through a framework-neutral provider contract and dedicated
+  share-link endpoint, so host applications can return stable public links
+  without coupling SoFinder to host routes, authentication or link storage.
+- Use the resolved share URL for both copy and QR Code, show access and expiry
+  only when explicitly returned, and enable QR Code by default.
+- Keep ordinary skipped-upload feedback on the task row by coloring the
+  "Skipped" status without repeating an equivalent message below it, and let
+  users resize the upload queue from its bottom-right corner.
+- Harden destructive and batch workflows with typed permanent-delete
+  confirmation, recoverable trash notices and failed-item-only retries; keep
+  overwrite decisions session-scoped and surface their risk explicitly.
+- Validate picker result origins and media metadata, isolate picker window
+  names, sandbox document previews, and add an opt-in production-strict CSP
+  profile that requires malware scanning and proxied resources.
+- Improve keyboard, touch, forced-color, dark-theme and 200% zoom behavior,
+  including focus restoration, live upload status and manager-visible security
+  posture guidance.
 - Retry bounded transient Packagist advisory endpoint failures during stable
   package observation without weakening real vulnerability failures.
 

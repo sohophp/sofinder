@@ -12,7 +12,7 @@ use SohoPHP\SoFinder\Http\SecurityHeaders;
 
 final class LaravelBrowserController
 {
-    public function __construct(private readonly BrowserPage $page, private readonly RequestContextProviderInterface $contexts)
+    public function __construct(private readonly BrowserPage $page, private readonly RequestContextProviderInterface $contexts, private readonly LaravelConfiguration $configuration)
     {
     }
 
@@ -24,6 +24,9 @@ final class LaravelBrowserController
         return new Response($this->page->render($context), 200, [
             'Content-Type' => 'text/html; charset=UTF-8',
             'Cache-Control' => 'no-store, private',
-        ] + SecurityHeaders::defaults());
+        ] + SecurityHeaders::defaults(
+            (bool) $this->configuration->get('security.production_strict', false),
+            (array) $this->configuration->get('security.allowed_image_origins', []),
+        ));
     }
 }

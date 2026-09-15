@@ -31,6 +31,18 @@ SDK 使用弹窗返回结果，并同时校验弹窗对象、Origin、协议版�
 不匹配的返回结果。如果它只应作为初始位置，可传入 `lockResource: false`；
 直接构造 Picker URL 时使用 `resourceLock=0`。
 
+## SoEditor
+
+[SoEditor](https://soeditor.sohophp.app/) 负责 HTML 内容编辑，SoFinder 负责素材管理。通过官方 `@soeditor/adapter-sofinder` 适配器，可以选择图片、附件、视频文件和封面。
+
+安装相同版本的 `@soeditor/editor`、`@soeditor/presets`、`@soeditor/file-manager` 和 `@soeditor/adapter-sofinder`（本例面向 1.4.0）。页面加入 `<textarea id="content"></textarea>`，再将以下模块放入应用构建：
+
+<<< ../snippets/soeditor.js
+
+将浏览器、静态资源路由与 `Images` / `Files` 替换为实际部署配置。`media` 请求使用文件选择器，桥接函数在返回前校验请求的 MIME 类型。关闭窗口只取消选择，不插入内容；其他错误继续上报。空尺寸会省略，显式空替代文本会保留。显式配置插件列表时须保留 `cmsRuntimePreset.plugins`。
+
+本例选择已有素材。粘贴、拖放直接上传需要另行配置 `SoFinderUploadAdapter` 与宿主上传 SDK。登录、资源权限和稳定的访问 URL 仍由实际部署负责。编辑器端说明见 [SoEditor 集成指南](https://soeditor.sohophp.app/zh-CN/guide/sofinder)。
+
 ## CKEditor 5
 
 在应用中正常安装 CKEditor 5 和 Image Plugin，将编辑器实例交给 SoFinder：

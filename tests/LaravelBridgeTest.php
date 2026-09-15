@@ -66,7 +66,7 @@ final class LaravelBridgeTest extends TestCase
         ]))->register();
         $router->getRoutes()->refreshNameLookups();
 
-        self::assertCount(52, $router->getRoutes());
+        self::assertCount(53, $router->getRoutes());
         $browser = $router->getRoutes()->getByName('sofinder.browser');
         self::assertNotNull($browser);
         self::assertSame(\SohoPHP\SoFinder\Laravel\LaravelBrowserController::class, $browser->getActionName());

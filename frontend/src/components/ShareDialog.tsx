@@ -2,13 +2,13 @@ import { useEffect, useRef, useState } from "react";
 import QRCode from "qrcode";
 import { Modal } from "./Modal";
 
-export default function ShareDialog({ url, fileName, loginRequired, expiresAt, showQrCode, labels, formatDate, onClose }: {
+export default function ShareDialog({ url, fileName, access, expiresAt, showQrCode, labels, formatDate, onClose }: {
   url: string;
   fileName: string;
-  loginRequired: boolean;
+  access: "public" | "login_required" | "restricted";
   expiresAt?: number;
   showQrCode: boolean;
-  labels: { title: string; close: string; copyUrl: string; copied: string; copyFailed: string; downloadQr: string; loginRequired: string; expires: string; hint: string; qrCode: string; qrFailed: string };
+  labels: { title: string; close: string; copyUrl: string; copied: string; copyFailed: string; downloadQr: string; loginRequired: string; restrictedAccess: string; expires: string; hint: string; qrCode: string; qrFailed: string };
   formatDate: (timestamp: number) => string;
   onClose: () => void;
 }) {
@@ -38,7 +38,7 @@ export default function ShareDialog({ url, fileName, loginRequired, expiresAt, s
         <input ref={input} readOnly value={url} aria-label={labels.copyUrl} onFocus={event => event.currentTarget.select()}/>
         <button className="primary" onClick={() => void copy()}>{labels.copyUrl}</button>
         <span role="status" aria-live="polite">{copyStatus === "copied" ? labels.copied : copyStatus === "failed" ? labels.copyFailed : ""}</span>
-        {(loginRequired || expiresAt) && <dl className="sf-share-meta">{loginRequired && <><dt>{labels.loginRequired}</dt><dd>✓</dd></>}{expiresAt && <><dt>{labels.expires}</dt><dd><time dateTime={new Date(expiresAt * 1000).toISOString()}>{formatDate(expiresAt)}</time></dd></>}</dl>}
+        {(access !== "public" || expiresAt) && <dl className="sf-share-meta">{access !== "public" && <><dt>{access === "login_required" ? labels.loginRequired : labels.restrictedAccess}</dt><dd>✓</dd></>}{expiresAt && <><dt>{labels.expires}</dt><dd><time dateTime={new Date(expiresAt * 1000).toISOString()}>{formatDate(expiresAt)}</time></dd></>}</dl>}
       </section>
       {showQrCode && <section className="sf-share-qr"><h3>{labels.qrCode}</h3><div className="sf-qr-code">{qrFailed ? <p className="sf-warning" role="alert">{labels.qrFailed}</p> : image ? <img src={image} alt={labels.qrCode}/> : <div className="sf-state">…</div>}</div><a className="sf-download" href={image || undefined} download={`${safeName}-qr.png`} aria-disabled={!image}>{labels.downloadQr}</a></section>}
     </div>

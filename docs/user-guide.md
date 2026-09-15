@@ -62,7 +62,7 @@ For one file, use Download from the details panel, preview dialog or context men
 
 When **Download ZIP** is enabled, select one or more files or folders and choose it from the action bar. ZIP generation is bounded by the administrator's selection, entry and byte limits. It requires ZIP support on the server.
 
-The details panel presents **Download** and **Share** as two clear actions. Share groups **Copy URL** and the optional **QR Code** in one dialog. QR Code is disabled by default in each user's settings, generated entirely in the browser, and never sends the URL to an external QR service. Login requirements and signed-link expiration remain visible and still apply; sharing does not turn a private URL into a public one.
+The details panel presents **Download** and **Share** as two clear actions. Share groups **Copy URL** and **QR Code** in one dialog. Both use the same URL resolved by SoFinder's generic policy or an optional host provider. QR Code is enabled by default, generated entirely in the browser, and never sends the URL to an external service. Login requirements and expiration are shown only when the resolved sharing policy explicitly returns them.
 
 ## Delete and restore
 
