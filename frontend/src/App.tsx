@@ -1638,16 +1638,14 @@ export default function App({ config, initialMessages }: { config: SoFinderConfi
       ...(uiMode === "picker" && !contextMenu.entry.directory ? [{ id: "select", label: t("select"), disabled: !canChooseEntry(contextMenu.entry) }] : []),
       { id: "download", label: t("download"), disabled: contextMenu.entry.directory },
       { id: "share", label: t("share"), disabled: contextMenu.entry.directory },
-      ...(uiMode === "manager" ? [
-        ...(features.favorites && canFavorite(contextMenu.entry) ? [{ id: "favorite", label: metadata.favorites.includes(contextMenu.entry.path) ? t("removeFavorite") : t("favorite") }] : []),
-        ...(quickAccessEnabled && features.sidebarQuickAccess && canQuickAccess(contextMenu.entry) ? [{ id: "quick-access", label: metadata.quickAccess.includes(contextMenu.entry.path) ? t("unpinQuickAccess") : t("pinQuickAccess") }] : []),
-        ...(assetCatalogEnabled && !contextMenu.entry.directory && contextMenu.entry.capabilities?.["metadata.update"] !== false ? [{ id: "asset-metadata", label: t("assetMetadata") }] : []),
-        { id: "rename", label: t("rename"), disabled: contextMenu.entry.capabilities?.rename === false },
-        { id: "copy", label: t("copy"), disabled: contextMenu.entry.capabilities?.copy === false },
-        { id: "move", label: t("move"), disabled: contextMenu.entry.capabilities?.move === false },
-        { id: "delete", label: t("remove"), disabled: contextMenu.entry.capabilities?.delete === false, danger: true },
-        ...pluginActions.filter(action => action.slot === "context").map(action => ({ id: `plugin:${action.plugin}:${action.id}`, label: pluginLabel(action, language), disabled: !pluginActionAvailable(action, contextMenu.entry) })),
-      ] : []),
+      ...(features.favorites && canFavorite(contextMenu.entry) ? [{ id: "favorite", label: metadata.favorites.includes(contextMenu.entry.path) ? t("removeFavorite") : t("favorite") }] : []),
+      ...(quickAccessEnabled && features.sidebarQuickAccess && canQuickAccess(contextMenu.entry) ? [{ id: "quick-access", label: metadata.quickAccess.includes(contextMenu.entry.path) ? t("unpinQuickAccess") : t("pinQuickAccess") }] : []),
+      ...(assetCatalogEnabled && !contextMenu.entry.directory && contextMenu.entry.capabilities?.["metadata.update"] !== false ? [{ id: "asset-metadata", label: t("assetMetadata") }] : []),
+      { id: "rename", label: t("rename"), disabled: currentResource?.readOnly || contextMenu.entry.capabilities?.rename === false },
+      { id: "copy", label: t("copy"), disabled: currentResource?.readOnly || contextMenu.entry.capabilities?.copy === false },
+      { id: "move", label: t("move"), disabled: currentResource?.readOnly || contextMenu.entry.capabilities?.move === false },
+      { id: "delete", label: t("remove"), disabled: currentResource?.readOnly || contextMenu.entry.capabilities?.delete === false, danger: true },
+      ...pluginActions.filter(action => action.slot === "context").map(action => ({ id: `plugin:${action.plugin}:${action.id}`, label: pluginLabel(action, language), disabled: !pluginActionAvailable(action, contextMenu.entry) })),
     ]}/>}
     </Suspense>
     <div className="sf-sr-only" aria-live="polite">{selectedEntries.length > 0 ? `${selectedEntries.length} ${t("selectedCount")}` : notice}</div>

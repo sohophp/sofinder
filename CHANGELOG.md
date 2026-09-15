@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Expose permitted rename, copy, move, delete, pin and plugin actions in the
+  picker context menu as well as the toolbar, including for folders.
 - Resolve sharing through a framework-neutral provider contract and dedicated
   share-link endpoint, so host applications can return stable public links
   without coupling SoFinder to host routes, authentication or link storage.

@@ -11738,46 +11738,44 @@ function Ct({ config: e, initialMessages: t }) {
 							label: C("share"),
 							disabled: N.entry.directory
 						},
-						...f === "manager" ? [
-							...M.favorites && fa(N.entry) ? [{
-								id: "favorite",
-								label: en.favorites.includes(N.entry.path) ? C("removeFavorite") : C("favorite")
-							}] : [],
-							..._o && M.sidebarQuickAccess && pa(N.entry) ? [{
-								id: "quick-access",
-								label: en.quickAccess.includes(N.entry.path) ? C("unpinQuickAccess") : C("pinQuickAccess")
-							}] : [],
-							...zr && !N.entry.directory && N.entry.capabilities?.["metadata.update"] !== !1 ? [{
-								id: "asset-metadata",
-								label: C("assetMetadata")
-							}] : [],
-							{
-								id: "rename",
-								label: C("rename"),
-								disabled: N.entry.capabilities?.rename === !1
-							},
-							{
-								id: "copy",
-								label: C("copy"),
-								disabled: N.entry.capabilities?.copy === !1
-							},
-							{
-								id: "move",
-								label: C("move"),
-								disabled: N.entry.capabilities?.move === !1
-							},
-							{
-								id: "delete",
-								label: C("remove"),
-								disabled: N.entry.capabilities?.delete === !1,
-								danger: !0
-							},
-							...ma.filter((e) => e.slot === "context").map((e) => ({
-								id: `plugin:${e.plugin}:${e.id}`,
-								label: ze(e, g),
-								disabled: !He(e, N.entry)
-							}))
-						] : []
+						...M.favorites && fa(N.entry) ? [{
+							id: "favorite",
+							label: en.favorites.includes(N.entry.path) ? C("removeFavorite") : C("favorite")
+						}] : [],
+						..._o && M.sidebarQuickAccess && pa(N.entry) ? [{
+							id: "quick-access",
+							label: en.quickAccess.includes(N.entry.path) ? C("unpinQuickAccess") : C("pinQuickAccess")
+						}] : [],
+						...zr && !N.entry.directory && N.entry.capabilities?.["metadata.update"] !== !1 ? [{
+							id: "asset-metadata",
+							label: C("assetMetadata")
+						}] : [],
+						{
+							id: "rename",
+							label: C("rename"),
+							disabled: L?.readOnly || N.entry.capabilities?.rename === !1
+						},
+						{
+							id: "copy",
+							label: C("copy"),
+							disabled: L?.readOnly || N.entry.capabilities?.copy === !1
+						},
+						{
+							id: "move",
+							label: C("move"),
+							disabled: L?.readOnly || N.entry.capabilities?.move === !1
+						},
+						{
+							id: "delete",
+							label: C("remove"),
+							disabled: L?.readOnly || N.entry.capabilities?.delete === !1,
+							danger: !0
+						},
+						...ma.filter((e) => e.slot === "context").map((e) => ({
+							id: `plugin:${e.plugin}:${e.id}`,
+							label: ze(e, g),
+							disabled: !He(e, N.entry)
+						}))
 					]
 				})]
 			}),

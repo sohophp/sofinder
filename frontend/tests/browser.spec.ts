@@ -381,6 +381,27 @@ test("supports arrow navigation and focus restoration in context menus", async (
   await expect(entry).toBeFocused();
 });
 
+test("offers writable entry actions from the picker context menu", async ({ page }) => {
+  await page.route("**/sofinder/api/entries?**", route => route.fulfill({ json: { success: true, data: {
+    entries: [{ path: "folder1", name: "folder1", directory: true, size: 0, modifiedAt: 1, mimeType: null, url: null, capabilities: { read: true, rename: true, copy: true, move: true, delete: true } }],
+    total: 1, path: "", offset: 0, limit: 100, nextCursor: null, sort: "name", direction: "asc", capabilities: { upload: true, create_folder: true },
+  } } }));
+  const pickerConfig = { ...config, selectMode: true, uiDefaults: { ...config.uiDefaults, mode: "picker" as const } };
+  await page.setContent(`<!doctype html><html lang="zh-CN"><body><main id="sofinder-root" data-config='${JSON.stringify(pickerConfig)}'></main></body></html>`);
+  await page.addStyleTag({ path: resolve(import.meta.dirname, "../../dist/sofinder.css") });
+  await page.addScriptTag({ path: resolve(import.meta.dirname, "../../dist/sofinder.js"), type: "module" });
+  await expect(page.getByText("folder1").first()).toBeVisible();
+
+  await page.locator(".sf-entry", { hasText: "folder1" }).click({ button: "right" });
+
+  await expect(page.getByRole("menuitem", { name: "打开" })).toBeEnabled();
+  await expect(page.getByRole("menuitem", { name: "固定到侧栏" })).toBeEnabled();
+  await expect(page.getByRole("menuitem", { name: "重命名" })).toBeEnabled();
+  await expect(page.getByRole("menuitem", { name: "复制" })).toBeEnabled();
+  await expect(page.getByRole("menuitem", { name: "移动" })).toBeEnabled();
+  await expect(page.getByRole("menuitem", { name: "删除" })).toBeEnabled();
+});
+
 test("offers a bounded undo after moving an item to Trash", async ({ page }) => {
   let restored = 0;
   await page.route("**/sofinder/api/entries/batch", route => route.fulfill({ json: { success: true, data: { operation: "delete", total: 1, succeeded: 1, failed: 0, purgedItems: 0, purgedBytes: 0, results: [{ path: "guide.txt", success: true, trash: { item: { id: "1234567890abcdef1234567890abcdef", resource: "Files", path: "guide.txt", directory: false, size: 12, deletedAt: 1, expiresAt: 9999999999 }, purgedItems: 0, purgedBytes: 0 } }] } } }));
