@@ -2359,6 +2359,17 @@ for (const width of [1100, 390]) {
     await expect(embedded.locator('.sf-command-breadcrumb')).toBeVisible();
     expect(await embedded.locator('.sf-app').evaluate(element => element.getBoundingClientRect().height >= window.innerHeight - 1)).toBe(true);
     expect(await embedded.locator('body').evaluate(body => body.scrollWidth <= body.clientWidth)).toBe(true);
+    if (width === 1100) {
+      const bottoms = await embedded.locator('.sf-app').evaluate(app => ({
+        app: app.getBoundingClientRect().bottom,
+        layout: app.querySelector('.sf-layout')!.getBoundingClientRect().bottom,
+        sidebar: app.querySelector('.sf-sidebar')!.getBoundingClientRect().bottom,
+        separator: app.querySelector('.sf-column-resizer.left')!.getBoundingClientRect().bottom,
+      }));
+      expect(Math.abs(bottoms.layout - bottoms.app)).toBeLessThanOrEqual(1);
+      expect(Math.abs(bottoms.sidebar - bottoms.app)).toBeLessThanOrEqual(1);
+      expect(Math.abs(bottoms.separator - bottoms.app)).toBeLessThanOrEqual(1);
+    }
     await page.screenshot({ path: `/tmp/sofinder-embedded-${width}.png` });
   });
 }
@@ -2405,6 +2416,11 @@ test('embedded manager grows and shrinks using the host scrollbar', async ({ pag
   expect(await frame.locator('.sf-content').evaluate(el => el.scrollHeight <= el.clientHeight + 1)).toBe(true);
   await frame.locator('#growth-probe').evaluate(el => el.remove());
   await expect.poll(() => page.locator('iframe').evaluate(el => el.getBoundingClientRect().height)).toBeLessThan(initial + 100);
+  const finalBottoms = await frame.locator('.sf-app').evaluate(app => ({
+    app: app.getBoundingClientRect().bottom,
+    separator: app.querySelector('.sf-column-resizer.left')!.getBoundingClientRect().bottom,
+  }));
+  expect(Math.abs(finalBottoms.separator - finalBottoms.app)).toBeLessThanOrEqual(1);
 });
 
 test("opens reference titles from toast and notification details without displaying URLs", async ({ page, context }, testInfo) => {

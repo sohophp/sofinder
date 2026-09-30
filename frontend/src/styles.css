@@ -3064,6 +3064,6 @@ body:has(.sf-embedded) { font-size: 14px; background: var(--sf-panel); }
 html:has(.sf-embedded), body:has(.sf-embedded),
 #sofinder-root:has(.sf-embedded) { height: auto; min-height: 0; }
 .sf-app.sf-embedded { height: auto; min-height: var(--sf-embedded-min-height, 100dvh); }
-.sf-embedded .sf-layout { flex: none; overflow: visible; }
+.sf-embedded .sf-layout { flex: 1 0 auto; overflow: visible; }
 .sf-embedded .sf-content, .sf-embedded .sf-sidebar,
 .sf-embedded .sf-right-panel { overflow: visible; }
