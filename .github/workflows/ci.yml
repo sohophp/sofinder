@@ -146,9 +146,6 @@ jobs:
 
   frontend:
     runs-on: ubuntu-latest
-    container:
-      image: mcr.microsoft.com/playwright@sha256:dcc5531e97840b9b5e794f2814476b21571c5124a3fca2267d73041f56e7580e # v1.62.1-noble
-      options: --ipc=host
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
@@ -168,12 +165,17 @@ jobs:
       - run: pnpm test:unit
         working-directory: frontend
       - run: git diff --exit-code -- dist
-      - run: pnpm test:e2e
-        working-directory: frontend
+      - name: Verify all browser engines in the pinned Playwright image
+        run: |
+          docker run --rm --ipc=host --volume "$PWD:/work" --workdir /work/frontend \
+            --env CI=true mcr.microsoft.com/playwright@sha256:dcc5531e97840b9b5e794f2814476b21571c5124a3fca2267d73041f56e7580e \
+            /bin/bash -lc 'corepack enable && pnpm test:e2e'
       - name: Capture all current visual baselines for failure review
         if: failure()
-        run: pnpm exec playwright test --project=chromium --grep 'visual baseline covers' --update-snapshots
-        working-directory: frontend
+        run: |
+          docker run --rm --ipc=host --volume "$PWD:/work" --workdir /work/frontend \
+            --env CI=true mcr.microsoft.com/playwright@sha256:dcc5531e97840b9b5e794f2814476b21571c5124a3fca2267d73041f56e7580e \
+            /bin/bash -lc 'corepack enable && pnpm exec playwright test --project=chromium --grep "visual baseline covers" --update-snapshots'
       - name: Upload frontend failure evidence
         if: failure()
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
