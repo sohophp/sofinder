@@ -65,7 +65,7 @@ jobs:
       - name: Verify all browser engines in the same immutable image as CI
         run: |
           docker run --rm --ipc=host --user "$(id -u):$(id -g)" --volume "$PWD:/work" --workdir /work/frontend \
-            --env CI=true mcr.microsoft.com/playwright@sha256:dcc5531e97840b9b5e794f2814476b21571c5124a3fca2267d73041f56e7580e \
+            --env CI=true --env HOME=/tmp mcr.microsoft.com/playwright@sha256:dcc5531e97840b9b5e794f2814476b21571c5124a3fca2267d73041f56e7580e \
             /bin/bash -lc 'node node_modules/@playwright/test/cli.js test'
       - run: pnpm exec playwright install --with-deps chromium
         working-directory: frontend
