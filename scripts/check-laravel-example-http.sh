@@ -72,7 +72,7 @@ cp .env.example .env
 "$php_bin" artisan config:cache
 "$php_bin" artisan route:cache
 "$php_bin" artisan route:list --name=sofinder --json > "$test_dir/routes.json"
-"$php_bin" -r '$r=json_decode(file_get_contents($argv[1]),true,32,JSON_THROW_ON_ERROR); exit(count($r)===52?0:1);' "$test_dir/routes.json"
+"$php_bin" -r '$r=json_decode(file_get_contents($argv[1]),true,32,JSON_THROW_ON_ERROR); exit(count($r)===53 && count(array_filter($r,static fn(array $route): bool => $route["name"] === "sofinder.api.share.link" && $route["method"] === "GET|HEAD")) === 1 ? 0 : 1);' "$test_dir/routes.json"
 "$php_bin" artisan sofinder:maintenance:status --json | grep -Fq '"status":"ready"'
 
 APP_ENV=production APP_DEBUG=0 "$php_bin" -S "127.0.0.1:$port" -t public public/index.php > "$test_dir/server.log" 2>&1 &

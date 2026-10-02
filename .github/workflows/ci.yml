@@ -370,8 +370,11 @@ jobs:
       - run: |
           ../../scripts/php-bin.sh -r 'require "vendor/autoload.php"; exit(class_exists("SohoPHP\\SoFinderS3\\S3StorageAdapter") && !class_exists("Symfony\\Component\\HttpFoundation\\Request") ? 0 : 1);'
         working-directory: packages/sofinder-s3
-      - run: docker run -d --name sofinder-minio -p 9000:9000 -e MINIO_ROOT_USER=minioadmin -e MINIO_ROOT_PASSWORD=minioadmin minio/minio@sha256:d249d1fb6966de4d8ad26c04754b545205ff15a62e4fd19ebd0f26fa5baacbc0 server /data
-      - run: for attempt in {1..30}; do curl --fail --silent http://127.0.0.1:9000/minio/health/ready && exit 0; sleep 1; done; exit 1
+      - uses: actions/setup-go@924ae3a1cded613372ab5595356fb5720e22ba16 # v6
+        with:
+          go-version: '1.27.1'
+          cache: false
+      - run: bash scripts/start-ci-minio.sh
       - run: ../../scripts/php-bin.sh vendor/bin/phpunit
         working-directory: packages/sofinder-s3
         env:
