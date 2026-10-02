@@ -62,9 +62,12 @@ jobs:
         working-directory: frontend
       - run: pnpm build && pnpm check:size && pnpm test:unit
         working-directory: frontend
-      - run: pnpm exec playwright install --with-deps
-        working-directory: frontend
-      - run: pnpm test:e2e
+      - name: Verify all browser engines in the same immutable image as CI
+        run: |
+          docker run --rm --ipc=host --volume "$PWD:/work" --workdir /work/frontend \
+            --env CI=true mcr.microsoft.com/playwright@sha256:dcc5531e97840b9b5e794f2814476b21571c5124a3fca2267d73041f56e7580e \
+            /bin/bash -lc 'corepack enable && pnpm test:e2e'
+      - run: pnpm exec playwright install --with-deps chromium
         working-directory: frontend
       - run: ./scripts/php-bin.sh vendor/bin/phpunit --display-deprecations --fail-on-deprecation && ./scripts/php-bin.sh vendor/bin/phpstan analyse --no-progress
       - run: bash scripts/check-symfony-example-http.sh
