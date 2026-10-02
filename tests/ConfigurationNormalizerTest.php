@@ -16,6 +16,7 @@ final class ConfigurationNormalizerTest extends TestCase
     {
         $input = [
             'route_prefix' => '/sofinder',
+            'trash_purge_guard_service' => 'app.trash_guard',
             'image_variants' => ['widths' => [640]],
             'resources' => [
                 'Files' => [
@@ -76,6 +77,8 @@ final class ConfigurationNormalizerTest extends TestCase
     {
         $resource = ['resources' => ['Files' => ['root' => '/srv/files']]];
 
+        yield 'empty purge guard' => [$resource + ['trash_purge_guard_service' => ' '], 'non-empty service ID'];
+        yield 'invalid purge guard type' => [$resource + ['trash_purge_guard_service' => 1], 'non-empty service ID'];
         yield 'unknown key' => [$resource + ['routePrefix' => '/files'], 'Unknown SoFinder configuration key routePrefix'];
         yield 'origin with path' => [$resource + ['picker' => ['allowed_origins' => ['https://example.test/path']]], 'exact HTTP(S) origin'];
         yield 'image origin with path' => [$resource + ['security' => ['allowed_image_origins' => ['https://cdn.example.test/path']]], 'exact HTTP(S) origin'];

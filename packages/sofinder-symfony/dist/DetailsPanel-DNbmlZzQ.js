@@ -248,7 +248,7 @@ function u({ api: e, resource: t, selectedEntries: n, selected: u, imageInfo: d,
 			/* @__PURE__ */ (0, c.jsx)("div", {
 				className: "sf-preview",
 				children: m ? /* @__PURE__ */ (0, c.jsx)(i, {
-					src: e.thumbnailUrl(t, u, 800, 600),
+					src: u.mimeType === "image/svg+xml" ? u.url || e.contentUrl(t, u.path) : e.thumbnailUrl(t, u, 800, 600),
 					alt: u.name
 				}) : /* @__PURE__ */ (0, c.jsx)(a, {
 					name: u.name,

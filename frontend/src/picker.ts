@@ -66,20 +66,33 @@ export const pickerUrl = (options: PickerOptions, id = requestId()): URL => {
   return url;
 };
 
+const activePickers = new Map<string, Window>();
+
+/** Bring the pending picker back to the front when its opener is clicked again. */
+export const focusOpenPicker = (windowName: string): boolean => {
+  const popup = activePickers.get(windowName);
+  if (!popup || popup.closed) return false;
+  popup.focus();
+  return true;
+};
+
 /** Open a SoFinder picker and resolve with the selected entry after strict source, origin and request validation. */
 export const openPicker = (options: PickerOptions): Promise<PickerEntry> => {
   const id = requestId();
   const url = pickerUrl(options, id);
   const width = Math.max(640, options.width ?? 1100);
   const height = Math.max(480, options.height ?? 760);
-  const popup = window.open(url, options.windowName ?? `sofinder-picker-${id}`, `popup=yes,width=${width},height=${height},resizable=yes,scrollbars=yes`);
+  const windowName = options.windowName ?? `sofinder-picker-${id}`;
+  const popup = window.open(url, windowName, `popup=yes,width=${width},height=${height},resizable=yes,scrollbars=yes`);
   if (!popup) return Promise.reject(new Error("SoFinder picker was blocked by the browser."));
+  activePickers.set(windowName, popup);
 
   return new Promise<PickerEntry>((resolve, reject) => {
     let closedTimer = 0;
     const cleanup = () => {
       window.removeEventListener("message", receive);
       if (closedTimer) window.clearInterval(closedTimer);
+      if (activePickers.get(windowName) === popup) activePickers.delete(windowName);
     };
     const receive = (event: MessageEvent<unknown>) => {
       const message = event.data as Partial<PickerMessage> | null;

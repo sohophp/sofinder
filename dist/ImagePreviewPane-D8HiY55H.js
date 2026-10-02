@@ -36,7 +36,7 @@ function c({ api: e, resource: t, entry: c, labels: l }) {
 			}
 			y(null), d(e);
 		}
-	}, A = u === "fit" ? e.thumbnailUrl(t, c, 512, 512) : e.contentUrl(t, c.path), j = w === 0 ? A : `${A}${A.includes("?") ? "&" : "?"}retry=${w}`;
+	}, A = c.mimeType === "image/svg+xml" ? c.url || e.contentUrl(t, c.path) : u === "fit" ? e.thumbnailUrl(t, c, 512, 512) : e.contentUrl(t, c.path), j = w === 0 ? A : `${A}${A.includes("?") ? "&" : "?"}retry=${w}`;
 	(0, r.useEffect)(() => {
 		x(!0), C(!1), T(0);
 	}, [A]);

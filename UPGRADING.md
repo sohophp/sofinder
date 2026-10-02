@@ -1,5 +1,18 @@
 # Upgrading SoFinder
 
+## From 1.3.0 to 1.4.0
+
+Update the synchronized Composer packages together and deploy the complete rebuilt
+`dist/` directory. No storage migration is required. Symfony hosts may set
+`trash_purge_guard_service` to a service implementing
+`TrashPurgeGuardInterface`; its default is `null`. Referenced entries rejected by
+the guard remain in trash, including under capacity pressure.
+
+SVG uploads remain controlled by each resource’s allowed extensions. Only static
+SVG content is accepted; existing unsafe SVG files are not automatically cleaned.
+SVG previews use the original file rather than a raster variant. PDF previews
+require authorization, use `private, no-store`, and allow same-origin framing.
+
 ## From 1.1.1 to 1.1.2
 
 Deploy the complete rebuilt `dist/` directory. Picker integrations that pass a

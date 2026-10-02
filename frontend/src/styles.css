@@ -2817,6 +2817,9 @@ select:focus-visible,
   background: var(--sf-panel);
   box-shadow: 0 -8px 24px rgb(23 34 51 / 7%);
 }
+.sf-picker-bar-empty {
+  visibility: hidden;
+}
 .sf-picker-bar > div {
   display: grid;
   min-width: 0;

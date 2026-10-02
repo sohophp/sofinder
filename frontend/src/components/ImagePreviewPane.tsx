@@ -55,7 +55,7 @@ export default function ImagePreviewPane({ api, resource, entry, labels }: {
     if (largeOriginal && !confirmedLargeOriginal) { setPendingZoom(next); return; }
     setPendingZoom(null); setZoom(next);
   };
-  const source = zoom === "fit" ? api.thumbnailUrl(resource, entry, 512, 512) : api.contentUrl(resource, entry.path);
+  const source = entry.mimeType === "image/svg+xml" ? entry.url || api.contentUrl(resource, entry.path) : zoom === "fit" ? api.thumbnailUrl(resource, entry, 512, 512) : api.contentUrl(resource, entry.path);
   const retrySource = attempt === 0 ? source : `${source}${source.includes("?") ? "&" : "?"}retry=${attempt}`;
   useEffect(() => { setLoading(true); setFailed(false); setAttempt(0); }, [source]);
 

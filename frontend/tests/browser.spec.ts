@@ -1602,6 +1602,26 @@ test("keeps picker selection while exposing full ACL-controlled tools", async ({
   await expect.poll(() => page.evaluate(() => (window as Window & { pickerImage?: unknown }).pickerImage)).toMatchObject({ resource: "Files", path: "photo.png", width: 1200, height: 400 });
 });
 
+for (const fullTools of [false, true]) {
+  test(`keeps an image still during picker selection (full tools: ${fullTools})`, async ({ page }) => {
+    await page.setContent(`<!doctype html><html lang="zh-CN"><body><main id="sofinder-root" data-config='${JSON.stringify({ ...config, selectMode: true, selectionKind: "image", uiDefaults: { ...config.uiDefaults, mode: "picker", fullTools } })}'></main></body></html>`);
+    await page.addStyleTag({ path: resolve(import.meta.dirname, "../../dist/sofinder.css") });
+    await page.addScriptTag({ path: resolve(import.meta.dirname, "../../dist/sofinder.js"), type: "module" });
+    const image = page.locator(".sf-entry", { hasText: "photo.png" });
+    await expect(image).toBeVisible();
+    const before = await image.boundingBox();
+    await image.click();
+    const after = await image.boundingBox();
+    expect(after).toMatchObject({ x: before!.x, y: before!.y, width: before!.width, height: before!.height });
+    await page.keyboard.press("Escape");
+    await page.evaluate(() => window.addEventListener("sofinder:select", event => {
+      (window as Window & { pickerImage?: unknown }).pickerImage = (event as CustomEvent).detail;
+    }));
+    await image.dblclick();
+    await expect.poll(() => page.evaluate(() => (window as Window & { pickerImage?: unknown }).pickerImage)).toMatchObject({ path: "photo.png" });
+  });
+}
+
 test("keeps image thumbnails inside list rows", async ({ page }) => {
   await page.getByRole("button", { name: "查看" }).click();
   await page.getByRole("menuitemradio", { name: "列表", exact: true }).click();

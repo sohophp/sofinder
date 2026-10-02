@@ -5,6 +5,15 @@ description: 各 SoFinder 预发布版本的兼容性、配置与 adapter 升级
 
 # 升级 SoFinder
 
+## 从 1.3.0 升级至 1.4.0
+
+请同步更新 Composer 包并完整部署 `dist/`，无需迁移存储。Symfony 宿主可配置
+`trash_purge_guard_service`，指向实现 `TrashPurgeGuardInterface` 的服务，默认 `null`。
+引用保护拒绝的文件在永久删除和容量清理时均保留在回收站。
+
+SVG 仍须由资源允许其扩展名；上传仅接受静态安全内容，不自动清理已有文件。
+SVG 使用原图预览，不生成位图变体。PDF 预览要求授权，禁止响应缓存并仅允许同源嵌入。
+
 ## 从 1.1.1 升级至 1.1.2
 
 请完整部署重新构建的 `dist/`。传入 `resource` 的 Picker 默认会把导航和返回结果

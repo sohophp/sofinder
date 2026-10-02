@@ -1,11 +1,26 @@
 // @vitest-environment jsdom
 
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { createWangEditorPickerIntegration, openPicker, pickerUrl, registerTinyMce, selectForCkeditor5, selectForInput, selectForJodit, selectForMarkdown, selectForWangEditor } from "../src/picker";
+import { createWangEditorPickerIntegration, focusOpenPicker, openPicker, pickerUrl, registerTinyMce, selectForCkeditor5, selectForInput, selectForJodit, selectForMarkdown, selectForWangEditor } from "../src/picker";
 
 afterEach(() => vi.restoreAllMocks());
 
 describe("picker SDK", () => {
+  it("focuses a pending named picker and clears it after selection", async () => {
+    const focus = vi.fn();
+    const popup = { closed: false, focus } as unknown as Window;
+    vi.spyOn(window, "open").mockReturnValue(popup);
+    const promise = openPicker({ baseUrl: "/sofinder/browser", kind: "image", windowName: "component-images-test" });
+    const opened = new URL(String(vi.mocked(window.open).mock.calls[0][0]), window.location.href);
+    const entry = { resource: "Images", path: "photo.png", name: "photo.png", directory: false, size: 12, modifiedAt: 1, mimeType: "image/png", url: "/images/photo.png", width: 320, height: 180, capabilities: {} };
+    expect(focusOpenPicker("component-images-test")).toBe(true);
+    expect(focus).toHaveBeenCalledOnce();
+    expect(window.open).toHaveBeenCalledTimes(1);
+    window.dispatchEvent(new MessageEvent("message", { source: popup, origin: window.location.origin, data: { type: "sofinder:select", version: "1.0", requestId: opened.searchParams.get("pickerRequestId"), entry } }));
+    await expect(promise).resolves.toEqual(entry);
+    expect(focusOpenPicker("component-images-test")).toBe(false);
+  });
+
   it("builds a reproducible picker deep link", () => {
     const url = pickerUrl({ baseUrl: "/sofinder/browser", kind: "image", resource: "Images", path: "campaign/hero", language: "zh-cn", tools: "full" }, "12345678-abcd-4321-abcd-123456789012");
     expect(url.pathname).toBe("/sofinder/browser");

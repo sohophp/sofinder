@@ -58,7 +58,9 @@ final class QuickUploadController
         $resource = (string) $request->query->get('type', 'Files');
         $selection = strtolower((string) $request->query->get('selection', $resource === 'Images' ? 'image' : 'file'));
         $mime = (new \finfo(FILEINFO_MIME_TYPE))->file($uploaded->getPathname()) ?: 'application/octet-stream';
-        if ($selection === 'image' && ($this->imageCapabilities === null || !$this->imageCapabilities->isWebEmbeddable($mime))) {
+        $svg = strtolower((string) pathinfo($uploaded->getClientOriginalName(), PATHINFO_EXTENSION)) === 'svg'
+            && in_array($mime, ['image/svg+xml', 'text/xml', 'application/xml', 'text/plain'], true);
+        if ($selection === 'image' && !$svg && ($this->imageCapabilities === null || !$this->imageCapabilities->isWebEmbeddable($mime))) {
             return $this->failure($function, $expectsJson, 'image_not_web_embeddable', 'This image format cannot be embedded directly in a web page.');
         }
         $stream = fopen($uploaded->getPathname(), 'rb');

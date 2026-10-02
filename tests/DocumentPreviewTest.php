@@ -53,7 +53,10 @@ final class DocumentPreviewTest extends TestCase
 
         self::assertSame('application/pdf', $response->headers->get('Content-Type'));
         self::assertStringStartsWith('inline;', (string) $response->headers->get('Content-Disposition'));
-        self::assertStringContainsString('sandbox', (string) $response->headers->get('Content-Security-Policy'));
+        self::assertSame("frame-ancestors 'self'", $response->headers->get('Content-Security-Policy'));
+        self::assertSame('nosniff', $response->headers->get('X-Content-Type-Options'));
+        self::assertStringContainsString('private', (string) $response->headers->get('Cache-Control'));
+        self::assertStringContainsString('no-store', (string) $response->headers->get('Cache-Control'));
         self::assertFileExists($response->getFile()->getPathname());
     }
 

@@ -48,6 +48,8 @@ export interface PickerMessage {
     entry: PickerEntry;
 }
 export declare const pickerUrl: (options: PickerOptions, id?: string) => URL;
+/** Bring the pending picker back to the front when its opener is clicked again. */
+export declare const focusOpenPicker: (windowName: string) => boolean;
 /** Open a SoFinder picker and resolve with the selected entry after strict source, origin and request validation. */
 export declare const openPicker: (options: PickerOptions) => Promise<PickerEntry>;
 type EditorPickerOptions = Omit<PickerOptions, "kind">;

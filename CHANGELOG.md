@@ -1,6 +1,15 @@
 # Changelog
 
-## Unreleased
+## 1.4.0 - 2026-10-02
+
+- Add an optional host trash-purge guard that preserves referenced files,
+  including during automatic capacity cleanup. Normalize its configuration
+  consistently across plain PHP and Symfony integrations.
+- Inspect SVG uploads against a static allowlist, reject active content,
+  external references and escaped URL values, and preview safe SVG originals
+  without raster variants. SVG remains subject to resource extension settings.
+- Keep the picker footer stable before selection and focus an existing pending
+  picker window instead of opening a duplicate.
 
 - Expose permitted rename, copy, move, delete, pin and plugin actions in the
   picker context menu as well as the toolbar, including for folders.
@@ -16,7 +25,7 @@
   confirmation, recoverable trash notices and failed-item-only retries; keep
   overwrite decisions session-scoped and surface their risk explicitly.
 - Validate picker result origins and media metadata, isolate picker window
-  names, sandbox document previews, and add an opt-in production-strict CSP
+  names, restrict document preview framing to the same origin, and add an opt-in production-strict CSP
   profile that requires malware scanning and proxied resources.
 - Improve keyboard, touch, forced-color, dark-theme and 200% zoom behavior,
   including focus restoration, live upload status and manager-visible security

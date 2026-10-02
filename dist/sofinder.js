@@ -8916,7 +8916,7 @@ function Je(e, t, n, r) {
 }
 //#endregion
 //#region src/App.tsx
-var Ye = (0, _.lazy)(() => import("./ImageEditor-DN_8r-DU.js").then((e) => ({ default: e.ImageEditor }))), Xe = (0, _.lazy)(() => import("./ImageProcessDialog-YTfmP7GL.js").then((e) => ({ default: e.ImageProcessDialog }))), Ze = (0, _.lazy)(() => import("./SecurityStatusDialog-BgsTf51o.js").then((e) => ({ default: e.SecurityStatusDialog }))), Qe = (0, _.lazy)(() => import("./DocumentPreviewPane-B5cdB_xi.js")), $e = (0, _.lazy)(() => import("./SettingsDialog-CETBpSlZ.js").then((e) => ({ default: e.SettingsDialog }))), et = (0, _.lazy)(() => import("./DestinationDialog-DmAO36GJ.js").then((e) => ({ default: e.DestinationDialog }))), tt = (0, _.lazy)(() => import("./BulkRenameDialog-DVXk81cU.js").then((e) => ({ default: e.BulkRenameDialog }))), nt = (0, _.lazy)(() => import("./TrashDialog-B3dBCKn8.js").then((e) => ({ default: e.TrashDialog }))), rt = (0, _.lazy)(() => import("./TagsDialog-DYIZoxVL.js").then((e) => ({ default: e.TagsDialog }))), it = (0, _.lazy)(() => import("./FolderTree-B6mWGaDl.js").then((e) => ({ default: e.FolderTree }))), at = (0, _.lazy)(() => import("./DetailsPanel-B1QzkyXs.js").then((e) => ({ default: e.DetailsPanel }))), ot = (0, _.lazy)(() => import("./ShareDialog-CDiXWNdv.js")), st = (0, _.lazy)(() => import("./FavoritesPage-C_Fh2oIi.js")), ct = (0, _.lazy)(() => import("./RecentPage-D8SBV8gP.js")), lt = (0, _.lazy)(() => import("./MetadataSidebarPanels-CDvRRaf0.js").then((e) => ({ default: e.QuickAccessPanel }))), ut = (0, _.lazy)(() => import("./MetadataSidebarPanels-CDvRRaf0.js").then((e) => ({ default: e.FavoritesPanel }))), dt = (0, _.lazy)(() => import("./MetadataSidebarPanels-CDvRRaf0.js").then((e) => ({ default: e.RecentPanel }))), ft = (0, _.lazy)(() => import("./ContextMenu-BpIiVP7h.js").then((e) => ({ default: e.ContextMenu }))), pt = (0, _.lazy)(() => import("./UploadQueue-CLQ4K_3R.js").then((e) => ({ default: e.UploadQueue }))), mt = (0, _.lazy)(() => import("./ImagePreviewPane-D5O_-Lqv.js")), ht = (0, _.lazy)(() => import("./AssetMetadataDialog-CQDbU83C.js").then((e) => ({ default: e.AssetMetadataDialog }))), gt = (0, _.lazy)(() => import("./AssetSearchDialog-CsmI9Yqh.js").then((e) => ({ default: e.AssetSearchDialog }))), _t = () => {
+var Ye = (0, _.lazy)(() => import("./ImageEditor-DN_8r-DU.js").then((e) => ({ default: e.ImageEditor }))), Xe = (0, _.lazy)(() => import("./ImageProcessDialog-YTfmP7GL.js").then((e) => ({ default: e.ImageProcessDialog }))), Ze = (0, _.lazy)(() => import("./SecurityStatusDialog-BgsTf51o.js").then((e) => ({ default: e.SecurityStatusDialog }))), Qe = (0, _.lazy)(() => import("./DocumentPreviewPane-B5cdB_xi.js")), $e = (0, _.lazy)(() => import("./SettingsDialog-CETBpSlZ.js").then((e) => ({ default: e.SettingsDialog }))), et = (0, _.lazy)(() => import("./DestinationDialog-DmAO36GJ.js").then((e) => ({ default: e.DestinationDialog }))), tt = (0, _.lazy)(() => import("./BulkRenameDialog-DVXk81cU.js").then((e) => ({ default: e.BulkRenameDialog }))), nt = (0, _.lazy)(() => import("./TrashDialog-B3dBCKn8.js").then((e) => ({ default: e.TrashDialog }))), rt = (0, _.lazy)(() => import("./TagsDialog-DYIZoxVL.js").then((e) => ({ default: e.TagsDialog }))), it = (0, _.lazy)(() => import("./FolderTree-B6mWGaDl.js").then((e) => ({ default: e.FolderTree }))), at = (0, _.lazy)(() => import("./DetailsPanel-DNbmlZzQ.js").then((e) => ({ default: e.DetailsPanel }))), ot = (0, _.lazy)(() => import("./ShareDialog-CDiXWNdv.js")), st = (0, _.lazy)(() => import("./FavoritesPage-C_Fh2oIi.js")), ct = (0, _.lazy)(() => import("./RecentPage-D8SBV8gP.js")), lt = (0, _.lazy)(() => import("./MetadataSidebarPanels-CDvRRaf0.js").then((e) => ({ default: e.QuickAccessPanel }))), ut = (0, _.lazy)(() => import("./MetadataSidebarPanels-CDvRRaf0.js").then((e) => ({ default: e.FavoritesPanel }))), dt = (0, _.lazy)(() => import("./MetadataSidebarPanels-CDvRRaf0.js").then((e) => ({ default: e.RecentPanel }))), ft = (0, _.lazy)(() => import("./ContextMenu-BpIiVP7h.js").then((e) => ({ default: e.ContextMenu }))), pt = (0, _.lazy)(() => import("./UploadQueue-CLQ4K_3R.js").then((e) => ({ default: e.UploadQueue }))), mt = (0, _.lazy)(() => import("./ImagePreviewPane-D8HiY55H.js")), ht = (0, _.lazy)(() => import("./AssetMetadataDialog-CQDbU83C.js").then((e) => ({ default: e.AssetMetadataDialog }))), gt = (0, _.lazy)(() => import("./AssetSearchDialog-CsmI9Yqh.js").then((e) => ({ default: e.AssetSearchDialog }))), _t = () => {
 	let e = localStorage.getItem("sofinder.groupMode.v1");
 	return e === "name" || e === "type" || e === "size" || e === "modified" || e === "tags" ? e : "none";
 }, vt = () => {
@@ -9362,7 +9362,7 @@ function Ct({ config: e, initialMessages: t }) {
 		Ji,
 		Yi,
 		en.tags
-	]), Zi = (0, _.useMemo)(() => Xi.flatMap((e) => e.entries), [Xi]), { selectedPaths: Qi, setSelectedPaths: $i, selectionAnchor: ea, setSelectionAnchor: B, selectedEntries: V, selected: H, selectEntry: ta } = Ne(Zi, f === "picker", qi), na = (e) => Nr.formats.find((t) => e.mimeType !== null && t.mimes.includes(e.mimeType.toLowerCase())), ra = (e) => !!(e && na(e)?.thumbnail), ia = (e) => !!(e && na(e)?.edit), aa = V.filter((e) => ia(e)), oa = (t) => !!(t && !t.directory && t.url && (e.selectionKind !== "image" || na(t)?.webEmbeddable)), sa = async (e) => {
+	]), Zi = (0, _.useMemo)(() => Xi.flatMap((e) => e.entries), [Xi]), { selectedPaths: Qi, setSelectedPaths: $i, selectionAnchor: ea, setSelectionAnchor: B, selectedEntries: V, selected: H, selectEntry: ta } = Ne(Zi, f === "picker", qi), na = (e) => Nr.formats.find((t) => e.mimeType !== null && t.mimes.includes(e.mimeType.toLowerCase())), ra = (e) => !!(e && (e.mimeType === "image/svg+xml" || na(e)?.thumbnail)), ia = (e) => !!(e && na(e)?.edit), aa = V.filter((e) => ia(e)), oa = (t) => !!(t && !t.directory && t.url && (e.selectionKind !== "image" || t.mimeType === "image/svg+xml" || na(t)?.webEmbeddable)), sa = async (e) => {
 		if (e.directory) return null;
 		let t = await s.shareLink(w, e.path);
 		return {
@@ -9947,7 +9947,7 @@ function Ct({ config: e, initialMessages: t }) {
 			onOpen: (e) => void Ya(e),
 			onOpenAll: () => Mo()
 		})
-	}) : null, Eo = f === "manager" || mo, Do = wn && Eo && V.length > 0, Oo = Do || xo.length > 0 || xn !== null, G = (e, t) => /* @__PURE__ */ (0, S.jsxs)(S.Fragment, { children: [/* @__PURE__ */ (0, S.jsx)(a, { name: e }), /* @__PURE__ */ (0, S.jsx)("span", { children: t })] }), ko = (e, t, n = k) => {
+	}) : null, Eo = f === "manager" || mo, Do = wn && Eo && V.length > 0, Oo = Do || f === "picker" && wn && Eo || xo.length > 0 || xn !== null, G = (e, t) => /* @__PURE__ */ (0, S.jsxs)(S.Fragment, { children: [/* @__PURE__ */ (0, S.jsx)(a, { name: e }), /* @__PURE__ */ (0, S.jsx)("span", { children: t })] }), ko = (e, t, n = k) => {
 		an(null), It([]), Mi(e, t, n, 0, Ct, A, Je, null);
 	}, Ao = async (e, t) => {
 		let n = t.includes("/") ? t.slice(0, t.lastIndexOf("/")) : "";
@@ -10861,7 +10861,7 @@ function Ct({ config: e, initialMessages: t }) {
 											/* @__PURE__ */ (0, S.jsx)("span", {
 												className: "sf-entry-icon",
 												children: n ? /* @__PURE__ */ (0, S.jsx)(c, {
-													src: s.thumbnailUrl(w, e),
+													src: e.mimeType === "image/svg+xml" ? e.url || s.contentUrl(w, e.path) : s.thumbnailUrl(w, e),
 													alt: "",
 													lazy: !0
 												}) : /* @__PURE__ */ (0, S.jsx)(l, {
@@ -11048,9 +11048,9 @@ function Ct({ config: e, initialMessages: t }) {
 					})] })
 				]
 			}),
-			f === "picker" && H && !H.directory && /* @__PURE__ */ (0, S.jsxs)("div", {
-				className: "sf-picker-bar",
-				children: [
+			f === "picker" && /* @__PURE__ */ (0, S.jsx)("div", {
+				className: `sf-picker-bar${H && !H.directory ? "" : " sf-picker-bar-empty"}`,
+				children: H && !H.directory && /* @__PURE__ */ (0, S.jsxs)(S.Fragment, { children: [
 					/* @__PURE__ */ (0, S.jsxs)("div", { children: [/* @__PURE__ */ (0, S.jsx)("strong", { children: H.name }), /* @__PURE__ */ (0, S.jsx)("small", { children: u(H.size) })] }),
 					!oa(H) && /* @__PURE__ */ (0, S.jsx)("span", {
 						role: "status",
@@ -11062,7 +11062,7 @@ function Ct({ config: e, initialMessages: t }) {
 						onClick: () => void ka(),
 						children: C("select")
 					})
-				]
+				] })
 			}),
 			On && /* @__PURE__ */ (0, S.jsx)(_.Suspense, {
 				fallback: /* @__PURE__ */ (0, S.jsx)("div", {
