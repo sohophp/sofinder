@@ -31,6 +31,10 @@ test.beforeEach(async ({ page }) => {
       await route.fulfill({ json: { success: true, data: { apiVersion: "1.0", resources: [{ name: "Files", publicUrl: "/uploads/editor/files", allowedExtensions: ["txt", "png", "heic", "pdf"], maxSize: 1000000, readOnly: false, quotaBytes: 0, usedBytes: 80, maxFileNameLength: 120, maxFolderNameLength: 50, maxFolderDepth: 5, deliveryMode: "public", storageCapabilities: { search: true, sort: true, cursorPagination: false, atomicMove: true, nativeCopy: true, recoverableDelete: true, publicUrl: true } }], plugins: [{ name: "document-preview", version: "1.0.0", capabilities: ["preview.pdf"], previewers: [{ id: "pdf", mimeTypes: ["application/pdf"], extensions: ["pdf"], url: "/sofinder/api/preview/document" }] }], imagePresets: {}, imageCapabilities: { driver: "auto", formats: [{ format: "png", extensions: ["png"], mimes: ["image/png"], processor: "gd", read: true, edit: true, thumbnail: true, webEmbeddable: true }] } } } });
       return;
     }
+    if (url.pathname === "/sofinder/api/share-link") {
+      await route.fulfill({ json: { success: true, data: { url: `/uploads/editor/files/${url.searchParams.get("path")}`, access: "public", qrCode: true } } });
+      return;
+    }
     if (url.pathname === "/sofinder/api/security/status") {
       await route.fulfill({ json: { success: true, data: { malwareScanning: { enabled: false, provider: null, status: "disabled", message: "Malware scanning is not enabled.", counts: { passed: 0, quarantined: 0, failed: 0, pending: 0 }, recent: [] }, documentPreview: { pdfEnabled: true, officeEnabled: true, available: true, binary: "/usr/bin/libreoffice", version: "LibreOffice 25.2", cacheWritable: true, cacheCount: 3, lastSuccessfulAt: 1, configuredMode: "auto", effectiveMode: "inline", queueAvailable: false, counts: { queued: 0, running: 0, ready: 2, failed: 0, expired: 0 } } } } });
       return;
@@ -229,14 +233,7 @@ test("shows trusted Workspace choices only when more than one is available", asy
   await expect(switcher.locator("option")).toHaveCount(2);
 });
 
-test("enables a local QR Code action and keeps file delivery actions together", async ({ page }) => {
-  await page.getByRole("button", { name: "更多操作" }).click();
-  await page.getByRole("menuitem", { name: "设置" }).click();
-  const setting = page.getByRole("checkbox", { name: "文件网址 QR Code" });
-  await expect(setting).not.toBeChecked();
-  await setting.check();
-  await page.getByRole("button", { name: "完成" }).click();
-
+test("shows QR Code by default and keeps file delivery actions together", async ({ page }) => {
   await page.locator(".sf-entry", { hasText: "guide.txt" }).click();
   const actions = page.locator(".sf-detail-actions");
   const download = actions.getByRole("link", { name: "下载" });
@@ -270,16 +267,15 @@ test("keeps optional tag chips inline at the largest interface scale", async ({ 
   expect(chipBox!.width).toBeLessThanOrEqual(260);
 });
 
-test("issues an expiring anonymous URL for a private resource", async ({ page }) => {
+test("uses the provider expiring anonymous URL for a private resource", async ({ page }) => {
   await page.route("**/sofinder/api/config", async route => {
     await route.fulfill({ json: { success: true, data: { apiVersion: "1.0", resources: [{ name: "Files", publicUrl: "", allowedExtensions: ["txt"], maxSize: 1000000, readOnly: false, quotaBytes: 0, usedBytes: 80, maxFileNameLength: 120, maxFolderNameLength: 50, maxFolderDepth: 5, deliveryMode: "proxy", storageCapabilities: { search: true, sort: true, cursorPagination: false, atomicMove: true, nativeCopy: true, recoverableDelete: true, publicUrl: false } }], plugins: [], imagePresets: {}, imageCapabilities: { driver: "", formats: [] }, signedUrls: { enabled: true, defaultTtlSeconds: 300, maxTtlSeconds: 3600 } } } });
   });
-  await page.route("**/sofinder/api/signed-url?*", async route => {
+  await page.route("**/sofinder/api/share-link?*", async route => {
     const requestUrl = new URL(route.request().url());
     expect(requestUrl.searchParams.get("resource")).toBe("Files");
     expect(requestUrl.searchParams.get("path")).toBe("guide.txt");
-    expect(requestUrl.searchParams.get("ttl")).toBe("300");
-    await route.fulfill({ json: { success: true, data: { url: "http://sofinder.test/sofinder/signed/test-token", expiresAt: 1893456000 } } });
+    await route.fulfill({ json: { success: true, data: { url: "http://sofinder.test/sofinder/signed/test-token", expiresAt: 1893456000, access: "public", qrCode: true } } });
   });
 
   await page.setContent(`<!doctype html><html lang="zh-CN"><body><main id="sofinder-root" data-config='${JSON.stringify(config)}'></main></body></html>`);
@@ -2361,7 +2357,7 @@ test("treats non-web image formats as ordinary files and blocks image selection"
   await expect(page.getByText("此图片格式不能直接用于网页内容。")).toBeVisible();
   await heic.click({ button: "right" });
   await expect(page.getByRole("menuitem", { name: "选择" })).toBeDisabled();
-  await expect(page.getByRole("menuitem", { name: "删除" })).toHaveCount(0);
+  await expect(page.getByRole("menuitem", { name: "删除" })).toBeEnabled();
 });
 
 for (const width of [1100, 390]) {

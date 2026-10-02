@@ -8,6 +8,7 @@ use Nyholm\Psr7\Factory\Psr17Factory;
 use Nyholm\Psr7\ServerRequest;
 use Nyholm\Psr7\UploadedFile as PsrUploadedFile;
 use PHPUnit\Framework\TestCase;
+use PHPUnit\Framework\Attributes\DataProvider;
 use SohoPHP\SoFinder\Contract\AuthorizationInterface;
 use SohoPHP\SoFinder\Exception\AccessDeniedException;
 use SohoPHP\SoFinder\FileManager;
@@ -69,6 +70,57 @@ final class SharedQuickUploadActionTest extends TestCase
         self::assertSame('quick-upload', file_get_contents($psrRoot . '/Note.txt'));
     }
 
+    /** @return iterable<string, array{string,int}> */
+    public static function svgUploads(): iterable
+    {
+        yield 'static SVG' => ['<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 24"><rect width="32" height="24" fill="red"/></svg>', 200];
+        yield 'active SVG' => ['<svg xmlns="http://www.w3.org/2000/svg" width="32" height="24"><script>alert(1)</script></svg>', 415];
+    }
+
+    #[DataProvider('svgUploads')]
+    public function testSvgQuickUploadsUseTheSameValidatedPipeline(string $contents, int $status): void
+    {
+        [$controller, , $symfonyRoot] = $this->stack(svg: true);
+        [, $action, $psrRoot] = $this->stack(svg: true);
+        $symfony = null;
+        try {
+            $symfony = $controller(Request::create('/compat/ckeditor4/upload?type=Files&responseType=json', 'POST', files: [
+                'upload' => new UploadedFile($this->incoming($contents), 'art.svg', 'image/svg+xml', UPLOAD_ERR_OK, true),
+            ], server: ['HTTP_X_CSRF_TOKEN' => 'valid', 'HTTP_ORIGIN' => 'https://example.test', 'HTTP_HOST' => 'example.test', 'HTTPS' => 'on']));
+        } catch (\SohoPHP\SoFinder\Exception\SoFinderException $error) {
+            self::assertSame(415, $status);
+            self::assertSame($status, $error->httpStatus);
+            self::assertSame('unsafe_file_content', $error->errorCode);
+        }
+        $factory = new Psr17Factory();
+        $request = (new ServerRequest('POST', 'https://example.test/compat/ckeditor4/upload?type=Files&responseType=json', [
+            'X-CSRF-TOKEN' => 'valid', 'Origin' => 'https://example.test',
+        ]))->withUploadedFiles(['upload' => new PsrUploadedFile($factory->createStreamFromFile($this->incoming($contents)), strlen($contents), UPLOAD_ERR_OK, 'art.svg', 'image/svg+xml')]);
+        $psr = null;
+        try {
+            $psr = (new PsrEndpointHandler($action, $factory, $factory))->handle($request);
+        } catch (\SohoPHP\SoFinder\Exception\SoFinderException $error) {
+            self::assertSame(415, $status);
+            self::assertSame($status, $error->httpStatus);
+            self::assertSame('unsafe_file_content', $error->errorCode);
+        }
+        if ($status === 415) {
+            self::assertNull($symfony);
+            self::assertNull($psr);
+            self::assertFileDoesNotExist($symfonyRoot . '/art.svg');
+            self::assertFileDoesNotExist($psrRoot . '/art.svg');
+            return;
+        }
+        self::assertNotNull($symfony);
+        self::assertNotNull($psr);
+        self::assertSame($status, $symfony->getStatusCode());
+        self::assertSame($status, $psr->getStatusCode());
+        self::assertSame(json_decode((string) $symfony->getContent(), true, 16, JSON_THROW_ON_ERROR), json_decode((string) $psr->getBody(), true, 16, JSON_THROW_ON_ERROR));
+        foreach ([$symfonyRoot, $psrRoot] as $root) {
+            self::assertSame($contents, file_get_contents($root . '/art.svg'));
+        }
+    }
+
     public function testScriptResponseUsesNonceAndCrossOriginIsRejected(): void
     {
         [, $action] = $this->stack();
@@ -92,14 +144,14 @@ final class SharedQuickUploadActionTest extends TestCase
     }
 
     /** @return array{QuickUploadController,QuickUploadAction,string} */
-    private function stack(): array
+    private function stack(bool $svg = false): array
     {
         $root = $this->directory('root');
         $authorization = new class implements AuthorizationInterface {
             public function isAuthenticated(): bool { return true; }
             public function isGranted(string $operation, ResourceType $resource, string $path): bool { return true; }
         };
-        $resource = new ResourceType('Files', $root, '/files', allowedExtensions: ['txt'], allowedMimeTypes: ['text/plain']);
+        $resource = new ResourceType('Files', $root, '/files', allowedExtensions: $svg ? ['svg'] : ['txt'], allowedMimeTypes: $svg ? ['image/svg+xml'] : ['text/plain']);
         $files = new FileManager(new ResourceRegistry([new ResourceStorage($resource, new LocalStorageAdapter($root, '/files'))]), $authorization, new EventDispatcher());
         $csrf = new CallbackCsrfTokenProvider(static fn (): string => 'valid', static fn ($context, string $token): bool => $token === 'valid');
         $action = new QuickUploadAction($files, new CompatibleUploadGuard($authorization, $csrf), new UploadNamePolicy(lowercaseExtensions: true));
