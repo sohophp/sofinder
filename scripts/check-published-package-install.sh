@@ -71,7 +71,7 @@ create_consumer "$symfony_dir" sohophp/published-symfony-install-test
 verify_package sohophp/sofinder-core "$version" https://github.com/sohophp/sofinder-core
 verify_package sohophp/sofinder-http "$version" https://github.com/sohophp/sofinder-http
 verify_package sohophp/sofinder-symfony "$version" https://github.com/sohophp/sofinder-symfony
-"$repository_root/scripts/php-bin.sh" -r 'require "vendor/autoload.php"; $class = new ReflectionClass("SohoPHP\\SoFinder\\SoFinderBundle"); $package = dirname((string) $class->getFileName(), 2); $routes = SohoPHP\SoFinder\Routing\SymfonyRouteCollectionFactory::create(); exit(is_file($package . "/dist/manifest.json") && is_file($package . "/src/Resources/config/routes.php") && class_exists("SohoPHP\\SoFinder\\Symfony\\SymfonyEndpointController") && count($routes) === 52 && str_contains((string) $class->getFileName(), "/vendor/sohophp/sofinder-symfony/src/") ? 0 : 1);'
+"$repository_root/scripts/php-bin.sh" -r 'require "vendor/autoload.php"; $class = new ReflectionClass("SohoPHP\\SoFinder\\SoFinderBundle"); $package = dirname((string) $class->getFileName(), 2); $routes = SohoPHP\SoFinder\Routing\SymfonyRouteCollectionFactory::create(); exit(is_file($package . "/dist/manifest.json") && is_file($package . "/src/Resources/config/routes.php") && class_exists("SohoPHP\\SoFinder\\Symfony\\SymfonyEndpointController") && count($routes) === (version_compare($argv[1], "1.4.0", ">=") ? 53 : 52) && (version_compare($argv[1], "1.4.0", "<") || $routes->get("sofinder_api_share_link")?->getMethods() === ["GET"]) && str_contains((string) $class->getFileName(), "/vendor/sohophp/sofinder-symfony/src/") ? 0 : 1);' "$version"
 audit_locked
 
 meta_dir="$test_root/meta"
