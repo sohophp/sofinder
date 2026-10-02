@@ -169,6 +169,19 @@ jobs:
         working-directory: frontend
       - run: pnpm test:e2e
         working-directory: frontend
+      - name: Capture all current visual baselines for failure review
+        if: failure()
+        run: pnpm exec playwright test --project=chromium --grep 'visual baseline covers' --update-snapshots
+        working-directory: frontend
+      - name: Upload frontend failure evidence
+        if: failure()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: frontend-failure-evidence
+          path: |
+            frontend/test-results/
+            frontend/tests/browser.spec.ts-snapshots/
+          retention-days: 7
 
   package-install-matrix:
     runs-on: ubuntu-latest

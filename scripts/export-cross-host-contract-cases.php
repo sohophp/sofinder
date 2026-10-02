@@ -61,6 +61,7 @@ $queryByEndpoint = [
     'sofinder_api_asset_search' => ['resource' => 'Files', 'query' => '__sofinder_contract_missing__'],
     'sofinder_api_download' => ['resource' => 'Files', 'path' => '__sofinder_contract_missing__.txt'],
     'sofinder_api_content' => ['resource' => 'Files', 'path' => '__sofinder_contract_missing__.txt'],
+    'sofinder_api_share_link' => ['resource' => 'Files', 'path' => '__sofinder_contract_missing__.txt'],
     'sofinder_api_signed_url' => ['resource' => 'Files', 'path' => '__sofinder_contract_missing__.txt'],
     'sofinder_api_checksum' => ['resource' => 'Files', 'path' => '__sofinder_contract_missing__.txt'],
     'sofinder_api_text_preview' => ['resource' => 'Files', 'path' => '__sofinder_contract_missing__.txt'],

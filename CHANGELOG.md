@@ -1,6 +1,6 @@
 # Changelog
 
-## 1.4.0 - 2026-10-02
+## 1.4.0 - 2026-10-03
 
 - Add an optional host trash-purge guard that preserves referenced files,
   including during automatic capacity cleanup. Normalize its configuration

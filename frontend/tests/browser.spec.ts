@@ -2494,6 +2494,8 @@ test("CKEditor picker returns the resolved static asset URL", async ({ page }) =
   await page.route('**/sofinder/api/assets/resolve?*', route => route.fulfill({ json: { success: true, data: { asset: { assetId: '11111111-1111-4111-8111-111111111111', resource: 'Files', path: 'photo.png', name: 'photo.png', url } } } }));
   await page.evaluate(() => {
     Object.defineProperty(window, 'opener', { configurable: true, value: { CKEDITOR: { tools: { callFunction: (id: number, url: string) => Reflect.set(window, 'ckResult', { id, url }) } } } });
+    // Observe both callbacks while keeping this harness page available in Firefox.
+    Object.defineProperty(window, 'close', { configurable: true, value: () => Reflect.set(window, 'pickerClosed', true) });
   });
   await page.setContent(`<html><body><main id="sofinder-root" data-config='${JSON.stringify({ ...config, selectMode: true, ckeditorFunction: 7, uiDefaults: { ...config.uiDefaults, mode: 'picker' } })}'></main></body></html>`);
   await page.addStyleTag({ path: resolve(import.meta.dirname, '../../dist/sofinder.css') });
@@ -2501,4 +2503,5 @@ test("CKEditor picker returns the resolved static asset URL", async ({ page }) =
   await page.locator('.sf-entry', { hasText: 'photo.png' }).click();
   await page.getByRole('button', { name: '选择', exact: true }).click();
   await expect.poll(() => page.evaluate(() => Reflect.get(window, 'ckResult'))).toEqual({ id: 7, url });
+  await expect.poll(() => page.evaluate(() => Reflect.get(window, 'pickerClosed'))).toBe(true);
 });

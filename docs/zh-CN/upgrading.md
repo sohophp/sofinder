@@ -11,6 +11,7 @@ description: 各 SoFinder 预发布版本的兼容性、配置与 adapter 升级
 `trash_purge_guard_service`，指向实现 `TrashPurgeGuardInterface` 的服务，默认 `null`。
 引用保护拒绝的文件在永久删除和容量清理时均保留在回收站。
 
+SVG 上传校验要求 PHP DOM 扩展；缺少时返回 `unsupported_image`。
 SVG 仍须由资源允许其扩展名；上传仅接受静态安全内容，不自动清理已有文件。
 SVG 使用原图预览，不生成位图变体。PDF 预览要求授权，禁止响应缓存并仅允许同源嵌入。
 

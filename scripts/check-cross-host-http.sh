@@ -247,7 +247,7 @@ verify_endpoint_inventory()
             || fail "$host returned an invalid contract response for $endpoint."
         printf '%s\t%s\n' "$endpoint" "$signature" >> "$signatures"
     done < "$inventory"
-    [[ "$(wc -l < "$signatures")" == 51 ]] || fail "$host did not exercise all 51 non-presentation endpoints."
+    [[ "$(wc -l < "$signatures")" == 52 ]] || fail "$host did not exercise all 52 non-presentation endpoints."
 
     if [[ "$host" == symfony ]]; then
         cp "$signatures" "$test_dir/reference-endpoints.signatures"
@@ -310,7 +310,7 @@ stop_host()
 reference=''
 printf '%s' "$upload_payload" > "$test_dir/upload.txt"
 "$php_bin" "$repository_root/scripts/export-cross-host-contract-cases.php" > "$test_dir/endpoint-contract-cases.tsv"
-[[ "$(wc -l < "$test_dir/endpoint-contract-cases.tsv")" == 51 ]] || fail 'Endpoint contract inventory must contain all 51 non-presentation endpoints.'
+[[ "$(wc -l < "$test_dir/endpoint-contract-cases.tsv")" == 52 ]] || fail 'Endpoint contract inventory must contain all 52 non-presentation endpoints.'
 for specification in 'symfony 18100' 'laravel 18101' 'slim 18102' 'mezzio 18103' 'plain 18104'; do
     read -r host port <<< "$specification"
     base_url="http://127.0.0.1:$port"

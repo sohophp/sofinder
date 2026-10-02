@@ -8,7 +8,9 @@ Update the synchronized Composer packages together and deploy the complete rebui
 `TrashPurgeGuardInterface`; its default is `null`. Referenced entries rejected by
 the guard remain in trash, including under capacity pressure.
 
-SVG uploads remain controlled by each resource’s allowed extensions. Only static
+SVG upload inspection requires the PHP DOM extension; without it uploads are
+rejected with `unsupported_image`. SVG remains controlled by each resource’s
+allowed extensions. Only static
 SVG content is accepted; existing unsafe SVG files are not automatically cleaned.
 SVG previews use the original file rather than a raster variant. PDF previews
 require authorization, use `private, no-store`, and allow same-origin framing.
