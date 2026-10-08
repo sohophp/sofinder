@@ -36,6 +36,38 @@ so_finder:
 
 Imagick 只會接收由 Registry 產生的固定 Coder，永遠不執行自動 SVG、PDF、PostScript、URL 或 Pseudo-protocol Dispatch。Memory、Map、Disk、Thread 與 Time Limit 僅套用於各次操作，完成後還原。公開 Edit Capability 前，會透過有界 Round Trip 驗證 Encoder Availability。
 
+## 可設定基礎動作與上傳縮放（未發佈）
+
+圖片解碼、格式支援、方向、動畫處理與縮放由 SoFinder 實作。Host 只設定能力，不必實作圖片演算法。一般 PHP 在工廠設定陣列傳入相同鍵；Symfony 使用範例中的 `so_finder` 外層。
+
+```yaml
+so_finder:
+  image_processing:
+    driver: gd
+    action_pipeline:
+      formats: [jpeg, png, gif, webp, avif, bmp]
+      editable_formats: [jpeg, png, gif, webp, avif, bmp]
+      actions: [crop, rotate, resize]
+      auto_orientation: true
+      animated_editing: reject
+      max_width: 4096
+      max_height: 4096
+      quality: 88
+      resize_quality: 88
+  uploads:
+    image_resize:
+      formats: [jpeg, png, gif, webp, avif, bmp]
+      max_width: 4096
+      max_height: 4096
+      quality: 88
+      other_formats: reject
+```
+`action_pipeline` 與 `image_resize` 預設皆為 `null`，省略時保留現有處理器與上傳行為。可選基礎動作管線使用 GD，也接受 `driver: auto`；與 `imagick` 同時設定會報錯。實際格式支援仍取決於已安裝的編解碼器，此管線不提供 ICO 或 Imagick fallback。`formats` 限定可讀格式，`editable_formats` 必須為其子集；`actions` 只接受 crop、rotate、resize，空清單關閉編輯。瀏覽器探索動作與縮放範圍，伺服器獨立驗證。
+
+`auto_orientation: false` 保留 EXIF 原始座標；`animated_editing: first_frame` 明確允許有損的第一個影格編輯，預設拒絕動畫編輯。處理期間不改原圖，整組基礎動作最後只編碼一次；通常使用 `quality`，包含縮放時使用 `resize_quality`。直接 transform／crop 介面遵守明確的品質參數。
+
+上傳縮放獨立啟用，在一般及分塊上傳的私有隔離區執行，資源尺寸允許原圖時也會執行更嚴格的縮放策略。原圖須通過內容、MIME、大小與像素檢查，結果須再通過資源檢查；上傳 `quality` 控制本次編碼。清單外格式的 `other_formats: reject` 保留尺寸拒絕，明確 `preserve` 則允許超出尺寸上限而保留位元組，內容、MIME、大小及像素檢查仍執行；不會擴大資源副檔名允許清單。尺寸為 1～2,147,483,647 的整數，品質為 1～100，像素限制繼續約束解碼與輸出配置。
+
 ## 壓縮、轉換與浮水印
 
 「壓縮 / 浮水印」圖片工具在使用者工具列中預設關閉，可在「設定」中啟用。它提供品質可調的重新壓縮、Runtime 支援的 JPEG/PNG/WebP/AVIF 轉換、文字浮水印與圖片浮水印。單批最多處理 100 張已選圖片，並為每項回傳獨立結果。

@@ -270,6 +270,8 @@ Action 为 `crop`、`resize`、`rotate`、`preset`、`optimize`、`watermarkText
 
 完整 Code／Status／Category 目录是 [error-codes.json](/error-codes.json)，CI 会自动与服务器 Literal Exception 对照。
 
+可选图片管线在缺少动画明确同意时返回 `animated_resize_unverified`（415）；处理器无法执行所配置的编辑／缩放时返回 `image_format_unsupported` 或 `image_format_unverified`（415）；源与目标工作文件相同时返回 `invalid_image_input`（422）。私有暂存失败使用 `image_unavailable`（503）。`image_too_large` 可能是上传限制的 413 或处理器像素限制的 415；界面能力声明不能替代这些服务端检查。
+
 | Status | 代表 Code | 客户端处理 |
 | --- | --- | --- |
 | 400 | `invalid_json`、`invalid_path`、`invalid_type` | 修正语法或参数。 |

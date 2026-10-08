@@ -70,7 +70,7 @@ so_finder:
       max_archive_items: 1000
       max_archive_bytes: 536870912
       allowed_extensions: [avif, bmp, gif, ico, jpeg, jpg, png, webp]
-      allowed_mime_types: [image/avif, image/bmp, image/gif, image/jpeg, image/png, image/vnd.microsoft.icon, image/x-bmp, image/x-icon, image/webp]
+      allowed_mime_types: [image/avif, image/bmp, image/gif, image/jpeg, image/png, image/vnd.microsoft.icon, image/x-bmp, image/x-ms-bmp, image/x-icon, image/webp]
       roles: [ROLE_EDITOR]
       operation_roles:
         delete: [ROLE_FILE_ADMIN]
@@ -177,7 +177,9 @@ folder level zero, so a `max_folder_depth` of 5 allows files inside the fifth
 folder level but does not allow another child folder. Copying,
 moving, and renaming a folder validates its complete descendant tree, not only
 the selected folder. Supported configuration ranges are 1–255 characters for
-names and 1–100 folder levels.
+names and 1–2,147,483,647 folder levels. The default remains five levels. Raising the
+configured depth does not raise storage path, authorization or recursive
+operation limits.
 
 Mutating API requests require the `X-CSRF-TOKEN` header. The browser route
 injects a token into the React application. CKEditor 4 compatibility uploads

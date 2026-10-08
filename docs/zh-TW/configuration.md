@@ -246,6 +246,9 @@ so_finder:
 
 `image_processing.driver` 可設為 `auto`、`gd` 或 `imagick`。全域界線涵蓋尺寸、像素、Frame、Memory、Map、Disk、Thread 及 Timeout；個別資源可設定更嚴格的圖片寬度、高度及像素限制。Runtime Codec 需求請參考[圖片格式](/zh-TW/image-formats)。
 
+可選 `image_processing.action_pipeline` 與 `uploads.image_resize` 預設皆為 `null`；基礎動作、格式、EXIF、動畫及私有上傳區縮放由核心依參數執行，詳見[圖片格式](/zh-TW/image-formats)。處理器輸出限制持續生效，上傳縮放尺寸超過 4096 時須設定支援對應上限的處理器。
+
+
 Preset 是具名稱及界線的輸出尺寸：
 
 ```yaml
@@ -279,6 +282,10 @@ so_finder:
 
 `metadata.update` 是獨立的寫入操作。若資產替代文字、標題及共享標籤需要比檔案讀取更嚴格的限制，可在 `operation_roles` 或 `path_acl` 中分別設定；唯讀資源一律拒絕此操作。
 內建資產目錄亦實作 `LocalizedAssetMetadataCatalogInterface`，透過 `altTranslations` 儲存最多 20 個規範化語言標籤。第三方目錄可選擇實作此新增介面，無需修改既有 `AssetCatalogInterface`。
+
+fileinfo 可能將 BMP 識別為 `image/x-ms-bmp`。明確的 `allowed_mime_types` 清單須包含實際偵測的別名；Registry 將此別名識別為 BMP，不改變 MIME 白名單的比對語意。
+
+資源 `max_image_width` 與 `max_image_height` 明確取值支援 1–2,147,483,647（未發佈範圍擴充），預設均保持 12000。提高尺寸不會提高 `max_image_pixels` 或圖片處理器的輸出限制。
 
 ## 檢查有效設定
 

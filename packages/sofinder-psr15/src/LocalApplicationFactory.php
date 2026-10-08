@@ -9,6 +9,8 @@ use Psr\Http\Message\StreamFactoryInterface;
 use SohoPHP\SoFinder\Configuration\ConfigurationNormalizer;
 use SohoPHP\SoFinder\Contract\MaintenanceDispatcherInterface;
 use SohoPHP\SoFinder\Contract\DocumentPreviewDispatcherInterface;
+use SohoPHP\SoFinder\Contract\FileInspectorDecoratorInterface;
+use SohoPHP\SoFinder\Contract\ImageProcessorInterface;
 use SohoPHP\SoFinder\Contract\StorageAdapterFactoryInterface;
 use SohoPHP\SoFinder\Framework\ScopedRequestContextProvider;
 use SohoPHP\SoFinder\Http\EndpointDispatcher;
@@ -35,6 +37,8 @@ final class LocalApplicationFactory
         private readonly iterable $storageFactories = [],
         private readonly ?MaintenanceDispatcherInterface $maintenanceDispatcher = null,
         private readonly ?DocumentPreviewDispatcherInterface $documentPreviewDispatcher = null,
+        private readonly ?FileInspectorDecoratorInterface $fileInspectorDecorator = null,
+        private readonly ?ImageProcessorInterface $imageProcessor = null,
     ) {
         $this->contexts = new ScopedRequestContextProvider();
     }
@@ -92,6 +96,8 @@ final class LocalApplicationFactory
             $this->storageFactories,
             $this->maintenanceDispatcher,
             $this->documentPreviewDispatcher,
+            $this->fileInspectorDecorator,
+            $this->imageProcessor,
         );
     }
 

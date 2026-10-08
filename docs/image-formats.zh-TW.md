@@ -45,3 +45,5 @@ bin/console sofinder:image:capabilities
 ```
 
 若設定中的已註冊圖片 extension 沒有有效 decoder，命令會以失敗狀態退出；部署自動化可使用 `--json`。
+
+新增可設定的基礎圖片動作與上傳縮放，能力由 SoFinder 實作、Host 傳入參數。兩項政策預設關閉；完整選項與安全邊界見[圖片格式支援](zh-TW/image-formats.md)。

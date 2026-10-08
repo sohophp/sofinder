@@ -43,6 +43,72 @@ final class Psr15LocalRuntimeTest extends TestCase
         rmdir($this->directory);
     }
 
+    public function testOptionalHostInspectorCanDenyAnUploadWithoutChangingTheDefault(): void
+    {
+        $decorator = new class implements \SohoPHP\SoFinder\Contract\FileInspectorDecoratorInterface {
+            public function decorate(\SohoPHP\SoFinder\Contract\FileInspectorInterface $inspector, \SohoPHP\SoFinder\Contract\ImageProcessorInterface $images): \SohoPHP\SoFinder\Contract\FileInspectorInterface
+            {
+                return new class implements \SohoPHP\SoFinder\Contract\FileInspectorInterface {
+                    public function inspect(string $path, string $fileName, ResourceType $resource): \SohoPHP\SoFinder\Value\InspectedFile
+                    {
+                        throw new \SohoPHP\SoFinder\Exception\SoFinderException('Host upload policy denied this file.', 'host_upload_denied', 415);
+                    }
+                };
+            }
+        };
+        $psr17 = new Psr17Factory();
+        $fallback = new class($psr17) implements RequestHandlerInterface {
+            public function __construct(private Psr17Factory $responses) {}
+            public function handle(ServerRequestInterface $request): ResponseInterface { return $this->responses->createResponse(404); }
+        };
+        foreach ([true, false] as $custom) {
+            $application = (new LocalApplicationFactory($psr17, $psr17, $this->services(), [],
+                $this->directory . '/state', $this->directory . '/files', fileInspectorDecorator: $custom ? $decorator : null))->create();
+            $upload = new \Nyholm\Psr7\UploadedFile(\Nyholm\Psr7\Stream::create('plain text'), 10, UPLOAD_ERR_OK, 'file.txt', 'text/plain');
+            $request = (new ServerRequest('POST', '/sofinder/api/uploads', ['X-CSRF-TOKEN' => 'csrf']))
+                ->withParsedBody(['resource' => 'Files'])->withUploadedFiles(['upload' => $upload]);
+            $response = $application->middleware()->process($request, $fallback);
+            self::assertSame($custom ? 415 : 201, $response->getStatusCode(), (string) $response->getBody());
+            if ($custom) {
+                self::assertSame('host_upload_denied', json_decode((string) $response->getBody(), true)['error']['code']);
+                self::assertFileDoesNotExist($this->directory . '/files/file.txt');
+            } else {
+                self::assertSame('plain text', file_get_contents($this->directory . '/files/file.txt'));
+            }
+        }
+    }
+
+    public function testInjectedImageProcessorReachesInspectorAndRetainsCsrfGuard(): void
+    {
+        $processor = new \SohoPHP\SoFinder\Image\HybridImageProcessor(new \SohoPHP\SoFinder\Image\ImageFormatRegistry(),
+            new \SohoPHP\SoFinder\Image\GdImageProcessor(), new \SohoPHP\SoFinder\Image\ImagickImageProcessor(), 'gd');
+        $decorator = new class implements \SohoPHP\SoFinder\Contract\FileInspectorDecoratorInterface {
+            public ?\SohoPHP\SoFinder\Contract\ImageProcessorInterface $observed = null;
+            public function decorate(\SohoPHP\SoFinder\Contract\FileInspectorInterface $inspector, \SohoPHP\SoFinder\Contract\ImageProcessorInterface $images): \SohoPHP\SoFinder\Contract\FileInspectorInterface
+            {
+                $this->observed = $images;
+                return $inspector;
+            }
+        };
+        $psr17 = new Psr17Factory();
+        $application = (new LocalApplicationFactory($psr17, $psr17, $this->services(), [],
+            $this->directory . '/state', $this->directory . '/files', fileInspectorDecorator: $decorator, imageProcessor: $processor))->create();
+        self::assertSame($processor, $decorator->observed);
+        $fallback = new class($psr17) implements RequestHandlerInterface {
+            public function __construct(private Psr17Factory $responses) {}
+            public function handle(ServerRequestInterface $request): ResponseInterface { return $this->responses->createResponse(404); }
+        };
+        foreach ([false, true] as $csrf) {
+            $upload = new \Nyholm\Psr7\UploadedFile(\Nyholm\Psr7\Stream::create('plain text'), 10, UPLOAD_ERR_OK, 'injected.txt', 'text/plain');
+            $request = (new ServerRequest('POST', '/sofinder/api/uploads', $csrf ? ['X-CSRF-TOKEN' => 'csrf'] : []))
+                ->withParsedBody(['resource' => 'Files'])->withUploadedFiles(['upload' => $upload]);
+            $response = $application->middleware()->process($request, $fallback);
+            self::assertSame($csrf ? 201 : 403, $response->getStatusCode(), (string) $response->getBody());
+            if (!$csrf) self::assertFileDoesNotExist($this->directory . '/files/injected.txt');
+            else self::assertSame('plain text', file_get_contents($this->directory . '/files/injected.txt'));
+        }
+    }
+
     public function testFactoryBuildsTheCompleteCatalogAndExecutesMutations(): void
     {
         $psr17 = new Psr17Factory();

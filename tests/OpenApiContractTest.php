@@ -102,7 +102,8 @@ final class OpenApiContractTest extends TestCase
             foreach ($iterator as $file) {
                 if (!$file instanceof \SplFileInfo || !$file->isFile() || $file->getExtension() !== 'php') continue;
                 $source = (string) file_get_contents($file->getPathname());
-                preg_match_all('/(?:new\s+SoFinderException|parent::__construct)\((?:(?!\);).)*?[\'\"]([a-z][a-z0-9_]+)[\'\"]\s*,\s*(\d{3})/s', $source, $matches, PREG_SET_ORDER);
+                // Image processors also forward literal code/status pairs through fail().
+                preg_match_all('/(?:new\s+SoFinderException|parent::__construct|\$this->fail)\((?:(?!\);).)*?[\'\"]([a-z][a-z0-9_]+)[\'\"]\s*,\s*(\d{3})/s', $source, $matches, PREG_SET_ORDER);
                 foreach ($matches as $match) $actual[$match[1]][(int) $match[2]] = true;
             }
         }

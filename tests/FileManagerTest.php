@@ -151,6 +151,18 @@ final class FileManagerTest extends TestCase
         }
     }
 
+    public function testCreatesFolderBeyondOneHundredLevelsWithAnExplicitLimit(): void
+    {
+        $parent = implode('/', array_fill(0, 100, 'd'));
+        mkdir($this->directory . '/' . $parent, 0775, true);
+        $manager = $this->manager(true, maxFolderDepth: 101);
+        $manager->createFolder('Files', $parent, 'leaf');
+        self::assertDirectoryExists($this->directory . '/' . $parent . '/leaf');
+
+        $this->expectException(SoFinderException::class);
+        $manager->createFolder('Files', $parent . '/leaf', 'blocked');
+    }
+
     public function testTransferChecksTheDepthOfTheWholeFolderTree(): void
     {
         mkdir($this->directory . '/tree/child', 0775, true);

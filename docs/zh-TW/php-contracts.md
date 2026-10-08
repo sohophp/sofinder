@@ -23,6 +23,10 @@ Storage Interface、選用的本機 Capability 及 Factory Tag 記錄於[儲存 
 
 Remote Adapter 也可實作 `StorageAuditProviderInterface`，向安全稽核回傳不含機密的 `warning` 或 `critical` Finding。
 
+選用 `ChunkUploadSessionGuardInterface::withSessionLock($id, $operation)` 協調一次完整的分塊工作階段操作。實作必須支援 Callback 內的儲存呼叫重入、回傳其結果，並在例外時釋放鎖。通用 HTTP 動作用它保護組裝、發佈與清理，以及取消時的狀態檢查和清理。既有自訂儲存繼續相容；沒有實作此契約的儲存不會自動獲得端到端發佈鎖。
+
+本機 `ChunkUploadManager` 提供此 Guard：寫入、狀態、刪除與過期清理使用位於可刪除工作階段目錄之外的穩定私有鎖，每個身分最多 64 個鎖檔。清理跳過忙碌工作階段；雜湊桶碰撞的工作階段循序執行。這是本機檔案系統保證，共享儲存未提供新 Guard，不代表分散式租約。取消不回復已發佈目標，上傳識別碼保留可重用語意。升級時需處理進行中的上傳並統一執行版本；尚未驗證舊、新程序混用。
+
 可選的 `AssetCatalogInterface` 依 Workspace／資源／路徑解析不透明資產 ID，並維護上傳、移動、刪除與還原的身分變化；JSON 實作用於單節點，共享實作基於 `AtomicStateStoreInterface`。`WorkspaceResolverInterface` 必須從框架無關且可信的 `RequestContext` 回傳不可變 `WorkspaceContext`，不得直接接收 Symfony／Laravel Request 或信任瀏覽器查詢參數；`CsrfTokenProviderInterface` 同樣由 Host Bridge 實作。
 
 `EntryUrlContextProviderInterface` 可為資源設定的 `entry_url` Route Template 加入宿主擁有的 Scalar Value。Autoconfiguration 會自動加入 `sofinder.entry_url_context_provider` Tag。Provider 對無關資源應回傳空陣列，且不得在 Route Parameter 中暴露機密。

@@ -2505,3 +2505,70 @@ test("CKEditor picker returns the resolved static asset URL", async ({ page }) =
   await expect.poll(() => page.evaluate(() => Reflect.get(window, 'ckResult'))).toEqual({ id: 7, url });
   await expect.poll(() => page.evaluate(() => Reflect.get(window, 'pickerClosed'))).toBe(true);
 });
+
+
+for (const declaration of [
+  { name: "existing", actions: undefined, tools: ["裁剪", "旋转工具", "缩放", "预设尺寸", "压缩与格式转换", "水印"] },
+  { name: "basic", actions: ["crop", "rotate", "resize"], tools: ["裁剪", "旋转工具", "缩放"] },
+  { name: "empty", actions: [], tools: [] },
+  { name: "text watermark", actions: ["watermarkText"], tools: ["水印"] },
+  { name: "wide resize", actions: ["crop", "rotate", "resize"], tools: ["裁剪", "旋转工具", "缩放"] },
+]) {
+  test(`honors host image actions: ${declaration.name}`, async ({ page }) => {
+    await page.route("**/sofinder/api/config", route => route.fulfill({ json: { success: true, data: {
+      apiVersion: "1.0", resources: [{ name: "Files", publicUrl: "/uploads/editor/files", allowedExtensions: ["png"], maxSize: 1000000, readOnly: false }],
+      plugins: [], imagePresets: { thumb: { width: 100, height: 100, quality: 88 } },
+      imageCapabilities: { driver: "gd", actions: declaration.actions, resizeLimits: declaration.name === "wide resize" ? { width: 113600, height: 12000 } : undefined, formats: [{ format: "png", mimes: ["image/png"], extensions: ["png"], edit: true, read: true, thumbnail: true, webEmbeddable: true }] },
+    } } }));
+    await page.reload();
+    await page.setContent(`<!doctype html><main id="sofinder-root" data-config='${JSON.stringify({ ...config, uiDefaults: { ...config.uiDefaults, fullTools: true } })}'></main>`);
+    await page.addStyleTag({ path: resolve(import.meta.dirname, "../../dist/sofinder.css") });
+    await page.addScriptTag({ path: resolve(import.meta.dirname, "../../dist/sofinder.js"), type: "module" });
+    await page.locator(".sf-entry", { hasText: "photo.png" }).click();
+    const edit = page.getByRole("button", { name: "图片编辑", exact: true });
+    if (declaration.tools.length === 0) {
+      await expect(edit).toHaveCount(0);
+    } else {
+      await edit.click();
+      const dialog = page.getByRole("dialog", { name: "图片编辑: photo.png" });
+      await expect(dialog.locator(".sf-editor-tools button")).toHaveText(declaration.tools);
+      if (declaration.name === "wide resize" || declaration.name === "existing") {
+        await dialog.getByRole("button", { name: "缩放", exact: true }).click();
+        await dialog.getByRole("checkbox", { name: "应用尺寸调整" }).check();
+        const width = dialog.getByRole("spinbutton", { name: "宽度", exact: true });
+        const height = dialog.getByRole("spinbutton", { name: "高度", exact: true });
+        const maximumWidth = declaration.name === "wide resize" ? 113600 : 4096;
+        const maximumHeight = declaration.name === "wide resize" ? 12000 : 4096;
+        await expect(width).toHaveAttribute("max", String(maximumWidth));
+        await expect(height).toHaveAttribute("max", String(maximumHeight));
+        await width.fill(String(maximumWidth + 1));
+        await height.fill("1");
+        await expect(dialog.getByRole("button", { name: "保存", exact: true })).toBeDisabled();
+        await width.fill("6000");
+        if (declaration.name === "wide resize") {
+          await expect(dialog.getByRole("button", { name: "保存", exact: true })).toBeEnabled();
+          await height.fill(String(maximumHeight + 1));
+          await expect(dialog.getByRole("button", { name: "保存", exact: true })).toBeDisabled();
+          await height.fill("1");
+          const submission = page.waitForRequest(request => new URL(request.url()).pathname === "/sofinder/api/images/edit" && request.method() === "PATCH");
+          await dialog.getByRole("button", { name: "保存", exact: true }).click();
+          expect((await submission).postDataJSON().actions).toEqual([{ type: "resize", width: 6000, height: 1, quality: 95 }]);
+          await expect(dialog).not.toBeVisible();
+        } else {
+          await expect(dialog.getByRole("button", { name: "保存", exact: true })).toBeDisabled();
+        }
+      }
+      if (declaration.name === "text watermark") {
+        const options = dialog.getByRole("combobox", { name: "水印类型" }).locator("option");
+        await expect(options).toHaveText(["不添加水印", "文字水印"]);
+      }
+      if (declaration.name !== "wide resize") await dialog.getByRole("button", { name: "取消", exact: true }).click();
+    }
+    await page.getByRole("button", { name: "更多操作", exact: true }).click();
+    await page.getByRole("menuitem", { name: "设置", exact: true }).click();
+    const settings = page.getByRole("dialog", { name: "设置", exact: true });
+    await expect(settings.getByRole("checkbox", { name: "裁剪", exact: true })).toHaveCount(declaration.actions === undefined || declaration.actions.includes("crop") ? 1 : 0);
+    await expect(settings.getByRole("checkbox", { name: "预设尺寸", exact: true })).toHaveCount(declaration.actions === undefined ? 1 : 0);
+    await expect(settings.getByRole("checkbox", { name: "压缩 / 水印", exact: true })).toHaveCount(declaration.actions === undefined || declaration.name === "text watermark" ? 1 : 0);
+  });
+}

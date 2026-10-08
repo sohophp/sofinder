@@ -89,6 +89,64 @@ final class ImageManagerTest extends TestCase
         self::assertSame([100, 95], $processor->qualities);
     }
 
+    public function testHostPipelineRequiresExplicitAnimationConsentAndPreservesOriginal(): void
+    {
+        $before = hash_file('sha256', $this->directory . '/source.png');
+        foreach ([false, true] as $consent) {
+            $processor = $this->createMock(\SohoPHP\SoFinder\Contract\ImageActionProcessorInterface::class);
+            $processor->method('supports')->willReturn(true);
+            $processor->method('isAnimated')->willReturn(true);
+            $processor->method('allowsAnimatedEditing')->willReturn($consent);
+            $processor->method('dimensions')->willReturnCallback(static fn (string $source): array => (new GdImageProcessor())->dimensions($source));
+            $processor->expects($consent ? self::once() : self::never())->method('applyActions')
+                ->willReturnCallback(static function (string $source, string $destination, array $actions): void {
+                    (new GdImageProcessor())->transform($source, $destination, 0, 100, 50);
+                });
+            $authorization = new class implements AuthorizationInterface {
+                public function isAuthenticated(): bool { return true; }
+                public function isGranted(string $operation, ResourceType $resource, string $path): bool { return true; }
+            };
+            $type = new ResourceType('Images', $this->directory, '/images', allowedExtensions: ['png'], allowedMimeTypes: ['image/png']);
+            $files = new FileManager(new ResourceRegistry([new ResourceStorage($type, new LocalStorageAdapter($this->directory, '/images'))]), $authorization, new EventDispatcher());
+            $images = new ImageManager($files, $processor, $this->directory . '/cache');
+            try {
+                $result = $images->applyActions('Images', 'source.png', [['type' => 'resize', 'width' => 100, 'height' => 50]], ['mode' => 'copy', 'name' => 'pipeline.png']);
+                self::assertTrue($consent, 'Animation without explicit consent reached the host pipeline.');
+                self::assertSame(['width' => 100, 'height' => 50, 'size' => $result['entry']->size], $result['result']);
+            } catch (SoFinderException $exception) {
+                self::assertFalse($consent);
+                self::assertSame('animated_image_edit_unsupported', $exception->errorCode);
+                self::assertFileDoesNotExist($this->directory . '/pipeline.png');
+            }
+            self::assertSame($before, hash_file('sha256', $this->directory . '/source.png'));
+        }
+    }
+
+    public function testHostPipelineCannotPublishInvalidImageOutput(): void
+    {
+        $processor = $this->createMock(\SohoPHP\SoFinder\Contract\ImageActionProcessorInterface::class);
+        $processor->method('supports')->willReturn(true);
+        $processor->method('isAnimated')->willReturn(false);
+        $processor->method('dimensions')->willReturn(['width' => 400, 'height' => 200]);
+        $processor->expects(self::once())->method('applyActions')->willReturnCallback(static function (string $source, string $destination, array $actions): void {
+            file_put_contents($destination, '<?php invalid image output');
+        });
+        $authorization = new class implements AuthorizationInterface {
+            public function isAuthenticated(): bool { return true; }
+            public function isGranted(string $operation, ResourceType $resource, string $path): bool { return true; }
+        };
+        $type = new ResourceType('Images', $this->directory, '/images', allowedExtensions: ['png'], allowedMimeTypes: ['image/png']);
+        $files = new FileManager(new ResourceRegistry([new ResourceStorage($type, new LocalStorageAdapter($this->directory, '/images'))]), $authorization, new EventDispatcher());
+        $before = hash_file('sha256', $this->directory . '/source.png');
+        try {
+            (new ImageManager($files, $processor, $this->directory . '/cache'))->applyActions('Images', 'source.png', [['type' => 'resize', 'width' => 100, 'height' => 50]], ['mode' => 'overwrite']);
+            self::fail('The pipeline published invalid image content.');
+        } catch (SoFinderException $exception) {
+            self::assertSame('unsupported_image_output_format', $exception->errorCode);
+        }
+        self::assertSame($before, hash_file('sha256', $this->directory . '/source.png'));
+    }
+
     public function testConfiguredPresetCreatesDerivedImage(): void
     {
         $result = $this->manager()->applyActions('Images', 'source.png', [['type' => 'preset', 'name' => 'thumb']]);
@@ -239,7 +297,8 @@ final class ImageManagerTest extends TestCase
     {
         $gif = base64_decode('R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7', true);
         self::assertIsString($gif);
-        file_put_contents($this->directory . '/animated.gif', $gif . "\x00\x21\xF9\x04\x00\x21\xF9\x04");
+        $animated = substr($gif, 0, 19) . str_repeat(substr($gif, 19, -1), 2) . "\x3b";
+        file_put_contents($this->directory . '/animated.gif', $animated);
 
         try {
             $this->manager()->applyActions('Images', 'animated.gif', [['type' => 'resize', 'width' => 1, 'height' => 1]]);
@@ -247,6 +306,7 @@ final class ImageManagerTest extends TestCase
         } catch (SoFinderException $exception) {
             self::assertSame('animated_image_edit_unsupported', $exception->errorCode);
         }
+        self::assertSame($animated, file_get_contents($this->directory . '/animated.gif'));
     }
 
     public function testNonWebFileCannotEnterImageEndpoints(): void

@@ -269,6 +269,8 @@ Client 確認最近路徑已在 SoFinder 外部消失後，可傳送 `action: "f
 
 完整 Code／Status／Category 目錄是 [error-codes.json](/error-codes.json)，CI 會自動與伺服器 Literal Exception 比對。
 
+選用圖片管線在缺少動畫明確同意時回傳 `animated_resize_unverified`（415）；處理器無法執行所設定的編輯／縮放時回傳 `image_format_unsupported` 或 `image_format_unverified`（415）；來源與目標工作檔案相同時回傳 `invalid_image_input`（422）。私有暫存失敗使用 `image_unavailable`（503）。`image_too_large` 可能是上傳限制的 413 或處理器像素限制的 415；介面能力宣告不能取代這些伺服器端檢查。
+
 | Status | 代表 Code | 客戶端處理 |
 | --- | --- | --- |
 | 400 | `invalid_json`、`invalid_path`、`invalid_type` | 修正語法或引數。 |

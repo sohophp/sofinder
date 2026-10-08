@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace SohoPHP\SoFinder\DependencyInjection;
 
+use SohoPHP\SoFinder\Value\ResourceType;
 use Symfony\Component\Config\Definition\Builder\TreeBuilder;
 use Symfony\Component\Config\Definition\ConfigurationInterface;
 
@@ -190,6 +191,7 @@ final class Configuration implements ConfigurationInterface
                 ->arrayNode('uploads')
                     ->addDefaultsIfNotSet()
                     ->children()
+                        ->variableNode('image_resize')->defaultNull()->end()
                         ->arrayNode('naming')
                             ->addDefaultsIfNotSet()
                             ->children()
@@ -234,6 +236,7 @@ final class Configuration implements ConfigurationInterface
                 ->arrayNode('image_processing')
                     ->addDefaultsIfNotSet()
                     ->children()
+                        ->variableNode('action_pipeline')->defaultNull()->end()
                         ->enumNode('driver')->values(['auto', 'gd', 'imagick'])->defaultValue('auto')->end()
                         ->integerNode('max_width')->min(1)->max(100000)->defaultValue(12000)->end()
                         ->integerNode('max_height')->min(1)->max(100000)->defaultValue(12000)->end()
@@ -393,14 +396,14 @@ final class Configuration implements ConfigurationInterface
                             ->integerNode('quota')->min(0)->defaultValue(0)->end()
                             ->integerNode('max_file_name_length')->min(1)->max(255)->defaultValue(120)->end()
                             ->integerNode('max_folder_name_length')->min(1)->max(255)->defaultValue(50)->end()
-                            ->integerNode('max_folder_depth')->min(1)->max(100)->defaultValue(5)->end()
+                            ->integerNode('max_folder_depth')->min(1)->max(ResourceType::MAX_FOLDER_DEPTH)->defaultValue(5)->end()
                             ->integerNode('max_image_pixels')->min(1)->defaultValue(50000000)->end()
                             ->integerNode('max_batch_items')->min(1)->max(1000)->defaultValue(100)->end()
                             ->integerNode('max_recursive_items')->min(1)->max(100000)->defaultValue(10000)->end()
                             ->integerNode('max_archive_items')->min(1)->max(100000)->defaultValue(1000)->end()
                             ->integerNode('max_archive_bytes')->min(1)->defaultValue(536870912)->end()
-                            ->integerNode('max_image_width')->min(1)->max(100000)->defaultValue(12000)->end()
-                            ->integerNode('max_image_height')->min(1)->max(100000)->defaultValue(12000)->end()
+                            ->integerNode('max_image_width')->min(1)->max(ResourceType::MAX_IMAGE_DIMENSION)->defaultValue(12000)->end()
+                            ->integerNode('max_image_height')->min(1)->max(ResourceType::MAX_IMAGE_DIMENSION)->defaultValue(12000)->end()
                             ->enumNode('animated_image_policy')->values(['preserve', 'reject'])->defaultValue('preserve')->end()
                             ->arrayNode('roles')->scalarPrototype()->end()->defaultValue([])->end()
                             ->arrayNode('operation_roles')

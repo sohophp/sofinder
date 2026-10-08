@@ -473,11 +473,27 @@ final class SoFinderExtension extends Extension
                 new Reference(ImagickImageProcessor::class),
                 $imageDriver,
             ]));
-        $container->setAlias(ImageProcessorInterface::class, new Alias(HybridImageProcessor::class));
-        $container->setAlias(ImageCapabilityProviderInterface::class, new Alias(HybridImageProcessor::class));
+        $processorClass = HybridImageProcessor::class;
+        if ($imageConfig['action_pipeline'] !== null) {
+            $processorClass = \SohoPHP\SoFinder\Image\GdActionImageProcessor::class;
+            $container->setDefinition(\SohoPHP\SoFinder\Image\ImageActionOptions::class,
+                new Definition(\SohoPHP\SoFinder\Image\ImageActionOptions::class, [$imageConfig['action_pipeline']]));
+            $container->setDefinition($processorClass, new Definition($processorClass,
+                [new Reference(\SohoPHP\SoFinder\Image\ImageActionOptions::class), $imageConfig['max_single_frame_pixels']]));
+        }
+        $container->setAlias(ImageProcessorInterface::class, new Alias($processorClass));
+        $container->setAlias(ImageCapabilityProviderInterface::class, new Alias($processorClass));
         $container->setDefinition(DefaultFileInspector::class, (new Definition(DefaultFileInspector::class))
             ->setArguments([new Reference(ImageProcessorInterface::class), new Reference(ImageFormatRegistry::class)]));
         $container->setAlias(FileInspectorInterface::class, new Alias(DefaultFileInspector::class));
+        if ($config['uploads']['image_resize'] !== null) {
+            $container->setDefinition(\SohoPHP\SoFinder\Image\ImageUploadResizeOptions::class,
+                new Definition(\SohoPHP\SoFinder\Image\ImageUploadResizeOptions::class, [$config['uploads']['image_resize']]));
+            $container->setDefinition(\SohoPHP\SoFinder\Security\ResizingFileInspector::class,
+                new Definition(\SohoPHP\SoFinder\Security\ResizingFileInspector::class,
+                    [new Reference(DefaultFileInspector::class), new Reference(ImageProcessorInterface::class), new Reference(\SohoPHP\SoFinder\Image\ImageUploadResizeOptions::class)]));
+            $container->setAlias(FileInspectorInterface::class, new Alias(\SohoPHP\SoFinder\Security\ResizingFileInspector::class));
+        }
         $container->setDefinition(SymfonyEntryUrlGenerator::class, (new Definition(SymfonyEntryUrlGenerator::class))
             ->setArgument('$router', new Reference(RouterInterface::class))
             ->setArgument('$contextProviders', new TaggedIteratorArgument('sofinder.entry_url_context_provider')));

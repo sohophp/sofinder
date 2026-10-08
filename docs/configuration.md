@@ -320,6 +320,9 @@ Defaults are deliberately stricter for uploads, image mutations and archives tha
 
 `image_processing.driver` accepts `auto`, `gd` or `imagick`. Global bounds cover dimensions, pixels, frames, memory, map, disk, threads and timeout. A resource can impose tighter image width, height and pixel limits. See [image formats](/image-formats) for runtime codec requirements.
 
+Optional `image_processing.action_pipeline` and `uploads.image_resize` policies default to `null`. Configure built-in basic actions, supported formats, EXIF, animation and quarantine resizing as described in [image formats](/image-formats). Processor output limits still apply; upload resize dimensions above 4096 require a processor configured to accept them.
+
+
 Presets are named bounded output sizes:
 
 ```yaml
@@ -355,6 +358,10 @@ Resources also support limits for Unicode file and folder name length, folder de
 `operation_roles` or `path_acl` when asset alt/title/tag editing should be more
 restricted than file reading; read-only resources always deny it.
 The built-in catalogs also implement `LocalizedAssetMetadataCatalogInterface`, which stores up to 20 normalized language tags in `altTranslations`. Third-party catalogs can opt in through that additive interface without changing `AssetCatalogInterface`.
+
+BMP may be detected as `image/x-ms-bmp` by fileinfo. An explicit `allowed_mime_types` list must include the detected alias; the registry recognizes it as BMP without changing MIME allowlist semantics.
+
+Explicit resource `max_image_width` and `max_image_height` accept 1–2,147,483,647 (unreleased range extension); both defaults remain 12000. Raising these dimensions does not raise `max_image_pixels` or the image processor output limit.
 
 ## Inspect effective configuration
 

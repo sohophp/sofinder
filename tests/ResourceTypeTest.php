@@ -29,6 +29,24 @@ final class ResourceTypeTest extends TestCase
         self::assertSame(5, $this->resource->maxFolderDepth);
     }
 
+    public function testExplicitDeepFolderLimitIsEnforcedBeyondOneHundredLevels(): void
+    {
+        $resource = new ResourceType('Files', '/tmp/files', '/files', maxFolderDepth: 101);
+        $path = implode('/', array_fill(0, 101, 'd'));
+        $resource->assertEntryPathAllowed($path, true);
+        self::assertSame(101, $resource->jsonSerialize()['maxFolderDepth']);
+
+        $this->expectException(SoFinderException::class);
+        $this->expectExceptionMessage('101');
+        $resource->assertEntryPathAllowed($path . '/child', true);
+    }
+
+    public function testRejectsDepthOutsideThePortableIntegerRange(): void
+    {
+        $this->expectException(\InvalidArgumentException::class);
+        new ResourceType('Files', '/tmp/files', '/files', maxFolderDepth: ResourceType::MAX_FOLDER_DEPTH + 1);
+    }
+
     public function testDiscoveryDeclaresWhetherAHostEntryRouteIsConfigured(): void
     {
         self::assertFalse($this->resource->jsonSerialize()['entryUrlConfigured']);

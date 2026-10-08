@@ -160,6 +160,49 @@ anonymous allow fallback. If `document_preview.mode` or `maintenance.mode` is
 `messenger`, also pass the corresponding available dispatcher to
 `LocalApplicationFactory`.
 
+### Optional host upload policy (unreleased)
+
+A trusted PSR-15 host can pass `fileInspectorDecorator: $uploadPolicy` to
+`LocalApplicationFactory`. The service implements
+`SohoPHP\SoFinder\Contract\FileInspectorDecoratorInterface`; its `decorate()`
+method receives the default `FileInspectorInterface` and runtime
+`ImageProcessorInterface`, and returns the inspector used for ordinary uploads
+and assembled chunks. Omitting it keeps the default validation unchanged.
+
+Apply transformations only to the private quarantined upload. A policy that
+transforms an upload must validate the original and the transformed file with
+the wrapped inspector, retain MIME, content, size and pixel checks, and clean
+its temporary files. This trusted extension does not replace authorization,
+CSRF or path validation.
+
+For explicit host processing, `GdImageProcessor` accepts a trailing named
+`maximumDimension` constructor argument (1–2,147,483,647). Its default remains
+4096, independently of resource upload dimensions. Increasing it does not
+increase the configured pixel limit.
+
+### Optional host image processor (unreleased)
+
+For built-in format, orientation, animation and upload-resize policies, prefer [SoFinder image configuration](image-formats.md#configurable-basic-actions-and-upload-resizing-unreleased). Custom processor injection remains available for algorithms that the core does not provide.
+
+Pass `imageProcessor: $processor` to `LocalApplicationFactory` to share a host
+processor across inspection, previews and editing. It must implement both
+`ImageProcessorInterface` and `ImageCapabilityProviderInterface`; the runtime
+rejects a processor without capability reporting. Omitting it preserves the
+default processor and limits.
+
+An optional `ImageActionProcessorInterface` adds `applyActions()` for a complete
+edit sequence with one final encode. It receives private source/destination work
+files, must leave the source unchanged, and owns action validation, output limits
+and encoding policy. Animated sources still require an explicit true result from
+`allowsAnimatedEditing()`; ordinary processors continue to reject animated edits.
+`supportedActions()` returns the action types exposed as optional `imageCapabilities.actions` in runtime discovery. Browser toolbars, edit panels, batch actions and settings intersect them with enabled features and user preferences. An empty list offers no actions; existing processors omit the field and keep their behavior. This is capability discovery, not authorization: processors must still reject unsupported requests.
+
+`resizeLimits()` returns positive width and height input bounds as `imageCapabilities.resizeLimits`; the editor uses them for resize fields and keeps 4096 per dimension when absent. These bounds describe input capability, not permission to bypass processor output, pixel or upload validation.
+
+The manager detects the output format. The HTTP and storage layers retain
+authorization, CSRF, extension rules and final upload inspection. A host processor is trusted code,
+not a browser-selectable service or a replacement for these checks.
+
 ### Slim 4
 
 Install Slim and its PSR-7 implementation, then register the central route

@@ -1,5 +1,81 @@
 # Changelog
 
+## Unreleased
+
+- Reap every concurrent-state worker before assertions and temporary database cleanup, and include exception locations in diagnostics. Keep all four workers and all 100 durable updates; allow the test SQLite connection 60 seconds for lock acquisition on slow development disks instead of 10. Production PDO settings, journaling and callbacks are unchanged. Replace the usage-lock test’s timed hold with an explicit release signal and an independent blocked reader. Default `/tmp` full regression passes: 579 tests, 3,444 assertions, three unavailable external integrations skipped. Earlier failures and syscall traces remain evidence; this does not establish production SQLite capacity.
+
+- Development host validation uses immutable local 1.5.0-dev archives for
+  core/HTTP/PSR-15. Both legacy PHP runtimes pass 145 behavior comparisons;
+  authenticated development host tests cover account revocation and actual
+  picker insertion. The full PHP suite passes with TMPDIR=/dev/shm (579 tests,
+  3,429 assertions, three external integrations skipped). Three default /tmp
+  runs exposed SQLite initialization lock contention; isolated concurrency tests
+  pass. Preserve this environment limit rather than claim production SQLite
+  stability. Fork-worker failure output now identifies the source location.
+
+- Publish the opt-in image pipeline's error codes and statuses in the machine
+  catalog, including explicit animation consent, unsupported resize formats,
+  private staging failures and invalid work-file inputs. The contract audit now
+  covers literal code/status pairs forwarded through image failure helpers.
+  Complete PHP suite: 579 tests, 3,429 assertions, with 576 passing and three
+  external-service tests skipped (ClamAV, LibreOffice and configured PDO DSN).
+  Configured core/HTTP/PSR-15/Symfony PHPStan level 8 analysis passes; this does
+  not establish authenticated host, historical-media or production acceptance.
+
+- Coordinate local chunk writes, status, disposal and expiry cleanup with stable
+  actor locks outside removable session directories, bounded to 64 lock files
+  per actor. Busy sessions are skipped by expiry cleanup. An optional reentrant
+  session-guard contract keeps assembly, upload publication and disposal within
+  one critical section for shared HTTP actions; custom stores keep their existing
+  contract. Focused regression: 24 tests, 217 assertions, including five separate
+  process scenarios for cancellation, consistent status, expiry and publication.
+
+- Clean up staged chunk bytes after size, read or write rejection, closing the
+  stream before removal. Keep previously accepted parts intact so an upload can
+  retry without publishing incomplete content; original file and chunk limits
+  remain enforced. Focused chunk/upload regression: 18 tests, 52 assertions.
+
+- Verify transparent PNG crop/rotation RGBA and unchanged source bytes in the core. The configured GD pipeline also matches the existing connector in 145 isolated host comparisons, including transparent PNG/GIF, fractional resize, 33-degree rotation, three-action sequences and two-frame GIF offsets/disposal policies. These are synthetic fixtures, not historical-media or authenticated browser acceptance.
+
+- Implement configurable image actions and upload resizing in the independent
+  SoFinder core. Plain PHP and Symfony hosts select formats, editable formats,
+  crop/rotate/resize actions, orientation, explicit first-frame animation policy,
+  dimensions and encoding quality through configuration. Both policies are
+  disabled by default; existing processors and validation remain unchanged.
+  Upload resizing validates the original pixel limit and the transformed result,
+  including when its dimension limit is stricter than the resource limit.
+
+- Image pipelines can advertise resize dimensions alongside supported actions. The editor uses these host limits, retaining 4096 when absent; server output and pixel validation remain required.
+
+- Expose optional action discovery from injected image pipelines. Browser editing, batch processing and tool settings show only declared actions; existing processors retain their tools, and an empty declaration offers none. Server validation and authorization remain required.
+
+- Let PSR-15 local hosts inject an image processor with capability reporting.
+  An optional framework-neutral action processor can run a complete edit sequence
+  in one encode, with explicit consent required for animated input. Defaults keep
+  the existing processor, animation refusal, authorization and final upload checks.
+
+- Parse GIF image and extension blocks when detecting animation. Count actual
+  frames even without graphic-control extensions, ignore control-like bytes in
+  comments, and reject truncated structures; animated edit protection now covers
+  valid two-frame files previously missed by the signature heuristic.
+
+- Recognize the BMP MIME alias `image/x-ms-bmp` reported by fileinfo, while
+  retaining image decoding, pixel limits and extension/content matching.
+- Expose an optional file-inspector decorator to PSR-15 local hosts. It uses
+  the runtime image processor and shared upload quarantine, including chunk
+  assembly, so host upload policies can extend the default inspector without
+  introducing framework dependencies. Default validation remains unchanged.
+- Extend explicitly configured image width and height ranges to positive
+  32-bit integers; default dimensions and pixel limits remain unchanged.
+- Add an optional GD output-dimension constructor limit for host-owned image
+  policies. Its default remains 4096 pixels, and the source/output pixel
+  guard continues to apply.
+
+- Allow an explicit resource `max_folder_depth` up to 2,147,483,647 in the
+  framework-neutral core and Symfony bridge, so hosts can preserve existing
+  deep directory policies. The default remains five levels; path checks,
+  authorization and recursive operation limits still apply.
+
 ## 1.4.0 - 2026-10-03
 
 - Add an optional host trash-purge guard that preserves referenced files,

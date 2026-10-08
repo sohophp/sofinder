@@ -1,5 +1,6 @@
+import { supportsImageTool } from "../imageActions";
 import type { MessageKey } from "../i18n";
-import type { ResourceType } from "../types";
+import type { ImageAction, ResourceType } from "../types";
 import type { UiScale, UploadConflictStrategy } from "../types";
 import { Modal } from "./Modal";
 import { PreferenceProfiles, type PreferenceSnapshot } from "./PreferenceProfiles";
@@ -14,9 +15,10 @@ export interface ViewSizePreferences { grid: EntrySize; list: EntrySize }
 export type FolderTreePlacement = "left" | "right";
 export type QuickAccessScope = "all" | "resource";
 
-export function SettingsDialog({ resource, tools, features, columns, viewSizes, folderTreePlacement, quickAccessScope, availability, scale, uploadConflictStrategy, translate, onToolChange, onFeatureChange, onColumnChange, onViewSizeChange, onFolderTreePlacementChange, onQuickAccessScopeChange, onScaleChange, onUploadConflictStrategyChange, onReset, onClose }: {
+export function SettingsDialog({ resource, tools, imageActions, features, columns, viewSizes, folderTreePlacement, quickAccessScope, availability, scale, uploadConflictStrategy, translate, onToolChange, onFeatureChange, onColumnChange, onViewSizeChange, onFolderTreePlacementChange, onQuickAccessScopeChange, onScaleChange, onUploadConflictStrategyChange, onReset, onClose }: {
   resource?: ResourceType;
   tools: ToolPreferences;
+  imageActions?: ImageAction["type"][];
   features: FeaturePreferences;
   columns: ListColumnPreferences;
   viewSizes: ViewSizePreferences;
@@ -77,7 +79,7 @@ export function SettingsDialog({ resource, tools, features, columns, viewSizes, 
     </div>{uploadConflictStrategy === "overwrite" && <p className="sf-warning" role="status">{t("persistentOverwriteWarning")}</p>}<h3>{t("optionalTools")}</h3>
     {availability.batchRename !== false && <label className="sf-setting"><input type="checkbox" checked={tools.batchRename} onChange={event => onToolChange("batchRename", event.target.checked)}/><span>{t("batchRename")}</span></label>}
     {(availability.imageEditing !== false || availability.imageProcessing !== false) && <h3>{t("imageTools")}</h3>}
-    {(["resize", "crop", "rotate", "presets", "process"] as const).filter(tool => tool === "process" ? availability.imageProcessing !== false : availability.imageEditing !== false).map(tool => <label className="sf-setting" key={tool}><input type="checkbox" checked={tools[tool]} onChange={event => onToolChange(tool, event.target.checked)}/><span>{t(tool === "presets" ? "preset" : tool === "rotate" ? "rotationTools" : tool === "process" ? "imageProcess" : tool)}</span></label>)}</section>
+    {(["resize", "crop", "rotate", "presets", "process"] as const).filter(tool => supportsImageTool(imageActions, tool) && (tool === "process" ? availability.imageProcessing !== false : availability.imageEditing !== false)).map(tool => <label className="sf-setting" key={tool}><input type="checkbox" checked={tools[tool]} onChange={event => onToolChange(tool, event.target.checked)}/><span>{t(tool === "presets" ? "preset" : tool === "rotate" ? "rotationTools" : tool === "process" ? "imageProcess" : tool)}</span></label>)}</section>
     <section className="sf-settings-section"><h2>{sectionLabels.list}</h2><h3>{t("listColumns")}</h3>
     {(["size", "modified", "type"] as const).map(column => <label className="sf-setting" key={column}><input type="checkbox" checked={columns[column]} onChange={event => onColumnChange(column, event.target.checked)}/><span>{t(column === "size" ? "showSizeColumn" : column === "modified" ? "showModifiedColumn" : "showTypeColumn")}</span></label>)}</section>
     <section className="sf-settings-section"><h2>{sectionLabels.features}</h2><h3>{t("optionalFeatures")}</h3><p>{t("featureSettingsHint")}</p>

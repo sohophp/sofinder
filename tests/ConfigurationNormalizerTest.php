@@ -12,6 +12,45 @@ use Symfony\Component\Config\Definition\Processor;
 
 final class ConfigurationNormalizerTest extends TestCase
 {
+    public function testImagePoliciesAreOptionalAndHaveTheSamePlainAndSymfonySemantics(): void
+    {
+        $input = ['resources' => ['Files' => ['root' => '/srv/files']],
+            'image_processing' => ['action_pipeline' => ['formats' => ['png', 'webp'], 'auto_orientation' => false, 'max_width' => 113600]],
+            'uploads' => ['image_resize' => ['formats' => ['png'], 'max_width' => 113600, 'other_formats' => 'preserve']]];
+        $normalizer = new ConfigurationNormalizer();
+        $plain = $normalizer->normalize($input);
+        $symfony = $normalizer->normalizeResolved((new Processor())->processConfiguration(new Configuration(), [$input]), [$input]);
+        self::assertEquals($plain, $symfony);
+        self::assertSame(113600, $plain['image_processing']['action_pipeline']['max_width']);
+        self::assertSame(['png'], $plain['uploads']['image_resize']['formats']);
+        $defaults = $normalizer->normalize(['resources' => ['Files' => ['root' => '/srv/files']]]);
+        self::assertNull($defaults['image_processing']['action_pipeline']);
+        self::assertNull($defaults['uploads']['image_resize']);
+    }
+    public function testExplicitDeepFolderLimitHasTheSamePlainAndSymfonySemantics(): void
+    {
+        $input = ['resources' => ['Files' => ['root' => '/srv/files', 'max_folder_depth' => 4096]]];
+        $normalizer = new ConfigurationNormalizer();
+        $plain = $normalizer->normalize($input);
+        $symfony = $normalizer->normalizeResolved(
+            (new Processor())->processConfiguration(new Configuration(), [$input]),
+            [$input],
+        );
+        self::assertSame(4096, $plain['resources']['Files']['max_folder_depth']);
+        self::assertEquals($plain, $symfony);
+    }
+
+    public function testExplicitWideImageLimitsHaveTheSamePlainAndSymfonySemantics(): void
+    {
+        $input = ['resources' => ['Images' => ['root' => '/srv/images', 'max_image_width' => 113600, 'max_image_height' => 113200]]];
+        $normalizer = new ConfigurationNormalizer();
+        $plain = $normalizer->normalize($input);
+        $symfony = $normalizer->normalizeResolved((new Processor())->processConfiguration(new Configuration(), [$input]), [$input]);
+        self::assertSame(113600, $plain['resources']['Images']['max_image_width']);
+        self::assertSame(113200, $plain['resources']['Images']['max_image_height']);
+        self::assertEquals($plain, $symfony);
+    }
+
     public function testPlainArrayAndSymfonyYamlSemanticsResolveToTheSameConfiguration(): void
     {
         $input = [
@@ -89,6 +128,12 @@ final class ConfigurationNormalizerTest extends TestCase
         yield 'oversized file name limit' => [[
             'resources' => ['Files' => ['root' => '/srv/files', 'max_file_name_length' => 256]],
         ], 'max_file_name_length must be between 1 and 255'];
+        yield 'zero folder depth' => [[
+            'resources' => ['Files' => ['root' => '/srv/files', 'max_folder_depth' => 0]],
+        ], 'max_folder_depth must be between 1 and 2147483647'];
+        yield 'oversized folder depth' => [[
+            'resources' => ['Files' => ['root' => '/srv/files', 'max_folder_depth' => 2147483648]],
+        ], 'max_folder_depth must be between 1 and 2147483647'];
         yield 'invalid scanner endpoint' => [$resource + ['malware_scanning' => ['endpoint' => 'http://scanner.test']], 'tcp:// host or absolute unix:/// socket'];
     }
 

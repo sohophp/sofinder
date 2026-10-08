@@ -102,6 +102,23 @@ use SohoPHP\SoFinder\Image\WatermarkFontResolver;
 
 final class DependencyInjectionTest extends TestCase
 {
+    public function testImagePoliciesAreOptInAndUseFrameworkNeutralServices(): void
+    {
+        foreach ([false, true] as $configured) {
+            $container = new ContainerBuilder();
+            $config = ['resources' => ['Files' => ['root' => sys_get_temp_dir() . '/sofinder-di-files']]];
+            if ($configured) {
+                $config['image_processing']['action_pipeline'] = ['formats' => ['png'], 'actions' => ['resize']];
+                $config['uploads']['image_resize'] = ['formats' => ['png'], 'max_width' => 8000];
+            }
+            (new SoFinderExtension())->load([$config], $container);
+            self::assertSame($configured ? \SohoPHP\SoFinder\Image\GdActionImageProcessor::class : \SohoPHP\SoFinder\Image\HybridImageProcessor::class,
+                (string) $container->getAlias(\SohoPHP\SoFinder\Contract\ImageProcessorInterface::class));
+            self::assertSame($configured ? \SohoPHP\SoFinder\Security\ResizingFileInspector::class : \SohoPHP\SoFinder\Security\DefaultFileInspector::class,
+                (string) $container->getAlias(\SohoPHP\SoFinder\Contract\FileInspectorInterface::class));
+        }
+    }
+
     public function testWatermarkFontResolverUsesCacheAndAutoDownloadByDefault(): void
     {
         $cache = sys_get_temp_dir() . '/sofinder-di-font-cache';

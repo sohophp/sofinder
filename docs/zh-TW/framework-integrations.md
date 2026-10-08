@@ -147,6 +147,39 @@ Provider 必須把 Token 綁定到可信 Host Session 並進行安全比較，�
 若 `document_preview.mode` 或 `maintenance.mode` 設為 `messenger`，還必須向
 `LocalApplicationFactory` 傳入對應且可用的 Dispatcher。
 
+### 可選宿主上傳策略（未發佈）
+
+可信 PSR-15 宿主可向 `LocalApplicationFactory` 傳入
+`fileInspectorDecorator: $uploadPolicy`。Service 實作
+`SohoPHP\SoFinder\Contract\FileInspectorDecoratorInterface`，其 `decorate()`
+接收預設 `FileInspectorInterface` 和執行階段 `ImageProcessorInterface`，回傳一般上傳與分塊
+組裝共用的 Inspector。省略時保留預設驗證。
+
+轉換只能處理私有隔離區中的上傳檔案。轉換策略須透過被包裝的 Inspector 驗證原檔案
+與轉換結果，保留 MIME、內容、大小及像素檢查，並清理暫存檔案。此可信擴充不取代授權、
+CSRF 或路徑檢查。
+
+宿主明確處理圖片時，`GdImageProcessor` 支援尾端具名建構參數 `maximumDimension`
+（1–2,147,483,647）。預設仍為 4096，與資源上傳尺寸限制獨立；提高此參數不會提高像素限制。
+
+### 可選 Host 圖片處理器（未發佈）
+
+內建格式、方向、動畫及上傳縮放政策優先使用 [SoFinder 圖片設定](image-formats.md)，由核心實作演算法，Host 傳入參數。自訂處理器介面仍可用於核心尚未提供的演算法。
+
+向 `LocalApplicationFactory` 傳入 `imageProcessor: $processor`，上傳檢查、預覽與編輯共用該處理器。
+它須同時實作 `ImageProcessorInterface` 與 `ImageCapabilityProviderInterface`；缺少能力報告時
+執行階段拒絕建立。省略時沿用預設處理器與限制。
+
+可選 `ImageActionProcessorInterface` 透過 `applyActions()` 接管整組動作，並可在完成後一次編碼。
+它僅接收私有工作檔案，不得修改來源檔案，須驗證動作、輸出尺寸與編碼策略。動畫輸入仍要求
+`allowsAnimatedEditing()` 明確回傳 true；一般處理器繼續拒絕動畫編輯。管理器繼續辨識輸出格式，
+HTTP 與儲存層繼續執行授權、CSRF、副檔名與最終上傳內容檢查。此處理器是可信 Host 程式碼，不能由瀏覽器選擇，也不取代
+上述安全檢查。
+
+`supportedActions()` 宣告支援的動作，透過可選 `imageCapabilities.actions` 回傳；工具列、編輯面板、批次處理與設定同時受此宣告、功能開關與使用者偏好限制。空清單不提供動作，原處理器省略此欄位並保留原行為。能力宣告不能取代授權或伺服器動作驗證。
+
+`resizeLimits()` 回傳正整數寬高，透過 `imageCapabilities.resizeLimits` 提供縮放輸入上限；省略時介面維持每邊 4096。此宣告不能繞過伺服器輸出、像素或上傳驗證。
+
 ### Slim 4
 
 安裝 Slim 及其 PSR-7 實作，並在執行應用程式前註冊中央路由清單：

@@ -91,7 +91,9 @@ final class SharedStateConcurrencyTest extends TestCase
     private function pdoStore(string $database): PdoAtomicStateStore
     {
         $pdo = new \PDO('sqlite:' . $database);
-        $pdo->exec('PRAGMA busy_timeout = 10000');
+        // This checks 100 durable updates, not filesystem latency. Slow development
+        // disks can spend over 10 seconds syncing the other workers' commits.
+        $pdo->exec('PRAGMA busy_timeout = 60000');
 
         return new PdoAtomicStateStore($pdo);
     }
@@ -127,14 +129,22 @@ final class SharedStateConcurrencyTest extends TestCase
                     $worker();
                     exit(0);
                 } catch (\Throwable $exception) {
-                    fwrite(STDERR, $exception->getMessage() . "\n");
+                    fwrite(STDERR, $exception->getMessage() . ' at ' . $exception->getFile() . ':' . $exception->getLine() . "\n");
                     exit(1);
                 }
             }
             $children[] = $pid;
         }
+        $statuses = [];
         foreach ($children as $pid) {
-            pcntl_waitpid($pid, $status);
+            do {
+                $waited = pcntl_waitpid($pid, $status);
+            } while ($waited === -1 && pcntl_get_last_error() === PCNTL_EINTR);
+            $statuses[$pid] = [$waited, $status];
+        }
+        // Reap every child before an assertion can trigger database cleanup.
+        foreach ($statuses as $pid => [$waited, $status]) {
+            self::assertSame($pid, $waited, sprintf('Unable to reap worker %d.', $pid));
             self::assertTrue(pcntl_wifexited($status) && pcntl_wexitstatus($status) === 0, sprintf('Worker %d failed.', $pid));
         }
     }

@@ -1,18 +1,21 @@
+import { supportsImageAction } from "../imageActions";
 import { useState } from "react";
 import type { Entry, ImageAction, WatermarkFont, WatermarkPosition } from "../types";
 import { Modal } from "./Modal";
 
 type Mode = "optimize" | "text" | "image";
 
-export function ImageProcessDialog({ entries, resource, formats, labels, onClose, onApply }: {
+export function ImageProcessDialog({ entries, resource, formats, actions, labels, onClose, onApply }: {
   entries: Entry[];
   resource: string;
   formats: string[];
+  actions?: ImageAction["type"][];
   labels: Record<string, string>;
   onClose: () => void;
   onApply: (actions: ImageAction[], save: { mode: "copy" | "overwrite" }) => Promise<void>;
 }) {
-  const [mode, setMode] = useState<Mode>("optimize");
+  const modes: Mode[] = [...(supportsImageAction(actions, "optimize") ? ["optimize" as const] : []), ...(supportsImageAction(actions, "watermarkText") ? ["text" as const] : []), ...(supportsImageAction(actions, "watermarkImage") ? ["image" as const] : [])];
+  const [mode, setMode] = useState<Mode>(modes[0] ?? "optimize");
   const [quality, setQuality] = useState(82);
   const [format, setFormat] = useState("original");
   const [text, setText] = useState("SoFinder");
@@ -27,9 +30,10 @@ export function ImageProcessDialog({ entries, resource, formats, labels, onClose
   const [working, setWorking] = useState(false);
   const [error, setError] = useState("");
   const effectiveSaveMode = mode === "optimize" && format !== "original" ? "copy" : saveMode;
-  const invalid = entries.length === 0 || (mode === "text" && text.trim() === "") || (mode === "image" && watermarkPath.trim() === "");
+  const invalid = !modes.includes(mode) || entries.length === 0 || (mode === "text" && text.trim() === "") || (mode === "image" && watermarkPath.trim() === "");
 
   const submit = async () => {
+    if (invalid) return;
     const common = { position, opacity, scale, quality: 100 };
     const action: ImageAction = mode === "optimize"
       ? { type: "optimize", format, quality }
@@ -45,7 +49,7 @@ export function ImageProcessDialog({ entries, resource, formats, labels, onClose
 
   return <Modal title={labels.title} closeLabel={labels.close} onClose={onClose} className="sf-image-process-modal" footer={<><span>{labels.selected.replace("{count}", String(entries.length))}</span><button onClick={onClose}>{labels.cancel}</button><button className="primary" disabled={working || invalid} onClick={() => void submit()}>{working ? labels.processing : labels.apply}</button></>}>
     <div className="sf-image-process-grid">
-      <label>{labels.operation}<select value={mode} onChange={event => setMode(event.target.value as Mode)}><option value="optimize">{labels.optimize}</option><option value="text">{labels.textWatermark}</option><option value="image">{labels.imageWatermark}</option></select></label>
+      <label>{labels.operation}<select value={mode} onChange={event => setMode(event.target.value as Mode)}>{modes.map(value => <option key={value} value={value}>{value === "optimize" ? labels.optimize : value === "text" ? labels.textWatermark : labels.imageWatermark}</option>)}</select></label>
       {mode === "optimize" && <label>{labels.outputFormat}<select value={format} onChange={event => setFormat(event.target.value)}><option value="original">{labels.keepFormat}</option>{formats.map(value => <option key={value} value={value}>{value.toUpperCase()}</option>)}</select></label>}
       {mode === "text" && <><label className="sf-process-wide">{labels.watermarkText}<input value={text} maxLength={200} onChange={event => setText(event.target.value)}/></label><label>{labels.watermarkFont}<select value={font} onChange={event => setFont(event.target.value as WatermarkFont)}><option value="interface">{labels.interfaceFont}</option><option value="sans">{labels.sansFont}</option><option value="serif">{labels.serifFont}</option></select></label><label>{labels.color}<input type="color" value={color} onChange={event => setColor(event.target.value)}/></label></>}
       {mode === "image" && <><label>{labels.watermarkResource}<input value={watermarkResource} onChange={event => setWatermarkResource(event.target.value)}/></label><label className="sf-process-wide">{labels.watermarkPath}<input value={watermarkPath} placeholder="branding/logo.png" onChange={event => setWatermarkPath(event.target.value)}/></label></>}

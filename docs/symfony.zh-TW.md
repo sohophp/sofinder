@@ -62,7 +62,7 @@ so_finder:
       max_archive_items: 1000
       max_archive_bytes: 536870912
       allowed_extensions: [avif, bmp, gif, ico, jpeg, jpg, png, webp]
-      allowed_mime_types: [image/avif, image/bmp, image/gif, image/jpeg, image/png, image/vnd.microsoft.icon, image/x-bmp, image/x-icon, image/webp]
+      allowed_mime_types: [image/avif, image/bmp, image/gif, image/jpeg, image/png, image/vnd.microsoft.icon, image/x-bmp, image/x-ms-bmp, image/x-icon, image/webp]
       roles: [ROLE_EDITOR]
       operation_roles:
         delete: [ROLE_FILE_ADMIN]
@@ -136,7 +136,7 @@ final readonly class FileEntryUrlContext implements EntryUrlContextProviderInter
 或 `1` 的 `uiHeader`、`uiLogo`、`uiSearch`、`uiLanguage`、`uiView` 覆寫外觀；
 無效值回退到宿主設定，且這些參數不會授予操作權限或略過伺服器授權。
 
-名稱限制以 Unicode 字元數計算，而非 byte。資源 root 是第零層，因此 `max_folder_depth: 5` 允許檔案位於第五層資料夾，但不允許再新增第六層。複製、移動或重新命名資料夾時會檢查完整子樹。名稱支援範圍為 1–255 字元，資料夾深度為 1–100 層。
+名稱限制以 Unicode 字元數計算，而非 byte。資源 root 是第零層，因此 `max_folder_depth: 5` 允許檔案位於第五層資料夾，但不允許再新增第六層。複製、移動或重新命名資料夾時會檢查完整子樹。名稱支援範圍為 1–255 字元，資料夾深度為 1–2,147,483,647 層，預設仍為 5 層。提高設定深度不會放寬儲存路徑、授權或遞迴操作數量限制。
 
 所有異動 API 都要求 `X-CSRF-TOKEN` header。Browser route 會把 token 注入 React 應用程式。CKEditor 4 相容上傳必須透過 `_token` 傳入同一 token；Origin 與 Referer 只是附加檢查，不能取代 CSRF 驗證。
 

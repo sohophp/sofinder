@@ -37,6 +37,23 @@ resource and return the callback's exact byte delta atomically.
 Remote adapters may additionally implement `StorageAuditProviderInterface` to
 return secret-safe `warning` or `critical` findings to the security audit.
 
+The optional `ChunkUploadSessionGuardInterface::withSessionLock($id, $operation)`
+coordinates a complete chunk-session operation. Implementations must allow
+reentrant store calls within the callback, return its result and release the
+guard on exceptions. Shared HTTP actions use it for assembly, publication and
+disposal, and for cancellation's status check and disposal. Existing custom
+stores remain compatible; stores without this contract do not gain an
+end-to-end publication lock.
+
+The local `ChunkUploadManager` provides this guard and coordinates writes, status,
+disposal and expiry cleanup with at most 64 stable private lock files per actor,
+outside removable session directories. Expiry cleanup skips busy sessions.
+Hash-bucket collisions serialize otherwise unrelated sessions. This is a local
+filesystem guarantee, not a distributed lease; the shared store does not provide
+the new guard. Cancellation does not undo a published target, and upload IDs
+retain their reusable semantics. Drain active uploads and use a consistent
+runtime version when upgrading; mixed old/new workers have not been verified.
+
 `AssetCatalogInterface` is the optional stable identity layer. It resolves by
 workspace/resource/path, finds opaque IDs and records upload, move, delete and
 file or directory-tree restore identity transitions. The bundled JSON implementation is single-node;

@@ -22,9 +22,13 @@ use SohoPHP\SoFinder\Value\ResourceStorage;
 use SohoPHP\SoFinder\Value\ResourceType;
 use Symfony\Component\EventDispatcher\EventDispatcher;
 
+interface ActionDiscoveryFixture extends \SohoPHP\SoFinder\Contract\ImageActionProcessorInterface, ImageCapabilityProviderInterface {}
+
 final class ApiContractSnapshotTest extends TestCase
 {
-    public function testRuntimeDiscoveryResponseMatchesPublishedSchemaAndSnapshot(): void
+    /** @param list<string>|null $actions */
+    #[\PHPUnit\Framework\Attributes\DataProvider('actionDeclarations')]
+    public function testRuntimeDiscoveryResponseMatchesPublishedSchemaAndSnapshot(?array $actions): void
     {
         $root = sys_get_temp_dir() . '/sofinder-api-contract-' . bin2hex(random_bytes(8));
         mkdir($root, 0775, true);
@@ -42,6 +46,11 @@ final class ApiContractSnapshotTest extends TestCase
                 public function driver(): string { return ''; }
                 public function cacheVersion(): string { return 'test'; }
             };
+            if ($actions !== null) {
+                $images = $this->createMock(ActionDiscoveryFixture::class);
+                $images->method('supportedActions')->willReturn($actions);
+                $images->method('resizeLimits')->willReturn(['width' => 8000, 'height' => 6000]);
+            }
             $plugins = new PluginRegistry([]);
             $action = new ConfigAction($files, $plugins, imageCapabilities: $images);
             $controller = new ApiController($files, (new \ReflectionClass(CsrfGuard::class))->newInstanceWithoutConstructor(), $plugins, imageCapabilities: $images, configAction: $action);
@@ -66,10 +75,22 @@ final class ApiContractSnapshotTest extends TestCase
                 'signedUrls' => array_keys($payload['data']['signedUrls']),
             ];
             $expected = json_decode((string) file_get_contents(__DIR__ . '/fixtures/config-contract.snapshot.json'), true, 512, JSON_THROW_ON_ERROR);
+            if ($actions !== null) {
+                self::assertSame($actions, $payload['data']['imageCapabilities']['actions']);
+                $expected['imageCapabilities'][] = 'actions';
+                self::assertSame(['width' => 8000, 'height' => 6000], $payload['data']['imageCapabilities']['resizeLimits']);
+                $expected['imageCapabilities'][] = 'resizeLimits';
+            }
             self::assertSame($expected, $snapshot, 'The public config response changed; review and update the versioned snapshot intentionally.');
         } finally {
             @unlink($root . '/.gitkeep');
             @rmdir($root);
         }
+    }
+
+    /** @return array<string,array{list<string>|null}> */
+    public static function actionDeclarations(): array
+    {
+        return ['existing processor' => [null], 'no actions' => [[]], 'basic actions' => [['crop', 'rotate', 'resize']]];
     }
 }

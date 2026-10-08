@@ -115,9 +115,69 @@ final class ChunkUploadManagerTest extends TestCase
         } finally { fclose($stream); }
     }
 
+    public function testRejectedReplacementKeepsAcceptedPartAndRemovesTemporaryBytes(): void
+    {
+        $manager = new ChunkUploadManager($this->directory, $this->actor(), 65_536, 2);
+        $stream = fopen('php://temp', 'w+b'); fwrite($stream, 'abc'); rewind($stream);
+        $manager->accept('abcdefghijklmnop', 0, 2, $stream, 200_000); fclose($stream);
+        $stream = fopen('php://temp', 'w+b'); fwrite($stream, str_repeat('x', 65_537)); rewind($stream);
+        try {
+            $manager->accept('abcdefghijklmnop', 0, 2, $stream, 200_000);
+            self::fail('Oversized replacement should be rejected.');
+        } catch (SoFinderException $error) {
+            self::assertSame('upload_chunk_too_large', $error->errorCode);
+        } finally { fclose($stream); }
+        $directory = $this->directory . '/' . hash('sha256', 'actor') . '/abcdefghijklmnop';
+        self::assertSame('abc', file_get_contents($directory . '/part-0'));
+        self::assertSame([0], $manager->status('abcdefghijklmnop')['received']);
+        self::assertSame([], glob($directory . '/*.tmp-*'));
+        $stream = fopen('php://temp', 'w+b'); fwrite($stream, 'def'); rewind($stream);
+        $result = $manager->accept('abcdefghijklmnop', 1, 2, $stream, 200_000); fclose($stream);
+        self::assertTrue($result['complete']);
+        self::assertSame('abcdef', file_get_contents($result['path']));
+    }
+
+    public function testOversizedAssemblyCanResumeWithCorrectedPart(): void
+    {
+        $manager = new ChunkUploadManager($this->directory, $this->actor(), 10, 2);
+        $stream = fopen('php://temp', 'w+b'); fwrite($stream, 'abcdef'); rewind($stream);
+        $manager->accept('abcdefghijklmnop', 0, 2, $stream, 10); rewind($stream);
+        try {
+            $manager->accept('abcdefghijklmnop', 1, 2, $stream, 10);
+            self::fail('Oversized assembly should be rejected.');
+        } catch (SoFinderException $error) {
+            self::assertSame('file_too_large', $error->errorCode);
+        } finally { fclose($stream); }
+        self::assertFalse($manager->status('abcdefghijklmnop')['complete']);
+        self::assertSame([0, 1], $manager->status('abcdefghijklmnop')['received']);
+        $directory = $this->directory . '/' . hash('sha256', 'actor') . '/abcdefghijklmnop';
+        self::assertFileDoesNotExist($directory . '/assembled');
+        $stream = fopen('php://temp', 'w+b'); fwrite($stream, 'ghij'); rewind($stream);
+        $result = $manager->accept('abcdefghijklmnop', 1, 2, $stream, 10); fclose($stream);
+        self::assertTrue($result['complete']);
+        self::assertSame('abcdefghij', file_get_contents($result['path']));
+    }
+
     private function actor(): ActorProviderInterface
     {
         return new class implements ActorProviderInterface { public function actorId(): string { return 'actor'; } };
+    }
+
+    public function testSessionGuardIsReentrantAndLockStateIsBounded(): void
+    {
+        $manager = new ChunkUploadManager($this->directory, $this->actor(), 10, 2);
+        for ($index = 0; $index < 100; ++$index) {
+            $id = 'bounded-session-' . $index;
+            $manager->withSessionLock($id, function () use ($manager, $id): void {
+                $stream = fopen('php://temp', 'w+b'); fwrite($stream, 'abc'); rewind($stream);
+                $manager->accept($id, 0, 2, $stream, 20); fclose($stream);
+                self::assertSame([0], $manager->status($id)['received']);
+                $manager->discard($id);
+            });
+        }
+        $actor = $this->directory . '/' . hash('sha256', 'actor');
+        self::assertLessThanOrEqual(64, count(glob($actor . '/.session-lock-*')));
+        self::assertSame([], glob($actor . '/bounded-session-*'));
     }
 
     private function remove(string $path): void

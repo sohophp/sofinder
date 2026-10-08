@@ -178,6 +178,12 @@ export interface ImageFormatCapability {
 export interface ImageCapabilities {
     driver: "" | "auto" | "gd" | "imagick";
     formats: ImageFormatCapability[];
+    /** Omitted for existing processors; an empty list explicitly disables all actions. */
+    actions?: ImageAction["type"][];
+    resizeLimits?: {
+        width: number;
+        height: number;
+    };
 }
 export interface ResourceType {
     name: string;

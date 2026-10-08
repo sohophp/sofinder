@@ -72,26 +72,63 @@ final class PersistentUsageTrackerTest extends TestCase
         $tracker = new PersistentUsageTracker($this->state);
         self::assertSame(4, $tracker->usage($resource));
         $marker = $this->state . '/child-entered';
+        $readerStarted = $this->state . '/reader-started';
+        $readerFinished = $this->state . '/reader-finished';
         $autoload = dirname((new \ReflectionClass(\Composer\Autoload\ClassLoader::class))->getFileName()) . '/../autoload.php';
-        $code = sprintf(
-            'require %s; $resource=new SohoPHP\\SoFinder\\Value\\ResourceStorage(new SohoPHP\\SoFinder\\Value\\ResourceType("Files",%s,"/files",["txt"]),new SohoPHP\\SoFinder\\Storage\\LocalStorageAdapter(%s,"/files")); $tracker=new SohoPHP\\SoFinder\\Usage\\PersistentUsageTracker(%s); $tracker->mutate($resource,static function(int $current):array{file_put_contents(%s,"1");usleep(400000);return ["value"=>null,"delta"=>0];});',
+        $bootstrap = sprintf(
+            'require %s; $resource=new SohoPHP\\SoFinder\\Value\\ResourceStorage(new SohoPHP\\SoFinder\\Value\\ResourceType("Files",%s,"/files",["txt"]),new SohoPHP\\SoFinder\\Storage\\LocalStorageAdapter(%s,"/files")); $tracker=new SohoPHP\\SoFinder\\Usage\\PersistentUsageTracker(%s); ',
             var_export($autoload, true),
             var_export($this->root, true),
             var_export($this->root, true),
             var_export($this->state, true),
+        );
+        $holderCode = $bootstrap . sprintf(
+            '$tracker->mutate($resource,static function(int $current):array{file_put_contents(%s,"1");if(fgets(STDIN)===false){throw new RuntimeException("Missing lock release signal.");}return ["value"=>null,"delta"=>0];});',
             var_export($marker, true),
         );
-        $process = proc_open([PHP_BINARY, '-r', $code], [1 => ['pipe', 'w'], 2 => ['pipe', 'w']], $pipes);
-        self::assertIsResource($process);
-        for ($attempt = 0; $attempt < 100 && !is_file($marker); ++$attempt) {
-            usleep(10_000);
+        $readerCode = $bootstrap . sprintf(
+            'file_put_contents(%s,"1");if($tracker->usage($resource)!==4){throw new RuntimeException("Unexpected usage.");}file_put_contents(%s,"1");',
+            var_export($readerStarted, true),
+            var_export($readerFinished, true),
+        );
+        $processes = [];
+        $statuses = [];
+        $holderPipes = [];
+        try {
+            $holder = proc_open([PHP_BINARY, '-r', $holderCode], [0 => ['pipe', 'r'], 1 => ['pipe', 'w'], 2 => ['pipe', 'w']], $holderPipes);
+            self::assertIsResource($holder);
+            $processes[] = [$holder, $holderPipes];
+            $this->awaitMarker($marker);
+            $reader = proc_open([PHP_BINARY, '-r', $readerCode], [1 => ['pipe', 'w'], 2 => ['pipe', 'w']], $readerPipes);
+            self::assertIsResource($reader);
+            $processes[] = [$reader, $readerPipes];
+            $this->awaitMarker($readerStarted);
+            // The holder keeps the lock until explicitly released, regardless of startup time.
+            usleep(100_000);
+            clearstatcache(true, $readerFinished);
+            self::assertFileDoesNotExist($readerFinished);
+            fwrite($holderPipes[0], "release\n");
+            fflush($holderPipes[0]);
+            $this->awaitMarker($readerFinished);
+        } finally {
+            // Closing stdin also releases a holder if an assertion failed.
+            foreach ($processes as [$process, $pipes]) {
+                foreach ($pipes as $pipe) fclose($pipe);
+                $statuses[] = proc_close($process);
+            }
         }
-        self::assertFileExists($marker);
+        foreach ($statuses as $status) self::assertSame(0, $status);
+    }
 
-        $started = microtime(true);
-        self::assertSame(4, $tracker->usage($resource));
-        self::assertGreaterThan(0.2, microtime(true) - $started);
-        self::assertSame(0, proc_close($process));
+    private function awaitMarker(string $path): void
+    {
+        $deadline = microtime(true) + 10;
+        do {
+            clearstatcache(true, $path);
+            if (is_file($path)) break;
+            usleep(10_000);
+        } while (microtime(true) < $deadline);
+        self::assertFileExists($path);
     }
 
     private function resource(): ResourceStorage

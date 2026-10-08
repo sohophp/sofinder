@@ -25,6 +25,7 @@ final class ImageFormatRegistryTest extends TestCase
     {
         yield 'JPEG extension alias' => ['.jpg', 'image/jpeg', 'jpeg'];
         yield 'BMP MIME alias' => ['bmp', 'image/x-bmp', 'bmp'];
+        yield 'BMP fileinfo MIME alias' => ['bmp', 'image/x-ms-bmp', 'bmp'];
         yield 'ICO MIME alias' => ['ico', 'image/x-icon', 'ico'];
     }
 

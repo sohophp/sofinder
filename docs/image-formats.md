@@ -48,6 +48,38 @@ map, disk, thread and time limits are scoped to each operation and restored
 afterward. Encoder availability is verified with a bounded round trip before
 edit capability is advertised.
 
+## Configurable basic actions and upload resizing (unreleased)
+
+Image decoding, format support, orientation, animation handling and resizing belong to SoFinder. Hosts configure these capabilities rather than implementing their own image algorithms. Plain PHP passes the following keys in the factory configuration array; Symfony uses the `so_finder` wrapper shown here.
+
+```yaml
+so_finder:
+  image_processing:
+    driver: gd
+    action_pipeline:
+      formats: [jpeg, png, gif, webp, avif, bmp]
+      editable_formats: [jpeg, png, gif, webp, avif, bmp]
+      actions: [crop, rotate, resize]
+      auto_orientation: true
+      animated_editing: reject
+      max_width: 4096
+      max_height: 4096
+      quality: 88
+      resize_quality: 88
+  uploads:
+    image_resize:
+      formats: [jpeg, png, gif, webp, avif, bmp]
+      max_width: 4096
+      max_height: 4096
+      quality: 88
+      other_formats: reject
+```
+Both `action_pipeline` and `image_resize` default to `null`: omitting them preserves the existing processor and upload behavior. The opt-in basic pipeline uses GD; `driver: auto` is also accepted, but `imagick` is rejected with this pipeline. Effective format support requires installed codecs; it does not add ICO or Imagick fallback. `formats` controls readable formats; `editable_formats` is a subset. `actions` accepts only crop, rotate and resize, and an empty list disables editing. The browser discovers these actions and resize bounds; the server validates them independently.
+
+`auto_orientation: false` retains raw EXIF coordinates. `animated_editing: first_frame` explicitly permits lossy first-frame editing; the default rejects animated edits. Originals remain unchanged during processing. Complete basic action sequences encode once; `quality` applies normally and `resize_quality` applies to a sequence containing resize. The direct transform/crop API honors its explicit quality argument.
+
+Upload resizing is independently opt-in and runs inside private quarantine for ordinary and chunked uploads, even when resource dimensions would accept the original. The original must pass content, MIME, size and pixel checks; the transformed result must pass resource checks before publication. Upload `quality` controls this transformation. For formats outside its list, `other_formats: reject` keeps dimension rejection; explicit `preserve` retains bytes beyond dimension bounds while still enforcing content, MIME, size and pixels. It never extends the resource extension allowlist. Dimension values are positive integers up to 2,147,483,647; quality is 1–100. Pixel limits still bound decoding and output allocations.
+
 ## Compression, conversion and watermarks
 
 The **Optimize / watermark** image tool is disabled in each user's toolbar by default and can be enabled in Settings. It provides quality-controlled recompression, supported JPEG/PNG/WebP/AVIF conversion, text watermarks and image watermarks. A batch handles up to 100 selected images and returns an individual result for every item.

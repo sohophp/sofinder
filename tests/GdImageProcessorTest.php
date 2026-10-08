@@ -45,6 +45,60 @@ final class GdImageProcessorTest extends TestCase
         self::assertSame('image/png', $size['mime']);
     }
 
+    public function testGifAnimationCountsImageFramesRatherThanGraphicControlSignatures(): void
+    {
+        $gif = base64_decode('R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7', true);
+        self::assertIsString($gif);
+        file_put_contents($this->source, $gif);
+        self::assertFalse((new GdImageProcessor())->isAnimated($this->source));
+        // The first control block follows a palette, not a zero byte. The old regex missed it.
+        file_put_contents($this->source, substr($gif, 0, 19) . str_repeat(substr($gif, 19, -1), 2) . "\x3b");
+        self::assertTrue((new GdImageProcessor())->isAnimated($this->source));
+        // Valid GIF frames do not require graphic control extensions at all.
+        file_put_contents($this->source, substr($gif, 0, 19) . str_repeat(substr($gif, 27, -1), 2) . "\x3b");
+        self::assertTrue((new GdImageProcessor())->isAnimated($this->source));
+    }
+
+    public function testGifCommentCannotImpersonateAnimationFrames(): void
+    {
+        $gif = base64_decode('R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7', true);
+        self::assertIsString($gif);
+        $comment = "\x00\x21\xf9\x04\x00\x21\xf9\x04";
+        file_put_contents($this->source, substr($gif, 0, -1) . "\x21\xfe" . chr(strlen($comment)) . $comment . "\x00\x3b");
+        self::assertFalse((new GdImageProcessor())->isAnimated($this->source));
+    }
+
+    public function testTruncatedGifSubBlockIsRejectedInsteadOfBeingTreatedAsStatic(): void
+    {
+        $gif = base64_decode('R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7', true);
+        self::assertIsString($gif);
+        file_put_contents($this->source, substr($gif, 0, -1) . "\x21\xfe\x7fshort");
+        $this->expectException(SoFinderException::class);
+        $this->expectExceptionMessage('GIF structure is incomplete or invalid');
+        (new GdImageProcessor())->isAnimated($this->source);
+    }
+
+    public function testExplicitOutputDimensionLimitDoesNotChangeTheDefaultOrPixelGuard(): void
+    {
+        $image = imagecreatetruecolor(6000, 1); imagepng($image, $this->source); unset($image);
+        try {
+            (new GdImageProcessor())->transform($this->source, $this->destination, 0, 5000, 1);
+            self::fail('The default output dimension limit must remain 4096.');
+        } catch (SoFinderException $error) {
+            self::assertSame('invalid_image_dimensions', $error->errorCode);
+        }
+        (new GdImageProcessor(maximumDimension: 6000))->transform($this->source, $this->destination, 0, 5000, 1);
+        $size = getimagesize($this->destination);
+        if ($size === false) throw new \RuntimeException('The resized image must be readable.');
+        self::assertSame([5000, 1], array_slice($size, 0, 2));
+        try {
+            (new GdImageProcessor(maximumPixels: 100, maximumDimension: 6000))->transform($this->source, $this->destination, 0, 5000, 1);
+            self::fail('The configured pixel guard must still reject the image.');
+        } catch (SoFinderException $error) {
+            self::assertSame('unsupported_image', $error->errorCode);
+        }
+    }
+
     public function testReportsImageDimensions(): void
     {
         self::assertSame(['width' => 400, 'height' => 200], (new GdImageProcessor())->dimensions($this->source));

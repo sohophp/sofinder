@@ -46,6 +46,10 @@
     "file": "format-GD3_dnvn.js",
     "name": "format"
   },
+  "_imageActions-BRpJl8Vz.js": {
+    "file": "imageActions-BRpJl8Vz.js",
+    "name": "imageActions"
+  },
   "_jsx-runtime-CmCsaYvT.js": {
     "file": "jsx-runtime-CmCsaYvT.js",
     "name": "jsx-runtime"
@@ -174,13 +178,14 @@
     ]
   },
   "src/components/ImageEditor.tsx": {
-    "file": "ImageEditor-DN_8r-DU.js",
+    "file": "ImageEditor-5MZQPasf.js",
     "name": "ImageEditor",
     "src": "src/components/ImageEditor.tsx",
     "isDynamicEntry": true,
     "imports": [
       "_jsx-runtime-CmCsaYvT.js",
       "_react-B5TC723I.js",
+      "_imageActions-BRpJl8Vz.js",
       "_UiIcon-CyBzESIM.js",
       "_Modal-DhcERqG6.js",
       "_nameValidation-DURyMFRU.js"
@@ -198,13 +203,14 @@
     ]
   },
   "src/components/ImageProcessDialog.tsx": {
-    "file": "ImageProcessDialog-YTfmP7GL.js",
+    "file": "ImageProcessDialog-CgJ64igp.js",
     "name": "ImageProcessDialog",
     "src": "src/components/ImageProcessDialog.tsx",
     "isDynamicEntry": true,
     "imports": [
       "_jsx-runtime-CmCsaYvT.js",
       "_react-B5TC723I.js",
+      "_imageActions-BRpJl8Vz.js",
       "_Modal-DhcERqG6.js"
     ]
   },
@@ -242,13 +248,14 @@
     ]
   },
   "src/components/SettingsDialog.tsx": {
-    "file": "SettingsDialog-CETBpSlZ.js",
+    "file": "SettingsDialog-fnYZ68pn.js",
     "name": "SettingsDialog",
     "src": "src/components/SettingsDialog.tsx",
     "isDynamicEntry": true,
     "imports": [
       "_jsx-runtime-CmCsaYvT.js",
       "_react-B5TC723I.js",
+      "_imageActions-BRpJl8Vz.js",
       "_Modal-DhcERqG6.js"
     ]
   },
@@ -343,6 +350,7 @@
       "_jsx-runtime-CmCsaYvT.js",
       "_react-B5TC723I.js",
       "_api-B66v6vYY.js",
+      "_imageActions-BRpJl8Vz.js",
       "_UiIcon-CyBzESIM.js",
       "_Modal-DhcERqG6.js",
       "_nameValidation-DURyMFRU.js",

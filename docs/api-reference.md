@@ -357,6 +357,14 @@ An entry accepts at most 10 unique tags of 1–30 visible characters.
 
 The exhaustive code/status/category catalog is [error-codes.json](/error-codes.json) and CI checks it against literal server exceptions.
 
+The opt-in image pipeline reports `animated_resize_unverified` (415) when animation
+consent is absent, `image_format_unsupported` or `image_format_unverified` (415)
+when the configured processor cannot perform the requested edit/resize, and
+`invalid_image_input` (422) for identical source and destination work files.
+Private staging failures use `image_unavailable` (503). `image_too_large` can be
+413 for upload limits or 415 for processor pixel limits. Clients must retain
+these server checks even when the UI advertises supported actions.
+
 | Status | Representative codes | Client behavior |
 | --- | --- | --- |
 | 400 | `invalid_json`, `invalid_path`, `invalid_type`, `invalid_upload_chunk` | Fix request syntax or values. |
