@@ -35,6 +35,8 @@ Select **New folder**, enter a name and confirm. Folder depth and name length ar
 
 Select exactly one item and choose **Rename**, or press `F2`. For files, SoFinder keeps the extension outside the editable base name so it is not changed accidentally. The server validates the final Unicode name, extension, path and permissions again.
 
+Press `Enter` in the name field to confirm creation or renaming, just like the confirmation button. Empty or invalid names cannot be submitted, and Enter used to choose an IME candidate does not submit.
+
 Names cannot start with a dot, end with a dot or space, contain control or bidirectional text characters, use `< > : " / \\ | ? *`, or equal a reserved Windows device name such as `CON` or `LPT1`. The same checks apply to crop copies, automatic copy/move names and recycle-bin restores.
 
 ## Upload files

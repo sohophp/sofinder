@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useId, useState } from "react";
 import { Modal } from "./Modal";
 import { UiIcon } from "./UiIcon";
 import { entryNameIssue } from "../nameValidation";
@@ -9,12 +9,16 @@ export function TextDialog({ title, label, initialValue = "", maximum, extension
   invalidNameLabel: string; confirmLabel: string; cancelLabel: string; closeLabel: string; onConfirm: (value: string) => void; onClose: () => void;
 }) {
   const [value, setValue] = useState(initialValue);
+  const formId = useId();
   const completeName = value + extension;
   const length = Array.from(completeName).length;
   const issue = entryNameIssue(completeName, maximum);
   const valid = issue === null;
-  return <Modal title={title} closeLabel={closeLabel} onClose={onClose} className="sf-form-modal" footer={<><span>{length} / {maximum}</span><button onClick={onClose}>{cancelLabel}</button><button className="primary" disabled={!valid} onClick={() => onConfirm(value.trim() + extension)}>{confirmLabel}</button></>}>
-    <div className="sf-form-body"><label>{label}<span className="sf-name-input"><input autoFocus value={value} maxLength={maximum} onChange={event => setValue(event.target.value)}/>{extension && <span>{extension}</span>}</span></label>{!valid && value !== "" && <p role="alert">{issue === "tooLong" ? `${length} / ${maximum}` : invalidNameLabel}</p>}</div>
+  return <Modal title={title} closeLabel={closeLabel} onClose={onClose} className="sf-form-modal" footer={<><span>{length} / {maximum}</span><button type="button" onClick={onClose}>{cancelLabel}</button><button type="submit" form={formId} className="primary" disabled={!valid}>{confirmLabel}</button></>}>
+    <form id={formId} className="sf-form-body" onSubmit={event => { event.preventDefault(); if (valid) onConfirm(value.trim() + extension); }}><label>{label}<span className="sf-name-input"><input autoFocus value={value} maxLength={maximum} onChange={event => setValue(event.target.value)} onKeyDown={event => {
+      // Enter choosing an IME candidate must not submit the dialog (including Safari's 229 key code).
+      if (event.key === "Enter" && (event.nativeEvent.isComposing || event.nativeEvent.keyCode === 229 || event.repeat)) event.preventDefault();
+    }}/>{extension && <span>{extension}</span>}</span></label>{!valid && value !== "" && <p role="alert">{issue === "tooLong" ? `${length} / ${maximum}` : invalidNameLabel}</p>}</form>
   </Modal>;
 }
 

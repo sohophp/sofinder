@@ -7764,7 +7764,7 @@ var f = /* @__PURE__ */ e(((e) => {
 	return t === "en" || t === "zh-cn" || t === "zh-tw" ? t : e;
 }, S = t();
 function re({ title: e, label: t, initialValue: n = "", maximum: r, extension: i = "", invalidNameLabel: a, confirmLabel: o, cancelLabel: l, closeLabel: u, onConfirm: d, onClose: f }) {
-	let [p, m] = (0, v.useState)(n), h = p + i, g = Array.from(h).length, _ = c(h, r), y = _ === null;
+	let [p, m] = (0, v.useState)(n), h = (0, v.useId)(), g = p + i, _ = Array.from(g).length, y = c(g, r), b = y === null;
 	return /* @__PURE__ */ (0, S.jsx)(s, {
 		title: e,
 		closeLabel: u,
@@ -7772,34 +7772,43 @@ function re({ title: e, label: t, initialValue: n = "", maximum: r, extension: i
 		className: "sf-form-modal",
 		footer: /* @__PURE__ */ (0, S.jsxs)(S.Fragment, { children: [
 			/* @__PURE__ */ (0, S.jsxs)("span", { children: [
-				g,
+				_,
 				" / ",
 				r
 			] }),
 			/* @__PURE__ */ (0, S.jsx)("button", {
+				type: "button",
 				onClick: f,
 				children: l
 			}),
 			/* @__PURE__ */ (0, S.jsx)("button", {
+				type: "submit",
+				form: h,
 				className: "primary",
-				disabled: !y,
-				onClick: () => d(p.trim() + i),
+				disabled: !b,
 				children: o
 			})
 		] }),
-		children: /* @__PURE__ */ (0, S.jsxs)("div", {
+		children: /* @__PURE__ */ (0, S.jsxs)("form", {
+			id: h,
 			className: "sf-form-body",
+			onSubmit: (e) => {
+				e.preventDefault(), b && d(p.trim() + i);
+			},
 			children: [/* @__PURE__ */ (0, S.jsxs)("label", { children: [t, /* @__PURE__ */ (0, S.jsxs)("span", {
 				className: "sf-name-input",
 				children: [/* @__PURE__ */ (0, S.jsx)("input", {
 					autoFocus: !0,
 					value: p,
 					maxLength: r,
-					onChange: (e) => m(e.target.value)
+					onChange: (e) => m(e.target.value),
+					onKeyDown: (e) => {
+						e.key === "Enter" && (e.nativeEvent.isComposing || e.nativeEvent.keyCode === 229 || e.repeat) && e.preventDefault();
+					}
 				}), i && /* @__PURE__ */ (0, S.jsx)("span", { children: i })]
-			})] }), !y && p !== "" && /* @__PURE__ */ (0, S.jsx)("p", {
+			})] }), !b && p !== "" && /* @__PURE__ */ (0, S.jsx)("p", {
 				role: "alert",
-				children: _ === "tooLong" ? `${g} / ${r}` : a
+				children: y === "tooLong" ? `${_} / ${r}` : a
 			})]
 		})
 	});

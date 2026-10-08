@@ -117,6 +117,51 @@ test.beforeEach(async ({ page }) => {
   await expect(page.getByText("guide.txt").first()).toBeVisible();
 });
 
+test("submits folder names with Enter while preserving validation and IME composition", async ({ page }) => {
+  const changes: Array<{ method: string; resource: string; path: string; name: string }> = [];
+  const folders: Array<{ path: string; name: string; directory: boolean; capabilities: Record<string, boolean> }> = [];
+  await page.route("http://sofinder.test/sofinder/api/entries?**", route => route.fulfill({ json: { success: true, data: { entries: folders, total: folders.length, path: "", offset: 0, limit: 100, capabilities: { create_folder: true, upload: true } } } }));
+  for (const endpoint of ["folders", "entries/rename"]) await page.route(`http://sofinder.test/sofinder/api/${endpoint}`, async route => {
+    const body = route.request().postDataJSON() as { resource: string; path: string; name: string };
+    expect(route.request().headers()["x-csrf-token"]).toBe("test-token");
+    changes.push({ method: route.request().method(), ...body });
+    const entry = { path: body.name, name: body.name, directory: true, size: 0, modifiedAt: 1, mimeType: null, url: null, capabilities: { read: true, rename: true, delete: true } };
+    if (endpoint === "folders") folders.push(entry); else folders.splice(0, 1, entry);
+    await route.fulfill({ json: { success: true, data: { entry } } });
+  });
+  await page.getByRole("button", { name: "新建文件夹", exact: true }).click();
+  const dialog = page.getByRole("dialog", { name: "新建文件夹" });
+  const input = dialog.getByRole("textbox");
+  await input.press("Enter");
+  await expect(dialog).toBeVisible(); expect(changes).toHaveLength(0);
+  await input.fill("bad/name"); await input.press("Enter");
+  await expect(dialog.getByRole("button", { name: "确认", exact: true })).toBeDisabled(); expect(changes).toHaveLength(0);
+  await input.fill("测试目录");
+  for (const options of [{ isComposing: true }, { keyCode: 229 }, { repeat: true }]) {
+    expect(await input.evaluate((element, extra) => {
+      const event = new KeyboardEvent("keydown", { key: "Enter", bubbles: true, cancelable: true, ...extra });
+      element.dispatchEvent(event); return event.defaultPrevented;
+    }, options)).toBe(true);
+  }
+  expect(changes).toHaveLength(0);
+  await input.press("Enter"); await expect(dialog).toBeHidden();
+  await expect(page.getByText("测试目录", { exact: true }).first()).toBeVisible();
+  expect(changes).toEqual([{ method: "POST", resource: "Files", path: "", name: "测试目录" }]);
+  await page.getByText("测试目录", { exact: true }).first().click();
+  await page.getByRole("button", { name: "重命名", exact: true }).click();
+  const rename = page.getByRole("dialog", { name: "重命名" });
+  await rename.getByRole("textbox").fill("修改目录"); await rename.getByRole("textbox").press("Enter");
+  await expect(rename).toBeHidden(); await expect(page.getByText("修改目录", { exact: true }).first()).toBeVisible();
+  expect(changes[1]).toEqual({ method: "PATCH", resource: "Files", path: "测试目录", name: "修改目录" });
+  expect(changes).toHaveLength(2);
+  await page.getByRole("button", { name: "新建文件夹", exact: true }).click();
+  await dialog.getByRole("textbox").fill("按钮目录"); await dialog.getByRole("button", { name: "确认", exact: true }).click();
+  await expect(dialog).toBeHidden(); expect(changes).toHaveLength(3);
+  await page.getByRole("button", { name: "新建文件夹", exact: true }).click();
+  await dialog.getByRole("textbox").fill("取消目录"); await dialog.getByRole("button", { name: "取消", exact: true }).click();
+  await expect(dialog).toBeHidden(); expect(changes).toHaveLength(3);
+});
+
 test("shows and copies an absolute public file URL", async ({ page }) => {
   await page.waitForTimeout(400);
   await page.evaluate(() => Object.defineProperty(navigator, "clipboard", { configurable: true, value: { writeText: async () => undefined } }));

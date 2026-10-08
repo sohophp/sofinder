@@ -2,6 +2,25 @@
 
 ## Unreleased
 
+- Fix sharing on PHP 8.1: use readonly properties in the share descriptor
+  instead of PHP 8.2-only readonly class syntax. Public URLs, access policy,
+  expiration and QR-code settings remain unchanged.
+  Core/HTTP/PSR-15 sources pass PHP 8.1 syntax checks (263 files), and the local
+  PHP 8.1 host security suite passes (66 tests, 234 assertions). Authenticated
+  development site 202 passes image-preview sharing, URL copying, QR-code
+  rendering and anonymous retrieval of the original public bytes. This does
+  not establish production acceptance. The user subsequently confirms sharing
+  and QR codes work in their Windows browser; this is separate manual feedback.
+
+- Folder creation and rename dialogs submit valid names with Enter through the
+  same form action as the confirmation button. Invalid names remain blocked;
+  Enter selecting an IME candidate and repeated keydown events do not submit.
+  Frontend build and focused Chromium regression pass. The updated local PSR-15
+  installation passes authenticated folder creation and rename with Enter on
+  development site 202; dedicated folders and administrator were removed.
+  The user subsequently confirms Enter submission works in their Windows browser.
+  Synthetic IME-event coverage does not establish manual IME or production acceptance.
+
 - Reap every concurrent-state worker before assertions and temporary database cleanup, and include exception locations in diagnostics. Keep all four workers and all 100 durable updates; allow the test SQLite connection 60 seconds for lock acquisition on slow development disks instead of 10. Production PDO settings, journaling and callbacks are unchanged. Replace the usage-lock test’s timed hold with an explicit release signal and an independent blocked reader. Default `/tmp` full regression passes: 579 tests, 3,444 assertions, three unavailable external integrations skipped. Earlier failures and syscall traces remain evidence; this does not establish production SQLite capacity.
 
 - Development host validation uses immutable local 1.5.0-dev archives for
