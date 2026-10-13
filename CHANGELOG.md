@@ -2,6 +2,18 @@
 
 ## Unreleased
 
+- Fresh SDK chunk uploads start with POST instead of querying an uncreated session,
+  eliminating expected 404 console errors during new uploads. Interrupted tasks
+  still query server-reported chunk indexes before retrying; permission errors
+  and the missing-session response contract remain unchanged.
+  SDK/editor-adapter units pass (12 tests), and a focused Chromium test of the
+  built SDK uploads two new files without GET probes or console errors. Frontend
+  typecheck/build, asset-size gates and dist synchronization pass; shared chunk
+  tests pass (15 tests, 147 assertions). The PHP 8.1 development host installs an
+  immutable local PSR-15 archive; its 126 tests/467 assertions and signed HTTP
+  checks from PHP 7.2/7.4 (56 assertions each) pass, including SDK byte/MIME checks.
+  This is fixture-based development evidence, not authenticated site or production acceptance.
+
 - Fix sharing on PHP 8.1: use readonly properties in the share descriptor
   instead of PHP 8.2-only readonly class syntax. Public URLs, access policy,
   expiration and QR-code settings remain unchanged.

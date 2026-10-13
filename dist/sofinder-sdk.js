@@ -8,7 +8,7 @@ var n = class extends Error {
 	return new i(e, t);
 } }), i = class {
 	constructor(e, n) {
-		t(this, "options", void 0), t(this, "request", void 0), t(this, "id", typeof crypto < "u" && crypto.randomUUID ? crypto.randomUUID() : `sf-${Date.now()}-${Math.random().toString(36).slice(2)}`), t(this, "source", void 0), t(this, "file", void 0), t(this, "status", "queued"), t(this, "progress", 0), t(this, "result", null), t(this, "error", null), t(this, "listeners", /* @__PURE__ */ new Set()), t(this, "controller", null), t(this, "completion", void 0), this.options = e, this.request = n, this.file = n.file, this.source = n.source ?? "input", this.completion = this.run();
+		t(this, "options", void 0), t(this, "request", void 0), t(this, "id", typeof crypto < "u" && crypto.randomUUID ? crypto.randomUUID() : `sf-${Date.now()}-${Math.random().toString(36).slice(2)}`), t(this, "source", void 0), t(this, "file", void 0), t(this, "status", "queued"), t(this, "progress", 0), t(this, "result", null), t(this, "error", null), t(this, "listeners", /* @__PURE__ */ new Set()), t(this, "controller", null), t(this, "chunkUploadStarted", !1), t(this, "completion", void 0), this.options = e, this.request = n, this.file = n.file, this.source = n.source ?? "input", this.completion = this.run();
 	}
 	cancel() {
 		this.controller?.abort(), this.file.size > (this.options.chunkThreshold ?? 5e6) && this.discardChunkSession(), this.status = "canceled", this.emit();
@@ -62,14 +62,14 @@ var n = class extends Error {
 		});
 	}
 	async sendChunks(e) {
-		let t = await o(this.options.csrfToken), r = this.options.chunkSize ?? 4e6, i = Math.ceil(this.file.size / r), l = this.id.replace(/[^A-Za-z0-9_-]/g, "-"), u = `${a(this.options.apiBase)}/uploads/chunks/${encodeURIComponent(l)}`, d = await this.receivedChunks(u);
+		let t = await o(this.options.csrfToken), r = this.options.chunkSize ?? 4e6, i = Math.ceil(this.file.size / r), l = this.id.replace(/[^A-Za-z0-9_-]/g, "-"), u = `${a(this.options.apiBase)}/uploads/chunks/${encodeURIComponent(l)}`, d = this.chunkUploadStarted ? await this.receivedChunks(u) : /* @__PURE__ */ new Set();
 		for (let n = 0; n < i; n++) {
 			if (d.has(n)) {
 				this.progress = Math.round((n + 1) / i * 100), this.emit();
 				continue;
 			}
 			let o = s(this.request, e, !1);
-			o.set("name", this.file.name), o.set("uploadId", l), o.set("index", String(n)), o.set("total", String(i)), o.set("chunk", this.file.slice(n * r, Math.min(this.file.size, (n + 1) * r)), `${this.file.name}.part`);
+			o.set("name", this.file.name), o.set("uploadId", l), o.set("index", String(n)), o.set("total", String(i)), o.set("chunk", this.file.slice(n * r, Math.min(this.file.size, (n + 1) * r)), `${this.file.name}.part`), this.chunkUploadStarted = !0;
 			let u = await fetch(a(this.options.apiBase) + "/uploads/chunks", {
 				method: "POST",
 				headers: {

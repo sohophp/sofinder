@@ -68,6 +68,7 @@ class BrowserUploadTask implements UploadTask {
   error: SoFinderSdkErrorShape | null = null;
   private readonly listeners = new Set<(task: UploadTaskSnapshot) => void>();
   private controller: AbortController | null = null;
+  private chunkUploadStarted = false;
   completion: Promise<AssetReference>;
 
   constructor(private readonly options: SoFinderClientOptions, private readonly request: UploadRequest) {
@@ -159,12 +160,15 @@ class BrowserUploadTask implements UploadTask {
     const total = Math.ceil(this.file.size / chunkSize);
     const uploadId = this.id.replace(/[^A-Za-z0-9_-]/g, "-");
     const endpoint = `${base(this.options.apiBase)}/uploads/chunks/${encodeURIComponent(uploadId)}`;
-    const received = await this.receivedChunks(endpoint);
+    // A new task owns a fresh ID; a status query would necessarily return 404.
+    // Once a POST was attempted it may have reached the server, even on network failure.
+    const received = this.chunkUploadStarted ? await this.receivedChunks(endpoint) : new Set<number>();
     for (let index = 0; index < total; index++) {
       if (received.has(index)) { this.progress = Math.round((index + 1) / total * 100); this.emit(); continue; }
       const form = uploadForm(this.request, strategy, false);
       form.set("name", this.file.name); form.set("uploadId", uploadId); form.set("index", String(index)); form.set("total", String(total));
       form.set("chunk", this.file.slice(index * chunkSize, Math.min(this.file.size, (index + 1) * chunkSize)), `${this.file.name}.part`);
+      this.chunkUploadStarted = true;
       const response = await fetch(base(this.options.apiBase) + "/uploads/chunks", { method: "POST", headers: { Accept: "application/json", "X-CSRF-TOKEN": token }, credentials: this.options.credentials ?? "same-origin", body: form, signal: this.controller?.signal });
       const payload = await parsePayload<{ complete: boolean; entry?: Entry; asset?: AssetReference }>(await response.text(), response.status);
       this.progress = Math.round((index + 1) / total * 100); this.emit();

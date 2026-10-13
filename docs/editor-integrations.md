@@ -88,7 +88,10 @@ ClassicEditor.create(element, {
 The adapter uses the public CKEditor UploadAdapter contract and the shared
 `sofinder-sdk.js` upload task. Upload progress, abort, retry, whole/chunked
 transfer and `ask|rename|overwrite|skip` conflicts therefore behave the same in
-every editor. A Private resource is rejected unless it has a stable,
+every editor. In the unreleased source, a fresh chunk task starts directly with
+POST; only a retry after an attempted chunk POST queries session status. A
+missing or expired retry session still returns 404 and restarts from chunk zero,
+while authentication and permission failures remain errors. A Private resource is rejected unless it has a stable,
 authorization-preserving delivery URL; a temporary signed URL is never treated
 as embeddable content. The returned value is a constructible CKEditor plugin;
 do not invoke it manually or wrap it in another plugin class.
