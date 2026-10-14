@@ -22,6 +22,10 @@ bin/console sofinder:uploads:cleanup
 bin/console sofinder:security:audit
 ```
 
-預設 Request Gate 會分別限制一般 API、Upload／Chunk Traffic、唯讀 Thumbnail、圖片編輯、ZIP 產生及 Transfer Batch。因單一目錄頁可能載入大量圖片，Thumbnail 有較高的獨立額度；成功 Response 會由 Browser 私有快取。請依部署調整 `so_finder.limits`。內建 Gate 使用本機 Lock File；多主機部署在分散並行 Traffic 前應改用共用 Limiter。
+三種框架共用的 Request Gate 會分別限制已對應的一般 API、Upload／Chunk Traffic、唯讀 Thumbnail、圖片編輯、ZIP 產生及 Transfer Batch。因單一目錄頁可能載入大量圖片，Thumbnail 有較高的獨立額度；成功 Response 會由 Browser 私有快取。請依部署調整 `so_finder.limits`。內建 Gate 使用本機 Lock File；多主機部署在分散並行 Traffic 前應改用共用 Limiter。
+
+Symfony、PSR-15 與 Laravel 已共用端點分組，包含圖片變體及文件預覽工作。Laravel 使用支援鎖的宿主快取；PSR-15 多節點部署可注入共用 RequestGateStore。須複驗實際額度與使用者隔離；本機狀態損壞回傳 503，不會重設計數。
+
+JSON／表單中繼資料上限為 1 MiB、4096 個值、32 層；二進位上傳保留獨立串流與分塊預算。分享／簽名簽發要求 POST＋CSRF。臨時 bearer 連結依設計可匿名使用至到期，不代表帳號撤權後立即失效；嚴格私有內容應停用此功能。舊弱綁定授權須重建；新授權使用 SHA-256 校驗快照並禁止快取。自行啟動原生工作階段時 HTTPS 使用 Secure，重用的宿主工作階段由宿主維護安全屬性。
 
 預設 Inspector 可透過 `FileInspectorInterface` 替換。接受不受信任公開上傳的部署，應以防毒或 Content-disarm Service 裝飾它，並使用 Operation Event 處理應用程式 Audit 與 Quota Policy。

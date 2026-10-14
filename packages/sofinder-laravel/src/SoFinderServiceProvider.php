@@ -347,6 +347,7 @@ final class SoFinderServiceProvider extends ServiceProvider
             $app->make(AssetCatalogInterface::class), $app->make(JsonAssetAccessSessionStore::class), $app->make(WorkspaceProvider::class), $app->make(FileManager::class), $app->make(ResourceRegistry::class),
             (bool) $app->make(LaravelConfiguration::class)->get('asset_access_sessions.enabled'), (int) $app->make(LaravelConfiguration::class)->get('asset_access_sessions.default_ttl_seconds'),
             (int) $app->make(LaravelConfiguration::class)->get('asset_access_sessions.max_ttl_seconds'), (int) $app->make(LaravelConfiguration::class)->get('asset_access_sessions.max_assets'),
+            roles: $app->make(RoleAuthorizationInterface::class),
         ));
         $this->app->singleton(HealthManager::class, static function ($app): HealthManager {
             $packageDirectory = dirname(__DIR__);
@@ -429,7 +430,8 @@ final class SoFinderServiceProvider extends ServiceProvider
             return new EndpointDispatcher($responses, $streams, array_map(
                 static fn (EndpointActionInterface $action): PsrEndpointHandler => new PsrEndpointHandler($action, $responses, $streams),
                 $actions,
-            ), (bool) $configuration->get('security.production_strict', false), (array) $configuration->get('security.allowed_image_origins', []));
+            ), (bool) $configuration->get('security.production_strict', false), (array) $configuration->get('security.allowed_image_origins', []),
+                new \SohoPHP\SoFinder\Security\RequestBudget(new \SohoPHP\SoFinder\State\SharedRequestGateStore($app->make(AtomicStateStoreInterface::class)), $app->make(ActorProviderInterface::class), (array) $configuration->get('limits'), $app->make(AuthorizationInterface::class)));
         });
         $this->app->singleton(LaravelRouteRegistrar::class, static fn ($app): LaravelRouteRegistrar => new LaravelRouteRegistrar(
             $app->make(Router::class),

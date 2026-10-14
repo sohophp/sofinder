@@ -97,7 +97,7 @@ final class OpenApiContractTest extends TestCase
         $catalog = json_decode((string) file_get_contents($root . '/docs/public/error-codes.json'), true, 512, JSON_THROW_ON_ERROR);
         self::assertSame('1.0', $catalog['apiVersion']);
         $actual = [];
-        foreach ([$root . '/packages/sofinder-core/src', $root . '/packages/sofinder-symfony/src'] as $sourceDirectory) {
+        foreach ([$root . '/packages/sofinder-core/src', $root . '/packages/sofinder-symfony/src', $root . '/packages/sofinder-http/src'] as $sourceDirectory) {
             $iterator = new \RecursiveIteratorIterator(new \RecursiveDirectoryIterator($sourceDirectory));
             foreach ($iterator as $file) {
                 if (!$file instanceof \SplFileInfo || !$file->isFile() || $file->getExtension() !== 'php') continue;

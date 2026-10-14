@@ -99,13 +99,13 @@ final class SharedRoutedActionTest extends TestCase
         $resource = new ResourceType('Private', $directory, '', ['txt'], deliveryMode: 'proxy');
         [$files, $authorization, $registry] = $this->files($resource);
         $manager = new SignedUrlManager($files, $registry, new PathGuard(), true, str_repeat('s', 32), 60, 300, static fn (): int => 1800000000);
-        $action = new SignedUrlIssueAction($manager, $this->urls());
+        $action = new SignedUrlIssueAction($manager, $this->urls(), new MutationGuard($authorization, $this->csrf()));
         $router = $this->createMock(RouterInterface::class);
         $controller = new SignedUrlController($manager, new ContentController($files), $router, $action);
         $uri = '/api/signed-url?resource=Private&path=private.txt&ttl=60';
-        $symfony = $controller->issue(Request::create($uri));
+        $symfony = $controller->issue(Request::create($uri, 'POST', server: ['HTTP_X_CSRF_TOKEN' => 'valid']));
         $factory = new Psr17Factory();
-        $psr = (new PsrEndpointHandler($action, $factory, $factory))->handle(new ServerRequest('GET', $uri));
+        $psr = (new PsrEndpointHandler($action, $factory, $factory))->handle(new ServerRequest('POST', $uri, ['X-CSRF-TOKEN' => 'valid']));
 
         self::assertSame(json_decode((string) $symfony->getContent(), true, 32, JSON_THROW_ON_ERROR), json_decode((string) $psr->getBody(), true, 32, JSON_THROW_ON_ERROR));
         self::assertStringStartsWith('https://example.test/sofinder_signed_content?', json_decode((string) $psr->getBody(), true, 32, JSON_THROW_ON_ERROR)['data']['url']);

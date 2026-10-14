@@ -24,6 +24,7 @@ final class SignedUrlController
         private readonly RouterInterface $router,
         private readonly ?SignedUrlIssueAction $issueAction = null,
         private readonly ?SignedContentAction $contentAction = null,
+        private readonly ?\SohoPHP\SoFinder\Symfony\CsrfGuard $csrf = null,
     ) {
     }
 
@@ -33,6 +34,8 @@ final class SignedUrlController
             $result = $this->issueAction->execute(SymfonyRequestContextProvider::fromRequest($request));
             return new JsonResponse($result->payload, $result->status, $result->headers);
         }
+        if ($this->csrf === null) throw new \SohoPHP\SoFinder\Exception\AccessDeniedException('A CSRF provider is required to issue a signed URL.');
+        $this->csrf->assertMutation($request);
         $ttl = $request->query->get('ttl');
         if ($ttl !== null && (!is_string($ttl) || preg_match('/^\d+$/D', $ttl) !== 1)) {
             throw new SoFinderException('The signed URL lifetime must be an integer.', 'signed_url_ttl_invalid', 422);
@@ -53,8 +56,7 @@ final class SignedUrlController
         if ($this->contentAction !== null) return SymfonyStreamResponseFactory::create($this->contentAction->execute(SymfonyRequestContextProvider::fromRequest($request), ['token' => $token]));
         $opened = $this->signedUrls->open($token);
         $response = $this->content->stream($request, $opened['resource'], $opened['entry'], $opened['stream'], $opened['disposition']);
-        $response->setPublic();
-        $response->setMaxAge(max(0, $opened['expiresAt'] - time()));
+        $response->headers->set('Cache-Control', 'private, no-store');
         $response->headers->set('Referrer-Policy', 'no-referrer');
 
         return $response;

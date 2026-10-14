@@ -36,13 +36,17 @@ Run after configuration or deployment changes:
 bin/console sofinder:security:audit
 ```
 
-Default request gates separately constrain ordinary APIs, upload/chunk traffic,
+Shared request gates separately constrain mapped ordinary APIs, upload/chunk traffic,
 read-only thumbnails, image editing, ZIP generation and transfer batches.
 Thumbnails have a larger independent allowance because one directory page can
 load many images; successful responses are privately cached by the browser.
 Tune `so_finder.limits` for the deployment. The built-in gate uses local locked
 files; a multi-host setup should replace it with a shared limiter before
 distributing concurrent traffic.
+
+Symfony, PSR-15 and Laravel now use the same endpoint groups, including image variants and document preview jobs. Laravel uses its lock-capable cache store; PSR-15 supports an injected shared request-gate store for multi-node hosts. Verify the actual configured budgets and actor isolation. Corrupted local state fails with 503 rather than resetting counts.
+
+JSON/form metadata is limited to 1 MiB, 4096 values and 32 levels; binary uploads retain separate stream and chunk budgets. Signed/share issuance requires POST and CSRF. Temporary bearer links intentionally remain usable without login until expiry; they are not an immediate account-revocation mechanism. Disable them for strictly private content. Weak legacy grants must be regenerated; protected streams are SHA-256-checked snapshots with private no-store caching. Self-started native sessions set Secure on HTTPS; reused host sessions remain the host's responsibility.
 
 The default inspector is replaceable through `FileInspectorInterface`.
 Deployments accepting untrusted public uploads should decorate it with an

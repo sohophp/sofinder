@@ -2,6 +2,16 @@
 
 ## Unreleased
 
+- 安全复验：PHP 588 用例／3537 断言，585 通过、3 项外部服务测试跳过；新增安全测试在 PHP 8.1 独立消费者通过 8 项／83 断言。真实隔离 HTTP／Chromium 14 项、SDK Chromium 1 项、前端 66 项、S3 单元 10 项、PHPStan、三语言文档及产物同步／大小检查通过。根／S3 Composer 与 UI／文档 Node 扫描均零公告；生产、真实账号登录及外部服务未验收。
+- 依赖修复保留原有 Vite／ANSI 覆盖和构建许可，在 pnpm 工作区配置中提高 source-map-js 至安全版本并更新 Vue SSR；没有忽略公告或关闭扫描。通用清单与技能参考同步补充本轮可复用检查项。
+
+- 安全修复：访问会话绑定创建者，其他用户撤销须有明确管理角色及目标资源权限；旧无归属会话不能被普通用户接管。三种框架共用请求预算，补齐图片／文档预览入口；本地计数损坏返回 503，使用有界锁及原子完整写入，不再静默归零。
+- JSON／表单元数据增加 1 MiB、4096 个值、32 层深度上限，已有解析结果不再重复读取原始请求体；文件上传保持独立预算。签名链接和访问会话绑定 SHA-256，返回经校验的私有快照；旧弱绑定链接需重新生成，文件原地址保持。
+- 分享与签名签发改为 POST＋CSRF，旧 GET 不再签发授权；临时授权内容禁公共缓存。原生 Session 在 HTTPS 下设置 Secure，复用宿主会话时保留宿主设置。自定义分享客户端须同步请求方法和令牌。
+
+- 完成本地安全自查，确认访问会话对象授权、框架／端点请求预算、损坏状态处理、请求体预算、文件版本绑定及开发依赖仍有待整改项；本轮未修改运行代码或升级依赖。生产安全文档三种语言明确限流覆盖与宿主责任，避免把配置存在视为所有入口已受保护。
+- 自查验证：PHP 579 用例／3444 断言，其中 3 项因未配置真实外部服务跳过；S3 独立单元 10 测试／36 断言、前端 66 测试及 PHPStan 通过。PHP 依赖扫描零公告，UI／文档开发依赖存在公告；真实浏览器、生产及最低 PHP 版本未验收。
+
 - Fresh SDK chunk uploads start with POST instead of querying an uncreated session,
   eliminating expected 404 console errors during new uploads. Interrupted tasks
   still query server-reported chunk indexes before retrying; permission errors

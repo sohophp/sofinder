@@ -104,7 +104,7 @@ bounded scan for a complete index.
 
 `POST /api/assets/access-sessions` accepts private proxy `assetIds` and optional
 `ttl`, then returns version-bound inline URLs and an expiry.
-`DELETE /api/assets/access-sessions/{id}` revokes the entire session. Changed,
+`DELETE /api/assets/access-sessions/{id}` revokes the entire session. Only its creator or an explicitly authorized resource administrator can revoke it; legacy ownerless sessions require an administrator. Sessions bind SHA-256 content, and old weakly bound sessions must be recreated. Changed,
 expired, revoked or unlisted assets cannot be consumed through the bearer URL.
 
 ### `GET /api/config`
@@ -256,16 +256,16 @@ Returns private authenticated content with ETag, Last-Modified, conditional requ
 
 ### Temporary signed URLs
 
-`GET /api/signed-url?resource=Private&path=manual.pdf&ttl=300` first authorizes the
+`POST /api/signed-url?resource=Private&path=manual.pdf&ttl=300` first authorizes the
 current user and returns `{url,expiresAt}`. The URL targets `/signed/{token}` and
 may be opened without a session only when the host firewall explicitly grants
 that route public access. Tokens are HMAC protected, work only with
-`delivery_mode: proxy`, and are bound to the file size and modified time.
+`delivery_mode: proxy`, and are bound to SHA-256 content as well as file metadata. Both issuance endpoints require a valid CSRF token. Legacy weakly bound links must be regenerated; content responses use private no-store caching.
 Expired or replaced files return 410; token tampering returns 403.
 
 ### Share links
 
-`GET /api/share-link?resource=Files&path=manual.pdf` resolves the URL shown by
+`POST /api/share-link?resource=Files&path=manual.pdf` resolves the URL shown by
 the Share dialog. The response contains `url`, an explicit `access` value
 (`public`, `login_required`, or `restricted`), nullable `expiresAt`, and
 `qrCode`. Copy URL and QR Code always use the same returned URL. Applications

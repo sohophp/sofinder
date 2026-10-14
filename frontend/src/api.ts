@@ -94,11 +94,11 @@ export class Api {
   signedUrl(resource: string, path: string, ttl?: number, disposition: "inline" | "attachment" = "attachment") {
     const query = new URLSearchParams({ resource, path, disposition });
     if (ttl !== undefined) query.set("ttl", String(ttl));
-    return this.request<{ url: string; expiresAt: number }>(`/signed-url?${query}`);
+    return this.request<{ url: string; expiresAt: number }>(`/signed-url?${query}`, { method: "POST" });
   }
 
   shareLink(resource: string, path: string) {
-    return this.request<ShareDescriptor>(`/share-link?${new URLSearchParams({ resource, path })}`);
+    return this.request<ShareDescriptor>(`/share-link?${new URLSearchParams({ resource, path })}`, { method: "POST" });
   }
 
   list(resource: string, path: string, search = "", sort = "name", direction = "asc", offset = 0, limit = 100, searchMode: "name" | "tags" = "name", cursor: string | null = null) {

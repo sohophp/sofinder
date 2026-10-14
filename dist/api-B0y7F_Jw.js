@@ -87,13 +87,13 @@ var n = (e) => /^1(?:\.|$)/.test(e), r = class extends Error {
 			path: t,
 			disposition: r
 		});
-		return n !== void 0 && i.set("ttl", String(n)), this.request(`/signed-url?${i}`);
+		return n !== void 0 && i.set("ttl", String(n)), this.request(`/signed-url?${i}`, { method: "POST" });
 	}
 	shareLink(e, t) {
 		return this.request(`/share-link?${new URLSearchParams({
 			resource: e,
 			path: t
-		})}`);
+		})}`, { method: "POST" });
 	}
 	list(e, t, n = "", r = "name", i = "asc", a = 0, o = 100, s = "name", c = null) {
 		let l = new URLSearchParams({

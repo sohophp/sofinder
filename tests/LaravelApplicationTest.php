@@ -46,6 +46,15 @@ final class LaravelApplicationTest extends TestCase
         $app['config']->set('sofinder.auth_middleware', []);
     }
 
+    public function testSharedBudgetLimitsRealLaravelRequests(): void
+    {
+        $this->app['config']->set('sofinder.core.limits.normal', ['max_requests' => 1, 'interval' => 60, 'max_concurrent' => 1]);
+        $this->app->forgetInstance(LaravelConfiguration::class);
+        $this->app->forgetInstance(\SohoPHP\SoFinder\Http\EndpointDispatcher::class);
+        $this->get('/sofinder/api/capabilities')->assertOk();
+        $this->get('/sofinder/api/capabilities')->assertStatus(429)->assertJsonPath('error.code', 'rate_limit_exceeded');
+    }
+
     public function testProviderBootsInsideARealLaravelApplication(): void
     {
         self::assertInstanceOf(Application::class, $this->app);

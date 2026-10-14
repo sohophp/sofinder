@@ -821,13 +821,14 @@ final class SoFinderExtension extends Extension
         $container->setDefinition(DocumentPreviewJobCreateAction::class, new Definition(DocumentPreviewJobCreateAction::class, [new Reference(DocumentPreviewJobService::class), new Reference(MutationGuard::class)]));
         $container->setDefinition(DocumentPreviewJobStatusAction::class, new Definition(DocumentPreviewJobStatusAction::class, [new Reference(DocumentPreviewJobService::class)]));
         $container->setDefinition(DocumentPreviewJobActions::class, new Definition(DocumentPreviewJobActions::class, [new Reference(DocumentPreviewJobCreateAction::class), new Reference(DocumentPreviewJobStatusAction::class)]));
-        $container->setDefinition(SignedUrlIssueAction::class, new Definition(SignedUrlIssueAction::class, [new Reference(SignedUrlManager::class), new Reference(EndpointUrlGeneratorInterface::class)]));
+        $container->setDefinition(SignedUrlIssueAction::class, new Definition(SignedUrlIssueAction::class, [new Reference(SignedUrlManager::class), new Reference(EndpointUrlGeneratorInterface::class), new Reference(MutationGuard::class)]));
         $container->setDefinition(ShareLinkAction::class, new Definition(ShareLinkAction::class, [
             new Reference(FileManager::class),
             new Reference(ResourceRegistry::class),
             new Reference(SignedUrlManager::class),
             new Reference(EndpointUrlGeneratorInterface::class),
             $signedUrlConfig['enabled'],
+            new Reference(MutationGuard::class),
             new TaggedIteratorArgument('sofinder.share_link_provider'),
         ]));
         $container->setDefinition(SignedContentAction::class, new Definition(SignedContentAction::class, [new Reference(SignedUrlManager::class), new Reference(EntryStreamResponseBuilder::class)]));
@@ -1042,7 +1043,7 @@ final class SoFinderExtension extends Extension
             new Reference(AssetUsageActions::class),
         ]);
         $container->setDefinition(AssetAccessSessionManager::class, (new Definition(AssetAccessSessionManager::class))->setArguments([
-            new Reference(AssetCatalogInterface::class), new Reference(AssetAccessSessionStoreInterface::class), new Reference(WorkspaceProvider::class), new Reference(FileManager::class), new Reference(ResourceRegistry::class), $assetAccessConfig['enabled'], $assetAccessConfig['default_ttl_seconds'], $assetAccessConfig['max_ttl_seconds'], $assetAccessConfig['max_assets'],
+            new Reference(AssetCatalogInterface::class), new Reference(AssetAccessSessionStoreInterface::class), new Reference(WorkspaceProvider::class), new Reference(FileManager::class), new Reference(ResourceRegistry::class), $assetAccessConfig['enabled'], $assetAccessConfig['default_ttl_seconds'], $assetAccessConfig['max_ttl_seconds'], $assetAccessConfig['max_assets'], null, new Reference(RoleAuthorizationInterface::class),
         ]));
         $container->setDefinition(AssetSessionCreateAction::class, new Definition(AssetSessionCreateAction::class, [new Reference(AssetAccessSessionManager::class), new Reference(MutationGuard::class), new Reference(EndpointUrlGeneratorInterface::class)]));
         $container->setDefinition(AssetSessionRevokeAction::class, new Definition(AssetSessionRevokeAction::class, [new Reference(AssetAccessSessionManager::class), new Reference(MutationGuard::class)]));
@@ -1150,7 +1151,7 @@ final class SoFinderExtension extends Extension
             ->setArguments([
                 new Reference(RequestGateStoreInterface::class),
                 new Reference(ActorProviderInterface::class),
-                $config['limits'],
+                $config['limits'], new Reference(AuthorizationInterface::class),
             ])
             ->addTag('kernel.event_subscriber'));
         $container->setDefinition(FailureAuditSubscriber::class, (new Definition(FailureAuditSubscriber::class))

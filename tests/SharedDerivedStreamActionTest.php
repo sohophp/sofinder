@@ -89,13 +89,13 @@ final class SharedDerivedStreamActionTest extends TestCase
         self::assertSame(substr($body, 0, 8), $rangeBody);
     }
 
-    public function testSignedContentPreservesRangeAndPublicCacheContract(): void
+    public function testSignedContentPreservesRangeAndDisablesCaching(): void
     {
         $directory = $this->directory('signed-content'); file_put_contents($directory . '/private.txt', '0123456789'); $resource = new ResourceType('Private', $directory, '', ['txt'], deliveryMode: 'proxy');
         [$files, , $registry] = $this->files($resource); $manager = new SignedUrlManager($files, $registry, new PathGuard(), true, str_repeat('s', 32), 60, 300); $issued = $manager->issue('Private', 'private.txt', 60); $action = new SignedContentAction($manager, new EntryStreamResponseBuilder());
         $router = $this->createMock(RouterInterface::class); $controller = new SignedUrlController($manager, new ContentController($files), $router, contentAction: $action); $request = Request::create('/signed/' . $issued['token'], server: ['HTTP_RANGE' => 'bytes=2-5']); $symfony = $controller->consume($request, $issued['token']); ob_start(); $symfony->sendContent(); $body = ob_get_clean();
         $factory = new Psr17Factory(); $psrRequest = (new ServerRequest('GET', '/signed/' . $issued['token']))->withAttribute('token', $issued['token'])->withHeader('Range', 'bytes=2-5'); $psr = (new PsrEndpointHandler($action, $factory, $factory))->handle($psrRequest);
-        self::assertSame(206, $psr->getStatusCode()); self::assertSame('2345', $body); self::assertSame($body, (string) $psr->getBody()); self::assertStringStartsWith('public, max-age=', $psr->getHeaderLine('Cache-Control')); self::assertSame('no-referrer', $psr->getHeaderLine('Referrer-Policy'));
+        self::assertSame(206, $psr->getStatusCode()); self::assertSame('2345', $body); self::assertSame($body, (string) $psr->getBody()); self::assertSame('private, no-store', $psr->getHeaderLine('Cache-Control')); self::assertSame('no-referrer', $psr->getHeaderLine('Referrer-Policy'));
     }
 
     /** @return array{FileManager,AuthorizationInterface,ResourceRegistry} */

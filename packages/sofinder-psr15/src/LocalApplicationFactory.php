@@ -39,6 +39,7 @@ final class LocalApplicationFactory
         private readonly ?DocumentPreviewDispatcherInterface $documentPreviewDispatcher = null,
         private readonly ?FileInspectorDecoratorInterface $fileInspectorDecorator = null,
         private readonly ?ImageProcessorInterface $imageProcessor = null,
+        private readonly ?\SohoPHP\SoFinder\Contract\RequestGateStoreInterface $requestGateStore = null,
     ) {
         $this->contexts = new ScopedRequestContextProvider();
     }
@@ -59,6 +60,12 @@ final class LocalApplicationFactory
                 $handlers,
                 (bool) $configuration['security']['production_strict'],
                 $this->allowedImageOrigins($configuration),
+                new \SohoPHP\SoFinder\Security\RequestBudget(
+                    $this->requestGateStore ?? new \SohoPHP\SoFinder\Security\LocalRequestGateStore(rtrim($this->stateDirectory, '/') . '/request-gate'),
+                    $this->services->actor,
+                    $configuration['limits'],
+                    $this->services->authorization,
+                ),
             ),
             $this->services,
             $this->prefix,

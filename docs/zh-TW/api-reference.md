@@ -188,11 +188,11 @@ Session 24 小時後過期。客戶端可以補傳缺失 Index，但不能超過
 
 - `GET /api/download?resource=Files&path=manual.pdf`：授權後以 Attachment 下載，並支援 ETag、Last-Modified、條件請求及單段位元組 Range；資料夾返回 `invalid_type`，無效或無法滿足的 Range 返回 416。
 - `GET /api/content?resource=Images&path=photo.jpg&disposition=inline`：返回私有內容，支援 ETag、Last-Modified、條件請求和單段 Byte Range。只有安全 Raster MIME 能 Inline，其餘強制 Attachment。無效 Range 返回 416。
-- `GET /api/signed-url?resource=Private&path=manual.pdf&ttl=300`：先重新授權目前使用者，再回傳 `{url,expiresAt}`。臨時網址指向 `/signed/{token}`；只有宿主 Firewall 明確允許該路由匿名存取時才不需要 Session。Token 使用 HMAC、僅適用於 `delivery_mode: proxy`，並綁定檔案大小與修改時間；過期或檔案已替換回傳 410，竄改回傳 403。
+- `POST /api/signed-url?resource=Private&path=manual.pdf&ttl=300`：先重新授權目前使用者，再回傳 `{url,expiresAt}`。臨時網址指向 `/signed/{token}`；只有宿主 Firewall 明確允許該路由匿名存取時才不需要 Session。Token 使用 HMAC、僅適用於 `delivery_mode: proxy`，並綁定 SHA-256 內容及檔案中繼資料；簽發要求有效 CSRF，舊弱綁定連結須重新產生，內容回應使用 private no-store；過期或檔案已替換回傳 410，竄改回傳 403。
 
 ### 分享連結
 
-`GET /api/share-link?resource=Files&path=manual.pdf` 解析分享視窗使用的網址。
+`POST /api/share-link?resource=Files&path=manual.pdf` 解析分享視窗使用的網址。
 回應包含 `url`、明確的 `access`（`public`、`login_required` 或 `restricted`）、
 可為空的 `expiresAt` 和 `qrCode`。複製與 QR Code 使用相同的回傳網址。
 Host 可實作 `ShareLinkProviderInterface` 回傳穩定連結；SoFinder 不規定連結的儲存或路由。
@@ -285,3 +285,5 @@ Client 確認最近路徑已在 SoFinder 外部消失後，可傳送 `action: "f
 | 500/503/507 | 儲存、配額、回收站、圖片或 Session 可用性錯誤 | 保留 Machine Code，停止自動寫重試並通知運維。 |
 
 不得向使用者顯示內部 Stack Trace，也不要記錄 Session Cookie、CSRF Token、簽名 URL、憑據或私有檔案內容。
+
+存取工作階段僅允許建立者撤銷；明確授權的管理員還須具有目標資源權限。舊無歸屬工作階段由管理員清理並重建；新工作階段以 SHA-256 綁定內容，內容回應禁止快取。
