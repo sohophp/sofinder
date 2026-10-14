@@ -3,14 +3,15 @@ import { t } from "./react-B5TC723I.js";
 import { t as n } from "./UiIcon-CyBzESIM.js";
 //#region src/components/FolderTree.tsx
 var r = t(), i = e();
-function a({ api: e, resource: t, currentPath: a, rootLabel: o, onNavigate: s }) {
-	let [c, l] = (0, r.useState)({ "": {
+function a({ api: e, resource: t, revision: a = 0, currentPath: o, rootLabel: s, onNavigate: c }) {
+	let [l, u] = (0, r.useState)({ "": {
 		loading: !1,
 		loaded: !1,
 		expanded: !0,
 		children: []
-	} }), u = (0, r.useCallback)(async (n, r = !0) => {
-		l((e) => ({
+	} }), d = (0, r.useRef)(0), f = (0, r.useCallback)(async (n, r = !0) => {
+		let i = d.current;
+		u((e) => ({
 			...e,
 			[n]: {
 				...e[n] || {
@@ -22,18 +23,20 @@ function a({ api: e, resource: t, currentPath: a, rootLabel: o, onNavigate: s })
 			}
 		}));
 		try {
-			let i = await e.list(t, n, "", "name", "asc", 0, 500);
-			l((e) => ({
+			let a = await e.list(t, n, "", "name", "asc", 0, 500);
+			if (i !== d.current) return;
+			u((e) => ({
 				...e,
 				[n]: {
 					loading: !1,
 					loaded: !0,
 					expanded: r,
-					children: i.entries.filter((e) => e.directory)
+					children: a.entries.filter((e) => e.directory)
 				}
 			}));
 		} catch {
-			l((e) => ({
+			if (i !== d.current) return;
+			u((e) => ({
 				...e,
 				[n]: {
 					...e[n] || {
@@ -46,78 +49,82 @@ function a({ api: e, resource: t, currentPath: a, rootLabel: o, onNavigate: s })
 			}));
 		}
 	}, [e, t]);
-	(0, r.useEffect)(() => {
-		l({ "": {
-			loading: !1,
-			loaded: !1,
-			expanded: !0,
-			children: []
-		} }), u("");
-	}, [u, t]), (0, r.useEffect)(() => {
-		let e = a === "" ? [] : a.split("/");
+	(0, r.useEffect)(() => (u({ "": {
+		loading: !1,
+		loaded: !1,
+		expanded: !0,
+		children: []
+	} }), f(""), () => {
+		d.current += 1;
+	}), [
+		f,
+		t,
+		a
+	]), (0, r.useEffect)(() => {
+		let e = o === "" ? [] : o.split("/");
 		e.forEach((t, n) => {
 			let r = e.slice(0, n + 1).join("/");
-			!c[r]?.loaded && !c[r]?.loading && u(r);
+			!l[r]?.loaded && !l[r]?.loading && f(r);
 		});
 	}, [
-		a,
-		u,
-		c
+		o,
+		f,
+		l
 	]);
-	let d = (e) => {
-		if (!c[e]?.loaded) {
-			u(e);
+	let p = (e) => {
+		if (!l[e]?.loaded) {
+			f(e);
 			return;
 		}
-		l((t) => ({
+		u((t) => ({
 			...t,
 			[e]: {
 				...t[e],
 				expanded: !t[e].expanded
 			}
 		}));
-	}, f = (e, t) => {
-		let r = c[e];
+	}, m = (e, t) => {
+		let r = l[e];
 		return r?.expanded ? r.children.map((e) => /* @__PURE__ */ (0, i.jsxs)("div", { children: [/* @__PURE__ */ (0, i.jsxs)("div", {
-			className: `sf-tree-row ${a === e.path ? "active" : ""}`,
+			className: `sf-tree-row ${o === e.path ? "active" : ""}`,
 			style: { paddingInlineStart: `${4 + t * 14}px` },
 			children: [/* @__PURE__ */ (0, i.jsx)("button", {
 				className: "sf-tree-toggle",
-				onClick: () => d(e.path),
-				"aria-expanded": c[e.path]?.expanded || !1,
+				onClick: () => p(e.path),
+				"aria-expanded": l[e.path]?.expanded || !1,
 				"aria-label": e.name,
-				children: c[e.path]?.loading ? /* @__PURE__ */ (0, i.jsx)("span", {
+				children: l[e.path]?.loading ? /* @__PURE__ */ (0, i.jsx)("span", {
 					className: "sf-tree-loading",
 					children: "…"
-				}) : /* @__PURE__ */ (0, i.jsx)(n, { name: c[e.path]?.expanded ? "chevron-down" : "chevron-right" })
+				}) : /* @__PURE__ */ (0, i.jsx)(n, { name: l[e.path]?.expanded ? "chevron-down" : "chevron-right" })
 			}), /* @__PURE__ */ (0, i.jsxs)("button", {
 				className: "sf-tree-name",
-				onClick: () => s(e.path),
+				onClick: () => c(e.path),
 				title: e.path,
 				children: [/* @__PURE__ */ (0, i.jsx)(n, { name: "folder" }), /* @__PURE__ */ (0, i.jsx)("span", { children: e.name })]
 			})]
-		}), f(e.path, t + 1)] }, e.path)) : null;
+		}), m(e.path, t + 1)] }, e.path)) : null;
 	};
 	return /* @__PURE__ */ (0, i.jsxs)("nav", {
 		className: "sf-folder-tree",
-		"aria-label": o,
+		"aria-label": s,
 		children: [/* @__PURE__ */ (0, i.jsxs)("div", {
-			className: `sf-tree-row ${a === "" ? "active" : ""}`,
+			className: `sf-tree-row ${o === "" ? "active" : ""}`,
 			children: [/* @__PURE__ */ (0, i.jsx)("button", {
 				className: "sf-tree-toggle",
-				onClick: () => d(""),
-				"aria-expanded": c[""]?.expanded || !1,
-				"aria-label": o,
-				children: c[""]?.loading ? /* @__PURE__ */ (0, i.jsx)("span", {
+				onClick: () => p(""),
+				"aria-expanded": l[""]?.expanded || !1,
+				"aria-label": s,
+				children: l[""]?.loading ? /* @__PURE__ */ (0, i.jsx)("span", {
 					className: "sf-tree-loading",
 					children: "…"
-				}) : /* @__PURE__ */ (0, i.jsx)(n, { name: c[""]?.expanded ? "chevron-down" : "chevron-right" })
+				}) : /* @__PURE__ */ (0, i.jsx)(n, { name: l[""]?.expanded ? "chevron-down" : "chevron-right" })
 			}), /* @__PURE__ */ (0, i.jsxs)("button", {
 				className: "sf-tree-name",
-				onClick: () => s(""),
-				children: [/* @__PURE__ */ (0, i.jsx)(n, { name: "folder" }), /* @__PURE__ */ (0, i.jsx)("span", { children: o })]
+				onClick: () => c(""),
+				children: [/* @__PURE__ */ (0, i.jsx)(n, { name: "folder" }), /* @__PURE__ */ (0, i.jsx)("span", { children: s })]
 			})]
-		}), f("", 1)]
+		}), m("", 1)]
 	});
 }
 //#endregion

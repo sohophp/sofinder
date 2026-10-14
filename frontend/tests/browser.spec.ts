@@ -117,6 +117,157 @@ test.beforeEach(async ({ page }) => {
   await expect(page.getByText("guide.txt").first()).toBeVisible();
 });
 
+for (const action of ["remove", "clear", "close"] as const) {
+  test(`restored upload picker stays quiet and ${action} has durable semantics`, async ({ page }) => {
+    await page.evaluate(() => localStorage.setItem("sofinder.uploadSessions.v1", JSON.stringify([{
+      id: "interrupted", scope: "/sofinder/api", resource: "Files", path: "", name: "old.pdf",
+      size: 10, lastModified: 1, total: 2, overwrite: false, autoRename: false, updatedAt: Date.now(),
+    }])));
+    await page.route("http://sofinder.test/sofinder/api/uploads/chunks/interrupted", route => route.abort());
+    const reopen = async () => {
+      await page.goto("http://sofinder.test/");
+      const pickerConfig = { ...config, selectMode: true, selectionKind: "file", uiDefaults: { ...config.uiDefaults, mode: "picker" } };
+      await page.setContent(`<main id="sofinder-root" data-config='${JSON.stringify(pickerConfig)}'></main>`);
+      await page.addStyleTag({ path: resolve(import.meta.dirname, "../../dist/sofinder.css") });
+      await page.addScriptTag({ path: resolve(import.meta.dirname, "../../dist/sofinder.js"), type: "module" });
+      await expect(page.getByText("guide.txt").first()).toBeVisible();
+    };
+    await reopen();
+    await expect(page.locator(".sf-upload-progress-trigger")).toBeVisible();
+    await expect(page.locator(".sf-upload-panel")).toHaveCount(0);
+    await page.locator(".sf-upload-progress-trigger").click();
+    await expect(page.locator(".sf-upload-panel")).toContainText("old.pdf");
+    if (action === "remove") await page.getByRole("button", { name: "移除任务: old.pdf", exact: true }).click();
+    else if (action === "clear") await page.getByRole("button", { name: "清除已完成", exact: true }).click();
+    else await page.locator(".sf-upload-close").click();
+    await expect.poll(() => page.evaluate(() => JSON.parse(localStorage.getItem("sofinder.uploadSessions.v1") || "[]").length)).toBe(action === "close" ? 1 : 0);
+    await reopen();
+    await expect(page.locator(".sf-upload-panel")).toHaveCount(0);
+    if (action === "close") {
+      await page.locator(".sf-upload-progress-trigger").click();
+      await expect(page.locator(".sf-upload-panel")).toContainText("old.pdf");
+    } else await expect(page.locator(".sf-upload-progress-trigger")).toHaveCount(0);
+  });
+}
+
+for (const [kind, filename] of [["image", "photo.png"], ["file", "manual.pdf"]] as const) {
+  test(`reopening the ${kind} picker does not replay an old upload error or block selection`, async ({ page }) => {
+    await page.evaluate(() => localStorage.setItem("sofinder.uploadSessions.v1", JSON.stringify([{
+      id: "interrupted", scope: "/sofinder/api", resource: "Files", path: "", name: "old.pdf",
+      size: 10, lastModified: 1, total: 2, overwrite: false, autoRename: false, updatedAt: Date.now(),
+    }])));
+    for (let attempt = 0; attempt < 2; attempt += 1) {
+      await page.goto("http://sofinder.test/");
+      const pickerConfig = { ...config, selectMode: true, selectionKind: kind, uiDefaults: { ...config.uiDefaults, mode: "picker", fullTools: true } };
+      await page.setContent(`<main id="sofinder-root" data-config='${JSON.stringify(pickerConfig)}'></main>`);
+      await page.addStyleTag({ path: resolve(import.meta.dirname, "../../dist/sofinder.css") });
+      await page.evaluate(() => window.addEventListener("sofinder:select", event => {
+        (window as Window & { selectedPath?: string }).selectedPath = (event as CustomEvent).detail.path;
+      }));
+      await page.addScriptTag({ path: resolve(import.meta.dirname, "../../dist/sofinder.js"), type: "module" });
+      const entry = page.locator(".sf-entry", { hasText: filename });
+      await expect(entry).toBeVisible();
+      await expect(page.locator(".sf-upload-progress-trigger")).toBeVisible();
+      await expect(page.locator(".sf-upload-panel")).toHaveCount(0);
+      await expect(page.getByText("上传已中断，请重新选择同一文件继续", { exact: false })).toHaveCount(0);
+      await entry.dblclick();
+      await expect.poll(() => page.evaluate(() => (window as Window & { selectedPath?: string }).selectedPath)).toBe(filename);
+      await expect(page.locator(".sf-upload-panel")).toHaveCount(0);
+      await expect.poll(() => page.evaluate(() => JSON.parse(localStorage.getItem("sofinder.uploadSessions.v1") || "[]").length)).toBe(1);
+    }
+  });
+}
+
+for (const scenario of ["request failure", "chunk failure", "network interruption", "navigation interruption", "cancellation"] as const) {
+  test(`a new upload after ${scenario} does not replay the previous upload error`, async ({ page }) => {
+    let plainRequests = 0;
+    let chunkRequests = 0;
+    let heldChunk: import("@playwright/test").Route | undefined;
+    let cancelledSessions = 0;
+    await page.route("http://sofinder.test/sofinder/api/uploads", async route => {
+      plainRequests += 1;
+      if (scenario === "request failure" && plainRequests === 1) {
+        await route.fulfill({ status: 503, json: { success: false, error: { code: "upload_failed", message: "Simulated upload failure" } } });
+      } else {
+        await route.fulfill({ status: 201, json: { success: true, data: { entry: { path: "new.pdf", name: "new.pdf", directory: false, size: 20, modifiedAt: 1, mimeType: "application/pdf", url: "/uploads/editor/files/new.pdf", capabilities: {} } } } });
+      }
+    });
+    await page.route("http://sofinder.test/sofinder/api/uploads/chunks/*", async route => {
+      if (route.request().method() === "DELETE") {
+        cancelledSessions += 1;
+        await route.fulfill({ json: { success: true, data: {} } });
+      } else await route.fulfill({ json: { success: true, data: { received: [0], complete: false } } });
+    });
+    await page.route("http://sofinder.test/sofinder/api/uploads/chunks", async route => {
+      chunkRequests += 1;
+      if (chunkRequests === 1) await route.fulfill({ json: { success: true, data: { complete: false } } });
+      else if (chunkRequests >= 3) await route.fulfill({ json: { success: true, data: { complete: true, entry: { path: "old.pdf", name: "old.pdf", directory: false, size: 6_000_000, modifiedAt: 1, mimeType: "application/pdf", url: "/uploads/editor/files/old.pdf", capabilities: {} } } } });
+      else if (scenario === "chunk failure") await route.fulfill({ status: 503, json: { success: false, error: { code: "upload_failed", message: "Simulated chunk failure" } } });
+      else if (scenario === "network interruption") await route.abort("connectionfailed");
+      else heldChunk = route;
+    });
+    const reopen = async () => {
+      await page.goto("http://sofinder.test/");
+      // The routed HTTP test origin has no native randomUUID; production uses HTTPS.
+      await page.evaluate(() => {
+        if (!crypto.randomUUID) Object.defineProperty(crypto, "randomUUID", { value: () => "11111111-1111-4111-8111-111111111111" });
+      });
+      const pickerConfig = { ...config, selectMode: true, selectionKind: "file", uiDefaults: { ...config.uiDefaults, mode: "picker", fullTools: true } };
+      await page.setContent(`<main id="sofinder-root" data-config='${JSON.stringify(pickerConfig)}'></main>`);
+      await page.addStyleTag({ path: resolve(import.meta.dirname, "../../dist/sofinder.css") });
+      await page.addScriptTag({ path: resolve(import.meta.dirname, "../../dist/sofinder.js"), type: "module" });
+      await expect(page.getByText("guide.txt").first()).toBeVisible();
+    };
+    await reopen();
+    const oldBuffer = Buffer.alloc(scenario === "request failure" ? 20 : 6_000_000);
+    oldBuffer.write("%PDF-1.4\n");
+    await page.locator('input[type="file"]:not([webkitdirectory])').setInputFiles({ name: "old.pdf", mimeType: "application/pdf", buffer: oldBuffer });
+    if (scenario === "request failure") await expect(page.locator(".sf-upload-task.error")).toContainText("Simulated upload failure");
+    else {
+      await expect.poll(() => chunkRequests).toBe(2);
+      if (scenario === "chunk failure" || scenario === "network interruption") await expect(page.locator(".sf-upload-task.error")).toContainText("old.pdf");
+      else if (scenario === "cancellation") {
+        await page.locator(".sf-upload-task.uploading").getByRole("button", { name: "取消", exact: true }).click();
+        await heldChunk?.abort().catch(() => undefined);
+        await expect(page.locator(".sf-upload-task.cancelled")).toContainText("old.pdf");
+        await expect.poll(() => cancelledSessions).toBeGreaterThan(0);
+      }
+    }
+    const retained = scenario !== "request failure" && scenario !== "cancellation";
+    await expect.poll(() => page.evaluate(() => JSON.parse(localStorage.getItem("sofinder.uploadSessions.v1") || "[]").length)).toBe(retained ? 1 : 0);
+    await reopen();
+    await heldChunk?.abort().catch(() => undefined);
+    await expect(page.locator(".sf-upload-panel")).toHaveCount(0);
+    await expect(page.getByText(/上传已中断/)).toHaveCount(0);
+    await page.locator('input[type="file"]:not([webkitdirectory])').setInputFiles({ name: "new.pdf", mimeType: "application/pdf", buffer: Buffer.from("%PDF-1.4\nnew") });
+    await expect(page.locator(".sf-upload-task.done")).toContainText("new.pdf");
+    await expect(page.locator(".sf-upload-progress-trigger")).toHaveText("100%");
+    await expect(page.locator(".sf-upload-panel")).not.toContainText("old.pdf");
+    await expect(page.getByText(/上传已中断/)).toHaveCount(0);
+    if (retained) {
+      await page.locator(".sf-upload-panel").getByRole("button", { name: "清除已完成", exact: true }).click();
+      await expect(page.locator(".sf-upload-panel")).toHaveCount(0);
+      await expect.poll(() => page.evaluate(() => JSON.parse(localStorage.getItem("sofinder.uploadSessions.v1") || "[]").length)).toBe(1);
+      // Old resumable tasks remain accessible when the user explicitly opens the queue.
+      await page.locator(".sf-upload-progress-trigger").click();
+      await expect(page.locator(".sf-upload-panel")).toContainText("old.pdf");
+      // Reselect the original file with the saved fingerprint to exercise real resume logic.
+      await page.evaluate(() => {
+        const saved = JSON.parse(localStorage.getItem("sofinder.uploadSessions.v1") || "[]")[0];
+        const file = new File([new Uint8Array(saved.size)], saved.name, { type: "application/pdf", lastModified: saved.lastModified });
+        const transfer = new DataTransfer(); transfer.items.add(file);
+        const input = document.querySelector<HTMLInputElement>('input[type="file"]:not([webkitdirectory])')!;
+        input.files = transfer.files;
+        input.dispatchEvent(new Event("change", { bubbles: true }));
+      });
+      await expect(page.locator(".sf-upload-task.done", { hasText: "old.pdf" })).toBeVisible();
+      await expect.poll(() => chunkRequests).toBe(3);
+      await expect(page.getByText(/上传已中断/)).toHaveCount(0);
+      await expect.poll(() => page.evaluate(() => JSON.parse(localStorage.getItem("sofinder.uploadSessions.v1") || "[]").length)).toBe(0);
+    }
+  });
+}
+
 test("submits folder names with Enter while preserving validation and IME composition", async ({ page }) => {
   const changes: Array<{ method: string; resource: string; path: string; name: string }> = [];
   const folders: Array<{ path: string; name: string; directory: boolean; capabilities: Record<string, boolean> }> = [];
@@ -2617,3 +2768,25 @@ for (const declaration of [
     await expect(settings.getByRole("checkbox", { name: "压缩 / 水印", exact: true })).toHaveCount(declaration.actions === undefined || declaration.name === "text watermark" ? 1 : 0);
   });
 }
+
+test('deleting a folder refreshes both the listing and cached folder tree', async ({ page }) => {
+  let removed = false;
+  const directory = { path: 'declaration', name: 'declaration', directory: true, size: 0, modifiedAt: 1, mimeType: null, url: null, capabilities: { read: true, delete: true } };
+  await page.route('**/sofinder/api/entries?*', route => route.fulfill({ json: { success: true, data: {
+    entries: removed ? [] : [directory], total: removed ? 0 : 1, path: '', offset: 0, limit: 100, nextCursor: null,
+    sort: 'name', direction: 'asc', capabilities: { upload: true, create_folder: true },
+  } } }));
+  await page.route('**/sofinder/api/entries/batch', async route => {
+    removed = true;
+    await route.fulfill({ json: { success: true, data: { operation: 'delete', total: 1, succeeded: 1, failed: 0, results: [{ path: 'declaration', success: true }], purgedItems: 0, purgedBytes: 0 } } });
+  });
+  await page.setContent(`<main id="sofinder-root" data-config='${JSON.stringify({ ...config, featureDefaults: { folderTree: true } })}'></main>`);
+  await page.addStyleTag({ path: resolve(import.meta.dirname, '../../dist/sofinder.css') });
+  await page.addScriptTag({ path: resolve(import.meta.dirname, '../../dist/sofinder.js'), type: 'module' });
+  await expect(page.locator('.sf-folder-tree .sf-tree-name').filter({ hasText: 'declaration' })).toBeVisible();
+  await page.locator('.sf-entry', { hasText: 'declaration' }).click();
+  await page.getByRole('button', { name: '删除', exact: true }).click();
+  await page.getByRole('dialog').getByRole('button', { name: '确认', exact: true }).click();
+  await expect(page.locator('.sf-entry', { hasText: 'declaration' })).toHaveCount(0);
+  await expect(page.locator('.sf-folder-tree .sf-tree-name').filter({ hasText: 'declaration' })).toHaveCount(0);
+});

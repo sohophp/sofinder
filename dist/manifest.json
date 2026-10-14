@@ -23,8 +23,8 @@
       "_jsx-runtime-CmCsaYvT.js"
     ]
   },
-  "_api-B0y7F_Jw.js": {
-    "file": "api-B0y7F_Jw.js",
+  "_api-3bFNJRSo.js": {
+    "file": "api-3bFNJRSo.js",
     "name": "api",
     "imports": [
       "_defineProperty-Crj45lTn.js"
@@ -133,14 +133,14 @@
     ]
   },
   "src/components/DetailsPanel.tsx": {
-    "file": "DetailsPanel-vZhiEXvA.js",
+    "file": "DetailsPanel-BmJG_XQ0.js",
     "name": "DetailsPanel",
     "src": "src/components/DetailsPanel.tsx",
     "isDynamicEntry": true,
     "imports": [
       "_jsx-runtime-CmCsaYvT.js",
       "_react-B5TC723I.js",
-      "_api-B0y7F_Jw.js",
+      "_api-3bFNJRSo.js",
       "_UiIcon-CyBzESIM.js",
       "_EntryVisuals-COz6M0oc.js",
       "_format-GD3_dnvn.js"
@@ -167,7 +167,7 @@
     ]
   },
   "src/components/FolderTree.tsx": {
-    "file": "FolderTree-B6mWGaDl.js",
+    "file": "FolderTree-rdGrCiYV.js",
     "name": "FolderTree",
     "src": "src/components/FolderTree.tsx",
     "isDynamicEntry": true,
@@ -349,7 +349,7 @@
     "imports": [
       "_jsx-runtime-CmCsaYvT.js",
       "_react-B5TC723I.js",
-      "_api-B0y7F_Jw.js",
+      "_api-3bFNJRSo.js",
       "_imageActions-BRpJl8Vz.js",
       "_UiIcon-CyBzESIM.js",
       "_Modal-DhcERqG6.js",

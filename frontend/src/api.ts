@@ -256,6 +256,16 @@ export class Api {
     } catch { return []; }
   }
 
+  discardPendingUpload(id: string): void {
+    if (!this.pendingUploads().some(session => session.id === id)) return;
+    // Forget locally first: a failed cleanup request must not resurrect a dismissed task.
+    this.removePendingUpload(id);
+    void fetch(`${this.base}/uploads/chunks/${encodeURIComponent(id)}`, {
+      method: "DELETE", headers: { "X-CSRF-TOKEN": this.config.csrfToken },
+      credentials: "same-origin", keepalive: true,
+    }).catch(() => { /* Server-side expiry cleans up when the browser is offline. */ });
+  }
+
   findPendingUpload(resource: string, path: string, file: File, overwrite: boolean, autoRename = false, total?: number): PendingUploadSession | undefined {
     return this.pendingUploads().find(item => item.resource === resource && item.path === path && item.name === file.name && item.size === file.size && item.lastModified === file.lastModified && item.overwrite === overwrite && item.autoRename === autoRename && (total === undefined || item.total === total));
   }
@@ -267,7 +277,7 @@ export class Api {
   }
 
   private removePendingUpload(id: string) {
-    localStorage.setItem(this.uploadStorageKey, JSON.stringify(this.readAllPendingUploads().filter(item => item.id !== id)));
+    localStorage.setItem(this.uploadStorageKey, JSON.stringify(this.readAllPendingUploads().filter(item => item.id !== id || item.scope !== this.base)));
   }
 
   private readAllPendingUploads(): PendingUploadSession[] {

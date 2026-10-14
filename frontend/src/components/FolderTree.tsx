@@ -1,20 +1,24 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import type { Api } from "../api";
 import type { Entry } from "../types";
 import { UiIcon } from "./UiIcon";
 
 interface NodeState { loading: boolean; loaded: boolean; expanded: boolean; children: Entry[] }
 
-export function FolderTree({ api, resource, currentPath, rootLabel, onNavigate }: {
-  api: Api; resource: string; currentPath: string; rootLabel: string; onNavigate: (path: string) => void;
+export function FolderTree({ api, resource, revision = 0, currentPath, rootLabel, onNavigate }: {
+  api: Api; resource: string; revision?: number; currentPath: string; rootLabel: string; onNavigate: (path: string) => void;
 }) {
   const [nodes, setNodes] = useState<Record<string, NodeState>>({ "": { loading: false, loaded: false, expanded: true, children: [] } });
+  const generation = useRef(0);
   const load = useCallback(async (path: string, expand = true) => {
+    const requestedGeneration = generation.current;
     setNodes(current => ({ ...current, [path]: { ...(current[path] || { children: [], loaded: false }), loading: true, expanded: expand } }));
     try {
       const result = await api.list(resource, path, "", "name", "asc", 0, 500);
+      if (requestedGeneration !== generation.current) return;
       setNodes(current => ({ ...current, [path]: { loading: false, loaded: true, expanded: expand, children: result.entries.filter(entry => entry.directory) } }));
     } catch {
+      if (requestedGeneration !== generation.current) return;
       setNodes(current => ({ ...current, [path]: { ...(current[path] || { children: [], loaded: false }), loading: false, expanded: expand } }));
     }
   }, [api, resource]);
@@ -22,7 +26,8 @@ export function FolderTree({ api, resource, currentPath, rootLabel, onNavigate }
   useEffect(() => {
     setNodes({ "": { loading: false, loaded: false, expanded: true, children: [] } });
     void load("");
-  }, [load, resource]);
+    return () => { generation.current += 1; };
+  }, [load, resource, revision]);
 
   useEffect(() => {
     const parts = currentPath === "" ? [] : currentPath.split("/");

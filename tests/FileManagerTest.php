@@ -87,6 +87,22 @@ final class FileManagerTest extends TestCase
         self::assertSame('Docs', $result['entries'][0]->name);
     }
 
+    public function testCopiesFilesAndFoldersInTheSameDirectoryWithAutomaticNames(): void
+    {
+        file_put_contents($this->directory . '/guide.txt', 'original');
+        mkdir($this->directory . '/docs');
+        file_put_contents($this->directory . '/docs/nested.txt', 'nested');
+        $manager = $this->manager(true);
+        $file = $manager->transfer('copy', 'Files', 'guide.txt', '', autoRename: true);
+        self::assertNotSame('guide.txt', $file->path);
+        self::assertSame('original', file_get_contents($this->directory . '/' . $file->path));
+        $folder = $manager->transfer('copy', 'Files', 'docs', '', autoRename: true);
+        self::assertNotSame('docs', $folder->path);
+        self::assertSame('nested', file_get_contents($this->directory . '/' . $folder->path . '/nested.txt'));
+        $this->expectException(\SohoPHP\SoFinder\Exception\InvalidPathException::class);
+        $manager->transfer('copy', 'Files', 'docs', 'docs', autoRename: true);
+    }
+
     public function testListingAMissingFolderReturnsStableNotFound(): void
     {
         try {

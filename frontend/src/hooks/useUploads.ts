@@ -30,7 +30,12 @@ export function useUploads({ api, resource, path, currentResource, currentDepth,
   onComplete?: (summary: { total: number; completed: number; failed: number; details: string[] }) => void;
 }) {
   const [uploads, setUploads] = useState<UploadTask[]>([]);
-  const [uploadsCollapsed, setUploadsCollapsed] = useState(false);
+  const [uploadsCollapsed, setCollapsed] = useState(true);
+  const [includeRestoredUploads, setIncludeRestoredUploads] = useState(false);
+  const setUploadsCollapsed = (collapsed: boolean) => {
+    setIncludeRestoredUploads(!collapsed);
+    setCollapsed(collapsed);
+  };
   const uploadInput = useRef<HTMLInputElement>(null);
   const directoryUploadInput = useRef<HTMLInputElement>(null);
   const controllers = useRef(new Map<string, AbortController>());
@@ -42,13 +47,12 @@ export function useUploads({ api, resource, path, currentResource, currentDepth,
     const interrupted = api.pendingUploads().map(session => ({ id: `pending-${session.id}`, name: session.name, progress: 0, status: "error" as const, message: t("uploadReselectToResume") }));
     if (interrupted.length > 0) {
       setUploads(current => [...current.filter(task => !task.id.startsWith("pending-")), ...interrupted]);
-      setUploadsCollapsed(false);
     }
   }, [api, t]);
 
   useEffect(() => {
     if (!autoCollapse || uploads.length === 0 || uploads.some(task => task.status === "queued" || task.status === "uploading")) return;
-    const timer = window.setTimeout(() => setUploadsCollapsed(true), 1200);
+    const timer = window.setTimeout(() => setCollapsed(true), 1200);
     return () => window.clearTimeout(timer);
   }, [autoCollapse, uploads]);
 
@@ -93,7 +97,10 @@ export function useUploads({ api, resource, path, currentResource, currentDepth,
       return choice;
     };
     if (jobs.length === 0) return;
-    setUploadsCollapsed(false);
+    // Opening for a new batch must not replay errors from restored sessions.
+    // Those sessions remain available through the explicit queue button.
+    setIncludeRestoredUploads(false);
+    setCollapsed(false);
     const resumedIds = new Set(jobs.map(job => job.pendingId).filter((id): id is string => id !== null));
     setUploads(current => [...current.filter(task => !resumedIds.has(task.id)), ...jobs.map(({ id, file, pendingId }) => ({ id, name: file.name, progress: 0, status: "queued" as const, message: pendingId ? t("uploadResuming") : undefined }))]);
 
@@ -195,26 +202,45 @@ export function useUploads({ api, resource, path, currentResource, currentDepth,
     } catch (error) { report(error); }
   };
 
-  const cancelUpload = (id: string) => { controllers.current.get(id)?.abort(); update(id, { status: "cancelled", message: t("cancelled") }); };
+  const discardSavedTask = (id: string) => {
+    if (id.startsWith("pending-")) {
+      api.discardPendingUpload(id.slice("pending-".length));
+      return;
+    }
+    const retry = retryData.current.get(id);
+    if (!retry) return;
+    for (const session of api.pendingUploads()) {
+      if (session.resource === resource && session.path === retry.targetPath && session.name === retry.file.name
+        && session.size === retry.file.size && session.lastModified === retry.file.lastModified) api.discardPendingUpload(session.id);
+    }
+  };
+  const cancelUpload = (id: string) => { controllers.current.get(id)?.abort(); discardSavedTask(id); update(id, { status: "cancelled", message: t("cancelled") }); };
   const cancelAllUploads = () => {
     controllers.current.forEach(controller => controller.abort());
+    uploads.filter(task => (includeRestoredUploads && task.id.startsWith("pending-")) || task.status === "queued" || task.status === "uploading").forEach(task => discardSavedTask(task.id));
     setUploads(current => current.map(task => task.status === "queued" || task.status === "uploading" ? { ...task, status: "cancelled", message: t("cancelled") } : task));
   };
   const removeUploadTask = (id: string) => {
-    controllers.current.get(id)?.abort(); controllers.current.delete(id); retryData.current.delete(id);
+    controllers.current.get(id)?.abort(); discardSavedTask(id); controllers.current.delete(id); retryData.current.delete(id);
     setUploads(current => current.filter(task => task.id !== id));
   };
   const retryUpload = (id: string) => {
     const retry = retryData.current.get(id);
     if (!retry) return;
-    removeUploadTask(id);
+    // Keep the saved chunks when retrying; explicit dismissal is what discards them.
+    retryData.current.delete(id);
+    setUploads(current => current.filter(task => task.id !== id));
     void upload([retry.file], retry.targetPath);
   };
   const clearFinishedUploads = () => {
-    const activeIds = new Set(uploads.filter(task => task.status === "queued" || task.status === "uploading").map(task => task.id));
-    retryData.current.forEach((_value, id) => { if (!activeIds.has(id)) retryData.current.delete(id); });
-    setUploads(current => current.filter(task => task.status === "queued" || task.status === "uploading"));
+    const finished = uploads.filter(task => task.status !== "queued" && task.status !== "uploading"
+      && (includeRestoredUploads || !task.id.startsWith("pending-")));
+    const finishedIds = new Set(finished.map(task => task.id));
+    finished.forEach(task => discardSavedTask(task.id));
+    finishedIds.forEach(id => retryData.current.delete(id));
+    setUploads(current => current.filter(task => !finishedIds.has(task.id)));
   };
 
-  return { uploads, uploadsCollapsed, setUploadsCollapsed, uploadInput, directoryUploadInput, upload, uploadTo: (targetPath: string, files: FileList | File[]) => upload(files, targetPath), uploadDirectory, cancelUpload, cancelAllUploads, removeUploadTask, retryUpload, clearFinishedUploads };
+  const visibleUploads = uploads.filter(task => includeRestoredUploads || !task.id.startsWith("pending-"));
+  return { uploads, visibleUploads, uploadsCollapsed, setUploadsCollapsed, uploadInput, directoryUploadInput, upload, uploadTo: (targetPath: string, files: FileList | File[]) => upload(files, targetPath), uploadDirectory, cancelUpload, cancelAllUploads, removeUploadTask, retryUpload, clearFinishedUploads };
 }

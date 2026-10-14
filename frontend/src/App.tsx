@@ -458,13 +458,15 @@ export default function App({ config, initialMessages }: { config: SoFinderConfi
     }
   }, [api, direction, offset, pageCursor, path, report, resource, search, searchMode, sort, t]);
 
+  const [folderTreeRevision, setFolderTreeRevision] = useState(0);
   const refresh = useCallback(async () => {
     await load(resource, path, search, offset, sort, direction, searchMode, pageCursor, true);
+    setFolderTreeRevision(revision => revision + 1);
   }, [direction, load, offset, pageCursor, path, resource, search, searchMode, sort]);
 
   const currentResource = resources.find(item => item.name === resource);
   const currentDepth = path === "" ? 0 : path.split("/").length;
-  const { uploads, uploadsCollapsed, setUploadsCollapsed, uploadInput, directoryUploadInput, upload, uploadTo, uploadDirectory, cancelUpload, cancelAllUploads, removeUploadTask, retryUpload, clearFinishedUploads } = useUploads({
+  const { uploads, visibleUploads, uploadsCollapsed, setUploadsCollapsed, uploadInput, directoryUploadInput, upload, uploadTo, uploadDirectory, cancelUpload, cancelAllUploads, removeUploadTask, retryUpload, clearFinishedUploads } = useUploads({
     api, resource, path, currentResource, currentDepth, autoCollapse: features.autoCollapseUploads, conflictStrategy: uploadConflictStrategy, lowercaseExtensions: lowercaseUploadExtensions, t, ask, chooseConflict: chooseUploadConflict, reload: refresh, setNotice, report,
     onComplete: result => showUploadToast(`${t("uploadDone")}: ${result.completed}/${result.total}${result.failed > 0 ? ` · ${t("failed")}: ${result.failed}` : ""}`, result.details, result.failed > 0 ? "warning" : "success"),
   });
@@ -1213,7 +1215,7 @@ export default function App({ config, initialMessages }: { config: SoFinderConfi
       || (entry.directory && (destinationDialog.path === entry.path || destinationDialog.path.startsWith(`${entry.path}/`)));
   });
   const uploadActive = uploads.some(task => task.status === "queued" || task.status === "uploading");
-  const uploadProgress = uploads.length === 0 ? 0 : Math.round(uploads.reduce((total, task) => total + task.progress, 0) / uploads.length);
+  const uploadProgress = visibleUploads.length === 0 ? 0 : Math.round(visibleUploads.reduce((total, task) => total + task.progress, 0) / visibleUploads.length);
   const fullTools = config.uiDefaults.fullTools === true;
   const hasLogo = !embedded && config.uiDefaults.logo !== false;
   const recoverableDelete = currentResource?.storageCapabilities?.recoverableDelete !== false;
@@ -1374,7 +1376,7 @@ export default function App({ config, initialMessages }: { config: SoFinderConfi
   const sidebarSectionTitle = (id: SidebarSectionId) => id === "folderNavigation" ? t("folderNavigation") : id === "quickAccess" ? t("quickAccess") : id === "favorites" ? t("favorites") : t("recent");
   const renderSidebarSection = (id: SidebarSectionId, side: SidebarSide) => {
     const content = id === "folderNavigation"
-      ? <section className={`sf-folder-navigation-section${side === "right" ? " sf-folder-navigation-right" : ""}`}><h2>{t("folderNavigation")}</h2><Suspense fallback={<div className="sf-state">{t("loading")}</div>}><FolderTree api={api} resource={resource} currentPath={resolvedPath} rootLabel={t("home")} onNavigate={next => resetAndLoad(resource, next, "")}/></Suspense></section>
+      ? <section className={`sf-folder-navigation-section${side === "right" ? " sf-folder-navigation-right" : ""}`}><h2>{t("folderNavigation")}</h2><Suspense fallback={<div className="sf-state">{t("loading")}</div>}><FolderTree api={api} resource={resource} revision={folderTreeRevision} currentPath={resolvedPath} rootLabel={t("home")} onNavigate={next => resetAndLoad(resource, next, "")}/></Suspense></section>
       : id === "quickAccess"
         ? <Suspense fallback={null}><QuickAccessPanel {...metadataSidebarProps}/></Suspense>
         : id === "favorites"
@@ -1421,7 +1423,7 @@ export default function App({ config, initialMessages }: { config: SoFinderConfi
         {utilityOpen && <div className="sf-utility-menu" role="menu">
           {config.uiDefaults.languageSwitcher !== false && <label><span>{t("language")}</span><select value={language} onChange={event => setLanguage(event.target.value as Language)} aria-label={t("language")}><option value="zh-cn">简中</option><option value="zh-tw">繁中</option><option value="en">EN</option></select></label>}
           <label><span>{t("filterType")}</span><select value={typeFilter} disabled={collectionView !== null} aria-label={t("filterType")} onChange={event => { const value = event.target.value as EntryTypeFilter; setTypeFilter(value); localStorage.setItem("sofinder.typeFilter.v1", value); clearSelection(); }}><option value="all">{t("allTypes")}</option><option value="folder">{t("folder")}</option><option value="image">{t("images")}</option><option value="document">{t("documents")}</option><option value="audio">{t("audio")}</option><option value="video">{t("video")}</option><option value="archive">{t("archives")}</option><option value="other">{t("other")}</option></select></label>
-          <button role="menuitem" onClick={() => { setUtilityOpen(false); if (collectionView === "favorites") void fetchMetadata(resource, true).catch(report); else void load(); }}>{iconButton("refresh", t("refresh"))}</button>
+          <button role="menuitem" onClick={() => { setUtilityOpen(false); if (collectionView === "favorites") void fetchMetadata(resource, true).catch(report); else void refresh(); }}>{iconButton("refresh", t("refresh"))}</button>
           <button role="menuitem" onClick={() => { setUtilityOpen(false); setSettingsOpen(true); }}>{iconButton("settings", t("settings"))}</button>
           {(uiMode === "manager" || fullTools) && config.securityStatusAvailable !== false && <button role="menuitem" onClick={() => { setUtilityOpen(false); setSecurityStatusOpen(true); }}>{iconButton("security", t("securityStatus"))}</button>}
           {(uiMode === "manager" || fullTools) && features.favorites && <button role="menuitem" onClick={() => { setUtilityOpen(false); openFavorites(); }}>{iconButton("favorite", t("favorites"))}</button>}
@@ -1464,7 +1466,7 @@ export default function App({ config, initialMessages }: { config: SoFinderConfi
     </div>
     {uiMode === "manager" && config.securityStatusAvailable === true && config.uiDefaults.securityProfile === "standard" && !securityAdvisoryDismissed && <div className="sf-security-advisory" role="status"><UiIcon name="security"/><span>{t("standardSecurityProfileWarning")}</span><button type="button" onClick={() => setSecurityStatusOpen(true)}>{t("securityStatus")}</button><button type="button" className="sf-security-advisory-close" onClick={() => { localStorage.setItem("sofinder.securityAdvisory.dismissed.v1", "1"); setSecurityAdvisoryDismissed(true); }} aria-label={t("dismissForever")} title={t("dismissForever")}><UiIcon name="close"/></button></div>}
     {selectionMenuOpen && createPortal(<div ref={selectionMenuPopup} className="sf-utility-menu sf-selection-menu-popup" role="menu" style={selectionMenuPosition}><button role="menuitem" disabled={displayedEntries.length === 0} onClick={() => { selectAll(); setSelectionMenuOpen(false); }}>{t("selectAll")}</button><button role="menuitem" disabled={selectedPaths.size === 0} onClick={() => { clearSelection(); setSelectionMenuOpen(false); }}>{t("clearSelection")}</button><button role="menuitem" disabled={displayedEntries.length === 0} onClick={() => { invertSelection(); setSelectionMenuOpen(false); }}>{t("invertSelection")}</button></div>, document.body)}
-    {uploads.length > 0 && <Suspense fallback={null}><UploadQueue tasks={uploads} collapsed={uploadsCollapsed} riskLabel={uploadConflictStrategy === "overwrite" ? t("persistentOverwriteWarning") : undefined} labels={{ title: t("uploadQueue"), close: t("close"), cancel: t("cancel"), cancelAll: t("cancelAll"), clearFinished: t("clearFinished"), retry: t("retryUpload"), remove: t("removeUploadTask"), status: status => t(status) }} onToggle={() => setUploadsCollapsed(true)} onCancel={cancelUpload} onCancelAll={cancelAllUploads} onClearFinished={clearFinishedUploads} onRetry={retryUpload} onRemove={removeUploadTask}/></Suspense>}
+    {uploads.length > 0 && <Suspense fallback={null}><UploadQueue tasks={visibleUploads} collapsed={uploadsCollapsed} riskLabel={uploadConflictStrategy === "overwrite" ? t("persistentOverwriteWarning") : undefined} labels={{ title: t("uploadQueue"), close: t("close"), cancel: t("cancel"), cancelAll: t("cancelAll"), clearFinished: t("clearFinished"), retry: t("retryUpload"), remove: t("removeUploadTask"), status: status => t(status) }} onToggle={() => setUploadsCollapsed(true)} onCancel={cancelUpload} onCancelAll={cancelAllUploads} onClearFinished={clearFinishedUploads} onRetry={retryUpload} onRemove={removeUploadTask}/></Suspense>}
     <div className="sf-layout" style={{ "--sf-sidebar-width": `${leftWidth}px`, "--sf-details-width": `${rightWidth}px` } as React.CSSProperties}>
       {showSidebar && <aside className={`sf-sidebar${leftWidth < 110 ? " sf-sidebar-collapsed" : ""}${trashOnlySidebar ? " sf-trash-only-sidebar" : ""}`} aria-label="Resources">
         <button type="button" className="sf-sidebar-collapse" title={t(leftWidth < 110 ? "expand" : "collapse")} aria-label={t(leftWidth < 110 ? "expand" : "collapse")} aria-expanded={leftWidth >= 110} onClick={() => setColumnWidth("left", leftWidth < 110 ? columnLimits.left.initial : columnLimits.left.min, true)}>
