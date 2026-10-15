@@ -1,5 +1,9 @@
 # Upgrading SoFinder
 
+## 1.5.0 → 1.5.1
+
+Update all synchronized packages to 1.5.1. Existing hosts keep active-content detection enabled. To avoid binary PDF false positives, set `so_finder.security.active_content_detection: false` in Symfony (Laravel: `sofinder.core.security.active_content_detection`; plain PHP/PSR-15: the same nested security array). Only the raw-byte script-marker heuristic is skipped. Clear/warm the host container cache after changing configuration. No database or stored-file migration is required.
+
 ## From 1.3.0 to 1.4.0
 
 Update the synchronized Composer packages together and deploy the complete rebuilt

@@ -7,6 +7,18 @@ description: SoFinder 全局、UI、维护、图片、请求限制与资源配�
 
 所有配置都位于 `so_finder` 键下。Symfony 会在编译 Container 时验证每个值，因此拼错的键名及超出范围的值都会提早失败。
 
+## 活动内容检测
+
+新增 `security.active_content_detection`，默认 `true`。内置规则扫描普通文件的原始字节，遇到 `<?php`、`<?=` 或 `<script` 就拒绝上传。PDF 内嵌 JPEG 等压缩二进制数据可能偶然包含这些字节，因此会误报；这项启发式检测不是病毒扫描。遇到误报时可以显式关闭这项扫描：
+
+```yaml
+so_finder:
+  security:
+    active_content_detection: false
+```
+
+关闭后仍执行 MIME、扩展名、大小限制、图片校验、静态 SVG 检查、隔离暂存和已配置的病毒扫描。Symfony 使用下方 YAML；普通 PHP 和 PSR-15 使用同结构数组；Laravel 配置路径为 `sofinder.core.security.active_content_detection`；直接使用核心时可向 `DefaultFileInspector` 传入 `activeContentDetection: false`。
+
 ## 全局路径与上传 Session
 
 | 选项 | 默认值 | 用途 |

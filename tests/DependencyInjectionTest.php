@@ -102,6 +102,32 @@ use SohoPHP\SoFinder\Image\WatermarkFontResolver;
 
 final class DependencyInjectionTest extends TestCase
 {
+    public function testActiveContentDetectionConfigurationReachesTheInspector(): void
+    {
+        $path = tempnam(sys_get_temp_dir(), 'sofinder-di-content-');
+        self::assertIsString($path);
+        file_put_contents($path, '%PDF-1.3 <?=');
+        try {
+            foreach ([true, false] as $enabled) {
+                $container = new ContainerBuilder();
+                (new SoFinderExtension())->load([['security' => ['active_content_detection' => $enabled],
+                    'resources' => ['Files' => ['root' => dirname($path)]]]], $container);
+                $container->set(\SohoPHP\SoFinder\Contract\ImageProcessorInterface::class, new \SohoPHP\SoFinder\Image\GdImageProcessor());
+                $inspector = $container->get(\SohoPHP\SoFinder\Security\DefaultFileInspector::class);
+                try {
+                    $result = $inspector->inspect($path, 'scan.pdf', new \SohoPHP\SoFinder\Value\ResourceType('Files', dirname($path), ''));
+                    self::assertFalse($enabled);
+                    self::assertSame('application/pdf', $result->mimeType);
+                } catch (\SohoPHP\SoFinder\Exception\SoFinderException $error) {
+                    self::assertTrue($enabled);
+                    self::assertSame('The uploaded file contains active script content.', $error->getMessage());
+                }
+            }
+        } finally {
+            unlink($path);
+        }
+    }
+
     public function testImagePoliciesAreOptInAndUseFrameworkNeutralServices(): void
     {
         foreach ([false, true] as $configured) {

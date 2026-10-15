@@ -7,6 +7,18 @@ description: SoFinder 全域、UI、維護、圖片、請求限制與資源設�
 
 所有設定都位於 `so_finder` 鍵下。Symfony 會在編譯 Container 時驗證每個值，因此拼錯的鍵名及超出範圍的值都會提早失敗。
 
+## 主動內容偵測
+
+新增 `security.active_content_detection`，預設 `true`。內建規則掃描一般檔案的原始位元組，遇到 `<?php`、`<?=` 或 `<script` 就拒絕上傳。PDF 內嵌 JPEG 等壓縮二進位資料可能偶然包含這些位元組，因此會誤報；這項啟發式偵測不是病毒掃描。遇到誤報時可明確關閉這項掃描：
+
+```yaml
+so_finder:
+  security:
+    active_content_detection: false
+```
+
+關閉後仍執行 MIME、副檔名、大小限制、圖片驗證、靜態 SVG 檢查、隔離暫存與已設定的病毒掃描。Symfony 使用下方 YAML；一般 PHP 與 PSR-15 使用相同結構陣列；Laravel 設定路徑為 `sofinder.core.security.active_content_detection`；直接使用核心時可向 `DefaultFileInspector` 傳入 `activeContentDetection: false`。
+
 ## 全域路徑與上傳 Session
 
 | 選項 | 預設值 | 用途 |

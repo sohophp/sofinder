@@ -73,6 +73,7 @@ final class Configuration implements ConfigurationInterface
                     ->addDefaultsIfNotSet()
                     ->children()
                         ->booleanNode('production_strict')->defaultFalse()->end()
+                        ->booleanNode('active_content_detection')->defaultTrue()->end()
                         ->arrayNode('allowed_image_origins')
                             ->scalarPrototype()
                                 ->validate()

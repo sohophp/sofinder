@@ -12,6 +12,18 @@ use Symfony\Component\Config\Definition\Processor;
 
 final class ConfigurationNormalizerTest extends TestCase
 {
+    public function testActiveContentDetectionHasMatchingDefaultsAndExplicitOptOut(): void
+    {
+        foreach ([[], ['security' => ['active_content_detection' => false]]] as $input) {
+            $input['resources'] = ['Files' => ['root' => '/srv/files']];
+            $normalizer = new ConfigurationNormalizer();
+            $plain = $normalizer->normalize($input);
+            $symfony = $normalizer->normalizeResolved((new Processor())->processConfiguration(new Configuration(), [$input]), [$input]);
+            self::assertEquals($plain, $symfony);
+            self::assertSame($input['security']['active_content_detection'] ?? true, $plain['security']['active_content_detection']);
+        }
+    }
+
     public function testImagePoliciesAreOptionalAndHaveTheSamePlainAndSymfonySemantics(): void
     {
         $input = ['resources' => ['Files' => ['root' => '/srv/files']],

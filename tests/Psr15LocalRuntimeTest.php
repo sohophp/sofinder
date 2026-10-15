@@ -43,6 +43,31 @@ final class Psr15LocalRuntimeTest extends TestCase
         rmdir($this->directory);
     }
 
+    public function testActiveContentDetectionCanBeDisabledForBinaryDocuments(): void
+    {
+        $psr17 = new Psr17Factory();
+        $fallback = new class($psr17) implements RequestHandlerInterface {
+            public function __construct(private Psr17Factory $responses) {}
+            public function handle(ServerRequestInterface $request): ResponseInterface { return $this->responses->createResponse(404); }
+        };
+        $contents = "%PDF-1.3\nstream\n\xff<?=\xfe\nendstream\n%%EOF\n";
+        foreach ([true, false] as $enabled) {
+            $application = (new LocalApplicationFactory($psr17, $psr17, $this->services(),
+                ['security' => ['active_content_detection' => $enabled]],
+                $this->directory . '/state', $this->directory . '/files'))->create();
+            $upload = new \Nyholm\Psr7\UploadedFile(\Nyholm\Psr7\Stream::create($contents), strlen($contents), UPLOAD_ERR_OK, 'scan.pdf', 'application/pdf');
+            $request = (new ServerRequest('POST', '/sofinder/api/uploads', ['X-CSRF-TOKEN' => 'csrf']))
+                ->withParsedBody(['resource' => 'Files'])->withUploadedFiles(['upload' => $upload]);
+            $response = $application->middleware()->process($request, $fallback);
+            self::assertSame($enabled ? 415 : 201, $response->getStatusCode(), (string) $response->getBody());
+            if ($enabled) {
+                self::assertFileDoesNotExist($this->directory . '/files/scan.pdf');
+            } else {
+                self::assertSame($contents, file_get_contents($this->directory . '/files/scan.pdf'));
+            }
+        }
+    }
+
     public function testOptionalHostInspectorCanDenyAnUploadWithoutChangingTheDefault(): void
     {
         $decorator = new class implements \SohoPHP\SoFinder\Contract\FileInspectorDecoratorInterface {

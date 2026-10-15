@@ -5,6 +5,10 @@ description: 各 SoFinder 預發布版本的相容性、設定與 adapter 升級
 
 # 升級 SoFinder
 
+## 1.5.0 → 1.5.1
+
+同步升級所有 SoFinder 套件到 1.5.1。主動內容偵測預設保持開啟；遇到 PDF 二進位資料誤報時，Symfony 可設定 `so_finder.security.active_content_detection: false`，Laravel 使用 `sofinder.core.security.active_content_detection`，一般 PHP／PSR-15 使用相同結構的 security 陣列。僅跳過原始位元組腳本標記掃描，其他上傳檢查持續保留。修改設定後清理並預熱宿主容器快取；無須遷移資料庫或既有檔案。
+
 ## 從 1.3.0 升級至 1.4.0
 
 請同步更新 Composer 套件並完整部署 `dist/`，不需移轉儲存。Symfony Host 可設定

@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.5.1 — 2026-10-15
+
+- Add `security.active_content_detection` (default `true`) across core, Symfony, Laravel and PSR-15 hosts. Hosts may disable the raw-byte script-marker heuristic to avoid false positives in binary PDF/image streams; all other upload validation and configured malware scanning remain active. No file or database migration is required.
+
 ## 1.5.0 — 2026-10-14
 
 - 修复同目录文件／目录复制在自动改名前被误判为复制到自身；仍拒绝将目录复制或移动到其子目录。删除、改名、移动、复制、上传及手动刷新会刷新目录树，旧请求不会覆盖新目录状态。

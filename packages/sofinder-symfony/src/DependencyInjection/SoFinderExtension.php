@@ -484,7 +484,7 @@ final class SoFinderExtension extends Extension
         $container->setAlias(ImageProcessorInterface::class, new Alias($processorClass));
         $container->setAlias(ImageCapabilityProviderInterface::class, new Alias($processorClass));
         $container->setDefinition(DefaultFileInspector::class, (new Definition(DefaultFileInspector::class))
-            ->setArguments([new Reference(ImageProcessorInterface::class), new Reference(ImageFormatRegistry::class)]));
+            ->setArguments([new Reference(ImageProcessorInterface::class), new Reference(ImageFormatRegistry::class), $config['security']['active_content_detection']]));
         $container->setAlias(FileInspectorInterface::class, new Alias(DefaultFileInspector::class));
         if ($config['uploads']['image_resize'] !== null) {
             $container->setDefinition(\SohoPHP\SoFinder\Image\ImageUploadResizeOptions::class,

@@ -46,6 +46,28 @@ final class LaravelApplicationTest extends TestCase
         $app['config']->set('sofinder.auth_middleware', []);
     }
 
+    public function testDisabledActiveContentDetectionReachesLaravelUploadPipeline(): void
+    {
+        $this->app['config']->set('sofinder.core.security.active_content_detection', false);
+        $contents = "%PDF-1.3\nstream\n\xff<?=\xfe\nendstream\n%%EOF\n";
+        $stream = fopen('php://temp', 'w+b');
+        self::assertIsResource($stream);
+        fwrite($stream, $contents);
+        rewind($stream);
+        try {
+            $result = $this->app->make(\SohoPHP\SoFinder\Security\UploadPipeline::class)->quarantine(
+                $stream, 'scan.pdf', new \SohoPHP\SoFinder\Value\ResourceType('Files', sys_get_temp_dir(), ''));
+            try {
+                self::assertSame($contents, file_get_contents($result['path']));
+                self::assertSame('application/pdf', $result['inspection']->mimeType);
+            } finally {
+                unlink($result['path']);
+            }
+        } finally {
+            fclose($stream);
+        }
+    }
+
     public function testSharedBudgetLimitsRealLaravelRequests(): void
     {
         $this->app['config']->set('sofinder.core.limits.normal', ['max_requests' => 1, 'interval' => 60, 'max_concurrent' => 1]);

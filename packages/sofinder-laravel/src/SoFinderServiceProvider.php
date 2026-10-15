@@ -235,7 +235,8 @@ final class SoFinderServiceProvider extends ServiceProvider
             );
         });
         $this->app->singleton(UploadPipeline::class, static fn ($app): UploadPipeline => new UploadPipeline(
-            new DefaultFileInspector($app->make(HybridImageProcessor::class), $app->make(ImageFormatRegistry::class)),
+            new DefaultFileInspector($app->make(HybridImageProcessor::class), $app->make(ImageFormatRegistry::class),
+                (bool) $app->make(LaravelConfiguration::class)->get('security.active_content_detection', true)),
             (string) $app->make(LaravelConfiguration::class)->get('quarantine_dir'),
             [$app->make(ClamAvScanner::class)],
         ));

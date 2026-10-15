@@ -7,6 +7,18 @@ description: Reference for SoFinder global, UI, maintenance, image, request-limi
 
 Configuration lives below the `so_finder` key. Symfony validates all values while compiling the container, so misspelled keys and out-of-range values fail early.
 
+## Active content detection
+
+The new `security.active_content_detection` option defaults to `true`. The built-in raw-byte scan rejects `<?php`, `<?=` and `<script` markers in ordinary files. Compressed binary data, including embedded JPEG images in PDFs, can contain these bytes accidentally; this scan is a heuristic, not a virus scanner. Hosts that encounter false positives can explicitly disable only this scan:
+
+```yaml
+so_finder:
+  security:
+    active_content_detection: false
+```
+
+MIME, extension and size limits, image validation, static SVG inspection, quarantine and configured malware scanners continue to apply. Symfony uses the YAML below; plain PHP and PSR-15 use the same nested array, Laravel uses `sofinder.core.security.active_content_detection`, and direct core integrations can pass `activeContentDetection: false` to `DefaultFileInspector`.
+
 ## Global paths and upload sessions
 
 | Option | Default | Purpose |

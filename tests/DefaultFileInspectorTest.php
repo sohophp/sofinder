@@ -13,6 +13,55 @@ use SohoPHP\SoFinder\Value\ResourceType;
 
 final class DefaultFileInspectorTest extends TestCase
 {
+    public function testBinaryPdfMarkerCanBeExplicitlyAllowedWhileDefaultStillRejects(): void
+    {
+        $path = tempnam(sys_get_temp_dir(), 'sofinder-pdf-marker-');
+        self::assertIsString($path);
+        // Model the reported JPEG stream: the short tag crosses a read boundary.
+        $contents = "%PDF-1.3\n1 0 obj\n<< /Subtype /Image /Filter /DCTDecode >>\nstream\n";
+        $contents = str_pad($contents, 65_535, "\xff") . "<?=\xfe\x98\x91\nendstream\nendobj\n%%EOF\n";
+        file_put_contents($path, $contents);
+        $resource = new ResourceType('Files', dirname($path), '/files', ['pdf']);
+        try {
+            $allowed = (new DefaultFileInspector(new GdImageProcessor(), activeContentDetection: false))
+                ->inspect($path, 'scan.pdf', $resource);
+            self::assertSame('application/pdf', $allowed->mimeType);
+            self::assertSame(strlen($contents), $allowed->size);
+            self::assertSame($contents, file_get_contents($path));
+            $this->expectException(SoFinderException::class);
+            $this->expectExceptionMessage('active script content');
+            (new DefaultFileInspector(new GdImageProcessor()))->inspect($path, 'scan.pdf', $resource);
+        } finally {
+            unlink($path);
+        }
+    }
+
+    public function testDisabledDetectionStillEnforcesMimeAndSizeLimits(): void
+    {
+        $path = tempnam(sys_get_temp_dir(), 'sofinder-disabled-detection-');
+        self::assertIsString($path);
+        file_put_contents($path, '%PDF-1.3 <?=');
+        $inspector = new DefaultFileInspector(new GdImageProcessor(), activeContentDetection: false);
+        try {
+            foreach ([
+                [new ResourceType('Files', '/tmp', '', maxSize: 1), 'size limit'],
+                [new ResourceType('Files', '/tmp', '', allowedMimeTypes: ['text/plain']), 'allowed media type'],
+            ] as [$resource, $message]) {
+                try {
+                    $inspector->inspect($path, 'scan.pdf', $resource);
+                    self::fail('The remaining upload constraint must reject the file.');
+                } catch (SoFinderException $error) {
+                    self::assertStringContainsString($message, $error->getMessage());
+                }
+            }
+            file_put_contents($path, '<svg xmlns="http://www.w3.org/2000/svg"><script>alert(1)</script></svg>');
+            $this->expectException(SoFinderException::class);
+            $inspector->inspect($path, 'image.svg', new ResourceType('Images', '/tmp', ''));
+        } finally {
+            unlink($path);
+        }
+    }
+
     public function testBmpUsesDetectedMimeAndStillRejectsAMismatchedExtension(): void
     {
         if (!extension_loaded('gd') || !function_exists('imagebmp')) self::markTestSkipped('GD BMP is not installed.');
