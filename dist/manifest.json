@@ -23,22 +23,22 @@
       "_jsx-runtime-CmCsaYvT.js"
     ]
   },
-  "_api-3bFNJRSo.js": {
-    "file": "api-3bFNJRSo.js",
+  "_api-D6TQSNVt.js": {
+    "file": "api-D6TQSNVt.js",
     "name": "api",
     "imports": [
-      "_defineProperty-Crj45lTn.js"
+      "_defineProperty-DqgXQJ_v.js"
     ]
   },
-  "_defineProperty-Crj45lTn.js": {
-    "file": "defineProperty-Crj45lTn.js",
+  "_defineProperty-DqgXQJ_v.js": {
+    "file": "defineProperty-DqgXQJ_v.js",
     "name": "defineProperty"
   },
-  "_editorAdapters-DmmKMbAE.js": {
-    "file": "editorAdapters-DmmKMbAE.js",
+  "_editorAdapters-CziS3R-h.js": {
+    "file": "editorAdapters-CziS3R-h.js",
     "name": "editorAdapters",
     "imports": [
-      "_defineProperty-Crj45lTn.js",
+      "_defineProperty-DqgXQJ_v.js",
       "src/sdk.ts"
     ]
   },
@@ -71,7 +71,7 @@
     "src": "src/ckeditor5.ts",
     "isEntry": true,
     "imports": [
-      "_editorAdapters-DmmKMbAE.js"
+      "_editorAdapters-CziS3R-h.js"
     ]
   },
   "src/components/AssetMetadataDialog.tsx": {
@@ -133,14 +133,14 @@
     ]
   },
   "src/components/DetailsPanel.tsx": {
-    "file": "DetailsPanel-BmJG_XQ0.js",
+    "file": "DetailsPanel-DHXlvF8p.js",
     "name": "DetailsPanel",
     "src": "src/components/DetailsPanel.tsx",
     "isDynamicEntry": true,
     "imports": [
       "_jsx-runtime-CmCsaYvT.js",
       "_react-B5TC723I.js",
-      "_api-3bFNJRSo.js",
+      "_api-D6TQSNVt.js",
       "_UiIcon-CyBzESIM.js",
       "_EntryVisuals-COz6M0oc.js",
       "_format-GD3_dnvn.js"
@@ -311,7 +311,7 @@
     "src": "src/editors.ts",
     "isEntry": true,
     "imports": [
-      "_editorAdapters-DmmKMbAE.js"
+      "_editorAdapters-CziS3R-h.js"
     ]
   },
   "src/jodit.ts": {
@@ -320,23 +320,23 @@
     "src": "src/jodit.ts",
     "isEntry": true,
     "imports": [
-      "_editorAdapters-DmmKMbAE.js"
+      "_editorAdapters-CziS3R-h.js"
     ]
   },
   "src/locales/en.ts": {
-    "file": "en-BQW9QEGJ.js",
+    "file": "en-m0gUbBVr.js",
     "name": "en",
     "src": "src/locales/en.ts",
     "isDynamicEntry": true
   },
   "src/locales/zh-cn.ts": {
-    "file": "zh-cn-CF5DIQSS.js",
+    "file": "zh-cn-C3dda_xX.js",
     "name": "zh-cn",
     "src": "src/locales/zh-cn.ts",
     "isDynamicEntry": true
   },
   "src/locales/zh-tw.ts": {
-    "file": "zh-tw-B0hL19gb.js",
+    "file": "zh-tw-DJE-stNH.js",
     "name": "zh-tw",
     "src": "src/locales/zh-tw.ts",
     "isDynamicEntry": true
@@ -349,7 +349,7 @@
     "imports": [
       "_jsx-runtime-CmCsaYvT.js",
       "_react-B5TC723I.js",
-      "_api-3bFNJRSo.js",
+      "_api-D6TQSNVt.js",
       "_imageActions-BRpJl8Vz.js",
       "_UiIcon-CyBzESIM.js",
       "_Modal-DhcERqG6.js",
@@ -395,7 +395,7 @@
     "src": "src/quill.ts",
     "isEntry": true,
     "imports": [
-      "_editorAdapters-DmmKMbAE.js"
+      "_editorAdapters-CziS3R-h.js"
     ]
   },
   "src/sdk.ts": {
@@ -404,7 +404,7 @@
     "src": "src/sdk.ts",
     "isEntry": true,
     "imports": [
-      "_defineProperty-Crj45lTn.js"
+      "_defineProperty-DqgXQJ_v.js"
     ]
   },
   "src/tinymce.ts": {
@@ -413,7 +413,7 @@
     "src": "src/tinymce.ts",
     "isEntry": true,
     "imports": [
-      "_editorAdapters-DmmKMbAE.js"
+      "_editorAdapters-CziS3R-h.js"
     ]
   },
   "src/tiptap.ts": {
@@ -422,7 +422,7 @@
     "src": "src/tiptap.ts",
     "isEntry": true,
     "imports": [
-      "_editorAdapters-DmmKMbAE.js"
+      "_editorAdapters-CziS3R-h.js"
     ]
   },
   "src/wangeditor.ts": {
@@ -431,7 +431,7 @@
     "src": "src/wangeditor.ts",
     "isEntry": true,
     "imports": [
-      "_editorAdapters-DmmKMbAE.js"
+      "_editorAdapters-CziS3R-h.js"
     ]
   },
   "style.css": {

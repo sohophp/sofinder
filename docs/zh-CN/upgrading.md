@@ -5,6 +5,10 @@ description: 各 SoFinder 预发布版本的兼容性、配置与 adapter 升级
 
 # 升级 SoFinder
 
+## 1.5.1 → 1.5.2
+
+同步升级所有 Composer 包到 1.5.2，并部署完整的新 dist 目录，确保界面、共用上传传输代码和编辑器 SDK 一致。上传接口和已有文件保持兼容；SDK 在等待最终响应时提供 processing 状态且进度最多 99，服务器确认成功后才变为 ready／100。无需数据库或文件迁移。
+
 ## 1.5.0 → 1.5.1
 
 同步升级所有 SoFinder 包到 1.5.1。活动内容检测默认保持开启；遇到 PDF 二进制数据误报时，Symfony 可设置 `so_finder.security.active_content_detection: false`，Laravel 使用 `sofinder.core.security.active_content_detection`，普通 PHP／PSR-15 使用相同结构的 security 数组。只跳过原始字节脚本标记扫描，其他上传检查仍保留。修改配置后清理并预热宿主容器缓存；无需迁移数据库或已有文件。

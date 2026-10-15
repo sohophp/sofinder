@@ -164,6 +164,8 @@ var e = {
 	completed: "個已完成",
 	failed: "個失敗",
 	uploadConflictRememberBatch: "本次上傳的同名檔案都採用此選擇",
+	uploadStarting: "正在開始上傳…",
+	uploadProcessing: "檔案已傳送，正在等待伺服器處理…",
 	uploadQueue: "上傳佇列",
 	cancel: "取消",
 	cancelAll: "全部取消",

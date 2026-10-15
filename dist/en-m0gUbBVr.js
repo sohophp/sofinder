@@ -164,6 +164,8 @@ var e = {
 	completed: "completed",
 	failed: "failed",
 	uploadConflictRememberBatch: "Use this choice for all conflicts in this upload",
+	uploadStarting: "Starting upload…",
+	uploadProcessing: "File sent; waiting for the server to finish…",
 	uploadQueue: "Uploads",
 	cancel: "Cancel",
 	cancelAll: "Cancel all",

@@ -110,14 +110,14 @@ export function useUploads({ api, resource, path, currentResource, currentDepth,
       while (cursor < jobs.length) {
         const job = jobs[cursor++];
         if (job.controller.signal.aborted) { controllers.current.delete(job.id); continue; }
-        update(job.id, { status: "uploading", progress: 0, message: undefined });
+        update(job.id, { status: "uploading", progress: 0, message: t("uploadStarting") });
         let overwrite = conflictStrategy === "overwrite";
         let autoRename = conflictStrategy === "rename";
         try {
           for (;;) {
             try {
-              await api.upload(resource, targetPath, job.file, { overwrite, autoRename, signal: job.controller.signal, onProgress: progress => update(job.id, { progress }) });
-              update(job.id, { status: "done", progress: 100 });
+              await api.upload(resource, targetPath, job.file, { overwrite, autoRename, signal: job.controller.signal, onProgress: progress => update(job.id, { progress, ...(progress > 0 && progress < 99 ? { message: undefined } : {}) }), onProcessing: () => update(job.id, { message: t("uploadProcessing") }) });
+              update(job.id, { status: "done", progress: 100, message: undefined });
               results.set(job.id, `${job.file.name}: ${t("done")}`);
               break;
             } catch (error) {
@@ -130,7 +130,7 @@ export function useUploads({ api, resource, path, currentResource, currentDepth,
                 }
                 overwrite = strategy === "overwrite";
                 autoRename = strategy === "rename";
-                update(job.id, { progress: 0 });
+                update(job.id, { progress: 0, message: t("uploadStarting") });
                 continue;
               }
               throw error;

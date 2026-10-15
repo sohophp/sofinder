@@ -62,6 +62,7 @@ describe("editor adapters", () => {
       onload: (() => void) | null = null;
       open() {}
       setRequestHeader() {}
+      getResponseHeader() { return "application/json"; }
       send() { queueMicrotask(() => this.onload?.()); }
       abort() {}
     }

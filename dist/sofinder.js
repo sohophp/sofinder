@@ -1,6 +1,6 @@
 import { n as e, t } from "./jsx-runtime-CmCsaYvT.js";
 import { t as n } from "./react-B5TC723I.js";
-import { n as r, t as i } from "./api-3bFNJRSo.js";
+import { n as r, t as i } from "./api-D6TQSNVt.js";
 import { n as a } from "./imageActions-BRpJl8Vz.js";
 import { t as o } from "./UiIcon-CyBzESIM.js";
 import { t as s } from "./Modal-DhcERqG6.js";
@@ -7756,9 +7756,9 @@ var f = /* @__PURE__ */ e(((e) => {
 	}
 	n(), t.exports = g();
 })), v = n(), y = h(), b = _(), x = {
-	en: () => import("./en-BQW9QEGJ.js"),
-	"zh-cn": () => import("./zh-cn-CF5DIQSS.js"),
-	"zh-tw": () => import("./zh-tw-B0hL19gb.js")
+	en: () => import("./en-m0gUbBVr.js"),
+	"zh-cn": () => import("./zh-cn-C3dda_xX.js"),
+	"zh-tw": () => import("./zh-tw-DJE-stNH.js")
 }, ee = async (e) => (await x[e]()).default, te = (e) => (t) => e[t], ne = (e) => {
 	let t = localStorage.getItem("sofinder.language");
 	return t === "en" || t === "zh-cn" || t === "zh-tw" ? t : e;
@@ -8707,7 +8707,7 @@ function Re({ api: e, resource: t, path: n, currentResource: i, currentDepth: a,
 				oe(n.id, {
 					status: "uploading",
 					progress: 0,
-					message: void 0
+					message: u("uploadStarting")
 				});
 				let i = s === "overwrite", a = s === "rename";
 				try {
@@ -8716,10 +8716,15 @@ function Re({ api: e, resource: t, path: n, currentResource: i, currentDepth: a,
 							overwrite: i,
 							autoRename: a,
 							signal: n.controller.signal,
-							onProgress: (e) => oe(n.id, { progress: e })
+							onProgress: (e) => oe(n.id, {
+								progress: e,
+								...e > 0 && e < 99 ? { message: void 0 } : {}
+							}),
+							onProcessing: () => oe(n.id, { message: u("uploadProcessing") })
 						}), oe(n.id, {
 							status: "done",
-							progress: 100
+							progress: 100,
+							message: void 0
 						}), le.set(n.id, `${n.file.name}: ${u("done")}`);
 						break;
 					} catch (e) {
@@ -8733,7 +8738,10 @@ function Re({ api: e, resource: t, path: n, currentResource: i, currentDepth: a,
 								}), le.set(n.id, `${n.file.name}: ${u("skipped")}`);
 								break;
 							}
-							i = e === "overwrite", a = e === "rename", oe(n.id, { progress: 0 });
+							i = e === "overwrite", a = e === "rename", oe(n.id, {
+								progress: 0,
+								message: u("uploadStarting")
+							});
 							continue;
 						}
 						throw e;
@@ -8934,7 +8942,7 @@ function Ye(e, t, n, r) {
 }
 //#endregion
 //#region src/App.tsx
-var Xe = (0, v.lazy)(() => import("./ImageEditor-5MZQPasf.js").then((e) => ({ default: e.ImageEditor }))), Ze = (0, v.lazy)(() => import("./ImageProcessDialog-CgJ64igp.js").then((e) => ({ default: e.ImageProcessDialog }))), Qe = (0, v.lazy)(() => import("./SecurityStatusDialog-BgsTf51o.js").then((e) => ({ default: e.SecurityStatusDialog }))), $e = (0, v.lazy)(() => import("./DocumentPreviewPane-B5cdB_xi.js")), et = (0, v.lazy)(() => import("./SettingsDialog-fnYZ68pn.js").then((e) => ({ default: e.SettingsDialog }))), tt = (0, v.lazy)(() => import("./DestinationDialog-DmAO36GJ.js").then((e) => ({ default: e.DestinationDialog }))), nt = (0, v.lazy)(() => import("./BulkRenameDialog-DVXk81cU.js").then((e) => ({ default: e.BulkRenameDialog }))), rt = (0, v.lazy)(() => import("./TrashDialog-B3dBCKn8.js").then((e) => ({ default: e.TrashDialog }))), it = (0, v.lazy)(() => import("./TagsDialog-DYIZoxVL.js").then((e) => ({ default: e.TagsDialog }))), at = (0, v.lazy)(() => import("./FolderTree-rdGrCiYV.js").then((e) => ({ default: e.FolderTree }))), ot = (0, v.lazy)(() => import("./DetailsPanel-BmJG_XQ0.js").then((e) => ({ default: e.DetailsPanel }))), st = (0, v.lazy)(() => import("./ShareDialog-CDiXWNdv.js")), ct = (0, v.lazy)(() => import("./FavoritesPage-C_Fh2oIi.js")), lt = (0, v.lazy)(() => import("./RecentPage-D8SBV8gP.js")), ut = (0, v.lazy)(() => import("./MetadataSidebarPanels-CDvRRaf0.js").then((e) => ({ default: e.QuickAccessPanel }))), dt = (0, v.lazy)(() => import("./MetadataSidebarPanels-CDvRRaf0.js").then((e) => ({ default: e.FavoritesPanel }))), ft = (0, v.lazy)(() => import("./MetadataSidebarPanels-CDvRRaf0.js").then((e) => ({ default: e.RecentPanel }))), pt = (0, v.lazy)(() => import("./ContextMenu-BpIiVP7h.js").then((e) => ({ default: e.ContextMenu }))), mt = (0, v.lazy)(() => import("./UploadQueue-CLQ4K_3R.js").then((e) => ({ default: e.UploadQueue }))), ht = (0, v.lazy)(() => import("./ImagePreviewPane-D8HiY55H.js")), gt = (0, v.lazy)(() => import("./AssetMetadataDialog-CQDbU83C.js").then((e) => ({ default: e.AssetMetadataDialog }))), _t = (0, v.lazy)(() => import("./AssetSearchDialog-CsmI9Yqh.js").then((e) => ({ default: e.AssetSearchDialog }))), vt = () => {
+var Xe = (0, v.lazy)(() => import("./ImageEditor-5MZQPasf.js").then((e) => ({ default: e.ImageEditor }))), Ze = (0, v.lazy)(() => import("./ImageProcessDialog-CgJ64igp.js").then((e) => ({ default: e.ImageProcessDialog }))), Qe = (0, v.lazy)(() => import("./SecurityStatusDialog-BgsTf51o.js").then((e) => ({ default: e.SecurityStatusDialog }))), $e = (0, v.lazy)(() => import("./DocumentPreviewPane-B5cdB_xi.js")), et = (0, v.lazy)(() => import("./SettingsDialog-fnYZ68pn.js").then((e) => ({ default: e.SettingsDialog }))), tt = (0, v.lazy)(() => import("./DestinationDialog-DmAO36GJ.js").then((e) => ({ default: e.DestinationDialog }))), nt = (0, v.lazy)(() => import("./BulkRenameDialog-DVXk81cU.js").then((e) => ({ default: e.BulkRenameDialog }))), rt = (0, v.lazy)(() => import("./TrashDialog-B3dBCKn8.js").then((e) => ({ default: e.TrashDialog }))), it = (0, v.lazy)(() => import("./TagsDialog-DYIZoxVL.js").then((e) => ({ default: e.TagsDialog }))), at = (0, v.lazy)(() => import("./FolderTree-rdGrCiYV.js").then((e) => ({ default: e.FolderTree }))), ot = (0, v.lazy)(() => import("./DetailsPanel-DHXlvF8p.js").then((e) => ({ default: e.DetailsPanel }))), st = (0, v.lazy)(() => import("./ShareDialog-CDiXWNdv.js")), ct = (0, v.lazy)(() => import("./FavoritesPage-C_Fh2oIi.js")), lt = (0, v.lazy)(() => import("./RecentPage-D8SBV8gP.js")), ut = (0, v.lazy)(() => import("./MetadataSidebarPanels-CDvRRaf0.js").then((e) => ({ default: e.QuickAccessPanel }))), dt = (0, v.lazy)(() => import("./MetadataSidebarPanels-CDvRRaf0.js").then((e) => ({ default: e.FavoritesPanel }))), ft = (0, v.lazy)(() => import("./MetadataSidebarPanels-CDvRRaf0.js").then((e) => ({ default: e.RecentPanel }))), pt = (0, v.lazy)(() => import("./ContextMenu-BpIiVP7h.js").then((e) => ({ default: e.ContextMenu }))), mt = (0, v.lazy)(() => import("./UploadQueue-CLQ4K_3R.js").then((e) => ({ default: e.UploadQueue }))), ht = (0, v.lazy)(() => import("./ImagePreviewPane-D8HiY55H.js")), gt = (0, v.lazy)(() => import("./AssetMetadataDialog-CQDbU83C.js").then((e) => ({ default: e.AssetMetadataDialog }))), _t = (0, v.lazy)(() => import("./AssetSearchDialog-CsmI9Yqh.js").then((e) => ({ default: e.AssetSearchDialog }))), vt = () => {
 	let e = localStorage.getItem("sofinder.groupMode.v1");
 	return e === "name" || e === "type" || e === "size" || e === "modified" || e === "tags" ? e : "none";
 }, yt = () => {

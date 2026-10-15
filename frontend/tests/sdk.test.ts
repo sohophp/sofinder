@@ -1,72 +1,85 @@
-import { afterEach, describe, expect, it, vi } from "vitest";
-import { createSoFinderClient } from "../src/sdk";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { createSoFinderClient, type UploadTaskSnapshot } from "../src/sdk";
+import { UploadRequest } from "./support/UploadRequest";
 
+beforeEach(() => { UploadRequest.sent = []; vi.stubGlobal("XMLHttpRequest", UploadRequest); });
 afterEach(() => vi.unstubAllGlobals());
+const entry = { path: "photo.png", name: "photo.png", directory: false, size: 2, modifiedAt: 10, mimeType: "image/png", url: "/images/photo.png", capabilities: {} };
+const client = () => createSoFinderClient({ apiBase: "/sofinder/api", csrfToken: "token", chunkThreshold: 1, chunkSize: 1 });
+const requestAt = async (index: number) => { await vi.waitFor(() => expect(UploadRequest.sent.length).toBeGreaterThan(index)); return UploadRequest.sent[index]; };
 
 describe("upload SDK", () => {
   it("resumes an interrupted chunk task from server-reported indexes", async () => {
-    const firstChunk = new Response(JSON.stringify({ success: true, data: { complete: false } }), { status: 200 });
-    const fetchMock = vi.fn()
-      .mockResolvedValueOnce(firstChunk)
-      .mockRejectedValueOnce(new TypeError("Network interrupted"))
-      .mockResolvedValueOnce(new Response(JSON.stringify({ success: true, data: { received: [0] } }), { status: 200 }))
-      .mockResolvedValueOnce(new Response(JSON.stringify({ success: true, data: {
-        complete: true,
-        entry: { path: "photo.png", name: "photo.png", directory: false, size: 2, modifiedAt: 10, mimeType: "image/png", url: "/images/photo.png", capabilities: {} },
-        asset: { schemaVersion: "1.0", assetId: null, resource: "Images", path: "photo.png", name: "photo.png", directory: false, mimeType: "image/png", size: 2, modifiedAt: 10, version: "10-2", url: "/images/photo.png", downloadUrl: null, width: 1, height: 1, alt: null, variants: [], capabilities: { embeddable: true } },
-      } }), { status: 201 }));
+    const fetchMock = vi.fn().mockResolvedValue(new Response(JSON.stringify({ success: true, data: { received: [0] } })));
     vi.stubGlobal("fetch", fetchMock);
-
-    const task = createSoFinderClient({ apiBase: "/sofinder/api", csrfToken: "token", chunkThreshold: 1, chunkSize: 1 }).upload({ file: new File(["ab"], "photo.png", { type: "image/png" }), resource: "Images" });
-    await expect(task.completion).rejects.toThrow("Network interrupted");
-    const result = await task.retry();
-
-    expect(result.url).toBe("/images/photo.png");
-    expect(fetchMock).toHaveBeenCalledTimes(4);
-    expect(fetchMock.mock.calls[0]?.[1]?.method).toBe("POST");
-    expect(fetchMock.mock.calls[2]?.[0]).toContain(`/uploads/chunks/${task.id}`);
-    expect(fetchMock.mock.calls[2]?.[1]?.method).toBeUndefined();
-    const uploaded = fetchMock.mock.calls[3]?.[1]?.body as FormData;
-    expect(uploaded.get("index")).toBe("1");
+    const task = client().upload({ file: new File(["ab"], "photo.png"), resource: "Images" });
+    const rejected = expect(task.completion).rejects.toMatchObject({ code: "network_error" });
+    (await requestAt(0)).respond({ complete: false });
+    (await requestAt(1)).fail();
+    await rejected;
+    const retried = task.retry();
+    const last = await requestAt(2);
+    expect(last.body.get("index")).toBe("1");
+    last.respond({ complete: true, entry }, 201);
+    expect((await retried).url).toBe("/images/photo.png");
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+    expect(fetchMock.mock.calls[0][0]).toContain(`/uploads/chunks/${task.id}`);
   });
 
-  it("starts a fresh chunk task with POST without probing a missing session", async () => {
-    const fetchMock = vi.fn()
-      .mockResolvedValueOnce(new Response(JSON.stringify({ success: true, data: { complete: false } }), { status: 200 }))
-      .mockResolvedValueOnce(new Response(JSON.stringify({ success: true, data: { complete: true,
-        entry: { path: "new.png", name: "new.png", directory: false, size: 2, modifiedAt: 10, mimeType: "image/png", url: "/images/new.png", capabilities: {} },
-      } }), { status: 201 }));
-    vi.stubGlobal("fetch", fetchMock);
-    const task = createSoFinderClient({ apiBase: "/sofinder/api", csrfToken: "token", chunkThreshold: 1, chunkSize: 1 })
-      .upload({ file: new File(["ab"], "new.png", { type: "image/png" }), resource: "Images" });
-    expect((await task.completion).url).toBe("/images/new.png");
-    expect(fetchMock).toHaveBeenCalledTimes(2);
-    expect(fetchMock.mock.calls.every(([url, options]) => url === "/sofinder/api/uploads/chunks" && options.method === "POST")).toBe(true);
-    expect(fetchMock.mock.calls.map(([, options]) => (options.body as FormData).get("index"))).toEqual(["0", "1"]);
+  it("starts fresh chunks with POST and exposes partial bytes and a real processing phase", async () => {
+    const fetchMock = vi.fn(); vi.stubGlobal("fetch", fetchMock);
+    const task = createSoFinderClient({ apiBase: "/sofinder/api", csrfToken: "token", chunkThreshold: 1, chunkSize: 4 })
+      .upload({ file: new File(["abcdef"], "new.pdf"), resource: "Files" });
+    const snapshots: UploadTaskSnapshot[] = [];
+    task.subscribe(snapshot => snapshots.push(snapshot));
+    const first = await requestAt(0);
+    first.progress(1, 2); expect(task.progress).toBe(33);
+    first.finishSending(); expect(task.progress).toBe(67);
+    first.respond({ complete: false });
+    const last = await requestAt(1);
+    last.progress(1, 2); expect(task.progress).toBe(83);
+    last.finishSending(); expect(task.status).toBe("processing"); expect(task.progress).toBe(99);
+    expect(snapshots.some(snapshot => snapshot.progress === 100)).toBe(false);
+    last.respond({ complete: true, entry });
+    await task.completion;
+    expect(task.status).toBe("ready"); expect(task.progress).toBe(100);
+    expect(fetchMock).not.toHaveBeenCalled();
+    expect(UploadRequest.sent.map(request => [request.method, request.body.get("index")])).toEqual([["POST", "0"], ["POST", "1"]]);
   });
 
-  it("restarts expired sessions on retry but propagates permission errors", async () => {
-    for (const status of [404, 403]) {
-      const fetchMock = vi.fn()
-        .mockRejectedValueOnce(new TypeError("Network interrupted"))
-        .mockResolvedValueOnce(new Response(JSON.stringify({ success: false, error: { code: "missing_or_denied", message: "Missing or denied" } }), { status }))
-        .mockResolvedValueOnce(new Response(JSON.stringify({ success: true, data: { complete: false } }), { status: 200 }))
-        .mockResolvedValueOnce(new Response(JSON.stringify({ success: true, data: { complete: true,
-          entry: { path: "retry.png", name: "retry.png", directory: false, size: 2, modifiedAt: 10, mimeType: "image/png", url: "/images/retry.png", capabilities: {} },
-        } }), { status: 201 }));
-      vi.stubGlobal("fetch", fetchMock);
-      const task = createSoFinderClient({ apiBase: "/sofinder/api", csrfToken: "token", chunkThreshold: 1, chunkSize: 1 })
-        .upload({ file: new File(["ab"], "retry.png", { type: "image/png" }), resource: "Images" });
-      await expect(task.completion).rejects.toThrow("Network interrupted");
-      if (status === 404) {
-        expect((await task.retry()).url).toBe("/images/retry.png");
-        expect(fetchMock).toHaveBeenCalledTimes(4);
-        expect((fetchMock.mock.calls[2]?.[1]?.body as FormData).get("index")).toBe("0");
-      } else {
-        await expect(task.retry()).rejects.toMatchObject({ status: 403, code: "missing_or_denied" });
-        expect(fetchMock).toHaveBeenCalledTimes(2);
-      }
+  it.each([404, 403])("restarts expired sessions but preserves status %s from the resume check", async status => {
+    vi.stubGlobal("fetch", vi.fn().mockResolvedValue(new Response(JSON.stringify({ success: false, error: { code: "missing_or_denied", message: "Missing or denied" } }), { status })));
+    const task = client().upload({ file: new File(["ab"], "retry.png"), resource: "Images" });
+    const rejected = expect(task.completion).rejects.toMatchObject({ code: "network_error" });
+    (await requestAt(0)).fail(); await rejected;
+    const retried = task.retry();
+    if (status === 403) {
+      await expect(retried).rejects.toMatchObject({ status: 403, code: "missing_or_denied" });
+      expect(UploadRequest.sent).toHaveLength(1);
+    } else {
+      const first = await requestAt(1); expect(first.body.get("index")).toBe("0"); first.respond({ complete: false });
+      (await requestAt(2)).respond({ complete: true, entry });
+      expect((await retried).url).toBe("/images/photo.png");
     }
   });
 
+  it("preserves explicitly anonymous chunk uploads without sending cookies", async () => {
+    const fetchMock = vi.fn().mockResolvedValue(new Response(JSON.stringify({ success: true, data: { complete: true, entry } })));
+    vi.stubGlobal("fetch", fetchMock);
+    const task = createSoFinderClient({ apiBase: "/api", csrfToken: "token", credentials: "omit", chunkThreshold: 1 })
+      .upload({ file: new File(["ab"], "anonymous.png"), resource: "Images" });
+    await task.completion;
+    expect(fetchMock).toHaveBeenCalledWith("/api/uploads/chunks", expect.objectContaining({ credentials: "omit" }));
+    expect(UploadRequest.sent).toHaveLength(0);
+  });
+
+  it("cancels before an asynchronous token is available without sending bytes", async () => {
+    let tokenReady!: (token: string) => void;
+    vi.stubGlobal("fetch", vi.fn().mockResolvedValue(new Response('{}')));
+    const task = createSoFinderClient({ apiBase: "/sofinder/api", csrfToken: () => new Promise(resolve => { tokenReady = resolve; }) })
+      .upload({ file: new File(["a"], "small.txt"), resource: "Files" });
+    const rejected = expect(task.completion).rejects.toMatchObject({ code: "upload_canceled" });
+    task.cancel(); tokenReady("token"); await rejected;
+    expect(UploadRequest.sent).toHaveLength(0);
+  });
 });

@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.5.2 — 2026-10-15
+
+- Fix large-file upload progress in the manager, picker and editor SDK. Default authenticated uploads now report byte progress within each chunk and weight the shorter final chunk correctly. Resumed chunks are counted once. Transfers remain below 100% while the server finalizes the file; the UI shows a processing message and the SDK exposes its processing state until a successful response. Cancellation, retry and existing upload checks remain active.
+
 ## 1.5.1 — 2026-10-15
 
 - Add `security.active_content_detection` (default `true`) across core, Symfony, Laravel and PSR-15 hosts. Hosts may disable the raw-byte script-marker heuristic to avoid false positives in binary PDF/image streams; all other upload validation and configured malware scanning remain active. No file or database migration is required.

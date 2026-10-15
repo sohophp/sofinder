@@ -50,6 +50,8 @@ You can upload by:
 
 The upload panel shows queued, active, completed, failed and cancelled files. Up to three files upload concurrently. Files larger than 5 MB use 4 MB chunks. If the page is interrupted, select the same local file again within 24 hours to resume the saved session. You can cancel one upload, cancel all active uploads, remove a task or clear finished tasks.
 
+Progress follows transmitted file bytes, including progress within a chunk and the actual size of the final chunk. Saved chunks count once when resuming. While the server finishes processing a fully transmitted file, progress stays at 99% and the panel explains that it is waiting for the server. Only a successful server response marks the task complete at 100%; a stalled network does not advance progress automatically.
+
 Reopening the browser or file picker keeps historical interrupted uploads collapsed; click the upload progress button to inspect them. Starting an upload opens the panel with current-session tasks, without replaying historical interruption errors. Closing the panel preserves resumable tasks. Removing or cancelling a restored task, or clearing finished tasks, also forgets its saved resume record and attempts to delete the server-side chunks. Offline cleanup may leave chunks until server expiry, but the dismissed task will not reappear locally. Retry preserves the saved chunks.
 
 If a destination already contains the same file name, SoFinder asks before overwriting it. An upload can still fail because of the host's PHP/web-server limit, the resource size or quota limit, a denied extension/MIME type, unsafe active content, invalid image data, name length or permissions. The upload panel keeps the server's exact error message.

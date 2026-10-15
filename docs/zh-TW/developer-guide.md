@@ -117,3 +117,7 @@ final readonly class DocumentService
 8. 接近生產環境的 Security Audit 和用量重算。
 
 可使用 `examples/symfony` 作為整合 Fixture。部署期間必須執行 `sofinder:security:audit`，Critical 結果應阻止釋出。
+
+## 上傳 SDK 進度
+
+管理器與預設上傳 SDK 依檔案位元組回報進度，包含分塊內部的傳輸。SDK 等待最終回應時維持 processing 狀態且進度最多 99，伺服器確認成功後才提供 ready／100；重試時已儲存的分塊僅計入一次。明確設定 `credentials: "omit"` 時保留匿名 fetch 傳輸方式，不提供分塊內部的位元組進度事件。

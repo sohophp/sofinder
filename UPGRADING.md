@@ -1,5 +1,9 @@
 # Upgrading SoFinder
 
+## 1.5.1 → 1.5.2
+
+Update all synchronized Composer packages to 1.5.2 and deploy the complete rebuilt `dist/` directory so the UI, shared upload transport and editor SDK stay in sync. Upload endpoints and stored files are unchanged. The SDK now reports `processing` with progress capped at 99 while awaiting the final response, then `ready` at 100 after server acceptance. No database or file migration is required.
+
 ## 1.5.0 → 1.5.1
 
 Update all synchronized packages to 1.5.1. Existing hosts keep active-content detection enabled. To avoid binary PDF false positives, set `so_finder.security.active_content_detection: false` in Symfony (Laravel: `sofinder.core.security.active_content_detection`; plain PHP/PSR-15: the same nested security array). Only the raw-byte script-marker heuristic is skipped. Clear/warm the host container cache after changing configuration. No database or stored-file migration is required.

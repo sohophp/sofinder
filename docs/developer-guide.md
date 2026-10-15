@@ -117,3 +117,7 @@ At minimum, automate:
 8. security audit and usage recalculation in a production-like environment.
 
 Use the runnable `examples/symfony` variants as integration fixtures. During deployment run `sofinder:security:audit`; critical findings must block release.
+
+## Upload SDK progress
+
+The manager and default upload SDK report progress from file bytes, including partial chunks. SDK snapshots remain in `processing` at no more than 99 while awaiting the final response; `ready` and 100 require server acceptance. Stored chunks count once on retry. An explicit `credentials: "omit"` keeps the anonymous fetch transport and does not provide progress events within a chunk.

@@ -1,5 +1,6 @@
 import type { AssetReference, Entry, ImageVariant, UploadConflictStrategy } from "./types";
 import { responseFailureMessage } from "./responseError";
+import { postUpload, receivedUploadBytes, receivedUploadChunks, uploadPercentage, UploadNetworkError } from "./uploadTransport";
 
 export type UploadTaskStatus = "queued" | "uploading" | "processing" | "ready" | "failed" | "canceled";
 export type UploadSource = "picker" | "input" | "paste" | "drop";
@@ -116,9 +117,8 @@ class BrowserUploadTask implements UploadTask {
         strategy = resolution;
         payload = await this.send(strategy);
       }
-      this.status = "processing"; this.progress = 100; this.emit();
       const asset = payload.asset ?? assetFromEntry(this.request.resource, payload.entry, this.options.apiBase);
-      this.result = asset; this.status = "ready"; this.emit();
+      this.result = asset; this.status = "ready"; this.progress = 100; this.emit();
       return asset;
     } catch (error) {
       const sdkError = error instanceof SoFinderSdkError ? error : error instanceof DOMException && error.name === "AbortError"
@@ -132,6 +132,7 @@ class BrowserUploadTask implements UploadTask {
   }
 
   private async send(strategy: UploadConflictStrategy): Promise<UploadPayload> {
+    this.status = "uploading"; this.progress = 0; this.emit();
     const threshold = this.options.chunkThreshold ?? 5_000_000;
     return this.file.size > threshold ? this.sendChunks(strategy) : this.sendWhole(strategy);
   }
@@ -139,19 +140,26 @@ class BrowserUploadTask implements UploadTask {
   private async sendWhole(strategy: UploadConflictStrategy): Promise<UploadPayload> {
     const token = await csrf(this.options.csrfToken);
     const form = uploadForm(this.request, strategy);
-    return new Promise<UploadPayload>((resolve, reject) => {
-      const xhr = new XMLHttpRequest();
-      const abort = () => xhr.abort();
-      this.controller?.signal.addEventListener("abort", abort, { once: true });
-      xhr.open("POST", base(this.options.apiBase) + "/uploads");
-      xhr.withCredentials = this.options.credentials !== "omit";
-      xhr.setRequestHeader("Accept", "application/json"); xhr.setRequestHeader("X-CSRF-TOKEN", token);
-      xhr.upload.onprogress = event => { if (event.lengthComputable) { this.progress = Math.min(99, Math.round(event.loaded / event.total * 100)); this.emit(); } };
-      xhr.onerror = () => reject(new SoFinderSdkError("network_error", "The upload failed because of a network error."));
-      xhr.onabort = () => reject(new DOMException("Upload canceled.", "AbortError"));
-      xhr.onload = () => parsePayload<UploadPayload>(xhr.responseText, xhr.status).then(resolve, reject);
-      xhr.send(form);
-    });
+    return this.post("/uploads", form, token, 0, this.file.size);
+  }
+
+  private async post<T>(endpoint: string, form: FormData, token: string, completedBytes: number, bytes: number): Promise<T> {
+    try {
+      const response = await postUpload(base(this.options.apiBase) + endpoint, form, token, {
+        signal: this.controller?.signal, credentials: endpoint === "/uploads"
+          ? (this.options.credentials === "omit" ? "omit" : "include")
+          : this.options.credentials ?? "same-origin",
+        onProgress: fraction => {
+          this.progress = uploadPercentage(completedBytes + bytes * fraction, this.file.size);
+          if (fraction === 1 && completedBytes + bytes === this.file.size) this.status = "processing";
+          this.emit();
+        },
+      });
+      return await parsePayload<T>(response.text, response.status);
+    } catch (error) {
+      if (error instanceof UploadNetworkError) throw new SoFinderSdkError("network_error", error.message);
+      throw error;
+    }
   }
 
   private async sendChunks(strategy: UploadConflictStrategy): Promise<UploadPayload> {
@@ -162,16 +170,20 @@ class BrowserUploadTask implements UploadTask {
     const endpoint = `${base(this.options.apiBase)}/uploads/chunks/${encodeURIComponent(uploadId)}`;
     // A new task owns a fresh ID; a status query would necessarily return 404.
     // Once a POST was attempted it may have reached the server, even on network failure.
-    const received = this.chunkUploadStarted ? await this.receivedChunks(endpoint) : new Set<number>();
+    const received = this.chunkUploadStarted ? receivedUploadChunks([...(await this.receivedChunks(endpoint))], total) : new Set<number>();
+    let completedBytes = receivedUploadBytes(received, this.file.size, chunkSize);
+    this.progress = uploadPercentage(completedBytes, this.file.size); this.emit();
     for (let index = 0; index < total; index++) {
-      if (received.has(index)) { this.progress = Math.round((index + 1) / total * 100); this.emit(); continue; }
+      if (this.controller?.signal.aborted) throw new DOMException("Upload canceled.", "AbortError");
+      if (received.has(index)) continue;
       const form = uploadForm(this.request, strategy, false);
       form.set("name", this.file.name); form.set("uploadId", uploadId); form.set("index", String(index)); form.set("total", String(total));
-      form.set("chunk", this.file.slice(index * chunkSize, Math.min(this.file.size, (index + 1) * chunkSize)), `${this.file.name}.part`);
+      const chunk = this.file.slice(index * chunkSize, Math.min(this.file.size, (index + 1) * chunkSize));
+      form.set("chunk", chunk, `${this.file.name}.part`);
       this.chunkUploadStarted = true;
-      const response = await fetch(base(this.options.apiBase) + "/uploads/chunks", { method: "POST", headers: { Accept: "application/json", "X-CSRF-TOKEN": token }, credentials: this.options.credentials ?? "same-origin", body: form, signal: this.controller?.signal });
-      const payload = await parsePayload<{ complete: boolean; entry?: Entry; asset?: AssetReference }>(await response.text(), response.status);
-      this.progress = Math.round((index + 1) / total * 100); this.emit();
+      const payload = await this.post<{ complete: boolean; entry?: Entry; asset?: AssetReference }>("/uploads/chunks", form, token, completedBytes, chunk.size);
+      completedBytes += chunk.size;
+      this.progress = uploadPercentage(completedBytes, this.file.size); this.emit();
       if (payload.complete && payload.entry) return { entry: payload.entry, asset: payload.asset };
     }
     throw new SoFinderSdkError("chunk_incomplete", "The chunk upload did not complete.", 500);
